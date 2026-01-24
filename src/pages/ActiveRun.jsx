@@ -1,0 +1,274 @@
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
+import { base44 } from '@/api/base44Client';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, MapPin, Zap, Heart, Flame, Timer } from 'lucide-react';
+import RunTimer from '@/components/running/RunTimer';
+import RunControls from '@/components/running/RunControls';
+import MetricDisplay from '@/components/running/MetricDisplay';
+import HeartRateMonitor from '@/components/running/HeartRateMonitor';
+
+export default function ActiveRun() {
+  const navigate = useNavigate();
+  const [runStatus, setRunStatus] = useState('idle'); // idle, active, paused
+  const [seconds, setSeconds] = useState(0);
+  const [distance, setDistance] = useState(0);
+  const [currentSpeed, setCurrentSpeed] = useState(0);
+  const [maxSpeed, setMaxSpeed] = useState(0);
+  const [heartRate, setHeartRate] = useState(72);
+  const [maxHeartRate, setMaxHeartRate] = useState(72);
+  const [calories, setCalories] = useState(0);
+  const [runId, setRunId] = useState(null);
+  
+  const timerRef = useRef(null);
+  const watchIdRef = useRef(null);
+  const startTimeRef = useRef(null);
+  const lastPositionRef = useRef(null);
+
+  // Simulated heart rate (in real app, would connect to Bluetooth device)
+  useEffect(() => {
+    if (runStatus === 'active') {
+      const hrInterval = setInterval(() => {
+        // Simulate heart rate based on activity
+        const baseHR = 72;
+        const activityBonus = Math.min(seconds / 10, 80);
+        const variation = Math.random() * 10 - 5;
+        const newHR = Math.round(baseHR + activityBonus + variation);
+        setHeartRate(prev => {
+          const smoothed = Math.round((prev * 0.7) + (newHR * 0.3));
+          return Math.max(60, Math.min(200, smoothed));
+        });
+      }, 1000);
+      return () => clearInterval(hrInterval);
+    }
+  }, [runStatus, seconds]);
+
+  // Update max heart rate
+  useEffect(() => {
+    if (heartRate > maxHeartRate) {
+      setMaxHeartRate(heartRate);
+    }
+  }, [heartRate, maxHeartRate]);
+
+  // Calculate calories (simplified formula)
+  useEffect(() => {
+    if (runStatus === 'active' && seconds > 0) {
+      // MET value for running: ~8-12 depending on speed
+      const met = 8 + (currentSpeed / 5);
+      const weight = 70; // Default weight in kg
+      const caloriesPerMinute = (met * weight * 3.5) / 200;
+      setCalories(Math.round(caloriesPerMinute * (seconds / 60)));
+    }
+  }, [seconds, currentSpeed, runStatus]);
+
+  // Timer
+  useEffect(() => {
+    if (runStatus === 'active') {
+      timerRef.current = setInterval(() => {
+        setSeconds(s => s + 1);
+      }, 1000);
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [runStatus]);
+
+  // GPS tracking
+  const startGPSTracking = useCallback(() => {
+    if ('geolocation' in navigator) {
+      watchIdRef.current = navigator.geolocation.watchPosition(
+        (position) => {
+          const { latitude, longitude, speed } = position.coords;
+          
+          // Update speed (convert m/s to km/h)
+          const speedKmh = speed ? speed * 3.6 : 0;
+          setCurrentSpeed(speedKmh);
+          if (speedKmh > maxSpeed) setMaxSpeed(speedKmh);
+          
+          // Calculate distance if we have a previous position
+          if (lastPositionRef.current) {
+            const dist = calculateDistance(
+              lastPositionRef.current.lat,
+              lastPositionRef.current.lng,
+              latitude,
+              longitude
+            );
+            setDistance(d => d + dist);
+          }
+          
+          lastPositionRef.current = { lat: latitude, lng: longitude };
+        },
+        (error) => {
+          console.log('GPS error:', error);
+          // Simulate movement for demo
+          simulateMovement();
+        },
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+      );
+    } else {
+      simulateMovement();
+    }
+  }, [maxSpeed]);
+
+  const simulateMovement = () => {
+    // Simulate running data for demo purposes
+    const interval = setInterval(() => {
+      if (runStatus === 'active') {
+        setDistance(d => d + 0.01 + Math.random() * 0.005);
+        setCurrentSpeed(8 + Math.random() * 4);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  };
+
+  const stopGPSTracking = () => {
+    if (watchIdRef.current) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+    }
+  };
+
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
+  const handleStart = async () => {
+    startTimeRef.current = new Date().toISOString();
+    setRunStatus('active');
+    startGPSTracking();
+    
+    // Create run record
+    const run = await base44.entities.Run.create({
+      start_time: startTimeRef.current,
+      status: 'active',
+    });
+    setRunId(run.id);
+  };
+
+  const handlePause = () => {
+    setRunStatus('paused');
+    stopGPSTracking();
+    if (timerRef.current) clearInterval(timerRef.current);
+  };
+
+  const handleResume = () => {
+    setRunStatus('active');
+    startGPSTracking();
+  };
+
+  const handleStop = async () => {
+    stopGPSTracking();
+    if (timerRef.current) clearInterval(timerRef.current);
+    
+    const pace = distance > 0 ? (seconds / 60) / distance : 0;
+    const avgSpeed = seconds > 0 ? (distance / seconds) * 3600 : 0;
+    const avgHR = Math.round((72 + maxHeartRate) / 2);
+    
+    if (runId) {
+      await base44.entities.Run.update(runId, {
+        end_time: new Date().toISOString(),
+        duration_seconds: seconds,
+        distance_km: parseFloat(distance.toFixed(3)),
+        avg_speed_kmh: parseFloat(avgSpeed.toFixed(2)),
+        max_speed_kmh: parseFloat(maxSpeed.toFixed(2)),
+        calories_burned: calories,
+        avg_heart_rate: avgHR,
+        max_heart_rate: maxHeartRate,
+        pace_min_per_km: parseFloat(pace.toFixed(2)),
+        status: 'completed',
+      });
+    }
+    
+    navigate(createPageUrl(`RunDetails?id=${runId}`));
+  };
+
+  const pace = distance > 0 ? (seconds / 60) / distance : 0;
+  const formatPace = (pace) => {
+    if (!pace || pace === Infinity || pace === 0) return '--:--';
+    const mins = Math.floor(pace);
+    const secs = Math.round((pace - mins) * 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-950 text-white">
+      {/* Header */}
+      <div className="px-6 pt-6 flex items-center justify-between">
+        <button 
+          onClick={() => navigate(createPageUrl('Home'))}
+          className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <span className={`px-3 py-1 rounded-full text-xs uppercase tracking-wider ${
+          runStatus === 'active' ? 'bg-emerald-500/20 text-emerald-400' :
+          runStatus === 'paused' ? 'bg-amber-500/20 text-amber-400' :
+          'bg-white/10 text-gray-400'
+        }`}>
+          {runStatus}
+        </span>
+      </div>
+
+      {/* Timer */}
+      <RunTimer seconds={seconds} isActive={runStatus === 'active'} />
+
+      {/* Main Metrics */}
+      <div className="px-6 mb-6">
+        <div className="grid grid-cols-3 gap-6">
+          <MetricDisplay label="Distance" value={distance.toFixed(2)} unit="km" />
+          <MetricDisplay label="Pace" value={formatPace(pace)} unit="/km" />
+          <MetricDisplay label="Speed" value={currentSpeed.toFixed(1)} unit="km/h" />
+        </div>
+      </div>
+
+      {/* Heart Rate */}
+      <div className="px-6 mb-6">
+        <HeartRateMonitor bpm={heartRate} isActive={runStatus === 'active'} />
+      </div>
+
+      {/* Additional Stats */}
+      <div className="px-6 mb-8">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4">
+            <div className="p-2 rounded-xl bg-orange-500/20">
+              <Flame className="w-5 h-5 text-orange-400" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 uppercase tracking-wider">Calories</p>
+              <p className="text-2xl font-light text-white">{calories}</p>
+            </div>
+          </div>
+          
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4">
+            <div className="p-2 rounded-xl bg-blue-500/20">
+              <Zap className="w-5 h-5 text-blue-400" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 uppercase tracking-wider">Max Speed</p>
+              <p className="text-2xl font-light text-white">{maxSpeed.toFixed(1)}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Controls */}
+      <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-gray-950 via-gray-950 to-transparent pt-8 pb-12">
+        <RunControls
+          status={runStatus}
+          onStart={handleStart}
+          onPause={handlePause}
+          onResume={handleResume}
+          onStop={handleStop}
+        />
+      </div>
+    </div>
+  );
+}
