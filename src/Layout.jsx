@@ -7,9 +7,10 @@ export default function Layout({ children }) {
   const location = useLocation();
   
   const navItems = [
-    { name: 'Home', icon: Home, page: 'Home' },
-    { name: 'History', icon: Activity, page: 'History' },
-    { name: 'Stats', icon: BarChart2, page: 'Stats' },
+    { name: 'หน้าหลัก', icon: Home, page: 'Home' },
+    { name: 'ประวัติ', icon: Activity, page: 'History' },
+    { name: 'สถิติ', icon: BarChart2, page: 'Stats' },
+    { name: 'โปรไฟล์', icon: User, page: 'Profile' },
   ];
 
   const isActivePage = (pageName) => {

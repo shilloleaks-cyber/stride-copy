@@ -1,0 +1,360 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
+import { base44 } from '@/api/base44Client';
+import { useQuery } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
+import { format } from 'date-fns';
+import { 
+  ArrowLeft, Share2, User, MapPin, Clock, Flame, Heart, 
+  Award, Calendar, TrendingUp, Facebook, Copy, Check,
+  Settings, LogOut
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { toast } from 'sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+export default function Profile() {
+  const navigate = useNavigate();
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const { data: user } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: () => base44.auth.me(),
+  });
+
+  const { data: runs = [] } = useQuery({
+    queryKey: ['runs'],
+    queryFn: () => base44.entities.Run.list('-start_time', 500),
+  });
+
+  const completedRuns = runs.filter(r => r.status === 'completed');
+
+  // Stats
+  const stats = {
+    totalDistance: completedRuns.reduce((sum, r) => sum + (r.distance_km || 0), 0),
+    totalTime: completedRuns.reduce((sum, r) => sum + (r.duration_seconds || 0), 0),
+    totalCalories: completedRuns.reduce((sum, r) => sum + (r.calories_burned || 0), 0),
+    totalRuns: completedRuns.length,
+    avgPace: completedRuns.length > 0 
+      ? completedRuns.reduce((sum, r) => sum + (r.pace_min_per_km || 0), 0) / completedRuns.length 
+      : 0,
+  };
+
+  // Personal bests
+  const longestRun = completedRuns.reduce((max, r) => (r.distance_km || 0) > (max?.distance_km || 0) ? r : max, null);
+  const fastestPace = completedRuns.filter(r => r.pace_min_per_km > 0).reduce((min, r) => 
+    (r.pace_min_per_km || Infinity) < (min?.pace_min_per_km || Infinity) ? r : min, null);
+
+  const formatDuration = (seconds) => {
+    if (!seconds) return '0 ชม.';
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    if (hours > 0) return `${hours} ชม. ${mins} นาที`;
+    return `${mins} นาที`;
+  };
+
+  const formatPace = (pace) => {
+    if (!pace || pace === 0) return '--:--';
+    const mins = Math.floor(pace);
+    const secs = Math.round((pace - mins) * 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Generate share text for Facebook
+  const generateShareText = () => {
+    const text = `🏃‍♂️ สถิติการวิ่งของฉัน
+
+📍 ระยะทางรวม: ${stats.totalDistance.toFixed(1)} กม.
+⏱️ เวลารวม: ${formatDuration(stats.totalTime)}
+🔥 แคลอรี่ที่เผาผลาญ: ${stats.totalCalories.toLocaleString()} kcal
+🏅 จำนวนครั้งที่วิ่ง: ${stats.totalRuns} ครั้ง
+${longestRun ? `\n🏆 ระยะทางไกลที่สุด: ${longestRun.distance_km?.toFixed(2)} กม.` : ''}
+${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วที่สุด: ${formatPace(fastestPace.pace_min_per_km)} /กม.` : ''}
+
+#Running #RunningStats #HealthyLifestyle`;
+    return text;
+  };
+
+  const handleShareToFacebook = () => {
+    const text = encodeURIComponent(generateShareText());
+    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?quote=${text}`;
+    window.open(facebookUrl, '_blank', 'width=600,height=400');
+    setShareDialogOpen(false);
+  };
+
+  const handleCopyText = () => {
+    navigator.clipboard.writeText(generateShareText());
+    setCopied(true);
+    toast.success('คัดลอกข้อความแล้ว!');
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleLogout = () => {
+    base44.auth.logout();
+  };
+
+  const getInitials = (name) => {
+    if (!name) return 'U';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-950 text-white pb-24">
+      {/* Header */}
+      <div className="px-6 pt-6 flex items-center justify-between">
+        <button 
+          onClick={() => navigate(createPageUrl('Home'))}
+          className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <h1 className="text-lg font-medium">โปรไฟล์</h1>
+        <button 
+          onClick={handleLogout}
+          className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-red-400"
+        >
+          <LogOut className="w-5 h-5" />
+        </button>
+      </div>
+
+      {/* Profile Header */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="px-6 pt-8 pb-6 text-center"
+      >
+        <Avatar className="w-24 h-24 mx-auto mb-4 bg-gradient-to-br from-emerald-400 to-emerald-600">
+          <AvatarFallback className="text-2xl font-medium bg-gradient-to-br from-emerald-400 to-emerald-600 text-white">
+            {getInitials(user?.full_name)}
+          </AvatarFallback>
+        </Avatar>
+        <h2 className="text-2xl font-light">{user?.full_name || 'Runner'}</h2>
+        <p className="text-gray-500 text-sm mt-1">{user?.email}</p>
+        
+        {/* Share Button */}
+        <Button 
+          onClick={() => setShareDialogOpen(true)}
+          className="mt-6 bg-blue-600 hover:bg-blue-700"
+        >
+          <Share2 className="w-4 h-4 mr-2" />
+          แชร์สถิติการวิ่ง
+        </Button>
+      </motion.div>
+
+      {/* Quick Stats */}
+      <div className="px-6 mb-6">
+        <div className="bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-500/30 rounded-3xl p-6">
+          <div className="grid grid-cols-2 gap-6">
+            <div className="text-center">
+              <MapPin className="w-6 h-6 text-emerald-400 mx-auto mb-2" />
+              <p className="text-3xl font-light text-white">{stats.totalDistance.toFixed(1)}</p>
+              <p className="text-xs text-gray-400 mt-1">กิโลเมตร</p>
+            </div>
+            <div className="text-center">
+              <Calendar className="w-6 h-6 text-purple-400 mx-auto mb-2" />
+              <p className="text-3xl font-light text-white">{stats.totalRuns}</p>
+              <p className="text-xs text-gray-400 mt-1">ครั้งที่วิ่ง</p>
+            </div>
+            <div className="text-center">
+              <Flame className="w-6 h-6 text-orange-400 mx-auto mb-2" />
+              <p className="text-3xl font-light text-white">{(stats.totalCalories / 1000).toFixed(1)}k</p>
+              <p className="text-xs text-gray-400 mt-1">แคลอรี่</p>
+            </div>
+            <div className="text-center">
+              <Clock className="w-6 h-6 text-blue-400 mx-auto mb-2" />
+              <p className="text-3xl font-light text-white">{Math.floor(stats.totalTime / 3600)}</p>
+              <p className="text-xs text-gray-400 mt-1">ชั่วโมง</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Personal Records */}
+      <div className="px-6 mb-6">
+        <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-4 flex items-center gap-2">
+          <Award className="w-4 h-4 text-yellow-400" />
+          สถิติส่วนตัว
+        </h2>
+        <div className="space-y-3">
+          {longestRun && (
+            <div className="bg-gradient-to-r from-yellow-500/10 to-transparent border border-yellow-500/20 rounded-2xl p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center">
+                  <MapPin className="w-5 h-5 text-yellow-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-400">ระยะทางไกลที่สุด</p>
+                  <p className="text-xl font-light text-white">{longestRun.distance_km?.toFixed(2)} กม.</p>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500">{format(new Date(longestRun.start_time), 'd MMM yyyy')}</p>
+            </div>
+          )}
+          
+          {fastestPace && fastestPace.pace_min_per_km > 0 && (
+            <div className="bg-gradient-to-r from-blue-500/10 to-transparent border border-blue-500/20 rounded-2xl p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-400">เพซเร็วที่สุด</p>
+                  <p className="text-xl font-light text-white">{formatPace(fastestPace.pace_min_per_km)} /กม.</p>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500">{format(new Date(fastestPace.start_time), 'd MMM yyyy')}</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Achievements Preview */}
+      <div className="px-6">
+        <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-4">ความสำเร็จ</h2>
+        <div className="grid grid-cols-4 gap-3">
+          {stats.totalRuns >= 1 && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="aspect-square bg-gradient-to-br from-emerald-500/30 to-emerald-600/10 border border-emerald-500/30 rounded-2xl flex flex-col items-center justify-center p-2"
+            >
+              <span className="text-2xl mb-1">🏃</span>
+              <p className="text-[10px] text-gray-400 text-center">วิ่งครั้งแรก</p>
+            </motion.div>
+          )}
+          {stats.totalDistance >= 10 && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.1 }}
+              className="aspect-square bg-gradient-to-br from-blue-500/30 to-blue-600/10 border border-blue-500/30 rounded-2xl flex flex-col items-center justify-center p-2"
+            >
+              <span className="text-2xl mb-1">🎯</span>
+              <p className="text-[10px] text-gray-400 text-center">10 กม.</p>
+            </motion.div>
+          )}
+          {stats.totalDistance >= 50 && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2 }}
+              className="aspect-square bg-gradient-to-br from-purple-500/30 to-purple-600/10 border border-purple-500/30 rounded-2xl flex flex-col items-center justify-center p-2"
+            >
+              <span className="text-2xl mb-1">⭐</span>
+              <p className="text-[10px] text-gray-400 text-center">50 กม.</p>
+            </motion.div>
+          )}
+          {stats.totalDistance >= 100 && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.3 }}
+              className="aspect-square bg-gradient-to-br from-yellow-500/30 to-yellow-600/10 border border-yellow-500/30 rounded-2xl flex flex-col items-center justify-center p-2"
+            >
+              <span className="text-2xl mb-1">🏆</span>
+              <p className="text-[10px] text-gray-400 text-center">100 กม.</p>
+            </motion.div>
+          )}
+          {stats.totalRuns >= 10 && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.4 }}
+              className="aspect-square bg-gradient-to-br from-orange-500/30 to-orange-600/10 border border-orange-500/30 rounded-2xl flex flex-col items-center justify-center p-2"
+            >
+              <span className="text-2xl mb-1">🔥</span>
+              <p className="text-[10px] text-gray-400 text-center">10 ครั้ง</p>
+            </motion.div>
+          )}
+          {stats.totalCalories >= 5000 && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.5 }}
+              className="aspect-square bg-gradient-to-br from-red-500/30 to-red-600/10 border border-red-500/30 rounded-2xl flex flex-col items-center justify-center p-2"
+            >
+              <span className="text-2xl mb-1">💪</span>
+              <p className="text-[10px] text-gray-400 text-center">5k kcal</p>
+            </motion.div>
+          )}
+        </div>
+      </div>
+
+      {/* Share Dialog */}
+      <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+        <DialogContent className="bg-gray-900 border-gray-800 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl">แชร์สถิติการวิ่ง</DialogTitle>
+          </DialogHeader>
+          
+          {/* Preview Card */}
+          <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-white/10 rounded-2xl p-5 my-4">
+            <div className="text-center mb-4">
+              <span className="text-4xl">🏃‍♂️</span>
+              <h3 className="text-lg font-medium mt-2">สถิติการวิ่งของฉัน</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-emerald-400" />
+                <span className="text-gray-400">ระยะทาง:</span>
+                <span className="text-white">{stats.totalDistance.toFixed(1)} กม.</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-blue-400" />
+                <span className="text-gray-400">เวลา:</span>
+                <span className="text-white">{Math.floor(stats.totalTime / 3600)} ชม.</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Flame className="w-4 h-4 text-orange-400" />
+                <span className="text-gray-400">แคลอรี่:</span>
+                <span className="text-white">{stats.totalCalories.toLocaleString()}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-purple-400" />
+                <span className="text-gray-400">วิ่ง:</span>
+                <span className="text-white">{stats.totalRuns} ครั้ง</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Share Options */}
+          <div className="space-y-3">
+            <Button 
+              onClick={handleShareToFacebook}
+              className="w-full bg-[#1877F2] hover:bg-[#166FE5] h-12"
+            >
+              <Facebook className="w-5 h-5 mr-2" />
+              แชร์ไปยัง Facebook
+            </Button>
+            
+            <Button 
+              onClick={handleCopyText}
+              variant="outline"
+              className="w-full border-white/20 text-white hover:bg-white/10 h-12"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-5 h-5 mr-2 text-emerald-400" />
+                  คัดลอกแล้ว!
+                </>
+              ) : (
+                <>
+                  <Copy className="w-5 h-5 mr-2" />
+                  คัดลอกข้อความ
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

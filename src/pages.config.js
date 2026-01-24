@@ -3,6 +3,7 @@ import ActiveRun from './pages/ActiveRun';
 import RunDetails from './pages/RunDetails';
 import History from './pages/History';
 import Stats from './pages/Stats';
+import Profile from './pages/Profile';
 import __Layout from './Layout.jsx';
 
 
@@ -12,6 +13,7 @@ export const PAGES = {
     "RunDetails": RunDetails,
     "History": History,
     "Stats": Stats,
+    "Profile": Profile,
 }
 
 export const pagesConfig = {
