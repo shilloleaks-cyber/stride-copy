@@ -4,6 +4,8 @@ import RunDetails from './pages/RunDetails';
 import History from './pages/History';
 import Stats from './pages/Stats';
 import Profile from './pages/Profile';
+import Feed from './pages/Feed';
+import Discover from './pages/Discover';
 import __Layout from './Layout.jsx';
 
 
@@ -14,6 +16,8 @@ export const PAGES = {
     "History": History,
     "Stats": Stats,
     "Profile": Profile,
+    "Feed": Feed,
+    "Discover": Discover,
 }
 
 export const pagesConfig = {
