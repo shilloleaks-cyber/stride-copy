@@ -7,6 +7,8 @@ import Profile from './pages/Profile';
 import RunDetails from './pages/RunDetails';
 import Stats from './pages/Stats';
 import Wallet from './pages/Wallet';
+import Leaderboard from './pages/Leaderboard';
+import Challenges from './pages/Challenges';
 import __Layout from './Layout.jsx';
 
 
@@ -20,6 +22,8 @@ export const PAGES = {
     "RunDetails": RunDetails,
     "Stats": Stats,
     "Wallet": Wallet,
+    "Leaderboard": Leaderboard,
+    "Challenges": Challenges,
 }
 
 export const pagesConfig = {
