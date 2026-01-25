@@ -6,23 +6,9 @@ export default async function finishRun({ distance_km, duration_sec, avg_pace, c
   const user = await base44.auth.me();
   const today = format(new Date(), 'yyyy-MM-dd');
   
-  // Get user's current data
-  let dailyCoin = user.daily_coin || 0;
-  
-  // Reset daily_coin if it's a new day
-  if (user.last_run_date !== today) {
-    dailyCoin = 0;
-  }
-  
-  // Calculate earned coins
-  let earned_coin = 0;
-  
-  // Validate run: must be at least 0.5km and 3 minutes (180 sec)
-  if (distance_km >= 0.5 && duration_sec >= 180) {
-    const base_coin = Math.floor(distance_km);
-    const remaining = 10 - dailyCoin;
-    earned_coin = Math.min(base_coin, Math.max(0, remaining));
-  }
+  // Tokenomics: 0.1 km = 0.1 token (1:1 ratio with distance)
+  // Total supply: 29,000,000 RUN tokens
+  const tokens_earned = Math.round(distance_km * 10) / 10; // Round to 1 decimal
   
   // Create Runs record
   await base44.entities.Runs.create({
@@ -31,30 +17,40 @@ export default async function finishRun({ distance_km, duration_sec, avg_pace, c
     duration_sec,
     avg_pace,
     calories_est,
-    coins_earned: earned_coin,
+    tokens_earned,
   });
   
   // Update User
-  const newCoinBalance = (user.coin_balance || 0) + earned_coin;
+  const newTokenBalance = (user.token_balance || 0) + tokens_earned;
   const newTotalDistance = (user.total_distance_km || 0) + distance_km;
   const newTotalRuns = (user.total_runs || 0) + 1;
-  const newDailyCoin = dailyCoin + earned_coin;
+  const newTotalTokensEarned = (user.total_tokens_earned || 0) + tokens_earned;
   
   await base44.auth.updateMe({
-    coin_balance: newCoinBalance,
+    token_balance: newTokenBalance,
     total_distance_km: newTotalDistance,
     total_runs: newTotalRuns,
-    daily_coin: newDailyCoin,
+    total_tokens_earned: newTotalTokensEarned,
     last_run_date: today,
   });
   
   // Create WalletLog
-  if (earned_coin > 0) {
+  if (tokens_earned > 0) {
     await base44.entities.WalletLog.create({
       user: user.email,
-      amount: earned_coin,
-      type: 'mine',
-      note: 'Run completed',
+      amount: tokens_earned,
+      type: 'run',
+      note: `วิ่ง ${distance_km.toFixed(2)} กม.`,
+    });
+  }
+  
+  // Update TokenConfig distributed amount
+  const configs = await base44.entities.TokenConfig.list();
+  if (configs.length > 0) {
+    const config = configs[0];
+    await base44.entities.TokenConfig.update(config.id, {
+      distributed: (config.distributed || 0) + tokens_earned,
+      remaining: (config.remaining || 29000000) - tokens_earned,
     });
   }
   
@@ -62,7 +58,7 @@ export default async function finishRun({ distance_km, duration_sec, avg_pace, c
   return {
     distance_km,
     duration_sec,
-    earned_coin,
-    coin_balance: newCoinBalance,
+    tokens_earned,
+    token_balance: newTokenBalance,
   };
 }

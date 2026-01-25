@@ -1,23 +1,25 @@
-import Home from './pages/Home';
 import ActiveRun from './pages/ActiveRun';
-import RunDetails from './pages/RunDetails';
-import History from './pages/History';
-import Stats from './pages/Stats';
-import Profile from './pages/Profile';
-import Feed from './pages/Feed';
 import Discover from './pages/Discover';
+import Feed from './pages/Feed';
+import History from './pages/History';
+import Home from './pages/Home';
+import Profile from './pages/Profile';
+import RunDetails from './pages/RunDetails';
+import Stats from './pages/Stats';
+import Wallet from './pages/Wallet';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Home": Home,
     "ActiveRun": ActiveRun,
-    "RunDetails": RunDetails,
-    "History": History,
-    "Stats": Stats,
-    "Profile": Profile,
-    "Feed": Feed,
     "Discover": Discover,
+    "Feed": Feed,
+    "History": History,
+    "Home": Home,
+    "Profile": Profile,
+    "RunDetails": RunDetails,
+    "Stats": Stats,
+    "Wallet": Wallet,
 }
 
 export const pagesConfig = {
