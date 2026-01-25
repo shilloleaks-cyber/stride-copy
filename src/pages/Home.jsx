@@ -4,7 +4,7 @@ import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, TrendingUp, MapPin, Flame, Clock, Heart, Activity } from 'lucide-react';
+import { Play, TrendingUp, MapPin, Flame, Clock, Heart, Activity, Trophy, Target } from 'lucide-react';
 import StatCard from '@/components/running/StatCard';
 import WeeklyChart from '@/components/running/WeeklyChart';
 import RunListItem from '@/components/running/RunListItem';
@@ -99,6 +99,42 @@ export default function Home() {
             value={stats.totalRuns} 
             icon={Activity}
           />
+        </div>
+      </div>
+
+      {/* Quick Links */}
+      <div className="px-6 mb-8">
+        <div className="grid grid-cols-2 gap-4">
+          <Link to={createPageUrl('Leaderboard')}>
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 border border-yellow-500/30 rounded-2xl p-4 flex items-center gap-3"
+            >
+              <div className="w-10 h-10 rounded-full bg-yellow-500/30 flex items-center justify-center">
+                <Trophy className="w-5 h-5 text-yellow-400" />
+              </div>
+              <div>
+                <p className="text-white font-medium">อันดับ</p>
+                <p className="text-xs text-gray-400">ดูอันดับผู้เล่น</p>
+              </div>
+            </motion.div>
+          </Link>
+          <Link to={createPageUrl('Challenges')}>
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="bg-gradient-to-br from-purple-500/20 to-purple-600/10 border border-purple-500/30 rounded-2xl p-4 flex items-center gap-3"
+            >
+              <div className="w-10 h-10 rounded-full bg-purple-500/30 flex items-center justify-center">
+                <Target className="w-5 h-5 text-purple-400" />
+              </div>
+              <div>
+                <p className="text-white font-medium">Challenges</p>
+                <p className="text-xs text-gray-400">เข้าร่วมกิจกรรม</p>
+              </div>
+            </motion.div>
+          </Link>
         </div>
       </div>
 
