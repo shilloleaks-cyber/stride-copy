@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { Home, Activity, BarChart2, User, Users } from 'lucide-react';
+import { Home, Activity, BarChart2, User, Users, Wallet } from 'lucide-react';
 
 export default function Layout({ children }) {
   const location = useLocation();
@@ -9,7 +9,7 @@ export default function Layout({ children }) {
   const navItems = [
     { name: 'หน้าหลัก', icon: Home, page: 'Home' },
     { name: 'ฟีด', icon: Users, page: 'Feed' },
-    { name: 'ประวัติ', icon: Activity, page: 'History' },
+    { name: 'กระเป๋า', icon: Wallet, page: 'Wallet' },
     { name: 'สถิติ', icon: BarChart2, page: 'Stats' },
     { name: 'โปรไฟล์', icon: User, page: 'Profile' },
   ];
