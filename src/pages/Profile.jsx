@@ -2,17 +2,20 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import { 
   ArrowLeft, Share2, User, MapPin, Clock, Flame, Heart, 
   Award, Calendar, TrendingUp, Facebook, Copy, Check,
-  Settings, LogOut
+  Settings, LogOut, Trophy, Target, Users, Edit3
 } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
+import ProfileAvatar from '@/components/shared/ProfileAvatar';
 import {
   Dialog,
   DialogContent,
@@ -22,13 +25,47 @@ import {
 
 export default function Profile() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [editBioOpen, setEditBioOpen] = useState(false);
+  const [bio, setBio] = useState('');
   const [copied, setCopied] = useState(false);
 
-  const { data: user } = useQuery({
+  const { data: user, refetch: refetchUser } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
   });
+
+  const { data: follows = [] } = useQuery({
+    queryKey: ['follows', user?.email],
+    queryFn: () => base44.entities.Follow.filter({ follower_email: user?.email }),
+    enabled: !!user?.email,
+  });
+
+  const { data: followers = [] } = useQuery({
+    queryKey: ['followers', user?.email],
+    queryFn: () => base44.entities.Follow.filter({ following_email: user?.email }),
+    enabled: !!user?.email,
+  });
+
+  const { data: myParticipations = [] } = useQuery({
+    queryKey: ['myParticipations', user?.email],
+    queryFn: () => base44.entities.ChallengeParticipant.filter({ user_email: user?.email }),
+    enabled: !!user?.email,
+  });
+
+  const completedChallenges = myParticipations.filter(p => p.is_completed);
+
+  React.useEffect(() => {
+    if (user?.bio) setBio(user.bio);
+  }, [user?.bio]);
+
+  const handleSaveBio = async () => {
+    await base44.auth.updateMe({ bio });
+    refetchUser();
+    setEditBioOpen(false);
+    toast.success('บันทึกสำเร็จ!');
+  };
 
   const { data: runs = [] } = useQuery({
     queryKey: ['runs'],
@@ -131,18 +168,67 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
         animate={{ opacity: 1, y: 0 }}
         className="px-6 pt-8 pb-6 text-center"
       >
-        <Avatar className="w-24 h-24 mx-auto mb-4 bg-gradient-to-br from-emerald-400 to-emerald-600">
-          <AvatarFallback className="text-2xl font-medium bg-gradient-to-br from-emerald-400 to-emerald-600 text-white">
-            {getInitials(user?.full_name)}
-          </AvatarFallback>
-        </Avatar>
-        <h2 className="text-2xl font-light">{user?.full_name || 'Runner'}</h2>
+        <ProfileAvatar 
+          user={user} 
+          size="lg" 
+          editable 
+          onImageUpdate={() => refetchUser()}
+          className="mx-auto mb-4"
+        />
+        <h2 className="text-2xl font-light neon-text">{user?.full_name || 'Runner'}</h2>
         <p className="text-gray-500 text-sm mt-1">{user?.email}</p>
+        
+        {/* Bio */}
+        <div className="mt-3">
+          {editBioOpen ? (
+            <div className="space-y-2">
+              <Textarea
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                placeholder="เขียนเกี่ยวกับตัวคุณ..."
+                className="bg-white/5 border-emerald-500/30 text-white placeholder:text-gray-500 text-sm"
+                rows={2}
+              />
+              <div className="flex justify-center gap-2">
+                <Button size="sm" variant="ghost" onClick={() => setEditBioOpen(false)} className="text-gray-400">
+                  ยกเลิก
+                </Button>
+                <Button size="sm" onClick={handleSaveBio} className="bg-emerald-600 hover:bg-emerald-700">
+                  บันทึก
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setEditBioOpen(true)}
+              className="text-sm text-gray-400 hover:text-emerald-400 transition-colors flex items-center justify-center gap-1 mx-auto"
+            >
+              {user?.bio || 'เพิ่มคำอธิบาย'}
+              <Edit3 className="w-3 h-3" />
+            </button>
+          )}
+        </div>
+
+        {/* Follow Stats */}
+        <div className="flex items-center justify-center gap-6 mt-4">
+          <div className="text-center">
+            <p className="text-lg font-medium text-white">{followers.length}</p>
+            <p className="text-xs text-gray-500">ผู้ติดตาม</p>
+          </div>
+          <div className="text-center">
+            <p className="text-lg font-medium text-white">{follows.length}</p>
+            <p className="text-xs text-gray-500">กำลังติดตาม</p>
+          </div>
+          <div className="text-center">
+            <p className="text-lg font-medium text-emerald-400">{completedChallenges.length}</p>
+            <p className="text-xs text-gray-500">Challenge</p>
+          </div>
+        </div>
         
         {/* Share Button */}
         <Button 
           onClick={() => setShareDialogOpen(true)}
-          className="mt-6 bg-blue-600 hover:bg-blue-700"
+          className="mt-6 bg-emerald-600 hover:bg-emerald-700 neon-glow"
         >
           <Share2 className="w-4 h-4 mr-2" />
           แชร์สถิติการวิ่ง
@@ -151,7 +237,7 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
 
       {/* Quick Stats */}
       <div className="px-6 mb-6">
-        <div className="bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-500/30 rounded-3xl p-6">
+        <div className="bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-500/30 rounded-3xl p-6 neon-border">
           <div className="grid grid-cols-2 gap-6">
             <div className="text-center">
               <MapPin className="w-6 h-6 text-emerald-400 mx-auto mb-2" />
