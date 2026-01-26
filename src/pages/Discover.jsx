@@ -124,7 +124,7 @@ export default function Discover() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="ค้นหาด้วยชื่อหรืออีเมล..."
-              className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-gray-500"
+              className="pl-10 bg-white/5 border-emerald-500/20 text-white placeholder:text-gray-500 focus:border-emerald-500/50"
             />
           </div>
         </div>

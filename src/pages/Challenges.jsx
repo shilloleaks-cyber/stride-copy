@@ -198,8 +198,8 @@ export default function Challenges() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
                     className={`bg-gradient-to-br ${
-                      isCompleted ? 'from-emerald-500/20 to-emerald-600/10 border-emerald-500/30' : 'from-white/5 to-transparent border-white/10'
-                    } border rounded-2xl p-5`}
+                      isCompleted ? 'from-emerald-500/20 to-emerald-600/10 border-emerald-500/30 neon-border' : 'from-white/5 to-transparent border-emerald-500/20 hover:border-emerald-500/40'
+                    } border rounded-2xl p-5 transition-colors`}
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-2">
