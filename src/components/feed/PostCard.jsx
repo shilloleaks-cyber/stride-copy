@@ -6,7 +6,7 @@ import {
   Heart, MessageCircle, Share2, MoreHorizontal, 
   MapPin, Clock, Flame, Zap, Trash2 
 } from 'lucide-react';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -49,12 +49,15 @@ export default function PostCard({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden"
+      className="bg-white/5 border border-emerald-500/20 rounded-2xl overflow-hidden hover:border-emerald-500/40 transition-colors"
     >
       {/* Header */}
       <div className="p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Avatar className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-emerald-600">
+          <Avatar className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-emerald-600 neon-border">
+            {post.author_image ? (
+              <AvatarImage src={post.author_image} alt={post.author_name} className="object-cover" />
+            ) : null}
             <AvatarFallback className="text-sm bg-gradient-to-br from-emerald-400 to-emerald-600 text-white">
               {getInitials(post.author_name)}
             </AvatarFallback>
@@ -138,7 +141,18 @@ export default function PostCard({
           <img 
             src={post.image_url} 
             alt="Post image" 
-            className="w-full rounded-xl object-cover max-h-80"
+            className="w-full rounded-xl object-cover max-h-80 border border-emerald-500/20"
+          />
+        </div>
+      )}
+
+      {/* Video */}
+      {post.video_url && (
+        <div className="px-4 pb-4">
+          <video 
+            src={post.video_url} 
+            controls
+            className="w-full rounded-xl object-cover max-h-80 border border-purple-500/20"
           />
         </div>
       )}

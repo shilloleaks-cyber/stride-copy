@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
-import { X, Image, MapPin, Clock, Flame, Zap, Check } from 'lucide-react';
+import { X, Image, MapPin, Clock, Flame, Zap, Check, Video, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -20,9 +20,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import MediaUploader from '@/components/shared/MediaUploader';
+
 export default function CreatePostModal({ open, onClose, onSubmit, user }) {
   const [content, setContent] = useState('');
   const [selectedRunId, setSelectedRunId] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [videoUrl, setVideoUrl] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: runs = [] } = useQuery({
@@ -57,9 +61,13 @@ export default function CreatePostModal({ open, onClose, onSubmit, user }) {
       content: content.trim(),
       author_name: user?.full_name || 'Runner',
       author_email: user?.email,
+      author_image: user?.profile_image || '',
       likes: [],
       comments_count: 0,
     };
+
+    if (imageUrl) postData.image_url = imageUrl;
+    if (videoUrl) postData.video_url = videoUrl;
 
     if (selectedRun) {
       postData.run_id = selectedRun.id;
@@ -75,6 +83,8 @@ export default function CreatePostModal({ open, onClose, onSubmit, user }) {
     await onSubmit(postData);
     setContent('');
     setSelectedRunId('');
+    setImageUrl('');
+    setVideoUrl('');
     setIsSubmitting(false);
     onClose();
   };
@@ -91,7 +101,18 @@ export default function CreatePostModal({ open, onClose, onSubmit, user }) {
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="แชร์ความรู้สึกเกี่ยวกับการวิ่งของคุณ..."
-            className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 min-h-[120px] resize-none"
+            className="bg-white/5 border-emerald-500/20 text-white placeholder:text-gray-500 min-h-[120px] resize-none focus:border-emerald-500/50"
+          />
+
+          {/* Media Upload */}
+          <MediaUploader
+            onImageUpload={setImageUrl}
+            onVideoUpload={setVideoUrl}
+            currentImage={imageUrl}
+            currentVideo={videoUrl}
+            onRemoveImage={() => setImageUrl('')}
+            onRemoveVideo={() => setVideoUrl('')}
+            allowVideo={true}
           />
 
           {/* Attach Run */}
