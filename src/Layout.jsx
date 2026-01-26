@@ -8,9 +8,9 @@ export default function Layout({ children }) {
   
   const navItems = [
     { name: 'หน้าหลัก', icon: Home, page: 'Home' },
+    { name: 'ฟีด', icon: Users, page: 'Feed' },
     { name: 'อันดับ', icon: Trophy, page: 'Leaderboard' },
     { name: 'กระเป๋า', icon: Wallet, page: 'Wallet' },
-    { name: 'สถิติ', icon: BarChart2, page: 'Stats' },
     { name: 'โปรไฟล์', icon: User, page: 'Profile' },
   ];
 
