@@ -190,7 +190,7 @@ export default function Feed() {
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         onClick={() => setShowCreatePost(true)}
-        className="fixed bottom-24 right-6 w-14 h-14 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30 z-20"
+        className="fixed bottom-24 right-6 w-14 h-14 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30 z-20 neon-glow"
       >
         <Plus className="w-6 h-6 text-white" />
       </motion.button>

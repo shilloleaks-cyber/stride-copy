@@ -35,7 +35,7 @@ export default function Layout({ children }) {
                   key={item.name}
                   to={createPageUrl(item.page)}
                   className={`flex flex-col items-center gap-1 transition-colors ${
-                    isActive ? 'text-emerald-400' : 'text-gray-500 hover:text-gray-300'
+                    isActive ? 'text-emerald-400 neon-text' : 'text-gray-500 hover:text-emerald-300'
                   }`}
                 >
                   <item.icon className="w-6 h-6" />

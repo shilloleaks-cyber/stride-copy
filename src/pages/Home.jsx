@@ -56,7 +56,7 @@ export default function Home() {
             animate={{ opacity: 1, scale: 1 }}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="relative overflow-hidden bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-3xl p-6 shadow-2xl shadow-emerald-500/20"
+            className="relative overflow-hidden bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-3xl p-6 shadow-2xl shadow-emerald-500/30 neon-glow"
           >
             <div className="flex items-center justify-between">
               <div>

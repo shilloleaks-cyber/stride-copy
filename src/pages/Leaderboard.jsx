@@ -5,7 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Trophy, MapPin, Activity, Coins, Crown, Medal } from 'lucide-react';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function Leaderboard() {
@@ -162,9 +162,12 @@ export default function Leaderboard() {
                 </div>
                 
                 <Avatar className={`w-12 h-12 ${rank <= 3 ? 'ring-2 ring-offset-2 ring-offset-gray-950' : ''} ${
-                  rank === 1 ? 'ring-yellow-400' : rank === 2 ? 'ring-gray-300' : rank === 3 ? 'ring-amber-600' : ''
+                  rank === 1 ? 'ring-yellow-400 neon-glow' : rank === 2 ? 'ring-gray-300' : rank === 3 ? 'ring-amber-600' : ''
                 }`}>
-                  <AvatarFallback className="bg-gradient-to-br from-purple-400 to-purple-600 text-white">
+                  {user.profile_image ? (
+                    <AvatarImage src={user.profile_image} alt={user.full_name} className="object-cover" />
+                  ) : null}
+                  <AvatarFallback className="bg-gradient-to-br from-emerald-400 to-emerald-600 text-white">
                     {getInitials(user.full_name)}
                   </AvatarFallback>
                 </Avatar>
