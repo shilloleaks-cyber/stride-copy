@@ -29,11 +29,89 @@ export default function ActiveRun() {
   const [currentLng, setCurrentLng] = useState(null);
   const [gpsAccuracyM, setGpsAccuracyM] = useState(null);
   
+  // Pre-run location tracking
+  const [preRunLat, setPreRunLat] = useState(null);
+  const [preRunLng, setPreRunLng] = useState(null);
+  const [preRunAccuracyM, setPreRunAccuracyM] = useState(null);
+  const [locationStatus, setLocationStatus] = useState('loading');
+  const [lastLocationTime, setLastLocationTime] = useState(null);
+  
   const timerRef = useRef(null);
   const watchIdRef = useRef(null);
   const startTimeRef = useRef(null);
   const lastPositionRef = useRef(null);
   const lastCaptureTimeRef = useRef(0);
+  const autoRefreshIntervalRef = useRef(null);
+
+  // Get initial location on page load
+  useEffect(() => {
+    setLocationStatus('loading');
+    
+    if (!('geolocation' in navigator)) {
+      setLocationStatus('error');
+      setGpsError('เบราว์เซอร์ของคุณไม่รองรับ GPS');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setPreRunLat(position.coords.latitude);
+        setPreRunLng(position.coords.longitude);
+        setPreRunAccuracyM(position.coords.accuracy);
+        setLastLocationTime(new Date());
+        setLocationStatus('ready');
+        setCurrentPosition({ 
+          lat: position.coords.latitude, 
+          lng: position.coords.longitude 
+        });
+        setGpsError(null);
+      },
+      (error) => {
+        if (error.code === error.PERMISSION_DENIED) {
+          setLocationStatus('denied');
+          setGpsError('กรุณาอนุญาตการเข้าถึงตำแหน่ง');
+        } else {
+          setLocationStatus('error');
+          setGpsError('ไม่สามารถรับตำแหน่งได้');
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  }, []);
+
+  // Auto-refresh location every 5 seconds while idle
+  useEffect(() => {
+    if (runStatus === 'idle' && locationStatus === 'ready') {
+      autoRefreshIntervalRef.current = setInterval(() => {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const newAccuracy = position.coords.accuracy;
+            // Only update if accuracy improves
+            if (!preRunAccuracyM || newAccuracy < preRunAccuracyM) {
+              setPreRunLat(position.coords.latitude);
+              setPreRunLng(position.coords.longitude);
+              setPreRunAccuracyM(newAccuracy);
+              setLastLocationTime(new Date());
+              setCurrentPosition({ 
+                lat: position.coords.latitude, 
+                lng: position.coords.longitude 
+              });
+            }
+          },
+          () => {
+            // Ignore errors during auto-refresh
+          },
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+      }, 5000);
+    }
+
+    return () => {
+      if (autoRefreshIntervalRef.current) {
+        clearInterval(autoRefreshIntervalRef.current);
+      }
+    };
+  }, [runStatus, locationStatus, preRunAccuracyM]);
 
   // Simulated heart rate (in real app, would connect to Bluetooth device)
   useEffect(() => {
@@ -173,6 +251,13 @@ export default function ActiveRun() {
   const handleStart = async () => {
     startTimeRef.current = new Date().toISOString();
     setRunStatus('active');
+    
+    // Stop auto-refresh
+    if (autoRefreshIntervalRef.current) {
+      clearInterval(autoRefreshIntervalRef.current);
+    }
+    
+    // Start continuous GPS tracking
     startGPSTracking();
     
     // Create run record
@@ -271,20 +356,45 @@ export default function ActiveRun() {
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <span className={`px-3 py-1 rounded-full text-xs uppercase tracking-wider ${
-          runStatus === 'active' ? 'bg-emerald-500/20 text-emerald-400' :
-          runStatus === 'paused' ? 'bg-amber-500/20 text-amber-400' :
-          'bg-white/10 text-gray-400'
-        }`}>
-          {runStatus}
-        </span>
+        <div className="flex items-center gap-3">
+          {/* Location Status Chip */}
+          <span className={`px-3 py-1 rounded-full text-xs flex items-center gap-2 ${
+            locationStatus === 'loading' ? 'bg-yellow-500/20 text-yellow-400' :
+            locationStatus === 'ready' ? 'bg-emerald-500/20 text-emerald-400' :
+            'bg-red-500/20 text-red-400'
+          }`}>
+            <div className={`w-1.5 h-1.5 rounded-full ${
+              locationStatus === 'loading' ? 'bg-yellow-400 animate-pulse' :
+              locationStatus === 'ready' ? 'bg-emerald-400' :
+              'bg-red-400'
+            }`} />
+            {locationStatus === 'loading' && 'Locating...'}
+            {locationStatus === 'ready' && `GPS Ready (±${preRunAccuracyM?.toFixed(0)}m)`}
+            {(locationStatus === 'denied' || locationStatus === 'error') && 'Location Off'}
+          </span>
+          <span className={`px-3 py-1 rounded-full text-xs uppercase tracking-wider ${
+            runStatus === 'active' ? 'bg-emerald-500/20 text-emerald-400' :
+            runStatus === 'paused' ? 'bg-amber-500/20 text-amber-400' :
+            'bg-white/10 text-gray-400'
+          }`}>
+            {runStatus}
+          </span>
+        </div>
       </div>
 
       {/* GPS Error Message */}
-      {gpsError && (
+      {gpsError && locationStatus !== 'ready' && (
         <div className="px-6 pt-4">
-          <div className="bg-red-500/20 border border-red-500/30 rounded-xl p-4">
+          <div className="bg-red-500/20 border border-red-500/30 rounded-xl p-4 flex items-center justify-between">
             <p className="text-red-400 text-sm">{gpsError}</p>
+            {locationStatus === 'denied' && (
+              <button
+                onClick={() => window.location.reload()}
+                className="px-3 py-1 bg-red-500/30 hover:bg-red-500/40 rounded-lg text-xs text-red-300 transition-colors"
+              >
+                Retry
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -294,11 +404,12 @@ export default function ActiveRun() {
 
       {/* Map */}
       <div className="px-6 mb-6">
-        <div className="h-64 rounded-2xl overflow-hidden border border-white/10">
+        <div className="h-64 rounded-2xl overflow-hidden border border-white/10 relative">
           <RunMap 
             routeCoordinates={routePoints}
             currentPosition={currentPosition}
             isActive={runStatus === 'active'}
+            preRunPosition={runStatus === 'idle' && preRunLat && preRunLng ? { lat: preRunLat, lng: preRunLng } : null}
           />
         </div>
       </div>
