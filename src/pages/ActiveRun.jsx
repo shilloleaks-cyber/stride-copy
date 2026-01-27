@@ -8,6 +8,7 @@ import RunTimer from '@/components/running/RunTimer';
 import RunControls from '@/components/running/RunControls';
 import MetricDisplay from '@/components/running/MetricDisplay';
 import HeartRateMonitor from '@/components/running/HeartRateMonitor';
+import RunMap from '@/components/running/RunMap';
 
 export default function ActiveRun() {
   const navigate = useNavigate();
@@ -20,6 +21,8 @@ export default function ActiveRun() {
   const [maxHeartRate, setMaxHeartRate] = useState(72);
   const [calories, setCalories] = useState(0);
   const [runId, setRunId] = useState(null);
+  const [routeCoordinates, setRouteCoordinates] = useState([]);
+  const [currentPosition, setCurrentPosition] = useState(null);
   
   const timerRef = useRef(null);
   const watchIdRef = useRef(null);
@@ -80,6 +83,14 @@ export default function ActiveRun() {
       watchIdRef.current = navigator.geolocation.watchPosition(
         (position) => {
           const { latitude, longitude, speed } = position.coords;
+          const timestamp = new Date().toISOString();
+          
+          // Update current position
+          const newPosition = { lat: latitude, lng: longitude };
+          setCurrentPosition(newPosition);
+          
+          // Add to route coordinates
+          setRouteCoordinates(prev => [...prev, { lat: latitude, lng: longitude, timestamp }]);
           
           // Update speed (convert m/s to km/h)
           const speedKmh = speed ? speed * 3.6 : 0;
@@ -113,8 +124,19 @@ export default function ActiveRun() {
 
   const simulateMovement = () => {
     // Simulate running data for demo purposes
+    const baselat = 13.7563;
+    const baseLng = 100.5018;
+    let step = 0;
+    
     const interval = setInterval(() => {
       if (runStatus === 'active') {
+        step++;
+        const lat = baseL + (Math.random() - 0.5) * 0.001;
+        const lng = baseLng + (Math.random() - 0.5) * 0.001;
+        const timestamp = new Date().toISOString();
+        
+        setCurrentPosition({ lat, lng });
+        setRouteCoordinates(prev => [...prev, { lat, lng, timestamp }]);
         setDistance(d => d + 0.01 + Math.random() * 0.005);
         setCurrentSpeed(8 + Math.random() * 4);
       }
@@ -184,6 +206,7 @@ export default function ActiveRun() {
         max_heart_rate: maxHeartRate,
         pace_min_per_km: parseFloat(pace.toFixed(2)),
         status: 'completed',
+        route_coordinates: routeCoordinates,
       });
     }
     
@@ -219,6 +242,17 @@ export default function ActiveRun() {
 
       {/* Timer */}
       <RunTimer seconds={seconds} isActive={runStatus === 'active'} />
+
+      {/* Map */}
+      <div className="px-6 mb-6">
+        <div className="h-64 rounded-2xl overflow-hidden border border-white/10">
+          <RunMap 
+            routeCoordinates={routeCoordinates}
+            currentPosition={currentPosition}
+            isActive={runStatus === 'active'}
+          />
+        </div>
+      </div>
 
       {/* Main Metrics */}
       <div className="px-6 mb-6">
