@@ -21,13 +21,15 @@ export default function ActiveRun() {
   const [maxHeartRate, setMaxHeartRate] = useState(72);
   const [calories, setCalories] = useState(0);
   const [runId, setRunId] = useState(null);
-  const [routeCoordinates, setRouteCoordinates] = useState([]);
+  const [routePoints, setRoutePoints] = useState([]);
   const [currentPosition, setCurrentPosition] = useState(null);
+  const [gpsError, setGpsError] = useState(null);
   
   const timerRef = useRef(null);
   const watchIdRef = useRef(null);
   const startTimeRef = useRef(null);
   const lastPositionRef = useRef(null);
+  const lastCaptureTimeRef = useRef(0);
 
   // Simulated heart rate (in real app, would connect to Bluetooth device)
   useEffect(() => {
@@ -80,69 +82,71 @@ export default function ActiveRun() {
   // GPS tracking
   const startGPSTracking = useCallback(() => {
     if ('geolocation' in navigator) {
+      // Request permission first
+      navigator.permissions.query({ name: 'geolocation' }).then((result) => {
+        if (result.state === 'denied') {
+          setGpsError('กรุณาเปิดการเข้าถึงตำแหน่งในการตั้งค่าเบราว์เซอร์');
+          return;
+        }
+      });
+
       watchIdRef.current = navigator.geolocation.watchPosition(
         (position) => {
           const { latitude, longitude, speed } = position.coords;
-          const timestamp = new Date().toISOString();
+          const now = Date.now();
           
-          // Update current position
-          const newPosition = { lat: latitude, lng: longitude };
-          setCurrentPosition(newPosition);
+          // Update current position for map
+          setCurrentPosition({ lat: latitude, lng: longitude });
+          setGpsError(null);
           
-          // Add to route coordinates
-          setRouteCoordinates(prev => [...prev, { lat: latitude, lng: longitude, timestamp }]);
+          // Capture point every 3 seconds
+          if (now - lastCaptureTimeRef.current >= 3000) {
+            const routePoint = {
+              lat: latitude,
+              lng: longitude,
+              time: new Date().toISOString()
+            };
+            
+            setRoutePoints(prev => [...prev, routePoint]);
+            lastCaptureTimeRef.current = now;
+            
+            // Calculate distance if we have a previous position
+            if (lastPositionRef.current) {
+              const dist = calculateDistance(
+                lastPositionRef.current.lat,
+                lastPositionRef.current.lng,
+                latitude,
+                longitude
+              );
+              setDistance(d => d + dist);
+            }
+            
+            lastPositionRef.current = { lat: latitude, lng: longitude };
+          }
           
           // Update speed (convert m/s to km/h)
           const speedKmh = speed ? speed * 3.6 : 0;
           setCurrentSpeed(speedKmh);
           if (speedKmh > maxSpeed) setMaxSpeed(speedKmh);
-          
-          // Calculate distance if we have a previous position
-          if (lastPositionRef.current) {
-            const dist = calculateDistance(
-              lastPositionRef.current.lat,
-              lastPositionRef.current.lng,
-              latitude,
-              longitude
-            );
-            setDistance(d => d + dist);
-          }
-          
-          lastPositionRef.current = { lat: latitude, lng: longitude };
         },
         (error) => {
           console.log('GPS error:', error);
-          // Simulate movement for demo
-          simulateMovement();
+          if (error.code === error.PERMISSION_DENIED) {
+            setGpsError('คุณไม่ได้อนุญาตให้เข้าถึงตำแหน่ง GPS กรุณาเปิดการเข้าถึงในการตั้งค่า');
+          } else if (error.code === error.POSITION_UNAVAILABLE) {
+            setGpsError('ไม่สามารถรับสัญญาณ GPS ได้ กรุณาลองอีกครั้ง');
+          } else {
+            setGpsError('เกิดข้อผิดพลาดในการติดตาม GPS');
+          }
         },
-        { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
       );
     } else {
-      simulateMovement();
+      setGpsError('เบราว์เซอร์ของคุณไม่รองรับ GPS');
     }
   }, [maxSpeed]);
 
-  const simulateMovement = () => {
-    // Simulate running data for demo purposes
-    const baselat = 13.7563;
-    const baseLng = 100.5018;
-    let step = 0;
-    
-    const interval = setInterval(() => {
-      if (runStatus === 'active') {
-        step++;
-        const lat = baseL + (Math.random() - 0.5) * 0.001;
-        const lng = baseLng + (Math.random() - 0.5) * 0.001;
-        const timestamp = new Date().toISOString();
-        
-        setCurrentPosition({ lat, lng });
-        setRouteCoordinates(prev => [...prev, { lat, lng, timestamp }]);
-        setDistance(d => d + 0.01 + Math.random() * 0.005);
-        setCurrentSpeed(8 + Math.random() * 4);
-      }
-    }, 1000);
-    return () => clearInterval(interval);
-  };
+
 
   const stopGPSTracking = () => {
     if (watchIdRef.current) {
@@ -194,6 +198,9 @@ export default function ActiveRun() {
     const avgSpeed = seconds > 0 ? (distance / seconds) * 3600 : 0;
     const avgHR = Math.round((72 + maxHeartRate) / 2);
     
+    const startPoint = routePoints.length > 0 ? routePoints[0] : null;
+    const endPoint = routePoints.length > 0 ? routePoints[routePoints.length - 1] : null;
+    
     if (runId) {
       await base44.entities.Run.update(runId, {
         end_time: new Date().toISOString(),
@@ -206,7 +213,11 @@ export default function ActiveRun() {
         max_heart_rate: maxHeartRate,
         pace_min_per_km: parseFloat(pace.toFixed(2)),
         status: 'completed',
-        route_coordinates: routeCoordinates,
+        route_points: routePoints,
+        start_lat: startPoint?.lat,
+        start_lng: startPoint?.lng,
+        end_lat: endPoint?.lat,
+        end_lng: endPoint?.lng,
       });
     }
     
@@ -240,6 +251,15 @@ export default function ActiveRun() {
         </span>
       </div>
 
+      {/* GPS Error Message */}
+      {gpsError && (
+        <div className="px-6 pt-4">
+          <div className="bg-red-500/20 border border-red-500/30 rounded-xl p-4">
+            <p className="text-red-400 text-sm">{gpsError}</p>
+          </div>
+        </div>
+      )}
+
       {/* Timer */}
       <RunTimer seconds={seconds} isActive={runStatus === 'active'} />
 
@@ -247,7 +267,7 @@ export default function ActiveRun() {
       <div className="px-6 mb-6">
         <div className="h-64 rounded-2xl overflow-hidden border border-white/10">
           <RunMap 
-            routeCoordinates={routeCoordinates}
+            routeCoordinates={routePoints}
             currentPosition={currentPosition}
             isActive={runStatus === 'active'}
           />
