@@ -24,6 +24,10 @@ export default function ActiveRun() {
   const [routePoints, setRoutePoints] = useState([]);
   const [currentPosition, setCurrentPosition] = useState(null);
   const [gpsError, setGpsError] = useState(null);
+  const [gpsStatus, setGpsStatus] = useState('Not tested');
+  const [currentLat, setCurrentLat] = useState(null);
+  const [currentLng, setCurrentLng] = useState(null);
+  const [gpsAccuracyM, setGpsAccuracyM] = useState(null);
   
   const timerRef = useRef(null);
   const watchIdRef = useRef(null);
@@ -232,6 +236,31 @@ export default function ActiveRun() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const handleTestGPS = () => {
+    setGpsStatus('Testing...');
+    
+    if (!('geolocation' in navigator)) {
+      setGpsStatus('ERROR: Geolocation not supported');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setGpsStatus('OK');
+        setCurrentLat(position.coords.latitude);
+        setCurrentLng(position.coords.longitude);
+        setGpsAccuracyM(position.coords.accuracy);
+      },
+      (error) => {
+        setGpsStatus(`ERROR: ${error.code} - ${error.message}`);
+        setCurrentLat(null);
+        setCurrentLng(null);
+        setGpsAccuracyM(null);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       {/* Header */}
@@ -308,6 +337,41 @@ export default function ActiveRun() {
             <div>
               <p className="text-xs text-gray-500 uppercase tracking-wider">Max Speed</p>
               <p className="text-2xl font-light text-white">{maxSpeed.toFixed(1)}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* GPS Debug Card */}
+      <div className="px-6 mb-8">
+        <div className="bg-purple-500/10 border border-purple-500/30 rounded-2xl p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-medium text-purple-400">GPS Debug</h3>
+            <button
+              onClick={handleTestGPS}
+              className="px-3 py-1 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/40 rounded-lg text-xs text-purple-300 transition-colors"
+            >
+              Test GPS
+            </button>
+          </div>
+          <div className="space-y-2 text-xs">
+            <div className="flex justify-between">
+              <span className="text-gray-500">GPS Status:</span>
+              <span className={`font-mono ${gpsStatus.includes('OK') ? 'text-green-400' : gpsStatus.includes('ERROR') ? 'text-red-400' : 'text-gray-400'}`}>
+                {gpsStatus}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-500">Latitude:</span>
+              <span className="font-mono text-white">{currentLat !== null ? currentLat.toFixed(6) : '--'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-500">Longitude:</span>
+              <span className="font-mono text-white">{currentLng !== null ? currentLng.toFixed(6) : '--'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-500">Accuracy:</span>
+              <span className="font-mono text-white">{gpsAccuracyM !== null ? `${gpsAccuracyM.toFixed(1)} m` : '--'}</span>
             </div>
           </div>
         </div>
