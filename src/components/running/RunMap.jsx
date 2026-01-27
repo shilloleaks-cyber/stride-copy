@@ -41,13 +41,21 @@ function MapController({ center, zoom }) {
   return null;
 }
 
-export default function RunMap({ routeCoordinates, currentPosition, isActive, preRunPosition }) {
+export default function RunMap({ routeCoordinates, currentPosition, isActive, preRunPosition, showFullRoute = false }) {
   const [mapCenter, setMapCenter] = useState([13.7563, 100.5018]); // Default: Bangkok
   const [mapZoom, setMapZoom] = useState(16);
   const mapRef = useRef(null);
 
   useEffect(() => {
-    if (currentPosition) {
+    if (showFullRoute && routeCoordinates && routeCoordinates.length > 0) {
+      // Calculate center point of entire route
+      const latSum = routeCoordinates.reduce((sum, p) => sum + p.lat, 0);
+      const lngSum = routeCoordinates.reduce((sum, p) => sum + p.lng, 0);
+      const centerLat = latSum / routeCoordinates.length;
+      const centerLng = lngSum / routeCoordinates.length;
+      setMapCenter([centerLat, centerLng]);
+      setMapZoom(15);
+    } else if (currentPosition) {
       setMapCenter([currentPosition.lat, currentPosition.lng]);
     } else if (preRunPosition) {
       setMapCenter([preRunPosition.lat, preRunPosition.lng]);
@@ -55,7 +63,7 @@ export default function RunMap({ routeCoordinates, currentPosition, isActive, pr
       const lastPoint = routeCoordinates[routeCoordinates.length - 1];
       setMapCenter([lastPoint.lat, lastPoint.lng]);
     }
-  }, [currentPosition, routeCoordinates, preRunPosition]);
+  }, [currentPosition, routeCoordinates, preRunPosition, showFullRoute]);
 
   // Convert coordinates for Polyline
   const pathCoordinates = routeCoordinates.map(coord => [coord.lat, coord.lng]);
@@ -106,15 +114,67 @@ export default function RunMap({ routeCoordinates, currentPosition, isActive, pr
             icon={L.divIcon({
               className: 'custom-start-marker',
               html: `<div style="
-                width: 16px;
-                height: 16px;
-                background: #3b82f6;
-                border: 3px solid white;
-                border-radius: 50%;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-              "></div>`,
-              iconSize: [16, 16],
-              iconAnchor: [8, 8],
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+              ">
+                <div style="
+                  background: white;
+                  color: #3b82f6;
+                  padding: 2px 6px;
+                  border-radius: 4px;
+                  font-size: 10px;
+                  font-weight: bold;
+                  margin-bottom: 2px;
+                  white-space: nowrap;
+                ">START</div>
+                <div style="
+                  width: 16px;
+                  height: 16px;
+                  background: #3b82f6;
+                  border: 3px solid white;
+                  border-radius: 50%;
+                  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                "></div>
+              </div>`,
+              iconSize: [40, 40],
+              iconAnchor: [20, 40],
+            })}
+          />
+        )}
+
+        {/* End marker (only for completed runs with full route) */}
+        {showFullRoute && pathCoordinates.length > 1 && (
+          <Marker 
+            position={pathCoordinates[pathCoordinates.length - 1]}
+            icon={L.divIcon({
+              className: 'custom-end-marker',
+              html: `<div style="
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+              ">
+                <div style="
+                  background: white;
+                  color: #10b981;
+                  padding: 2px 6px;
+                  border-radius: 4px;
+                  font-size: 10px;
+                  font-weight: bold;
+                  margin-bottom: 2px;
+                  white-space: nowrap;
+                ">FINISH</div>
+                <div style="
+                  width: 16px;
+                  height: 16px;
+                  background: #10b981;
+                  border: 3px solid white;
+                  border-radius: 50%;
+                  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                "></div>
+              </div>`,
+              iconSize: [40, 40],
+              iconAnchor: [20, 40],
             })}
           />
         )}

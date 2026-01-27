@@ -22,6 +22,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import RunMap from '@/components/running/RunMap';
 
 export default function RunDetails() {
   const navigate = useNavigate();
@@ -150,6 +151,36 @@ export default function RunDetails() {
           {run.start_time && format(new Date(run.start_time), 'h:mm a')}
         </p>
       </motion.div>
+
+      {/* Route Map */}
+      {run.route_points && run.route_points.length >= 2 ? (
+        <div className="px-6 mb-6">
+          <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-4">Route</h2>
+          <div className="h-64 rounded-2xl overflow-hidden border border-white/10">
+            <RunMap 
+              routeCoordinates={run.route_points}
+              currentPosition={null}
+              isActive={false}
+              showFullRoute={true}
+            />
+          </div>
+          {/* Debug Info */}
+          <div className="mt-3 bg-purple-500/10 border border-purple-500/30 rounded-lg p-3 text-xs space-y-1">
+            <p className="text-purple-400">Route points count: <span className="text-white font-mono">{run.route_points.length}</span></p>
+            <p className="text-purple-400">First point: <span className="text-white font-mono">{JSON.stringify(run.route_points[0])}</span></p>
+            <p className="text-purple-400">Last point: <span className="text-white font-mono">{JSON.stringify(run.route_points[run.route_points.length - 1])}</span></p>
+          </div>
+        </div>
+      ) : (
+        <div className="px-6 mb-6">
+          <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-4">Route</h2>
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-8 text-center">
+            <MapPin className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+            <p className="text-gray-400">Route not available for this run</p>
+            <p className="text-sm text-gray-600 mt-1">GPS tracking was not enabled during this run</p>
+          </div>
+        </div>
+      )}
 
       {/* Main Stats */}
       <div className="px-6 mb-6">
