@@ -333,7 +333,15 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
 
       {/* Achievements Preview */}
       <div className="px-6">
-        <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-4">ความสำเร็จ</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xs uppercase tracking-widest text-gray-500">ความสำเร็จ</h2>
+          <button 
+            onClick={() => navigate(createPageUrl('Achievements'))}
+            className="text-emerald-400 text-xs hover:text-emerald-300 transition-colors"
+          >
+            View All →
+          </button>
+        </div>
         <div className="grid grid-cols-4 gap-3">
           {stats.totalRuns >= 1 && (
             <motion.div

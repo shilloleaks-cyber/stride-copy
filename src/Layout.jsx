@@ -10,7 +10,7 @@ export default function Layout({ children }) {
     { name: 'หน้าหลัก', icon: Home, page: 'Home' },
     { name: 'เทรน', icon: BarChart2, page: 'Training' },
     { name: 'ฟีด', icon: Users, page: 'Feed' },
-    { name: 'อันดับ', icon: Trophy, page: 'Leaderboard' },
+    { name: 'ชาเลนจ์', icon: Trophy, page: 'Challenges' },
     { name: 'โปรไฟล์', icon: User, page: 'Profile' },
   ];
 
