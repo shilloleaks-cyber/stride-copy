@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { format } from 'date-fns';
 import html2canvas from 'html2canvas';
-import { Share2, Download, Link2, Facebook, Twitter, Check } from 'lucide-react';
+import { Share2, Download, Link2, Facebook, Twitter, Check, Coins } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -12,9 +12,24 @@ import {
 import { Button } from '@/components/ui/button';
 import RunMap from './RunMap';
 
+// Funny motivational slogans
+const RUN_SLOGANS = [
+  "I run therefore I eat.",
+  "Run now, regret tomorrow.",
+  "Slow pace, strong mindset.",
+  "Chasing coins, not people.",
+  "Running for coins, not cardio.",
+  "Legs tired, wallet happy.",
+  "Not fast, just consistent.",
+  "Earned this sweat.",
+  "Run. Earn. Repeat.",
+  "My legs hate me but my coins love me."
+];
+
 export default function ShareRunDialog({ run, trigger }) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+  const [slogan] = useState(() => RUN_SLOGANS[Math.floor(Math.random() * RUN_SLOGANS.length)]);
   const shareCardRef = useRef(null);
 
   const formatDuration = (seconds) => {
@@ -119,19 +134,18 @@ export default function ShareRunDialog({ run, trigger }) {
         {/* Share Preview Card */}
         <div 
           ref={shareCardRef}
-          className="bg-gradient-to-br from-gray-950 to-gray-900 rounded-2xl p-6 mb-4"
+          className="bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 rounded-3xl p-8 mb-4"
         >
-          {/* Header */}
-          <div className="mb-4">
-            <p className="text-emerald-400 text-xs uppercase tracking-widest mb-1">Completed Run</p>
-            <h2 className="text-xl font-light">
-              {run.start_time && format(new Date(run.start_time), 'EEEE, MMMM d')}
-            </h2>
+          {/* Header - App branding */}
+          <div className="text-center mb-6">
+            <p className="text-emerald-400 text-xs font-semibold uppercase tracking-widest">
+              {run.start_time && format(new Date(run.start_time), 'MMM d, yyyy')}
+            </p>
           </div>
 
-          {/* Map Preview */}
+          {/* Map Preview - Larger */}
           {run.route_points && run.route_points.length >= 2 && (
-            <div className="h-32 rounded-xl overflow-hidden border border-white/10 mb-4">
+            <div className="h-64 rounded-2xl overflow-hidden mb-6">
               <RunMap 
                 routeCoordinates={run.route_points}
                 currentPosition={null}
@@ -142,27 +156,46 @@ export default function ShareRunDialog({ run, trigger }) {
             </div>
           )}
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-3 gap-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4">
-            <div className="text-center">
-              <p className="text-xs text-gray-500 mb-1">Distance</p>
-              <p className="text-2xl font-light text-white">{run.distance_km?.toFixed(2) || '0.00'}</p>
-              <p className="text-xs text-gray-500">km</p>
+          {/* Stats Grid - 2x2 Layout */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            {/* Distance - Very Large */}
+            <div className="bg-white/5 rounded-2xl p-5 text-center">
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Distance</p>
+              <p className="text-5xl font-bold text-white">{run.distance_km?.toFixed(2) || '0.00'}</p>
+              <p className="text-sm text-gray-400 mt-1">km</p>
             </div>
-            <div className="text-center">
-              <p className="text-xs text-gray-500 mb-1">Duration</p>
-              <p className="text-2xl font-light text-white">{formatDuration(run.duration_seconds)}</p>
+
+            {/* Coins - Glowing */}
+            <div className="bg-emerald-500/10 rounded-2xl p-5 text-center relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 to-transparent"></div>
+              <div className="relative">
+                <p className="text-xs text-emerald-400 uppercase tracking-wider mb-2">Coins</p>
+                <div className="flex items-center justify-center gap-2">
+                  <Coins className="w-8 h-8 text-[#BFFF00]" />
+                  <p className="text-5xl font-bold text-[#BFFF00]" style={{ textShadow: '0 0 20px rgba(191, 255, 0, 0.5)' }}>
+                    {Math.round((run.distance_km || 0) * 10)}
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="text-center">
-              <p className="text-xs text-gray-500 mb-1">Pace</p>
-              <p className="text-2xl font-light text-white">{formatPace(run.pace_min_per_km)}</p>
-              <p className="text-xs text-gray-500">/km</p>
+
+            {/* Pace */}
+            <div className="bg-white/5 rounded-2xl p-5 text-center">
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Pace</p>
+              <p className="text-3xl font-light text-white">{formatPace(run.pace_min_per_km)}</p>
+              <p className="text-sm text-gray-400 mt-1">/km</p>
+            </div>
+
+            {/* Time */}
+            <div className="bg-white/5 rounded-2xl p-5 text-center">
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Time</p>
+              <p className="text-3xl font-light text-white">{formatDuration(run.duration_seconds)}</p>
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="mt-4 text-center">
-            <p className="text-xs text-gray-600">Powered by RunApp 🏃‍♂️</p>
+          {/* Funny Slogan */}
+          <div className="text-center">
+            <p className="text-gray-400 text-sm italic">"{slogan}"</p>
           </div>
         </div>
 
