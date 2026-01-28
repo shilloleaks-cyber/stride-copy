@@ -53,12 +53,12 @@ import Discover from './pages/Discover';
 import Feed from './pages/Feed';
 import History from './pages/History';
 import Leaderboard from './pages/Leaderboard';
+import PaceHistory from './pages/PaceHistory';
 import Profile from './pages/Profile';
 import RunDetails from './pages/RunDetails';
 import Wallet from './pages/Wallet';
 import Home from './pages/Home';
 import Stats from './pages/Stats';
-import PaceHistory from './pages/PaceHistory';
 import __Layout from './Layout.jsx';
 
 
@@ -69,12 +69,12 @@ export const PAGES = {
     "Feed": Feed,
     "History": History,
     "Leaderboard": Leaderboard,
+    "PaceHistory": PaceHistory,
     "Profile": Profile,
     "RunDetails": RunDetails,
     "Wallet": Wallet,
     "Home": Home,
     "Stats": Stats,
-    "PaceHistory": PaceHistory,
 }
 
 export const pagesConfig = {
