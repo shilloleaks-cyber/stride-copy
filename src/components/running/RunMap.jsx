@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { MapContainer, TileLayer, Polyline, Marker, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Polyline, Marker, CircleMarker, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -129,25 +129,24 @@ export default function RunMap({ routeCoordinates, currentPosition, isActive, pr
         {/* Draw the route path */}
         {pathCoordinates.length > 1 && (
           <>
-            {/* Fading trail effect for active runs */}
-            {isActive && pathCoordinates.length > 10 && (
-              <Polyline
-                positions={pathCoordinates}
-                pathOptions={{
-                  color: '#10b981',
-                  weight: 6,
-                  opacity: 0.3,
-                  lineCap: 'round',
-                  lineJoin: 'round'
-                }}
-              />
-            )}
+            {/* Purple glow layer */}
             <Polyline
               positions={pathCoordinates}
               pathOptions={{
-                color: '#10b981',
-                weight: 4,
-                opacity: 0.8,
+                color: '#8A2BE2',
+                weight: 10,
+                opacity: 0.3,
+                lineCap: 'round',
+                lineJoin: 'round'
+              }}
+            />
+            {/* Neon green route */}
+            <Polyline
+              positions={pathCoordinates}
+              pathOptions={{
+                color: '#BFFF00',
+                weight: 5,
+                opacity: 1,
                 lineCap: 'round',
                 lineJoin: 'round'
               }}
