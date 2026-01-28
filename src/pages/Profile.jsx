@@ -8,7 +8,7 @@ import { format } from 'date-fns';
 import { 
   ArrowLeft, Share2, User, MapPin, Clock, Flame, Heart, 
   Award, Calendar, TrendingUp, Facebook, Copy, Check,
-  Settings, LogOut, Trophy, Target, Users, Edit3, Palette
+  Settings, LogOut, Trophy, Target, Users, Edit3, Palette, Wallet
 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -310,25 +310,53 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
         </div>
       </div>
 
-      {/* Skins Button */}
-      <div className="px-6 mb-6">
-        <button
-          onClick={() => setShowSkins(true)}
-          className="w-full p-4 bg-gradient-to-r from-purple-500/20 to-purple-600/10 border border-purple-500/30 rounded-2xl hover:bg-purple-500/30 transition-all"
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-purple-500/30 flex items-center justify-center">
-                <Palette className="w-5 h-5 text-purple-400" />
+      {/* Quick Actions */}
+      <div className="px-6 mb-6 space-y-3">
+        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+          <button
+            onClick={() => setShowSkins(true)}
+            className="w-full p-4 bg-gradient-to-r from-purple-500/20 to-purple-600/10 border border-purple-500/30 rounded-2xl hover:bg-purple-500/30 transition-all"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-purple-500/30 flex items-center justify-center">
+                  <Palette className="w-5 h-5 text-purple-400" />
+                </div>
+                <div className="text-left">
+                  <p className="text-white font-medium">Customize</p>
+                  <p className="text-xs text-gray-400">Routes, Coins, Badges & Themes</p>
+                </div>
               </div>
-              <div className="text-left">
-                <p className="text-white font-medium">Customize</p>
-                <p className="text-xs text-gray-400">Routes, Coins, Badges & Themes</p>
-              </div>
+              <span className="text-xl">🎨</span>
             </div>
-            <span className="text-xl">🎨</span>
-          </div>
-        </button>
+          </button>
+        </motion.div>
+
+        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+          <button
+            onClick={() => navigate(createPageUrl('HealthConnect'))}
+            className="w-full p-4 bg-gradient-to-r from-emerald-500/20 to-emerald-600/10 border border-emerald-500/30 rounded-2xl hover:bg-emerald-500/30 transition-all"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-emerald-500/30 flex items-center justify-center">
+                  <Heart className="w-5 h-5 text-emerald-400" />
+                </div>
+                <div className="text-left flex-1">
+                  <p className="text-white font-medium">Health Connect</p>
+                  <p className="text-xs text-gray-400">
+                    {user?.health_platform_connected && user.health_platform_connected !== 'none' 
+                      ? `Connected: ${user.health_platform_connected}` 
+                      : 'Connect health platforms'}
+                  </p>
+                </div>
+              </div>
+              {user?.health_sync_enabled && (
+                <div className="w-2 h-2 rounded-full bg-emerald-400" />
+              )}
+            </div>
+          </button>
+        </motion.div>
       </div>
 
       {/* Achievements Preview */}

@@ -7,6 +7,28 @@ export default function AIFormInsights({ run }) {
   const [insights, setInsights] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [healthContext, setHealthContext] = useState(null);
+
+  // Fetch recent health data for context
+  useEffect(() => {
+    const fetchHealthData = async () => {
+      try {
+        const user = await base44.auth.me();
+        if (user?.email) {
+          const healthData = await base44.entities.HealthData.filter({ 
+            user_email: user.email 
+          });
+          const recent = healthData
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .slice(0, 7);
+          setHealthContext(recent);
+        }
+      } catch (err) {
+        console.log('Could not fetch health data:', err);
+      }
+    };
+    fetchHealthData();
+  }, []);
 
   useEffect(() => {
     const generateInsights = async () => {
@@ -20,6 +42,23 @@ export default function AIFormInsights({ run }) {
         const paceVariations = analyzePaceVariations(run.route_points);
         const speedData = analyzeSpeedData(run);
 
+        // Build health context string
+        let healthContextStr = '';
+        if (healthContext && healthContext.length > 0) {
+          const avgRestingHR = healthContext.reduce((sum, d) => sum + (d.resting_heart_rate || 0), 0) / healthContext.length;
+          const avgSleep = healthContext.reduce((sum, d) => sum + (d.sleep_hours || 0), 0) / healthContext.length;
+          const recentData = healthContext[0];
+          
+          healthContextStr = `
+
+Recent Health Metrics (7-day average):
+- Resting Heart Rate: ${avgRestingHR.toFixed(0)} BPM
+- Sleep: ${avgSleep.toFixed(1)} hours/night
+- Today's Steps: ${recentData.steps || 'N/A'}
+- Today's Sleep: ${recentData.sleep_hours ? recentData.sleep_hours.toFixed(1) + 'h' : 'N/A'}
+`;
+        }
+
         const prompt = `Analyze this running data and provide insights on form issues and recommendations:
 
 Distance: ${run.distance_km?.toFixed(2)} km
@@ -32,14 +71,16 @@ Pace Analysis:
 - Pace Coefficient of Variation: ${paceVariations.cv.toFixed(2)}%
 - Speed Drop: ${speedData.speedDrop.toFixed(1)}%
 - Max Speed Ratio: ${speedData.maxSpeedRatio.toFixed(2)}x average
+${healthContextStr}
 
-Based on these metrics, identify potential running form issues such as:
+Based on these metrics ${healthContext && healthContext.length > 0 ? 'and health data' : ''}, identify potential running form issues such as:
 1. Overstriding (indicated by high pace variation)
 2. Poor pacing strategy (fast start, slow finish)
 3. Inefficient cadence (large speed variations)
 4. Fatigue patterns
+${healthContext && healthContext.length > 0 ? '5. Recovery and sleep impact on performance' : ''}
 
-Provide 3 specific, actionable recommendations to improve form. Be concise and practical.
+Provide 3 specific, actionable recommendations to improve form${healthContext && healthContext.length > 0 ? ', considering the user\'s sleep and recovery metrics' : ''}. Be concise and practical.
 
 Return JSON format:
 {
@@ -77,7 +118,7 @@ Return JSON format:
     };
 
     generateInsights();
-  }, [run]);
+  }, [run, healthContext]);
 
   const analyzePaceVariations = (routePoints) => {
     const paces = [];
