@@ -3,8 +3,8 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { format } from 'date-fns';
-import { ChevronRight, TrendingUp } from 'lucide-react';
-import RunMap from './RunMap';
+import { ChevronRight } from 'lucide-react';
+import RoutePreview from './RoutePreview';
 
 export default function RunListItem({ run, index }) {
   const formatDuration = (seconds) => {
@@ -33,36 +33,23 @@ export default function RunListItem({ run, index }) {
     >
       <Link
         to={createPageUrl(`RunDetails?id=${run.id}`)}
-        className="block bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl overflow-hidden transition-all duration-200 group"
+        className="block bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl p-4 transition-all duration-200 group"
       >
-        {/* Map */}
-        {run.route_points && run.route_points.length >= 2 && (
-          <div className="h-32 w-full">
-            <RunMap 
-              routeCoordinates={run.route_points}
-              currentPosition={null}
-              isActive={false}
-              showFullRoute={true}
-              enableZoom={false}
-            />
+        <div className="flex items-start justify-between mb-3">
+          <div>
+            <p className="text-white font-medium">
+              {format(new Date(run.start_time), 'EEEE, MMM d')}
+            </p>
+            <p className="text-sm text-gray-500">
+              {format(new Date(run.start_time), 'h:mm a')}
+            </p>
           </div>
-        )}
-
-        {/* Content */}
-        <div className="p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <p className="text-white font-medium">
-                {format(new Date(run.start_time), 'EEEE, MMM d')}
-              </p>
-              <p className="text-sm text-gray-500">
-                {format(new Date(run.start_time), 'h:mm a')}
-              </p>
-            </div>
-            <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-emerald-400 transition-colors" />
-          </div>
-          
-          <div className="grid grid-cols-3 gap-4">
+          <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-emerald-400 transition-colors" />
+        </div>
+        
+        <div className="flex items-center gap-4">
+          {/* Stats */}
+          <div className="flex-1 grid grid-cols-3 gap-3">
             <div>
               <p className="text-xs text-gray-500 mb-1">Distance</p>
               <p className="text-xl font-light text-white">{run.distance_km?.toFixed(2) || '0.00'}</p>
@@ -81,6 +68,13 @@ export default function RunListItem({ run, index }) {
               <p className="text-xs text-gray-500">duration</p>
             </div>
           </div>
+
+          {/* Route Preview */}
+          {run.route_points && run.route_points.length >= 2 && (
+            <div className="flex-shrink-0">
+              <RoutePreview routePoints={run.route_points} className="rounded-lg" />
+            </div>
+          )}
         </div>
       </Link>
     </motion.div>
