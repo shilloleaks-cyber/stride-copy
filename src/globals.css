@@ -9,7 +9,7 @@ css
     --foreground: 75 100% 75%;
     --card: 0 0% 4%;
     --card-foreground: 75 100% 75%;
-    --popover: 0 0% 4%;
+    --popover: 0 0% 6%;
     --popover-foreground: 75 100% 75%;
     --primary: 75 100% 75%;
     --primary-foreground: 0 0% 4%;
@@ -21,10 +21,15 @@ css
     --accent-foreground: 75 100% 75%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 75 100% 75%;
-    --border: 0 0% 15%;
-    --input: 0 0% 15%;
+    --border: 271 76% 53%;
+    --input: 0 0% 12%;
     --ring: 75 100% 75%;
     --radius: 0.5rem;
+    --chart-1: 75 100% 75%;
+    --chart-2: 271 76% 53%;
+    --chart-3: 0 0% 20%;
+    --chart-4: 0 0% 40%;
+    --chart-5: 0 0% 60%;
   }
 
   .dark {
@@ -32,7 +37,7 @@ css
     --foreground: 75 100% 75%;
     --card: 0 0% 4%;
     --card-foreground: 75 100% 75%;
-    --popover: 0 0% 4%;
+    --popover: 0 0% 6%;
     --popover-foreground: 75 100% 75%;
     --primary: 75 100% 75%;
     --primary-foreground: 0 0% 4%;
@@ -44,9 +49,14 @@ css
     --accent-foreground: 75 100% 75%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 75 100% 75%;
-    --border: 0 0% 15%;
-    --input: 0 0% 15%;
+    --border: 271 76% 53%;
+    --input: 0 0% 12%;
     --ring: 75 100% 75%;
+    --chart-1: 75 100% 75%;
+    --chart-2: 271 76% 53%;
+    --chart-3: 0 0% 20%;
+    --chart-4: 0 0% 40%;
+    --chart-5: 0 0% 60%;
   }
 }
 
@@ -56,6 +66,7 @@ css
   }
   body {
     @apply bg-background text-foreground;
+    background-color: #0A0A0A;
   }
 }
 

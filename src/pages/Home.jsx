@@ -172,7 +172,7 @@ export default function Home() {
   }, [currentStreak]);
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen text-white" style={{ backgroundColor: '#0A0A0A' }}>
       {/* Header */}
       <div className="px-6 pt-12 pb-6">
         <motion.div
@@ -192,15 +192,16 @@ export default function Home() {
             animate={{ opacity: 1, scale: 1 }}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="relative overflow-hidden bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-3xl p-6 shadow-2xl shadow-emerald-500/30 neon-glow"
+            className="relative overflow-hidden rounded-3xl p-6 shadow-2xl neon-glow"
+            style={{ background: 'linear-gradient(135deg, #BFFF00 0%, #8A2BE2 100%)' }}
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-emerald-100 text-sm mb-1">Ready to run?</p>
-                <h2 className="text-2xl font-semibold text-white">Start New Run</h2>
+                <p className="text-sm mb-1" style={{ color: '#0A0A0A', opacity: 0.8 }}>Ready to run?</p>
+                <h2 className="text-2xl font-semibold" style={{ color: '#0A0A0A' }}>Start New Run</h2>
               </div>
-              <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center">
-                <Play className="w-8 h-8 text-white ml-1" fill="white" />
+              <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(10, 10, 10, 0.2)' }}>
+                <Play className="w-8 h-8 ml-1" style={{ color: '#0A0A0A' }} fill="#0A0A0A" />
               </div>
             </div>
             <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-white/10 rounded-full blur-xl" />
