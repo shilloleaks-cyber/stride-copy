@@ -65,63 +65,63 @@ export default function StravaRunControls({ status, onStart, onPause, onResume, 
 
             {/* RUNNING MODE - Pause & Finish */}
             {status === 'RUNNING' && (
-              <motion.div
-                key="running"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                className="flex items-center gap-8"
-              >
-                {/* Pause Button */}
-                <motion.div className="flex flex-col items-center gap-2">
-                  <motion.button
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => handleButtonPress(onPause)}
-                    className="w-16 h-16 rounded-full bg-gray-700 hover:bg-gray-600 flex items-center justify-center shadow-lg transition-colors"
-                  >
-                    <Pause className="w-6 h-6 text-white" />
-                  </motion.button>
-                  <span className="text-gray-400 text-xs uppercase tracking-wider">
-                    Pause
-                  </span>
-                </motion.div>
-
-                {/* Finish Button with Confirm Dialog */}
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <motion.div className="flex flex-col items-center gap-2">
-                      <motion.button
-                        whileTap={{ scale: 0.95 }}
-                        className="w-[72px] h-[72px] rounded-full bg-red-600 hover:bg-red-700 flex items-center justify-center shadow-xl shadow-red-600/50 transition-colors"
-                      >
-                        <Square className="w-7 h-7 text-white" fill="white" />
-                      </motion.button>
-                      <span className="text-red-400 text-xs uppercase tracking-wider">
-                        Finish
-                      </span>
-                    </motion.div>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent className="bg-gray-900 border-gray-800">
-                    <AlertDialogHeader>
-                      <AlertDialogTitle className="text-white">Finish Run?</AlertDialogTitle>
-                      <AlertDialogDescription className="text-gray-400">
-                        Are you sure you want to finish this run? Your progress will be saved.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700">
-                        Cancel
-                      </AlertDialogCancel>
-                      <AlertDialogAction 
-                        onClick={onStop}
-                        className="bg-red-600 hover:bg-red-700"
-                      >
-                        Finish Run
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+            <motion.div
+              key="running"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="flex items-center gap-8"
+            >
+              {/* Pause Button */}
+              <motion.div className="flex flex-col items-center gap-2">
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => handleButtonPress(onPause)}
+                  className="w-16 h-16 rounded-full bg-gray-700 hover:bg-gray-600 flex items-center justify-center shadow-lg transition-colors"
+                >
+                  <Pause className="w-6 h-6 text-white" />
+                </motion.button>
+                <span className="text-gray-400 text-xs uppercase tracking-wider">
+                  Pause
+                </span>
               </motion.div>
+
+              {/* Finish Button with Confirm Dialog */}
+              <AlertDialog open={isFinishModalOpen} onOpenChange={setIsFinishModalOpen}>
+                <AlertDialogTrigger asChild>
+                  <motion.div className="flex flex-col items-center gap-2">
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      className="w-[72px] h-[72px] rounded-full bg-red-600 hover:bg-red-700 flex items-center justify-center shadow-xl shadow-red-600/50 transition-colors"
+                    >
+                      <Square className="w-7 h-7 text-white" fill="white" />
+                    </motion.button>
+                    <span className="text-red-400 text-xs uppercase tracking-wider">
+                      Finish
+                    </span>
+                  </motion.div>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="bg-gray-900 border-gray-800 z-50">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="text-white">Finish Run?</AlertDialogTitle>
+                    <AlertDialogDescription className="text-gray-400">
+                      Are you sure you want to finish this run? Your progress will be saved.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700">
+                      Cancel
+                    </AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={handleFinish}
+                      className="bg-red-600 hover:bg-red-700"
+                    >
+                      Finish Run
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </motion.div>
             )}
 
             {/* PAUSED MODE - Resume & Finish */}
@@ -149,7 +149,7 @@ export default function StravaRunControls({ status, onStart, onPause, onResume, 
                 </motion.div>
 
                 {/* Finish Button with Confirm Dialog */}
-                <AlertDialog>
+                <AlertDialog open={isFinishModalOpen} onOpenChange={setIsFinishModalOpen}>
                   <AlertDialogTrigger asChild>
                     <motion.div className="flex flex-col items-center gap-2">
                       <motion.button
@@ -163,7 +163,7 @@ export default function StravaRunControls({ status, onStart, onPause, onResume, 
                       </span>
                     </motion.div>
                   </AlertDialogTrigger>
-                  <AlertDialogContent className="bg-gray-900 border-gray-800">
+                  <AlertDialogContent className="bg-gray-900 border-gray-800 z-50">
                     <AlertDialogHeader>
                       <AlertDialogTitle className="text-white">Finish Run?</AlertDialogTitle>
                       <AlertDialogDescription className="text-gray-400">
@@ -175,7 +175,7 @@ export default function StravaRunControls({ status, onStart, onPause, onResume, 
                         Cancel
                       </AlertDialogCancel>
                       <AlertDialogAction 
-                        onClick={onStop}
+                        onClick={handleFinish}
                         className="bg-red-600 hover:bg-red-700"
                       >
                         Finish Run
