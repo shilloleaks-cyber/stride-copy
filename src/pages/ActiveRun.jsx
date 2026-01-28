@@ -5,7 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, MapPin, Zap, Heart, Flame, Timer } from 'lucide-react';
 import RunTimer from '@/components/running/RunTimer';
-import RunControls from '@/components/running/RunControls';
+import StravaRunControls from '@/components/running/StravaRunControls';
 import MetricDisplay from '@/components/running/MetricDisplay';
 import HeartRateMonitor from '@/components/running/HeartRateMonitor';
 import RunMap from '@/components/running/RunMap';
@@ -316,7 +316,7 @@ export default function ActiveRun() {
   const currentPosition = currentLat && currentLng ? { lat: currentLat, lng: currentLng } : null;
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-gray-950 text-white pb-32">
       {/* Header */}
       <div className="px-6 pt-6 flex items-center justify-between">
         <button 
@@ -482,16 +482,14 @@ export default function ActiveRun() {
         </div>
       </div>
 
-      {/* Controls */}
-      <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-gray-950 via-gray-950 to-transparent pt-8 pb-12">
-        <RunControls
-          status={runStatus}
-          onStart={handleStart}
-          onPause={handlePause}
-          onResume={handleResume}
-          onStop={handleStop}
-        />
+      {/* Strava-Style Controls */}
+      <StravaRunControls
+        status={runStatus}
+        onStart={handleStart}
+        onPause={handlePause}
+        onResume={handleResume}
+        onStop={handleStop}
+      />
       </div>
-    </div>
-  );
-}
+      );
+      }
