@@ -4,9 +4,15 @@ import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Users, Compass, RefreshCw } from 'lucide-react';
+import { Plus, Users, Compass, RefreshCw, TrendingUp, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import PostCard from '@/components/feed/PostCard';
 import CreatePostModal from '@/components/feed/CreatePostModal';
 import CommentsSheet from '@/components/feed/CommentsSheet';
@@ -18,6 +24,7 @@ export default function Feed() {
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
   const [showComments, setShowComments] = useState(false);
+  const [sortBy, setSortBy] = useState('time'); // 'time' or 'engagement'
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
@@ -41,6 +48,17 @@ export default function Feed() {
   const filteredPosts = activeTab === 'following' 
     ? allPosts.filter(p => followingEmails.includes(p.author_email) || p.author_email === currentUser?.email)
     : allPosts;
+
+  // Sort posts based on sortBy
+  const sortedPosts = [...filteredPosts].sort((a, b) => {
+    if (sortBy === 'engagement') {
+      const engagementA = (a.likes?.length || 0) + (a.comments_count || 0);
+      const engagementB = (b.likes?.length || 0) + (b.comments_count || 0);
+      return engagementB - engagementA; // Higher engagement first
+    }
+    // Default: sort by time (newest first)
+    return new Date(b.created_date) - new Date(a.created_date);
+  });
 
   const createPostMutation = useMutation({
     mutationFn: (postData) => base44.entities.Post.create(postData),
@@ -92,6 +110,39 @@ export default function Feed() {
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-2xl font-light">ฟีด</h1>
             <div className="flex items-center gap-2">
+              {/* Sort Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-gray-400 hover:text-white"
+                  >
+                    {sortBy === 'engagement' ? (
+                      <TrendingUp className="w-5 h-5" />
+                    ) : (
+                      <Clock className="w-5 h-5" />
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-gray-900 border-gray-800">
+                  <DropdownMenuItem 
+                    onClick={() => setSortBy('time')}
+                    className="text-white cursor-pointer"
+                  >
+                    <Clock className="w-4 h-4 mr-2" />
+                    ล่าสุด
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => setSortBy('engagement')}
+                    className="text-white cursor-pointer"
+                  >
+                    <TrendingUp className="w-4 h-4 mr-2" />
+                    ยอดนิยม
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
               <Button
                 variant="ghost"
                 size="icon"
@@ -140,9 +191,9 @@ export default function Feed() {
               <div key={i} className="bg-white/5 rounded-2xl h-48 animate-pulse" />
             ))}
           </div>
-        ) : filteredPosts.length > 0 ? (
+        ) : sortedPosts.length > 0 ? (
           <AnimatePresence>
-            {filteredPosts.map((post) => (
+            {sortedPosts.map((post) => (
               <PostCard
                 key={post.id}
                 post={post}

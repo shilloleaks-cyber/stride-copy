@@ -7,10 +7,11 @@ import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import { 
   ArrowLeft, Share2, Trash2, MapPin, Clock, Zap, Heart, 
-  Flame, TrendingUp, Award, Edit2, X, Save 
+  Flame, TrendingUp, Award, Edit2, X, Save, Users 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
 
 import RunMap from '@/components/running/RunMap';
 import ShareRunDialog from '@/components/running/ShareRunDialog';
@@ -27,6 +28,12 @@ export default function RunDetails() {
   const [notes, setNotes] = useState('');
   const [isDeleteSheetOpen, setIsDeleteSheetOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+
+  const { data: currentUser } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: () => base44.auth.me(),
+  });
 
   const { data: run, isLoading } = useQuery({
     queryKey: ['run', runId],
@@ -57,6 +64,35 @@ export default function RunDetails() {
       navigate(createPageUrl('History'));
     } catch (error) {
       setIsDeleting(false);
+    }
+  };
+
+  const handleShareToFeed = async () => {
+    if (isSharing || !currentUser) return;
+    setIsSharing(true);
+    try {
+      await base44.entities.Post.create({
+        content: `เพิ่งวิ่งเสร็จ ${run.distance_km?.toFixed(2)} กิโลเมตร! 🏃‍♂️💪`,
+        run_id: run.id,
+        run_data: {
+          distance_km: run.distance_km,
+          duration_seconds: run.duration_seconds,
+          pace_min_per_km: run.pace_min_per_km,
+          calories_burned: run.calories_burned,
+          avg_heart_rate: run.avg_heart_rate,
+        },
+        author_name: currentUser.full_name || 'Runner',
+        author_email: currentUser.email,
+        author_image: currentUser.profile_image,
+        likes: [],
+        comments_count: 0,
+      });
+      toast.success('แชร์ไปยังฟีดเรียบร้อย!');
+      setIsSharing(false);
+    } catch (error) {
+      console.error('Error sharing to feed:', error);
+      toast.error('ไม่สามารถแชร์ได้');
+      setIsSharing(false);
     }
   };
 
@@ -108,6 +144,14 @@ export default function RunDetails() {
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div className="flex items-center gap-2">
+          <button 
+            onClick={handleShareToFeed}
+            disabled={isSharing}
+            className="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center hover:bg-emerald-700 transition-colors disabled:opacity-50"
+            title="Share to Feed"
+          >
+            <Users className="w-5 h-5" />
+          </button>
           <ShareRunDialog 
             run={run}
             trigger={
