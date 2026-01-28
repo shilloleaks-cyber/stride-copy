@@ -36,15 +36,15 @@ export default function GhostRunner({ ghostRoute, currentSeconds, isActive }) {
   const ghostIcon = L.divIcon({
     className: 'ghost-marker',
     html: `<div style="
-      width: 16px;
-      height: 16px;
-      background: rgba(255, 255, 255, 0.6);
-      border: 2px solid rgba(255, 255, 255, 0.9);
+      width: 20px;
+      height: 20px;
+      background: rgba(59, 130, 246, 0.6);
+      border: 2px solid rgba(59, 130, 246, 0.9);
       border-radius: 50%;
-      box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+      box-shadow: 0 0 12px rgba(59, 130, 246, 0.6);
     "></div>`,
-    iconSize: [16, 16],
-    iconAnchor: [8, 8],
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
   });
 
   return (
@@ -53,9 +53,9 @@ export default function GhostRunner({ ghostRoute, currentSeconds, isActive }) {
       <Polyline
         positions={ghostPath}
         pathOptions={{
-          color: '#ffffff',
+          color: '#3b82f6',
           weight: 3,
-          opacity: 0.4,
+          opacity: 0.5,
           dashArray: '10, 10',
           lineCap: 'round',
           lineJoin: 'round'

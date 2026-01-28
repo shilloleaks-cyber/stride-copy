@@ -8,7 +8,7 @@ import { format } from 'date-fns';
 import { 
   ArrowLeft, Share2, User, MapPin, Clock, Flame, Heart, 
   Award, Calendar, TrendingUp, Facebook, Copy, Check,
-  Settings, LogOut, Trophy, Target, Users, Edit3
+  Settings, LogOut, Trophy, Target, Users, Edit3, Palette
 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -16,12 +16,19 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import ProfileAvatar from '@/components/shared/ProfileAvatar';
+import SkinsShop from '@/components/skins/SkinsShop';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -30,6 +37,7 @@ export default function Profile() {
   const [editBioOpen, setEditBioOpen] = useState(false);
   const [bio, setBio] = useState('');
   const [copied, setCopied] = useState(false);
+  const [showSkins, setShowSkins] = useState(false);
 
   const { data: user, refetch: refetchUser } = useQuery({
     queryKey: ['currentUser'],
@@ -302,6 +310,27 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
         </div>
       </div>
 
+      {/* Skins Button */}
+      <div className="px-6 mb-6">
+        <button
+          onClick={() => setShowSkins(true)}
+          className="w-full p-4 bg-gradient-to-r from-purple-500/20 to-purple-600/10 border border-purple-500/30 rounded-2xl hover:bg-purple-500/30 transition-all"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-purple-500/30 flex items-center justify-center">
+                <Palette className="w-5 h-5 text-purple-400" />
+              </div>
+              <div className="text-left">
+                <p className="text-white font-medium">Customize</p>
+                <p className="text-xs text-gray-400">Routes, Coins, Badges & Themes</p>
+              </div>
+            </div>
+            <span className="text-xl">🎨</span>
+          </div>
+        </button>
+      </div>
+
       {/* Achievements Preview */}
       <div className="px-6">
         <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-4">ความสำเร็จ</h2>
@@ -439,6 +468,39 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
               )}
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Skins Dialog */}
+      <Dialog open={showSkins} onOpenChange={setShowSkins}>
+        <DialogContent className="bg-gray-900 border-gray-800 text-white max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl flex items-center gap-2">
+              <Palette className="w-5 h-5 text-purple-400" />
+              Customize Your Look
+            </DialogTitle>
+          </DialogHeader>
+          
+          <Tabs defaultValue="route" className="w-full">
+            <TabsList className="grid w-full grid-cols-4 bg-white/5">
+              <TabsTrigger value="route">Routes</TabsTrigger>
+              <TabsTrigger value="coin">Coins</TabsTrigger>
+              <TabsTrigger value="badge">Badges</TabsTrigger>
+              <TabsTrigger value="theme">Themes</TabsTrigger>
+            </TabsList>
+            <TabsContent value="route" className="mt-4">
+              <SkinsShop user={user} skinType="route" />
+            </TabsContent>
+            <TabsContent value="coin" className="mt-4">
+              <SkinsShop user={user} skinType="coin" />
+            </TabsContent>
+            <TabsContent value="badge" className="mt-4">
+              <SkinsShop user={user} skinType="badge" />
+            </TabsContent>
+            <TabsContent value="theme" className="mt-4">
+              <SkinsShop user={user} skinType="theme" />
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </div>
