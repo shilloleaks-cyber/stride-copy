@@ -188,6 +188,7 @@ export default function StravaRunControls({ status, onStart, onPause, onResume, 
           </AnimatePresence>
         </div>
       </div>
+      </div>
     </>
   );
 }
