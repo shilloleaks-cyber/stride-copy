@@ -22,11 +22,11 @@ export default function Layout({ children }) {
   const hideNav = location.pathname.includes('ActiveRun');
 
   return (
-    <div className="min-h-screen bg-gray-950">
+    <div className="min-h-screen" style={{ backgroundColor: '#0A0A0A' }}>
       {children}
       
       {!hideNav && (
-        <nav className="fixed bottom-0 left-0 right-0 bg-gray-950/95 backdrop-blur-lg border-t border-white/5 px-6 py-4 safe-area-bottom">
+        <nav className="fixed bottom-0 left-0 right-0 backdrop-blur-lg border-t border-white/5 px-6 py-4 safe-area-bottom" style={{ backgroundColor: 'rgba(10, 10, 10, 0.95)' }}>
           <div className="flex items-center justify-around max-w-md mx-auto">
             {navItems.map((item) => {
               const isActive = isActivePage(item.page);
@@ -35,8 +35,9 @@ export default function Layout({ children }) {
                   key={item.name}
                   to={createPageUrl(item.page)}
                   className={`flex flex-col items-center gap-1 transition-colors ${
-                    isActive ? 'text-emerald-400 neon-text' : 'text-gray-500 hover:text-emerald-300'
+                    isActive ? 'neon-text' : 'text-gray-500'
                   }`}
+                  style={isActive ? { color: '#BFFF00' } : {}}
                 >
                   <item.icon className="w-6 h-6" />
                   <span className="text-xs">{item.name}</span>
