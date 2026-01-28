@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Trophy, MapPin, Activity, Coins, Crown, Medal } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import FriendRequestButton from '@/components/social/FriendRequestButton';
 
 export default function Leaderboard() {
   const navigate = useNavigate();
@@ -113,21 +114,24 @@ export default function Leaderboard() {
           <TabsList className="w-full bg-white/5 p-1">
             <TabsTrigger 
               value="distance" 
-              className="flex-1 data-[state=active]:bg-emerald-600 data-[state=active]:text-white text-xs gap-1"
+              className="flex-1 data-[state=active]:text-black text-xs gap-1"
+              style={{ backgroundColor: sortBy === 'distance' ? '#BFFF00' : 'transparent' }}
             >
               <MapPin className="w-3 h-3" />
               ระยะทาง
             </TabsTrigger>
             <TabsTrigger 
               value="runs" 
-              className="flex-1 data-[state=active]:bg-emerald-600 data-[state=active]:text-white text-xs gap-1"
+              className="flex-1 data-[state=active]:text-black text-xs gap-1"
+              style={{ backgroundColor: sortBy === 'runs' ? '#BFFF00' : 'transparent' }}
             >
               <Activity className="w-3 h-3" />
               ครั้งวิ่ง
             </TabsTrigger>
             <TabsTrigger 
               value="tokens" 
-              className="flex-1 data-[state=active]:bg-emerald-600 data-[state=active]:text-white text-xs gap-1"
+              className="flex-1 data-[state=active]:text-black text-xs gap-1"
+              style={{ backgroundColor: sortBy === 'tokens' ? '#BFFF00' : 'transparent' }}
             >
               <Coins className="w-3 h-3" />
               โทเค็น
@@ -182,10 +186,13 @@ export default function Leaderboard() {
                   </p>
                 </div>
                 
-                <div className="text-right">
+                <div className="flex flex-col items-end gap-2">
                   <p className={`text-lg font-medium ${rank <= 3 ? 'text-white' : 'text-gray-300'}`}>
                     {getValue(user)}
                   </p>
+                  {!isCurrentUser && (
+                    <FriendRequestButton targetUser={user} currentUser={currentUser} />
+                  )}
                 </div>
               </motion.div>
             );

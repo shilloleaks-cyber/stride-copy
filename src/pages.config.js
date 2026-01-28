@@ -47,10 +47,12 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
+import Achievements from './pages/Achievements';
 import ActiveRun from './pages/ActiveRun';
 import Challenges from './pages/Challenges';
 import Discover from './pages/Discover';
 import Feed from './pages/Feed';
+import HealthConnect from './pages/HealthConnect';
 import History from './pages/History';
 import Home from './pages/Home';
 import Leaderboard from './pages/Leaderboard';
@@ -60,16 +62,16 @@ import RunDetails from './pages/RunDetails';
 import Stats from './pages/Stats';
 import Training from './pages/Training';
 import Wallet from './pages/Wallet';
-import Achievements from './pages/Achievements';
-import HealthConnect from './pages/HealthConnect';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "Achievements": Achievements,
     "ActiveRun": ActiveRun,
     "Challenges": Challenges,
     "Discover": Discover,
     "Feed": Feed,
+    "HealthConnect": HealthConnect,
     "History": History,
     "Home": Home,
     "Leaderboard": Leaderboard,
@@ -79,8 +81,6 @@ export const PAGES = {
     "Stats": Stats,
     "Training": Training,
     "Wallet": Wallet,
-    "Achievements": Achievements,
-    "HealthConnect": HealthConnect,
 }
 
 export const pagesConfig = {
