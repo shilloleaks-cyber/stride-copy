@@ -221,7 +221,7 @@ export default function Stats() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
+          transition={{ delay: 0.3 }}
         >
           <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-4">Weekly Distance</h2>
           <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
