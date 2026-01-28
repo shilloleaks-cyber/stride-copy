@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { format } from 'date-fns';
-import { ChevronRight, MapPin, Clock, Zap, Heart } from 'lucide-react';
+import { ChevronRight, MapPin, Clock, Flame, Heart } from 'lucide-react';
 
 export default function RunListItem({ run, index }) {
   const formatDuration = (seconds) => {
@@ -14,13 +14,6 @@ export default function RunListItem({ run, index }) {
     if (hrs > 0) {
       return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const formatPace = (pace) => {
-    if (!pace || pace === 0) return '--:--';
-    const mins = Math.floor(pace);
-    const secs = Math.round((pace - mins) * 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
@@ -64,10 +57,10 @@ export default function RunListItem({ run, index }) {
           </div>
           
           <div className="flex items-center gap-2">
-            <Zap className="w-4 h-4 text-purple-400" />
+            <Flame className="w-4 h-4 text-orange-400" />
             <div>
-              <p className="text-lg font-light text-white">{formatPace(run.pace_min_per_km)}</p>
-              <p className="text-xs text-gray-500">/km</p>
+              <p className="text-lg font-light text-white">{run.calories_burned || 0}</p>
+              <p className="text-xs text-gray-500">kcal</p>
             </div>
           </div>
           
