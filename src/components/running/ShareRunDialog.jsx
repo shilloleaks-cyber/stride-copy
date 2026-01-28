@@ -1,7 +1,7 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { format } from 'date-fns';
 import html2canvas from 'html2canvas';
-import { Share2, Download, Coins, RefreshCw } from 'lucide-react';
+import { Share2, Download, Coins, RefreshCw, Link2, Check, Facebook, Twitter, Instagram } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -26,6 +26,7 @@ export default function ShareRunDialog({ run, trigger }) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [routeImageUrl, setRouteImageUrl] = useState(null);
   const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
+  const [isCopied, setIsCopied] = useState(false);
   const shareCardRef = useRef(null);
   const mapPreviewRef = useRef(null);
   
@@ -34,6 +35,43 @@ export default function ShareRunDialog({ run, trigger }) {
 
   const cycleQuote = () => {
     setCurrentQuoteIndex((prev) => (prev + 1) % motivationalQuotes.length);
+  };
+
+  const getRunDetailUrl = () => {
+    return `${window.location.origin}${window.location.pathname}?page=RunDetails&id=${run.id}`;
+  };
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(getRunDetailUrl());
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
+  };
+
+  const handleShareFacebook = () => {
+    const url = encodeURIComponent(getRunDetailUrl());
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+  };
+
+  const handleShareTwitter = () => {
+    const url = encodeURIComponent(getRunDetailUrl());
+    const text = encodeURIComponent(`Just completed a ${run.distance_km?.toFixed(2)}km run! 🏃‍♂️💪`);
+    window.open(`https://twitter.com/intent/tweet?url=${url}&text=${text}`, '_blank');
+  };
+
+  const handleShareInstagram = async () => {
+    // Generate image and download for Instagram Stories
+    const blob = await generateShareImage();
+    if (blob) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `run-${format(new Date(run.start_time), 'yyyy-MM-dd')}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      alert('Image downloaded! Share it to Instagram Stories from your gallery.');
+    }
   };
 
   const formatDuration = (seconds) => {
@@ -272,6 +310,50 @@ export default function ShareRunDialog({ run, trigger }) {
                 </p>
                 <RefreshCw className="w-3 h-3 opacity-50" style={{ color: '#8A2BE2' }} />
               </div>
+            </button>
+          </div>
+        </div>
+
+        {/* Social Media Options */}
+        <div className="px-4 pb-3">
+          <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Share to Social Media</p>
+          <div className="grid grid-cols-4 gap-2">
+            <button
+              onClick={handleCopyLink}
+              className="flex flex-col items-center gap-1 p-3 rounded-lg border transition-all hover:bg-white/5"
+              style={{ borderColor: 'rgba(138, 43, 226, 0.3)' }}
+            >
+              {isCopied ? (
+                <Check className="w-5 h-5" style={{ color: '#BFFF00' }} />
+              ) : (
+                <Link2 className="w-5 h-5" style={{ color: '#8A2BE2' }} />
+              )}
+              <span className="text-xs text-gray-400">Link</span>
+            </button>
+            <button
+              onClick={handleShareFacebook}
+              className="flex flex-col items-center gap-1 p-3 rounded-lg border transition-all hover:bg-white/5"
+              style={{ borderColor: 'rgba(138, 43, 226, 0.3)' }}
+            >
+              <Facebook className="w-5 h-5 text-blue-500" />
+              <span className="text-xs text-gray-400">Facebook</span>
+            </button>
+            <button
+              onClick={handleShareTwitter}
+              className="flex flex-col items-center gap-1 p-3 rounded-lg border transition-all hover:bg-white/5"
+              style={{ borderColor: 'rgba(138, 43, 226, 0.3)' }}
+            >
+              <Twitter className="w-5 h-5 text-sky-500" />
+              <span className="text-xs text-gray-400">Twitter</span>
+            </button>
+            <button
+              onClick={handleShareInstagram}
+              disabled={isGenerating}
+              className="flex flex-col items-center gap-1 p-3 rounded-lg border transition-all hover:bg-white/5"
+              style={{ borderColor: 'rgba(138, 43, 226, 0.3)' }}
+            >
+              <Instagram className="w-5 h-5 text-pink-500" />
+              <span className="text-xs text-gray-400">Stories</span>
             </button>
           </div>
         </div>
