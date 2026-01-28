@@ -18,6 +18,9 @@ import ShareRunDialog from '@/components/running/ShareRunDialog';
 import RunInsights from '@/components/running/RunInsights';
 import PaceChart from '@/components/running/PaceChart';
 import SpeedChart from '@/components/running/SpeedChart';
+import PaceConsistencyScore from '@/components/running/PaceConsistencyScore';
+import PerKilometerBreakdown from '@/components/running/PerKilometerBreakdown';
+import AIFormInsights from '@/components/running/AIFormInsights';
 
 export default function RunDetails() {
   const navigate = useNavigate();
@@ -296,6 +299,11 @@ export default function RunDetails() {
         <div className="px-6 mb-6">
           <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-4">Performance Analysis</h2>
           
+          {/* Pace Consistency Score */}
+          <div className="mb-4">
+            <PaceConsistencyScore routePoints={run.route_points} />
+          </div>
+
           {/* Pace Chart */}
           <div className="mb-4">
             <h3 className="text-sm text-gray-400 mb-2">Pace per Kilometer</h3>
@@ -303,9 +311,15 @@ export default function RunDetails() {
           </div>
 
           {/* Speed Chart */}
-          <div>
+          <div className="mb-4">
             <h3 className="text-sm text-gray-400 mb-2">Speed Over Time</h3>
             <SpeedChart routePoints={run.route_points} avgSpeed={run.avg_speed_kmh} />
+          </div>
+
+          {/* Per-Kilometer Breakdown */}
+          <div>
+            <h3 className="text-sm text-gray-400 mb-3">Per-Kilometer Breakdown</h3>
+            <PerKilometerBreakdown routePoints={run.route_points} avgHeartRate={run.avg_heart_rate} />
           </div>
         </div>
       )}
@@ -313,7 +327,10 @@ export default function RunDetails() {
       {/* Insights & Tips */}
       <div className="px-6 mb-6">
         <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-4">Insights & Tips</h2>
-        <RunInsights run={run} />
+        <div className="space-y-4">
+          <AIFormInsights run={run} />
+          <RunInsights run={run} />
+        </div>
       </div>
 
       {/* Notes */}
