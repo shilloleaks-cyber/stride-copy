@@ -71,7 +71,7 @@ export default function History() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white pb-24">
+    <div className="min-h-screen text-white pb-24" style={{ backgroundColor: '#0A0A0A' }}>
       {/* Header */}
       <div className="px-6 pt-6 flex items-center justify-between">
         <button 
@@ -113,7 +113,7 @@ export default function History() {
               <p className="text-xs text-gray-500">Runs</p>
             </div>
             <div>
-              <p className="text-2xl font-light text-emerald-400">{stats.totalDistance.toFixed(1)}</p>
+              <p className="text-2xl font-light" style={{ color: '#BFFF00' }}>{stats.totalDistance.toFixed(1)}</p>
               <p className="text-xs text-gray-500">km</p>
             </div>
             <div>

@@ -70,7 +70,7 @@ export default function Leaderboard() {
   const currentUserRank = sortedUsers.findIndex(u => u.email === currentUser?.email) + 1;
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white pb-24">
+    <div className="min-h-screen text-white pb-24" style={{ backgroundColor: '#0A0A0A' }}>
       {/* Header */}
       <div className="px-6 pt-6 flex items-center justify-between">
         <button 

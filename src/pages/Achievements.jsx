@@ -113,7 +113,7 @@ export default function Achievements() {
   const unlockedCount = achievements.filter(a => unlockedIds.includes(a.id)).length;
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white pb-24">
+    <div className="min-h-screen text-white pb-24" style={{ backgroundColor: '#0A0A0A' }}>
       {/* Header */}
       <div className="px-6 pt-6 pb-4">
         <div className="flex items-center justify-between mb-6">
@@ -152,11 +152,11 @@ export default function Achievements() {
             <button
               key={cat}
               onClick={() => setFilter(cat)}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                filter === cat
-                  ? 'bg-emerald-600 text-white'
-                  : 'bg-white/5 text-gray-400 hover:bg-white/10'
-              }`}
+              className="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors"
+              style={{
+                backgroundColor: filter === cat ? '#BFFF00' : 'rgba(255, 255, 255, 0.05)',
+                color: filter === cat ? '#0A0A0A' : '#9CA3AF'
+              }}
             >
               {cat.charAt(0).toUpperCase() + cat.slice(1)}
             </button>

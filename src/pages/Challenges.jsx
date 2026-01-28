@@ -142,7 +142,7 @@ export default function Challenges() {
   const availableChallenges = activeChallenges.filter(c => !getParticipation(c.id));
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white pb-24">
+    <div className="min-h-screen text-white pb-24" style={{ backgroundColor: '#0A0A0A' }}>
       {/* Header */}
       <div className="px-6 pt-6 flex items-center justify-between">
         <button 
@@ -161,13 +161,19 @@ export default function Challenges() {
           <TabsList className="w-full bg-white/5 p-1">
             <TabsTrigger 
               value="active" 
-              className="flex-1 data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
+              className="flex-1 data-[state=active]:text-black"
+              style={{ 
+                backgroundColor: activeTab === 'active' ? '#BFFF00' : 'transparent'
+              }}
             >
               กำลังเข้าร่วม ({myJoinedChallenges.length})
             </TabsTrigger>
             <TabsTrigger 
               value="available" 
-              className="flex-1 data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
+              className="flex-1 data-[state=active]:text-black"
+              style={{ 
+                backgroundColor: activeTab === 'available' ? '#BFFF00' : 'transparent'
+              }}
             >
               Challenge ใหม่ ({availableChallenges.length})
             </TabsTrigger>

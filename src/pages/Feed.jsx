@@ -103,9 +103,9 @@ export default function Feed() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white pb-24">
+    <div className="min-h-screen text-white pb-24" style={{ backgroundColor: '#0A0A0A' }}>
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-gray-950/95 backdrop-blur-lg border-b border-white/5">
+      <div className="sticky top-0 z-10 backdrop-blur-lg border-b border-white/5" style={{ backgroundColor: 'rgba(10, 10, 10, 0.95)' }}>
         <div className="px-6 pt-6 pb-4">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-2xl font-light">ฟีด</h1>
@@ -167,13 +167,19 @@ export default function Feed() {
             <TabsList className="w-full bg-white/5 p-1">
               <TabsTrigger 
                 value="following" 
-                className="flex-1 data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
+                className="flex-1 data-[state=active]:text-black"
+                style={{ 
+                  backgroundColor: activeTab === 'following' ? '#BFFF00' : 'transparent'
+                }}
               >
                 กำลังติดตาม
               </TabsTrigger>
               <TabsTrigger 
                 value="discover" 
-                className="flex-1 data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
+                className="flex-1 data-[state=active]:text-black"
+                style={{ 
+                  backgroundColor: activeTab === 'discover' ? '#BFFF00' : 'transparent'
+                }}
               >
                 <Compass className="w-4 h-4 mr-1" />
                 สำรวจ
@@ -241,9 +247,10 @@ export default function Feed() {
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         onClick={() => setShowCreatePost(true)}
-        className="fixed bottom-24 right-6 w-14 h-14 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30 z-20 neon-glow"
+        className="fixed bottom-24 right-6 w-14 h-14 rounded-full flex items-center justify-center shadow-lg z-20 neon-glow"
+        style={{ background: 'linear-gradient(135deg, #BFFF00 0%, #8A2BE2 100%)' }}
       >
-        <Plus className="w-6 h-6 text-white" />
+        <Plus className="w-6 h-6" style={{ color: '#0A0A0A' }} />
       </motion.button>
 
       {/* Create Post Modal */}
