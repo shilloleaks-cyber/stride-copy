@@ -154,75 +154,30 @@ export default function RunMap({ routeCoordinates, currentPosition, isActive, pr
           </>
         )}
         
-        {/* Start marker */}
+        {/* Minimal start/finish dots */}
         {startPosition && (
-          <Marker 
-            position={startPosition}
-            icon={L.divIcon({
-              className: 'custom-start-marker',
-              html: `<div style="
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-              ">
-                <div style="
-                  background: white;
-                  color: #3b82f6;
-                  padding: 2px 6px;
-                  border-radius: 4px;
-                  font-size: 10px;
-                  font-weight: bold;
-                  margin-bottom: 2px;
-                  white-space: nowrap;
-                ">START</div>
-                <div style="
-                  width: 16px;
-                  height: 16px;
-                  background: #3b82f6;
-                  border: 3px solid white;
-                  border-radius: 50%;
-                  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-                "></div>
-              </div>`,
-              iconSize: [40, 40],
-              iconAnchor: [20, 40],
-            })}
+          <CircleMarker 
+            center={startPosition}
+            radius={4}
+            pathOptions={{ 
+              color: '#BFFF00', 
+              fillColor: '#BFFF00', 
+              fillOpacity: 1, 
+              weight: 1 
+            }}
           />
         )}
 
-        {/* End marker (only for completed runs with full route) */}
         {showFullRoute && pathCoordinates.length > 1 && (
-          <Marker 
-            position={pathCoordinates[pathCoordinates.length - 1]}
-            icon={L.divIcon({
-              className: 'custom-end-marker',
-              html: `<div style="
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-              ">
-                <div style="
-                  background: white;
-                  color: #10b981;
-                  padding: 2px 6px;
-                  border-radius: 4px;
-                  font-size: 10px;
-                  font-weight: bold;
-                  margin-bottom: 2px;
-                  white-space: nowrap;
-                ">FINISH</div>
-                <div style="
-                  width: 16px;
-                  height: 16px;
-                  background: #10b981;
-                  border: 3px solid white;
-                  border-radius: 50%;
-                  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-                "></div>
-              </div>`,
-              iconSize: [40, 40],
-              iconAnchor: [20, 40],
-            })}
+          <CircleMarker 
+            center={pathCoordinates[pathCoordinates.length - 1]}
+            radius={4}
+            pathOptions={{ 
+              color: '#8A2BE2', 
+              fillColor: '#8A2BE2', 
+              fillOpacity: 1, 
+              weight: 1 
+            }}
           />
         )}
         
