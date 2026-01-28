@@ -11,18 +11,44 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 export default function Leaderboard() {
   const navigate = useNavigate();
   const [sortBy, setSortBy] = useState('distance');
+  const [viewMode, setViewMode] = useState('global');
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
   });
 
+  const { data: crewMembership } = useQuery({
+    queryKey: ['crew-membership', currentUser?.email],
+    queryFn: () => base44.entities.CrewMember.filter({ user_email: currentUser.email }),
+    enabled: !!currentUser
+  });
+
+  const myCrew = crewMembership?.[0];
+
+  const { data: crewMembers = [] } = useQuery({
+    queryKey: ['crew-members', myCrew?.crew_id],
+    queryFn: () => base44.entities.CrewMember.filter({ crew_id: myCrew.crew_id }),
+    enabled: viewMode === 'crew' && !!myCrew?.crew_id
+  });
+
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['allUsersLeaderboard'],
     queryFn: () => base44.entities.User.list(),
+    enabled: viewMode === 'global'
   });
 
-  const sortedUsers = [...users].sort((a, b) => {
+  const displayUsers = viewMode === 'crew' 
+    ? crewMembers.map(m => ({
+        email: m.user_email,
+        full_name: m.user_name,
+        total_distance_km: m.weekly_distance_km || 0,
+        total_runs: 0,
+        token_balance: m.total_coins || 0
+      }))
+    : users;
+
+  const sortedUsers = [...displayUsers].sort((a, b) => {
     switch (sortBy) {
       case 'distance':
         return (b.total_distance_km || 0) - (a.total_distance_km || 0);
@@ -107,8 +133,32 @@ export default function Leaderboard() {
         </motion.div>
       )}
 
-      {/* Sort Tabs */}
+      {/* View Mode Toggle */}
       <div className="px-6 mt-6">
+        <div className="flex gap-2 mb-4">
+          <button
+            onClick={() => setViewMode('global')}
+            className={`flex-1 py-2 px-4 rounded-xl font-medium transition-all ${
+              viewMode === 'global'
+                ? 'bg-emerald-600 text-white'
+                : 'bg-white/10 text-gray-400'
+            }`}
+          >
+            Global
+          </button>
+          <button
+            onClick={() => setViewMode('crew')}
+            disabled={!myCrew}
+            className={`flex-1 py-2 px-4 rounded-xl font-medium transition-all ${
+              viewMode === 'crew'
+                ? 'bg-blue-600 text-white'
+                : 'bg-white/10 text-gray-400 disabled:opacity-50'
+            }`}
+          >
+            Crew
+          </button>
+        </div>
+
         <Tabs value={sortBy} onValueChange={setSortBy}>
           <TabsList className="w-full bg-white/5 p-1">
             <TabsTrigger 
