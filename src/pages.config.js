@@ -62,6 +62,7 @@ import RunDetails from './pages/RunDetails';
 import Stats from './pages/Stats';
 import Training from './pages/Training';
 import Wallet from './pages/Wallet';
+import LevelProgress from './pages/LevelProgress';
 import __Layout from './Layout.jsx';
 
 
@@ -81,6 +82,7 @@ export const PAGES = {
     "Stats": Stats,
     "Training": Training,
     "Wallet": Wallet,
+    "LevelProgress": LevelProgress,
 }
 
 export const pagesConfig = {
