@@ -61,6 +61,7 @@ import Stats from './pages/Stats';
 import Training from './pages/Training';
 import Wallet from './pages/Wallet';
 import Achievements from './pages/Achievements';
+import HealthConnect from './pages/HealthConnect';
 import __Layout from './Layout.jsx';
 
 
@@ -79,6 +80,7 @@ export const PAGES = {
     "Training": Training,
     "Wallet": Wallet,
     "Achievements": Achievements,
+    "HealthConnect": HealthConnect,
 }
 
 export const pagesConfig = {
