@@ -56,8 +56,8 @@ import Home from './pages/Home';
 import Leaderboard from './pages/Leaderboard';
 import Profile from './pages/Profile';
 import RunDetails from './pages/RunDetails';
-import Stats from './pages/Stats';
 import Wallet from './pages/Wallet';
+import Stats from './pages/Stats';
 import __Layout from './Layout.jsx';
 
 
@@ -71,8 +71,8 @@ export const PAGES = {
     "Leaderboard": Leaderboard,
     "Profile": Profile,
     "RunDetails": RunDetails,
-    "Stats": Stats,
     "Wallet": Wallet,
+    "Stats": Stats,
 }
 
 export const pagesConfig = {
