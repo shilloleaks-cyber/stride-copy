@@ -24,6 +24,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import RunMap from '@/components/running/RunMap';
 import ShareRunDialog from '@/components/running/ShareRunDialog';
+import RunInsights from '@/components/running/RunInsights';
+import PaceChart from '@/components/running/PaceChart';
+import SpeedChart from '@/components/running/SpeedChart';
 
 export default function RunDetails() {
   const navigate = useNavigate();
@@ -269,6 +272,31 @@ export default function RunDetails() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Performance Analysis */}
+      {run.route_points && run.route_points.length >= 2 && (
+        <div className="px-6 mb-6">
+          <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-4">Performance Analysis</h2>
+          
+          {/* Pace Chart */}
+          <div className="mb-4">
+            <h3 className="text-sm text-gray-400 mb-2">Pace per Kilometer</h3>
+            <PaceChart routePoints={run.route_points} avgPace={run.pace_min_per_km} />
+          </div>
+
+          {/* Speed Chart */}
+          <div>
+            <h3 className="text-sm text-gray-400 mb-2">Speed Over Time</h3>
+            <SpeedChart routePoints={run.route_points} avgSpeed={run.avg_speed_kmh} />
+          </div>
+        </div>
+      )}
+
+      {/* Insights & Tips */}
+      <div className="px-6 mb-6">
+        <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-4">Insights & Tips</h2>
+        <RunInsights run={run} />
       </div>
 
       {/* Notes */}
