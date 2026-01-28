@@ -8,8 +8,12 @@ import { Play, TrendingUp, MapPin, Flame, Clock, Heart, Activity, Trophy, Target
 import StatCard from '@/components/running/StatCard';
 import WeeklyChart from '@/components/running/WeeklyChart';
 import RunListItem from '@/components/running/RunListItem';
+import confetti from 'canvas-confetti';
 
 export default function Home() {
+  const [showStreakAnimation, setShowStreakAnimation] = useState(false);
+  const [streakMilestone, setStreakMilestone] = useState(null);
+
   const { data: runs = [], isLoading } = useQuery({
     queryKey: ['runs'],
     queryFn: () => base44.entities.Run.list('-start_time', 100),
@@ -82,6 +86,75 @@ export default function Home() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Streak milestone animation logic
+  useEffect(() => {
+    if (currentStreak === 0) return;
+
+    const milestones = [
+      { days: 3, key: 'streak_3_done', text: '3 Day Streak!' },
+      { days: 7, key: 'streak_7_done', text: '7 Day Streak!' },
+      { days: 14, key: 'streak_14_done', text: '14 Day Beast Mode!' }
+    ];
+
+    const milestone = milestones.find(m => m.days === currentStreak);
+    if (!milestone) return;
+
+    const isDone = localStorage.getItem(milestone.key);
+    if (isDone) return;
+
+    // Mark as done
+    localStorage.setItem(milestone.key, 'true');
+    setStreakMilestone(milestone);
+    setShowStreakAnimation(true);
+
+    // Play confetti
+    if (currentStreak === 3) {
+      confetti({
+        particleCount: 50,
+        spread: 60,
+        origin: { y: 0.6 },
+        colors: ['#10b981', '#f59e0b']
+      });
+    } else if (currentStreak === 7) {
+      confetti({
+        particleCount: 100,
+        spread: 80,
+        origin: { y: 0.6 },
+        colors: ['#10b981', '#f59e0b', '#ef4444']
+      });
+    } else if (currentStreak === 14) {
+      const duration = 1000;
+      const end = Date.now() + duration;
+      
+      const frame = () => {
+        confetti({
+          particleCount: 3,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 },
+          colors: ['#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+        });
+        confetti({
+          particleCount: 3,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 },
+          colors: ['#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+        });
+
+        if (Date.now() < end) {
+          requestAnimationFrame(frame);
+        }
+      };
+      frame();
+    }
+
+    // Hide animation after delay
+    setTimeout(() => {
+      setShowStreakAnimation(false);
+    }, 3000);
+  }, [currentStreak]);
+
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       {/* Header */}
@@ -131,23 +204,65 @@ export default function Home() {
             icon={MapPin}
             accent
           />
-          <StatCard 
-            label="Streak" 
-            value={currentStreak} 
-            unit="days"
-            icon={Flame}
-          />
+          <motion.div
+            animate={showStreakAnimation ? {
+              scale: [1, 1.05, 1],
+              boxShadow: currentStreak >= 14 
+                ? ['0 0 0 0 rgba(249, 115, 22, 0)', '0 0 30px 10px rgba(249, 115, 22, 0.6)', '0 0 0 0 rgba(249, 115, 22, 0)']
+                : currentStreak >= 7
+                ? ['0 0 0 0 rgba(249, 115, 22, 0)', '0 0 20px 5px rgba(249, 115, 22, 0.5)', '0 0 0 0 rgba(249, 115, 22, 0)']
+                : ['0 0 0 0 rgba(249, 115, 22, 0)', '0 0 15px 3px rgba(249, 115, 22, 0.4)', '0 0 0 0 rgba(249, 115, 22, 0)']
+            } : {}}
+            transition={{ duration: 0.6, repeat: showStreakAnimation ? 1 : 0 }}
+          >
+            <StatCard 
+              label="Streak" 
+              value={currentStreak} 
+              unit="days"
+              icon={Flame}
+            />
+          </motion.div>
         </div>
+
+        {/* Streak Milestone Popup */}
+        <AnimatePresence>
+          {showStreakAnimation && streakMilestone && (
+            <motion.div
+              initial={{ opacity: 0, y: -20, scale: 0.8 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.8 }}
+              className="fixed top-24 left-1/2 transform -translate-x-1/2 z-50 bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-full shadow-2xl"
+            >
+              <div className="flex items-center gap-2">
+                <motion.span
+                  animate={{ scale: [1, 1.3, 1] }}
+                  transition={{ duration: 0.5, repeat: 2 }}
+                  className="text-2xl"
+                >
+                  🔥
+                </motion.span>
+                <span className="font-bold text-lg">{streakMilestone.text}</span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Performance Section */}
         <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-3">Performance</h2>
         <div className="grid grid-cols-2 gap-3 mb-6">
-          <StatCard 
-            label="Avg Pace (Week)" 
-            value={formatPace(weekAvgPace)} 
-            unit="/km"
-            icon={Zap}
-          />
+          <Link to={createPageUrl('PaceHistory')}>
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <StatCard 
+                label="Avg Pace (Week)" 
+                value={formatPace(weekAvgPace)} 
+                unit="/km"
+                icon={Zap}
+              />
+            </motion.div>
+          </Link>
           <StatCard 
             label="Best Pace" 
             value={formatPace(bestPace)} 

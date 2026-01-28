@@ -58,6 +58,7 @@ import RunDetails from './pages/RunDetails';
 import Wallet from './pages/Wallet';
 import Home from './pages/Home';
 import Stats from './pages/Stats';
+import PaceHistory from './pages/PaceHistory';
 import __Layout from './Layout.jsx';
 
 
@@ -73,6 +74,7 @@ export const PAGES = {
     "Wallet": Wallet,
     "Home": Home,
     "Stats": Stats,
+    "PaceHistory": PaceHistory,
 }
 
 export const pagesConfig = {
