@@ -10,6 +10,9 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PostCard from '@/components/feed/PostCard';
 import CreatePostModal from '@/components/feed/CreatePostModal';
 import CommentsSheet from '@/components/feed/CommentsSheet';
+import CrewCard from '@/components/crew/CrewCard';
+import CreateCrewModal from '@/components/crew/CreateCrewModal';
+import BrowseCrewsModal from '@/components/crew/BrowseCrewsModal';
 
 export default function Feed() {
   const navigate = useNavigate();
@@ -18,6 +21,8 @@ export default function Feed() {
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
   const [showComments, setShowComments] = useState(false);
+  const [showCreateCrew, setShowCreateCrew] = useState(false);
+  const [showBrowseCrews, setShowBrowseCrews] = useState(false);
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
@@ -31,6 +36,20 @@ export default function Feed() {
   });
 
   const followingEmails = follows.map(f => f.following_email);
+
+  const { data: crewMembership } = useQuery({
+    queryKey: ['crew-membership', currentUser?.email],
+    queryFn: () => base44.entities.CrewMember.filter({ user_email: currentUser.email }),
+    enabled: !!currentUser
+  });
+
+  const myCrew = crewMembership?.[0];
+
+  const { data: crew } = useQuery({
+    queryKey: ['crew', myCrew?.crew_id],
+    queryFn: () => base44.entities.Crew.filter({ id: myCrew.crew_id }).then(r => r[0]),
+    enabled: !!myCrew?.crew_id
+  });
 
   const { data: allPosts = [], isLoading, refetch } = useQuery({
     queryKey: ['posts'],
@@ -132,8 +151,18 @@ export default function Feed() {
         </div>
       </div>
 
+      {/* Crew Card */}
+      <div className="px-6 pt-6 pb-3">
+        <CrewCard 
+          crew={crew}
+          memberData={myCrew}
+          onCreateClick={() => setShowCreateCrew(true)}
+          onJoinClick={() => setShowBrowseCrews(true)}
+        />
+      </div>
+
       {/* Posts */}
-      <div className="px-6 py-6 space-y-6">
+      <div className="px-6 pb-6 space-y-6">
         {isLoading ? (
           <div className="space-y-6">
             {[1, 2, 3].map(i => (
@@ -209,6 +238,32 @@ export default function Feed() {
         onClose={() => setShowComments(false)}
         post={selectedPost}
         currentUser={currentUser}
+      />
+
+      {/* Create Crew Modal */}
+      <CreateCrewModal
+        isOpen={showCreateCrew}
+        onClose={(success) => {
+          setShowCreateCrew(false);
+          if (success) {
+            queryClient.invalidateQueries(['crew-membership']);
+            queryClient.invalidateQueries(['crew']);
+          }
+        }}
+        user={currentUser}
+      />
+
+      {/* Browse Crews Modal */}
+      <BrowseCrewsModal
+        isOpen={showBrowseCrews}
+        onClose={(success) => {
+          setShowBrowseCrews(false);
+          if (success) {
+            queryClient.invalidateQueries(['crew-membership']);
+            queryClient.invalidateQueries(['crew']);
+          }
+        }}
+        user={currentUser}
       />
     </div>
   );
