@@ -16,7 +16,7 @@ export default function Home() {
   });
 
   const completedRuns = runs.filter(r => r.status === 'completed');
-  const recentRuns = completedRuns.slice(0, 2);
+  const recentRuns = completedRuns.slice(0, 5);
 
   const stats = {
     totalDistance: completedRuns.reduce((sum, r) => sum + (r.distance_km || 0), 0),
