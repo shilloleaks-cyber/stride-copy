@@ -40,7 +40,7 @@ export default function RoutePreview({ routePoints, className = '' }) {
     // Draw route
     ctx.beginPath();
     ctx.strokeStyle = '#10b981';
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 2;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
@@ -54,21 +54,27 @@ export default function RoutePreview({ routePoints, className = '' }) {
 
     ctx.stroke();
 
-    // Draw start point
+    // Draw start point with border
     ctx.beginPath();
     ctx.fillStyle = '#3b82f6';
-    ctx.arc(start.x, start.y, 4, 0, Math.PI * 2);
+    ctx.arc(start.x, start.y, 5, 0, Math.PI * 2);
     ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
 
-    // Draw end point
+    // Draw end point with border
     const end = toCanvasCoords(
       routePoints[routePoints.length - 1].lat,
       routePoints[routePoints.length - 1].lng
     );
     ctx.beginPath();
     ctx.fillStyle = '#10b981';
-    ctx.arc(end.x, end.y, 4, 0, Math.PI * 2);
+    ctx.arc(end.x, end.y, 5, 0, Math.PI * 2);
     ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
   }, [routePoints]);
 
   if (!routePoints || routePoints.length < 2) {
@@ -78,8 +84,8 @@ export default function RoutePreview({ routePoints, className = '' }) {
   return (
     <canvas
       ref={canvasRef}
-      width={120}
-      height={120}
+      width={60}
+      height={60}
       className={className}
     />
   );
