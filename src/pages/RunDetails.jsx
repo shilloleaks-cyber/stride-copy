@@ -329,19 +329,19 @@ export default function RunDetails() {
         )}
       </div>
 
-      {/* Delete Bottom Sheet */}
+      {/* Delete Modal */}
       {isDeleteSheetOpen && (
         <>
           {/* Backdrop */}
           <div 
-            className="fixed inset-0 bg-black/55 z-[99998]"
+            className="fixed inset-0 bg-black/55 z-[99998] flex items-center justify-center p-4"
             onClick={() => !isDeleting && setIsDeleteSheetOpen(false)}
           />
           
-          {/* Bottom Sheet */}
-          <div className="fixed left-0 right-0 bottom-0 z-[99999] flex justify-center">
+          {/* Centered Modal */}
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 pointer-events-none">
             <div 
-              className="w-full max-w-[520px] bg-[#111] rounded-t-[20px] p-5 pb-[calc(20px+env(safe-area-inset-bottom))]"
+              className="w-full max-w-[340px] bg-[#111] rounded-[20px] p-5 pointer-events-auto"
               style={{ boxShadow: 'none' }}
             >
               {/* Header */}
