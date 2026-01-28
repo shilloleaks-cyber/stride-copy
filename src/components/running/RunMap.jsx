@@ -16,15 +16,38 @@ const createRunnerIcon = () => {
   return L.divIcon({
     className: 'custom-runner-marker',
     html: `<div style="
-      width: 20px;
-      height: 20px;
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      border: 3px solid white;
-      border-radius: 50%;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    "></div>`,
-    iconSize: [20, 20],
-    iconAnchor: [10, 10],
+      position: relative;
+      width: 24px;
+      height: 24px;
+    ">
+      <div style="
+        position: absolute;
+        width: 24px;
+        height: 24px;
+        background: rgba(16, 185, 129, 0.3);
+        border-radius: 50%;
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      "></div>
+      <div style="
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 20px;
+        height: 20px;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border: 3px solid white;
+        border-radius: 50%;
+        box-shadow: 0 2px 12px rgba(16, 185, 129, 0.6), 0 0 0 4px rgba(16, 185, 129, 0.2);
+      "></div>
+    </div>
+    <style>
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.5); opacity: 0; }
+      }
+    </style>`,
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
   });
 };
 
@@ -41,7 +64,7 @@ function MapController({ center, zoom }) {
   return null;
 }
 
-export default function RunMap({ routeCoordinates, currentPosition, isActive, preRunPosition, showFullRoute = false }) {
+export default function RunMap({ routeCoordinates, currentPosition, isActive, preRunPosition, showFullRoute = false, enableZoom = false, onCenterClick }) {
   const [mapCenter, setMapCenter] = useState([13.7563, 100.5018]); // Default: Bangkok
   const [mapZoom, setMapZoom] = useState(16);
   const mapRef = useRef(null);
@@ -79,7 +102,7 @@ export default function RunMap({ routeCoordinates, currentPosition, isActive, pr
         center={mapCenter}
         zoom={mapZoom}
         style={{ height: '100%', width: '100%' }}
-        zoomControl={false}
+        zoomControl={enableZoom}
         attributionControl={false}
         ref={mapRef}
       >
@@ -95,16 +118,31 @@ export default function RunMap({ routeCoordinates, currentPosition, isActive, pr
         
         {/* Draw the route path */}
         {pathCoordinates.length > 1 && (
-          <Polyline
-            positions={pathCoordinates}
-            pathOptions={{
-              color: '#10b981',
-              weight: 4,
-              opacity: 0.8,
-              lineCap: 'round',
-              lineJoin: 'round'
-            }}
-          />
+          <>
+            {/* Fading trail effect for active runs */}
+            {isActive && pathCoordinates.length > 10 && (
+              <Polyline
+                positions={pathCoordinates}
+                pathOptions={{
+                  color: '#10b981',
+                  weight: 6,
+                  opacity: 0.3,
+                  lineCap: 'round',
+                  lineJoin: 'round'
+                }}
+              />
+            )}
+            <Polyline
+              positions={pathCoordinates}
+              pathOptions={{
+                color: '#10b981',
+                weight: 4,
+                opacity: 0.8,
+                lineCap: 'round',
+                lineJoin: 'round'
+              }}
+            />
+          </>
         )}
         
         {/* Start marker */}
@@ -210,12 +248,27 @@ export default function RunMap({ routeCoordinates, currentPosition, isActive, pr
 
       {/* Map overlay info */}
       {isActive && (
-        <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-sm text-white px-3 py-2 rounded-lg text-xs">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-            <span>GPS Tracking Active</span>
+        <>
+          <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-sm text-white px-3 py-2 rounded-lg text-xs">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+              <span>GPS Tracking Active</span>
+            </div>
           </div>
-        </div>
+
+          {/* Center button */}
+          {onCenterClick && currentPosition && (
+            <button
+              onClick={onCenterClick}
+              className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-sm text-white p-3 rounded-full hover:bg-black/80 transition-colors shadow-lg"
+              aria-label="Center on location"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+              </svg>
+            </button>
+          )}
+        </>
       )}
 
       {/* Pre-run overlay */}

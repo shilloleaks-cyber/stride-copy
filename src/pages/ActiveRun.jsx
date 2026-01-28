@@ -248,18 +248,24 @@ export default function ActiveRun() {
     return R * c;
   };
 
+  const handleCenterMap = () => {
+    if (currentPosition) {
+      setCurrentPosition({ ...currentPosition });
+    }
+  };
+
   const handleStart = async () => {
     startTimeRef.current = new Date().toISOString();
     setRunStatus('active');
-    
+
     // Stop auto-refresh
     if (autoRefreshIntervalRef.current) {
       clearInterval(autoRefreshIntervalRef.current);
     }
-    
+
     // Start continuous GPS tracking
     startGPSTracking();
-    
+
     // Create run record
     const run = await base44.entities.Run.create({
       start_time: startTimeRef.current,
@@ -410,6 +416,7 @@ export default function ActiveRun() {
             currentPosition={currentPosition}
             isActive={runStatus === 'active'}
             preRunPosition={runStatus === 'idle' && preRunLat && preRunLng ? { lat: preRunLat, lng: preRunLng } : null}
+            onCenterClick={handleCenterMap}
           />
         </div>
       </div>

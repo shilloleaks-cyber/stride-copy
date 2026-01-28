@@ -162,6 +162,7 @@ export default function RunDetails() {
               currentPosition={null}
               isActive={false}
               showFullRoute={true}
+              enableZoom={true}
             />
           </div>
           {/* Debug Info */}
