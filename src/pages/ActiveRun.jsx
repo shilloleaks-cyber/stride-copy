@@ -12,7 +12,8 @@ import RunMap from '@/components/running/RunMap';
 
 export default function ActiveRun() {
   const navigate = useNavigate();
-  const [runStatus, setRunStatus] = useState('idle'); // idle, active, paused
+  // Run state
+  const [runStatus, setRunStatus] = useState('IDLE'); // IDLE, RUNNING, PAUSED
   const [seconds, setSeconds] = useState(0);
   const [distance, setDistance] = useState(0);
   const [currentSpeed, setCurrentSpeed] = useState(0);
@@ -22,102 +23,97 @@ export default function ActiveRun() {
   const [calories, setCalories] = useState(0);
   const [runId, setRunId] = useState(null);
   const [routePoints, setRoutePoints] = useState([]);
-  const [currentPosition, setCurrentPosition] = useState(null);
-  const [gpsError, setGpsError] = useState(null);
-  const [gpsStatus, setGpsStatus] = useState('Not tested');
+  
+  // GPS state
   const [currentLat, setCurrentLat] = useState(null);
   const [currentLng, setCurrentLng] = useState(null);
   const [gpsAccuracyM, setGpsAccuracyM] = useState(null);
+  const [locationStatus, setLocationStatus] = useState('loading'); // loading, ready, denied, error
   
-  // Pre-run location tracking
-  const [preRunLat, setPreRunLat] = useState(null);
-  const [preRunLng, setPreRunLng] = useState(null);
-  const [preRunAccuracyM, setPreRunAccuracyM] = useState(null);
-  const [locationStatus, setLocationStatus] = useState('loading');
-  const [lastLocationTime, setLastLocationTime] = useState(null);
+  // Smart centering state
+  const [hasCentered, setHasCentered] = useState(false);
+  const [bestAccuracyM, setBestAccuracyM] = useState(9999);
+  const [lastCenterTimeMs, setLastCenterTimeMs] = useState(0);
+  const [mapCenter, setMapCenter] = useState([13.7563, 100.5018]);
+  const [mapZoom, setMapZoom] = useState(16);
   
+  // Refs
   const timerRef = useRef(null);
-  const watchIdRef = useRef(null);
+  const idleWatchIdRef = useRef(null);
+  const runningWatchIdRef = useRef(null);
   const startTimeRef = useRef(null);
   const lastPositionRef = useRef(null);
   const lastCaptureTimeRef = useRef(0);
-  const autoRefreshIntervalRef = useRef(null);
 
-  // Get initial location on page load
+  // IDLE MODE: Auto GPS tracking on page load
   useEffect(() => {
-    setLocationStatus('loading');
-    
     if (!('geolocation' in navigator)) {
       setLocationStatus('error');
-      setGpsError('เบราว์เซอร์ของคุณไม่รองรับ GPS');
       return;
     }
 
-    navigator.geolocation.getCurrentPosition(
+    // Start IDLE watchPosition
+    idleWatchIdRef.current = navigator.geolocation.watchPosition(
       (position) => {
-        setPreRunLat(position.coords.latitude);
-        setPreRunLng(position.coords.longitude);
-        setPreRunAccuracyM(position.coords.accuracy);
-        setLastLocationTime(new Date());
+        const { latitude, longitude, accuracy } = position.coords;
+        
         setLocationStatus('ready');
-        setCurrentPosition({ 
-          lat: position.coords.latitude, 
-          lng: position.coords.longitude 
-        });
-        setGpsError(null);
+        setCurrentLat(latitude);
+        setCurrentLng(longitude);
+        setGpsAccuracyM(accuracy);
+        
+        // Track best accuracy
+        if (accuracy < bestAccuracyM) {
+          setBestAccuracyM(accuracy);
+        }
+        
+        // SMART AUTO-CENTER LOGIC
+        const now = Date.now();
+        
+        // A) First time center (when accuracy is good enough)
+        if (!hasCentered && accuracy <= 50) {
+          setMapCenter([latitude, longitude]);
+          setMapZoom(16);
+          setHasCentered(true);
+          setLastCenterTimeMs(now);
+        }
+        // B) Smart re-center when accuracy improves significantly
+        else if (hasCentered) {
+          const accuracyImprovement = bestAccuracyM - accuracy;
+          const timeSinceLastCenter = now - lastCenterTimeMs;
+          
+          if (
+            accuracy <= 20 &&
+            accuracyImprovement >= 15 &&
+            timeSinceLastCenter >= 8000
+          ) {
+            setMapCenter([latitude, longitude]);
+            setLastCenterTimeMs(now);
+          }
+        }
       },
       (error) => {
         if (error.code === error.PERMISSION_DENIED) {
           setLocationStatus('denied');
-          setGpsError('กรุณาอนุญาตการเข้าถึงตำแหน่ง');
         } else {
           setLocationStatus('error');
-          setGpsError('ไม่สามารถรับตำแหน่งได้');
         }
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
     );
-  }, []);
 
-  // Auto-refresh location every 5 seconds while idle
-  useEffect(() => {
-    if (runStatus === 'idle' && locationStatus === 'ready') {
-      autoRefreshIntervalRef.current = setInterval(() => {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const newAccuracy = position.coords.accuracy;
-            // Only update if accuracy improves
-            if (!preRunAccuracyM || newAccuracy < preRunAccuracyM) {
-              setPreRunLat(position.coords.latitude);
-              setPreRunLng(position.coords.longitude);
-              setPreRunAccuracyM(newAccuracy);
-              setLastLocationTime(new Date());
-              setCurrentPosition({ 
-                lat: position.coords.latitude, 
-                lng: position.coords.longitude 
-              });
-            }
-          },
-          () => {
-            // Ignore errors during auto-refresh
-          },
-          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
-      }, 5000);
-    }
-
+    // Cleanup on unmount
     return () => {
-      if (autoRefreshIntervalRef.current) {
-        clearInterval(autoRefreshIntervalRef.current);
+      if (idleWatchIdRef.current) {
+        navigator.geolocation.clearWatch(idleWatchIdRef.current);
       }
     };
-  }, [runStatus, locationStatus, preRunAccuracyM]);
+  }, []);
 
-  // Simulated heart rate (in real app, would connect to Bluetooth device)
+  // Simulated heart rate
   useEffect(() => {
-    if (runStatus === 'active') {
+    if (runStatus === 'RUNNING') {
       const hrInterval = setInterval(() => {
-        // Simulate heart rate based on activity
         const baseHR = 72;
         const activityBonus = Math.min(seconds / 10, 80);
         const variation = Math.random() * 10 - 5;
@@ -138,12 +134,11 @@ export default function ActiveRun() {
     }
   }, [heartRate, maxHeartRate]);
 
-  // Calculate calories (simplified formula)
+  // Calculate calories
   useEffect(() => {
-    if (runStatus === 'active' && seconds > 0) {
-      // MET value for running: ~8-12 depending on speed
+    if (runStatus === 'RUNNING' && seconds > 0) {
       const met = 8 + (currentSpeed / 5);
-      const weight = 70; // Default weight in kg
+      const weight = 70;
       const caloriesPerMinute = (met * weight * 3.5) / 200;
       setCalories(Math.round(caloriesPerMinute * (seconds / 60)));
     }
@@ -151,7 +146,7 @@ export default function ActiveRun() {
 
   // Timer
   useEffect(() => {
-    if (runStatus === 'active') {
+    if (runStatus === 'RUNNING') {
       timerRef.current = setInterval(() => {
         setSeconds(s => s + 1);
       }, 1000);
@@ -161,80 +156,57 @@ export default function ActiveRun() {
     };
   }, [runStatus]);
 
-  // GPS tracking
-  const startGPSTracking = useCallback(() => {
-    if ('geolocation' in navigator) {
-      // Request permission first
-      navigator.permissions.query({ name: 'geolocation' }).then((result) => {
-        if (result.state === 'denied') {
-          setGpsError('กรุณาเปิดการเข้าถึงตำแหน่งในการตั้งค่าเบราว์เซอร์');
-          return;
+  // RUNNING MODE: GPS tracking with route capture
+  const startRunningGPSTracking = useCallback(() => {
+    runningWatchIdRef.current = navigator.geolocation.watchPosition(
+      (position) => {
+        const { latitude, longitude, speed } = position.coords;
+        const now = Date.now();
+
+        // Update current position
+        setCurrentLat(latitude);
+        setCurrentLng(longitude);
+        setGpsAccuracyM(position.coords.accuracy);
+
+        // Auto-center map on current position during run
+        setMapCenter([latitude, longitude]);
+
+        // Capture route point every 3 seconds
+        if (now - lastCaptureTimeRef.current >= 3000) {
+          const routePoint = {
+            lat: latitude,
+            lng: longitude,
+            time: new Date().toISOString()
+          };
+
+          setRoutePoints(prev => [...prev, routePoint]);
+          lastCaptureTimeRef.current = now;
+
+          // Calculate distance
+          if (lastPositionRef.current) {
+            const dist = calculateDistance(
+              lastPositionRef.current.lat,
+              lastPositionRef.current.lng,
+              latitude,
+              longitude
+            );
+            setDistance(d => d + dist);
+          }
+
+          lastPositionRef.current = { lat: latitude, lng: longitude };
         }
-      });
 
-      watchIdRef.current = navigator.geolocation.watchPosition(
-        (position) => {
-          const { latitude, longitude, speed } = position.coords;
-          const now = Date.now();
-          
-          // Update current position for map
-          setCurrentPosition({ lat: latitude, lng: longitude });
-          setGpsError(null);
-          
-          // Capture point every 3 seconds
-          if (now - lastCaptureTimeRef.current >= 3000) {
-            const routePoint = {
-              lat: latitude,
-              lng: longitude,
-              time: new Date().toISOString()
-            };
-            
-            setRoutePoints(prev => [...prev, routePoint]);
-            lastCaptureTimeRef.current = now;
-            
-            // Calculate distance if we have a previous position
-            if (lastPositionRef.current) {
-              const dist = calculateDistance(
-                lastPositionRef.current.lat,
-                lastPositionRef.current.lng,
-                latitude,
-                longitude
-              );
-              setDistance(d => d + dist);
-            }
-            
-            lastPositionRef.current = { lat: latitude, lng: longitude };
-          }
-          
-          // Update speed (convert m/s to km/h)
-          const speedKmh = speed ? speed * 3.6 : 0;
-          setCurrentSpeed(speedKmh);
-          if (speedKmh > maxSpeed) setMaxSpeed(speedKmh);
-        },
-        (error) => {
-          console.log('GPS error:', error);
-          if (error.code === error.PERMISSION_DENIED) {
-            setGpsError('คุณไม่ได้อนุญาตให้เข้าถึงตำแหน่ง GPS กรุณาเปิดการเข้าถึงในการตั้งค่า');
-          } else if (error.code === error.POSITION_UNAVAILABLE) {
-            setGpsError('ไม่สามารถรับสัญญาณ GPS ได้ กรุณาลองอีกครั้ง');
-          } else {
-            setGpsError('เกิดข้อผิดพลาดในการติดตาม GPS');
-          }
-        },
-        { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
-      );
-    } else {
-      setGpsError('เบราว์เซอร์ของคุณไม่รองรับ GPS');
-    }
+        // Update speed (m/s to km/h)
+        const speedKmh = speed ? speed * 3.6 : 0;
+        setCurrentSpeed(speedKmh);
+        if (speedKmh > maxSpeed) setMaxSpeed(speedKmh);
+      },
+      (error) => {
+        console.log('Running GPS error:', error);
+      },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
+    );
   }, [maxSpeed]);
-
-
-
-  const stopGPSTracking = () => {
-    if (watchIdRef.current) {
-      navigator.geolocation.clearWatch(watchIdRef.current);
-    }
-  };
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371; // Earth's radius in km
@@ -248,23 +220,33 @@ export default function ActiveRun() {
     return R * c;
   };
 
-  const handleCenterMap = () => {
-    if (currentPosition) {
-      setCurrentPosition({ ...currentPosition });
+  // Re-center button handler
+  const handleRecenter = () => {
+    if (currentLat && currentLng) {
+      setMapCenter([currentLat, currentLng]);
+      setMapZoom(16);
+      setLastCenterTimeMs(Date.now());
+      setHasCentered(true);
     }
   };
 
   const handleStart = async () => {
     startTimeRef.current = new Date().toISOString();
-    setRunStatus('active');
+    setRunStatus('RUNNING');
 
-    // Stop auto-refresh
-    if (autoRefreshIntervalRef.current) {
-      clearInterval(autoRefreshIntervalRef.current);
+    // Stop IDLE tracking
+    if (idleWatchIdRef.current) {
+      navigator.geolocation.clearWatch(idleWatchIdRef.current);
     }
 
-    // Start continuous GPS tracking
-    startGPSTracking();
+    // Reset route data
+    setRoutePoints([]);
+    setDistance(0);
+    lastPositionRef.current = null;
+    lastCaptureTimeRef.current = 0;
+
+    // Start RUNNING GPS tracking
+    startRunningGPSTracking();
 
     // Create run record
     const run = await base44.entities.Run.create({
@@ -275,27 +257,31 @@ export default function ActiveRun() {
   };
 
   const handlePause = () => {
-    setRunStatus('paused');
-    stopGPSTracking();
+    setRunStatus('PAUSED');
+    if (runningWatchIdRef.current) {
+      navigator.geolocation.clearWatch(runningWatchIdRef.current);
+    }
     if (timerRef.current) clearInterval(timerRef.current);
   };
 
   const handleResume = () => {
-    setRunStatus('active');
-    startGPSTracking();
+    setRunStatus('RUNNING');
+    startRunningGPSTracking();
   };
 
   const handleStop = async () => {
-    stopGPSTracking();
+    if (runningWatchIdRef.current) {
+      navigator.geolocation.clearWatch(runningWatchIdRef.current);
+    }
     if (timerRef.current) clearInterval(timerRef.current);
-    
+
     const pace = distance > 0 ? (seconds / 60) / distance : 0;
     const avgSpeed = seconds > 0 ? (distance / seconds) * 3600 : 0;
     const avgHR = Math.round((72 + maxHeartRate) / 2);
-    
+
     const startPoint = routePoints.length > 0 ? routePoints[0] : null;
     const endPoint = routePoints.length > 0 ? routePoints[routePoints.length - 1] : null;
-    
+
     if (runId) {
       await base44.entities.Run.update(runId, {
         end_time: new Date().toISOString(),
@@ -315,7 +301,7 @@ export default function ActiveRun() {
         end_lng: endPoint?.lng,
       });
     }
-    
+
     navigate(createPageUrl(`RunDetails?id=${runId}`));
   };
 
@@ -326,31 +312,8 @@ export default function ActiveRun() {
     const secs = Math.round((pace - mins) * 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
-
-  const handleTestGPS = () => {
-    setGpsStatus('Testing...');
-    
-    if (!('geolocation' in navigator)) {
-      setGpsStatus('ERROR: Geolocation not supported');
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setGpsStatus('OK');
-        setCurrentLat(position.coords.latitude);
-        setCurrentLng(position.coords.longitude);
-        setGpsAccuracyM(position.coords.accuracy);
-      },
-      (error) => {
-        setGpsStatus(`ERROR: ${error.code} - ${error.message}`);
-        setCurrentLat(null);
-        setCurrentLng(null);
-        setGpsAccuracyM(null);
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
-  };
+  
+  const currentPosition = currentLat && currentLng ? { lat: currentLat, lng: currentLng } : null;
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
@@ -367,20 +330,23 @@ export default function ActiveRun() {
           <span className={`px-3 py-1 rounded-full text-xs flex items-center gap-2 ${
             locationStatus === 'loading' ? 'bg-yellow-500/20 text-yellow-400' :
             locationStatus === 'ready' ? 'bg-emerald-500/20 text-emerald-400' :
-            'bg-red-500/20 text-red-400'
+            locationStatus === 'denied' ? 'bg-red-500/20 text-red-400' :
+            'bg-orange-500/20 text-orange-400'
           }`}>
             <div className={`w-1.5 h-1.5 rounded-full ${
               locationStatus === 'loading' ? 'bg-yellow-400 animate-pulse' :
               locationStatus === 'ready' ? 'bg-emerald-400' :
-              'bg-red-400'
+              locationStatus === 'denied' ? 'bg-red-400' :
+              'bg-orange-400'
             }`} />
             {locationStatus === 'loading' && 'Locating...'}
-            {locationStatus === 'ready' && `GPS Ready (±${preRunAccuracyM?.toFixed(0)}m)`}
-            {(locationStatus === 'denied' || locationStatus === 'error') && 'Location Off'}
+            {locationStatus === 'ready' && gpsAccuracyM && `GPS Ready (±${gpsAccuracyM.toFixed(0)}m)`}
+            {locationStatus === 'denied' && 'Location Off'}
+            {locationStatus === 'error' && 'GPS Error'}
           </span>
           <span className={`px-3 py-1 rounded-full text-xs uppercase tracking-wider ${
-            runStatus === 'active' ? 'bg-emerald-500/20 text-emerald-400' :
-            runStatus === 'paused' ? 'bg-amber-500/20 text-amber-400' :
+            runStatus === 'RUNNING' ? 'bg-emerald-500/20 text-emerald-400' :
+            runStatus === 'PAUSED' ? 'bg-amber-500/20 text-amber-400' :
             'bg-white/10 text-gray-400'
           }`}>
             {runStatus}
@@ -389,18 +355,23 @@ export default function ActiveRun() {
       </div>
 
       {/* GPS Error Message */}
-      {gpsError && locationStatus !== 'ready' && (
+      {locationStatus === 'denied' && (
         <div className="px-6 pt-4">
-          <div className="bg-red-500/20 border border-red-500/30 rounded-xl p-4 flex items-center justify-between">
-            <p className="text-red-400 text-sm">{gpsError}</p>
-            {locationStatus === 'denied' && (
-              <button
-                onClick={() => window.location.reload()}
-                className="px-3 py-1 bg-red-500/30 hover:bg-red-500/40 rounded-lg text-xs text-red-300 transition-colors"
-              >
-                Retry
-              </button>
-            )}
+          <div className="bg-red-500/20 border border-red-500/30 rounded-xl p-4">
+            <p className="text-red-400 text-sm mb-2">กรุณาอนุญาตการเข้าถึงตำแหน่ง GPS</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-3 py-1 bg-red-500/30 hover:bg-red-500/40 rounded-lg text-xs text-red-300 transition-colors"
+            >
+              Reload Page
+            </button>
+          </div>
+        </div>
+      )}
+      {locationStatus === 'error' && (
+        <div className="px-6 pt-4">
+          <div className="bg-orange-500/20 border border-orange-500/30 rounded-xl p-4">
+            <p className="text-orange-400 text-sm">ไม่สามารถรับสัญญาณ GPS ได้</p>
           </div>
         </div>
       )}
@@ -414,10 +385,24 @@ export default function ActiveRun() {
           <RunMap 
             routeCoordinates={routePoints}
             currentPosition={currentPosition}
-            isActive={runStatus === 'active'}
-            preRunPosition={runStatus === 'idle' && preRunLat && preRunLng ? { lat: preRunLat, lng: preRunLng } : null}
-            onCenterClick={handleCenterMap}
+            isActive={runStatus === 'RUNNING'}
+            preRunPosition={runStatus === 'IDLE' && currentPosition ? currentPosition : null}
+            mapCenter={mapCenter}
+            mapZoom={mapZoom}
           />
+          {/* Re-center Button */}
+          {currentPosition && (
+            <button
+              onClick={handleRecenter}
+              className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-sm text-white p-3 rounded-full hover:bg-black/80 transition-colors shadow-lg"
+              aria-label="Re-center map"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
 
@@ -463,21 +448,11 @@ export default function ActiveRun() {
       {/* GPS Debug Card */}
       <div className="px-6 mb-8">
         <div className="bg-purple-500/10 border border-purple-500/30 rounded-2xl p-4">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-medium text-purple-400">GPS Debug</h3>
-            <button
-              onClick={handleTestGPS}
-              className="px-3 py-1 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/40 rounded-lg text-xs text-purple-300 transition-colors"
-            >
-              Test GPS
-            </button>
-          </div>
+          <h3 className="text-sm font-medium text-purple-400 mb-3">GPS Debug</h3>
           <div className="space-y-2 text-xs">
             <div className="flex justify-between">
-              <span className="text-gray-500">GPS Status:</span>
-              <span className={`font-mono ${gpsStatus.includes('OK') ? 'text-green-400' : gpsStatus.includes('ERROR') ? 'text-red-400' : 'text-gray-400'}`}>
-                {gpsStatus}
-              </span>
+              <span className="text-gray-500">Status:</span>
+              <span className="font-mono text-white">{locationStatus}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-500">Latitude:</span>
@@ -490,6 +465,18 @@ export default function ActiveRun() {
             <div className="flex justify-between">
               <span className="text-gray-500">Accuracy:</span>
               <span className="font-mono text-white">{gpsAccuracyM !== null ? `${gpsAccuracyM.toFixed(1)} m` : '--'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-500">Best Accuracy:</span>
+              <span className="font-mono text-emerald-400">{bestAccuracyM < 9999 ? `${bestAccuracyM.toFixed(1)} m` : '--'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-500">Has Centered:</span>
+              <span className="font-mono text-white">{hasCentered ? 'Yes' : 'No'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-500">Route Points:</span>
+              <span className="font-mono text-white">{routePoints.length}</span>
             </div>
           </div>
         </div>

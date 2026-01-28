@@ -51,12 +51,12 @@ const createRunnerIcon = () => {
   });
 };
 
-// Component to auto-center map on current position
+// Component to update map view when center changes
 function MapController({ center, zoom }) {
   const map = useMap();
   
   useEffect(() => {
-    if (center) {
+    if (center && center[0] && center[1]) {
       map.setView(center, zoom);
     }
   }, [center, zoom, map]);
@@ -64,14 +64,26 @@ function MapController({ center, zoom }) {
   return null;
 }
 
-export default function RunMap({ routeCoordinates, currentPosition, isActive, preRunPosition, showFullRoute = false, enableZoom = false, onCenterClick }) {
-  const [mapCenter, setMapCenter] = useState([13.7563, 100.5018]); // Default: Bangkok
+export default function RunMap({ routeCoordinates, currentPosition, isActive, preRunPosition, showFullRoute = false, enableZoom = false, onCenterClick, mapCenter: externalMapCenter, mapZoom: externalMapZoom }) {
+  const [mapCenter, setMapCenter] = useState([13.7563, 100.5018]);
   const [mapZoom, setMapZoom] = useState(16);
   const mapRef = useRef(null);
 
+  // Use external center/zoom if provided (for ActiveRun smart centering)
   useEffect(() => {
+    if (externalMapCenter) {
+      setMapCenter(externalMapCenter);
+    }
+    if (externalMapZoom) {
+      setMapZoom(externalMapZoom);
+    }
+  }, [externalMapCenter, externalMapZoom]);
+
+  // Auto-center logic for other cases
+  useEffect(() => {
+    if (externalMapCenter) return; // Skip if external control
+    
     if (showFullRoute && routeCoordinates && routeCoordinates.length > 0) {
-      // Calculate center point of entire route
       const latSum = routeCoordinates.reduce((sum, p) => sum + p.lat, 0);
       const lngSum = routeCoordinates.reduce((sum, p) => sum + p.lng, 0);
       const centerLat = latSum / routeCoordinates.length;
@@ -86,7 +98,7 @@ export default function RunMap({ routeCoordinates, currentPosition, isActive, pr
       const lastPoint = routeCoordinates[routeCoordinates.length - 1];
       setMapCenter([lastPoint.lat, lastPoint.lng]);
     }
-  }, [currentPosition, routeCoordinates, preRunPosition, showFullRoute]);
+  }, [currentPosition, routeCoordinates, preRunPosition, showFullRoute, externalMapCenter]);
 
   // Convert coordinates for Polyline
   const pathCoordinates = routeCoordinates.map(coord => [coord.lat, coord.lng]);
@@ -111,10 +123,8 @@ export default function RunMap({ routeCoordinates, currentPosition, isActive, pr
           maxZoom={19}
         />
         
-        {/* Auto-center controller */}
-        {isActive && currentPosition && (
-          <MapController center={[currentPosition.lat, currentPosition.lng]} zoom={mapZoom} />
-        )}
+        {/* Map controller */}
+        <MapController center={mapCenter} zoom={mapZoom} />
         
         {/* Draw the route path */}
         {pathCoordinates.length > 1 && (
@@ -256,18 +266,7 @@ export default function RunMap({ routeCoordinates, currentPosition, isActive, pr
             </div>
           </div>
 
-          {/* Center button */}
-          {onCenterClick && currentPosition && (
-            <button
-              onClick={onCenterClick}
-              className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-sm text-white p-3 rounded-full hover:bg-black/80 transition-colors shadow-lg"
-              aria-label="Center on location"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-              </svg>
-            </button>
-          )}
+
         </>
       )}
 
