@@ -445,43 +445,6 @@ export default function ActiveRun() {
         </div>
       </div>
 
-      {/* GPS Debug Card */}
-      <div className="px-6 mb-8">
-        <div className="bg-purple-500/10 border border-purple-500/30 rounded-2xl p-4">
-          <h3 className="text-sm font-medium text-purple-400 mb-3">GPS Debug</h3>
-          <div className="space-y-2 text-xs">
-            <div className="flex justify-between">
-              <span className="text-gray-500">Status:</span>
-              <span className="font-mono text-white">{locationStatus}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Latitude:</span>
-              <span className="font-mono text-white">{currentLat !== null ? currentLat.toFixed(6) : '--'}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Longitude:</span>
-              <span className="font-mono text-white">{currentLng !== null ? currentLng.toFixed(6) : '--'}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Accuracy:</span>
-              <span className="font-mono text-white">{gpsAccuracyM !== null ? `${gpsAccuracyM.toFixed(1)} m` : '--'}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Best Accuracy:</span>
-              <span className="font-mono text-emerald-400">{bestAccuracyM < 9999 ? `${bestAccuracyM.toFixed(1)} m` : '--'}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Has Centered:</span>
-              <span className="font-mono text-white">{hasCentered ? 'Yes' : 'No'}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Route Points:</span>
-              <span className="font-mono text-white">{routePoints.length}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Strava-Style Controls */}
       <StravaRunControls
         status={runStatus}

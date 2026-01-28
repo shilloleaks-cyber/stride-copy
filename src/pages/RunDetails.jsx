@@ -173,14 +173,8 @@ export default function RunDetails() {
               showFullRoute={true}
               enableZoom={true}
             />
-          </div>
-          {/* Debug Info */}
-          <div className="mt-3 bg-purple-500/10 border border-purple-500/30 rounded-lg p-3 text-xs space-y-1">
-            <p className="text-purple-400">Route points count: <span className="text-white font-mono">{run.route_points.length}</span></p>
-            <p className="text-purple-400">First point: <span className="text-white font-mono">{JSON.stringify(run.route_points[0])}</span></p>
-            <p className="text-purple-400">Last point: <span className="text-white font-mono">{JSON.stringify(run.route_points[run.route_points.length - 1])}</span></p>
-          </div>
-        </div>
+            </div>
+            </div>
       ) : (
         <div className="px-6 mb-6">
           <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-4">Route</h2>

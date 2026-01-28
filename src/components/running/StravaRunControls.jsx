@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export default function StravaRunControls({ status, onStart, onPause, onResume, onStop }) {
+  const [isFinishModalOpen, setIsFinishModalOpen] = React.useState(false);
+
   const handleButtonPress = (callback) => {
     // Haptic feedback if supported
     if (navigator.vibrate) {
@@ -22,8 +24,19 @@ export default function StravaRunControls({ status, onStart, onPause, onResume, 
     callback();
   };
 
+  const handleFinish = () => {
+    setIsFinishModalOpen(false);
+    onStop();
+  };
+
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none">
+    <>
+      {/* Backdrop when modal is open */}
+      {isFinishModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40" />
+      )}
+
+      <div className={`fixed bottom-0 left-0 right-0 z-50 pointer-events-none ${isFinishModalOpen ? 'hidden' : ''}`}>
       <div className="h-32 bg-gradient-to-t from-gray-950 via-gray-950/95 to-transparent backdrop-blur-lg pointer-events-auto">
         <div className="flex items-center justify-center h-full px-6">
           <AnimatePresence mode="wait">
@@ -175,6 +188,6 @@ export default function StravaRunControls({ status, onStart, onPause, onResume, 
           </AnimatePresence>
         </div>
       </div>
-    </div>
+    </>
   );
 }
