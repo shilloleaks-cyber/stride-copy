@@ -11,17 +11,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+
 import RunMap from '@/components/running/RunMap';
 import ShareRunDialog from '@/components/running/ShareRunDialog';
 import RunInsights from '@/components/running/RunInsights';
@@ -35,6 +25,8 @@ export default function RunDetails() {
   const runId = urlParams.get('id');
   const [editingNotes, setEditingNotes] = useState(false);
   const [notes, setNotes] = useState('');
+  const [isDeleteSheetOpen, setIsDeleteSheetOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const { data: run, isLoading } = useQuery({
     queryKey: ['run', runId],
@@ -56,12 +48,17 @@ export default function RunDetails() {
     }
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: () => base44.entities.Run.delete(runId),
-    onSuccess: () => {
+  const handleDelete = async () => {
+    if (isDeleting) return;
+    setIsDeleting(true);
+    try {
+      await base44.entities.Run.delete(runId);
+      setIsDeleteSheetOpen(false);
       navigate(createPageUrl('History'));
+    } catch (error) {
+      setIsDeleting(false);
     }
-  });
+  };
 
   const formatDuration = (seconds) => {
     if (!seconds) return '--:--';
@@ -119,30 +116,12 @@ export default function RunDetails() {
               </button>
             }
           />
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <button className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
-                <Trash2 className="w-5 h-5 text-red-400" />
-              </button>
-            </AlertDialogTrigger>
-            <AlertDialogContent className="bg-gray-900 border-gray-800">
-              <AlertDialogHeader>
-                <AlertDialogTitle className="text-white">Delete this run?</AlertDialogTitle>
-                <AlertDialogDescription className="text-gray-400">
-                  This action cannot be undone. This will permanently delete your run data.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700">Cancel</AlertDialogCancel>
-                <AlertDialogAction 
-                  onClick={() => deleteMutation.mutate()}
-                  className="bg-red-600 hover:bg-red-700"
-                >
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <button 
+            onClick={() => setIsDeleteSheetOpen(true)}
+            className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center"
+          >
+            <Trash2 className="w-5 h-5 text-red-400" />
+          </button>
         </div>
       </div>
 
@@ -349,6 +328,58 @@ export default function RunDetails() {
           </div>
         )}
       </div>
+
+      {/* Delete Bottom Sheet */}
+      {isDeleteSheetOpen && (
+        <>
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-black/55 z-[99998]"
+            onClick={() => !isDeleting && setIsDeleteSheetOpen(false)}
+          />
+          
+          {/* Bottom Sheet */}
+          <div className="fixed left-0 right-0 bottom-0 z-[99999] flex justify-center">
+            <div 
+              className="w-full max-w-[520px] bg-[#111] rounded-t-[20px] p-5 pb-[calc(20px+env(safe-area-inset-bottom))]"
+              style={{ boxShadow: 'none' }}
+            >
+              {/* Header */}
+              <div className="flex items-start justify-between mb-5">
+                <div>
+                  <h3 className="text-white text-lg font-medium mb-1">Delete run?</h3>
+                  <p className="text-gray-400 text-sm">This can't be undone.</p>
+                </div>
+                <button 
+                  onClick={() => !isDeleting && setIsDeleteSheetOpen(false)}
+                  className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                  disabled={isDeleting}
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Buttons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => !isDeleting && setIsDeleteSheetOpen(false)}
+                  disabled={isDeleting}
+                  className="flex-1 h-12 rounded-full border border-gray-600 text-gray-300 font-medium hover:bg-gray-800 transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="flex-1 h-12 rounded-full bg-red-600 text-white font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
+                >
+                  {isDeleting ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
