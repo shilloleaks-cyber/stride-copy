@@ -4,7 +4,7 @@ import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, TrendingUp, MapPin, Flame, Clock, Heart, Activity, Trophy, Target, Coins, Zap, Award, Users } from 'lucide-react';
+import { Play, TrendingUp, MapPin, Flame, Clock, Heart, Activity, Trophy, Target, Coins, Zap, Award } from 'lucide-react';
 import StatCard from '@/components/running/StatCard';
 import WeeklyChart from '@/components/running/WeeklyChart';
 import RunListItem from '@/components/running/RunListItem';
@@ -338,18 +338,18 @@ export default function Home() {
               </div>
             </motion.div>
           </Link>
-          <Link to={createPageUrl('Feed')}>
+          <Link to={createPageUrl('Challenges')}>
             <motion.div
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/30 rounded-2xl p-4 flex items-center gap-3"
+              className="bg-gradient-to-br from-purple-500/20 to-purple-600/10 border border-purple-500/30 rounded-2xl p-4 flex items-center gap-3"
             >
-              <div className="w-10 h-10 rounded-full bg-blue-500/30 flex items-center justify-center">
-                <Users className="w-5 h-5 text-blue-400" />
+              <div className="w-10 h-10 rounded-full bg-purple-500/30 flex items-center justify-center">
+                <Target className="w-5 h-5 text-purple-400" />
               </div>
               <div>
-                <p className="text-white font-medium">Your Crew</p>
-                <p className="text-xs text-gray-400">เข้าสู่ Crew</p>
+                <p className="text-white font-medium">Challenges</p>
+                <p className="text-xs text-gray-400">เข้าร่วมกิจกรรม</p>
               </div>
             </motion.div>
           </Link>
