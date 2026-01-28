@@ -23,6 +23,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import RunMap from '@/components/running/RunMap';
+import ShareRunDialog from '@/components/running/ShareRunDialog';
 
 export default function RunDetails() {
   const navigate = useNavigate();
@@ -107,9 +108,14 @@ export default function RunDetails() {
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div className="flex items-center gap-2">
-          <button className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
-            <Share2 className="w-5 h-5" />
-          </button>
+          <ShareRunDialog 
+            run={run}
+            trigger={
+              <button className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors">
+                <Share2 className="w-5 h-5" />
+              </button>
+            }
+          />
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <button className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
