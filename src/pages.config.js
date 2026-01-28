@@ -52,14 +52,14 @@ import Challenges from './pages/Challenges';
 import Discover from './pages/Discover';
 import Feed from './pages/Feed';
 import History from './pages/History';
+import Home from './pages/Home';
 import Leaderboard from './pages/Leaderboard';
+import PaceHistory from './pages/PaceHistory';
 import Profile from './pages/Profile';
 import RunDetails from './pages/RunDetails';
-import Wallet from './pages/Wallet';
-import Home from './pages/Home';
 import Stats from './pages/Stats';
-import PaceHistory from './pages/PaceHistory';
 import Training from './pages/Training';
+import Wallet from './pages/Wallet';
 import __Layout from './Layout.jsx';
 
 
@@ -69,14 +69,14 @@ export const PAGES = {
     "Discover": Discover,
     "Feed": Feed,
     "History": History,
+    "Home": Home,
     "Leaderboard": Leaderboard,
+    "PaceHistory": PaceHistory,
     "Profile": Profile,
     "RunDetails": RunDetails,
-    "Wallet": Wallet,
-    "Home": Home,
     "Stats": Stats,
-    "PaceHistory": PaceHistory,
     "Training": Training,
+    "Wallet": Wallet,
 }
 
 export const pagesConfig = {

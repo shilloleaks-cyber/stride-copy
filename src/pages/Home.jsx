@@ -9,6 +9,7 @@ import StatCard from '@/components/running/StatCard';
 import WeeklyChart from '@/components/running/WeeklyChart';
 import RunListItem from '@/components/running/RunListItem';
 import LevelBadge from '@/components/running/LevelBadge';
+import DailyQuestCard from '@/components/quest/DailyQuestCard';
 import confetti from 'canvas-confetti';
 
 export default function Home() {
@@ -311,6 +312,12 @@ export default function Home() {
             </motion.div>
           </Link>
         </div>
+      </div>
+
+      {/* Daily Quests */}
+      <div className="px-6 mb-8">
+        <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-3">Daily Quests</h2>
+        {user && <DailyQuestCard user={user} />}
       </div>
 
       {/* Quick Links */}

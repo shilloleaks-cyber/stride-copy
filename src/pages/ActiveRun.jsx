@@ -11,6 +11,7 @@ import HeartRateMonitor from '@/components/running/HeartRateMonitor';
 import RunMap from '@/components/running/RunMap';
 import GhostRunner from '@/components/running/GhostRunner';
 import LevelUpModal from '@/components/running/LevelUpModal';
+import FriendGhostSelector from '@/components/ghost/FriendGhostSelector';
 
 export default function ActiveRun() {
   const navigate = useNavigate();
@@ -29,11 +30,16 @@ export default function ActiveRun() {
   // Ghost run state
   const [ghostEnabled, setGhostEnabled] = useState(false);
   const [ghostRun, setGhostRun] = useState(null);
+  const [ghostFriend, setGhostFriend] = useState(null);
   const [timeDifference, setTimeDifference] = useState(0); // seconds ahead/behind
+  const [showFriendSelector, setShowFriendSelector] = useState(false);
   
   // Level up state
   const [showLevelModal, setShowLevelModal] = useState(false);
   const [levelUpData, setLevelUpData] = useState(null);
+  
+  // User state
+  const [user, setUser] = useState(null);
   
   // GPS state
   const [currentLat, setCurrentLat] = useState(null);
@@ -56,19 +62,23 @@ export default function ActiveRun() {
   const lastPositionRef = useRef(null);
   const lastCaptureTimeRef = useRef(0);
 
-  // Load potential ghost run on mount
+  // Load user and potential ghost run on mount
   useEffect(() => {
-    const loadGhostRun = async () => {
+    const loadData = async () => {
       try {
-        const user = await base44.auth.me();
-        const userLevel = user.current_level || 0;
+        const userData = await base44.auth.me();
+        setUser(userData);
+        const userLevel = userData.current_level || 0;
         
         // Ghost run unlocked at level 3
         if (userLevel < 3) return;
         
-        const allRuns = await base44.entities.Run.list('-start_time', 50);
+        const allRuns = await base44.entities.Run.filter({ 
+          created_by: userData.email,
+          status: 'completed'
+        });
+        
         const completedRuns = allRuns.filter(r => 
-          r.status === 'completed' && 
           r.route_points && 
           r.route_points.length > 5 &&
           r.distance_km > 0.5
@@ -82,11 +92,11 @@ export default function ActiveRun() {
           setGhostRun(bestRun);
         }
       } catch (error) {
-        console.log('Could not load ghost run:', error);
+        console.log('Could not load data:', error);
       }
     };
     
-    loadGhostRun();
+    loadData();
   }, []);
 
   // IDLE MODE: Auto GPS tracking on page load
@@ -424,7 +434,11 @@ export default function ActiveRun() {
     // Check if beat ghost
     if (ghostEnabled && ghostRun && timeDifference < 0) {
       // User beat ghost! (timeDifference is negative = ahead)
-      localStorage.setItem('beat_ghost', 'true');
+      if (ghostFriend) {
+        localStorage.setItem('beat_friend_ghost', ghostFriend.full_name || ghostFriend.email);
+      } else {
+        localStorage.setItem('beat_ghost', 'true');
+      }
     }
 
     navigate(createPageUrl(`RunDetails?id=${runId}`));
@@ -479,41 +493,95 @@ export default function ActiveRun() {
         </div>
       </div>
 
-      {/* Ghost Run Toggle */}
-      {ghostRun && runStatus === 'IDLE' && (
-        <div className="px-6 pt-4">
-          <motion.button
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            onClick={() => setGhostEnabled(!ghostEnabled)}
-            className={`w-full p-4 rounded-2xl border transition-all ${
-              ghostEnabled
-                ? 'bg-white/10 border-white/30'
-                : 'bg-white/5 border-white/10'
-            }`}
-          >
-            <div className="flex items-center justify-between">
+      {/* Ghost Run Options */}
+      {user && user.current_level >= 3 && runStatus === 'IDLE' && (
+        <div className="px-6 pt-4 space-y-3">
+          {/* Personal Best Ghost */}
+          {ghostRun && !ghostFriend && (
+            <motion.button
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              onClick={() => setGhostEnabled(!ghostEnabled)}
+              className={`w-full p-4 rounded-2xl border transition-all ${
+                ghostEnabled
+                  ? 'bg-white/10 border-white/30'
+                  : 'bg-white/5 border-white/10'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                    <span className="text-xl">👻</span>
+                  </div>
+                  <div className="text-left">
+                    <p className="text-white font-medium">Your Ghost</p>
+                    <p className="text-xs text-gray-400">
+                      Best: {ghostRun.distance_km.toFixed(2)}km
+                    </p>
+                  </div>
+                </div>
+                <div className={`w-12 h-6 rounded-full transition-colors ${
+                  ghostEnabled ? 'bg-emerald-500' : 'bg-gray-600'
+                }`}>
+                  <motion.div
+                    animate={{ x: ghostEnabled ? 24 : 2 }}
+                    className="w-5 h-5 bg-white rounded-full mt-0.5"
+                  />
+                </div>
+              </div>
+            </motion.button>
+          )}
+          
+          {/* Friend Ghost */}
+          {ghostFriend && ghostRun && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-blue-500/20 border border-blue-500/30 rounded-2xl p-4"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold">
+                    {ghostFriend.full_name?.[0] || '?'}
+                  </div>
+                  <div className="text-left">
+                    <p className="text-white font-medium">Racing {ghostFriend.full_name}</p>
+                    <p className="text-xs text-blue-400">
+                      {ghostRun.distance_km.toFixed(2)}km • {Math.floor(ghostRun.duration_seconds / 60)}min
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setGhostFriend(null);
+                    setGhostRun(null);
+                    setGhostEnabled(false);
+                  }}
+                  className="text-xs text-gray-400 hover:text-white"
+                >
+                  Remove
+                </button>
+              </div>
+            </motion.div>
+          )}
+          
+          {/* Friend Ghost Selector Button */}
+          {!ghostFriend && (
+            <button
+              onClick={() => setShowFriendSelector(true)}
+              className="w-full p-4 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-2xl transition-all text-left"
+            >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                  <span className="text-xl">👻</span>
+                <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+                  <span className="text-xl">👥</span>
                 </div>
-                <div className="text-left">
-                  <p className="text-white font-medium">Ghost Run</p>
-                  <p className="text-xs text-gray-400">
-                    Race your best: {ghostRun.distance_km.toFixed(2)}km in {Math.floor(ghostRun.duration_seconds / 60)}min
-                  </p>
+                <div>
+                  <p className="text-white font-medium">Race Friend Ghost</p>
+                  <p className="text-xs text-blue-400">Challenge your friends</p>
                 </div>
               </div>
-              <div className={`w-12 h-6 rounded-full transition-colors ${
-                ghostEnabled ? 'bg-emerald-500' : 'bg-gray-600'
-              }`}>
-                <motion.div
-                  animate={{ x: ghostEnabled ? 24 : 2 }}
-                  className="w-5 h-5 bg-white rounded-full mt-0.5"
-                />
-              </div>
-            </div>
-          </motion.button>
+            </button>
+          )}
         </div>
       )}
 
@@ -566,7 +634,7 @@ export default function ActiveRun() {
           {ghostEnabled && runStatus === 'RUNNING' && timeDifference !== 0 && (
             <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black/70 backdrop-blur-sm px-4 py-2 rounded-full">
               <p className={`text-sm font-medium ${timeDifference < 0 ? 'text-emerald-400' : 'text-orange-400'}`}>
-                {timeDifference < 0 ? '👻 Ahead' : '👻 Behind'} {Math.abs(Math.round(timeDifference))}s
+                {timeDifference < 0 ? (ghostFriend ? '🏆 Ahead' : '👻 Ahead') : (ghostFriend ? '😅 Behind' : '👻 Behind')} {Math.abs(Math.round(timeDifference))}s
               </p>
             </div>
           )}
@@ -645,6 +713,18 @@ export default function ActiveRun() {
           leveledUp={levelUpData.leveledUp}
         />
       )}
+
+      {/* Friend Ghost Selector */}
+      <FriendGhostSelector
+        isOpen={showFriendSelector}
+        onClose={() => setShowFriendSelector(false)}
+        onSelect={(run, friend) => {
+          setGhostRun(run);
+          setGhostFriend(friend);
+          setGhostEnabled(true);
+        }}
+        user={user}
+      />
     </div>
   );
 }
