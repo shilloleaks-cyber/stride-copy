@@ -9,6 +9,8 @@ import StravaRunControls from '@/components/running/StravaRunControls';
 import MetricDisplay from '@/components/running/MetricDisplay';
 import HeartRateMonitor from '@/components/running/HeartRateMonitor';
 import RunMap from '@/components/running/RunMap';
+import GhostRunner from '@/components/running/GhostRunner';
+import LevelUpModal from '@/components/running/LevelUpModal';
 
 export default function ActiveRun() {
   const navigate = useNavigate();
@@ -23,6 +25,15 @@ export default function ActiveRun() {
   const [calories, setCalories] = useState(0);
   const [runId, setRunId] = useState(null);
   const [routePoints, setRoutePoints] = useState([]);
+  
+  // Ghost run state
+  const [ghostEnabled, setGhostEnabled] = useState(false);
+  const [ghostRun, setGhostRun] = useState(null);
+  const [timeDifference, setTimeDifference] = useState(0); // seconds ahead/behind
+  
+  // Level up state
+  const [showLevelModal, setShowLevelModal] = useState(false);
+  const [levelUpData, setLevelUpData] = useState(null);
   
   // GPS state
   const [currentLat, setCurrentLat] = useState(null);
@@ -44,6 +55,39 @@ export default function ActiveRun() {
   const startTimeRef = useRef(null);
   const lastPositionRef = useRef(null);
   const lastCaptureTimeRef = useRef(0);
+
+  // Load potential ghost run on mount
+  useEffect(() => {
+    const loadGhostRun = async () => {
+      try {
+        const user = await base44.auth.me();
+        const userLevel = user.current_level || 0;
+        
+        // Ghost run unlocked at level 3
+        if (userLevel < 3) return;
+        
+        const allRuns = await base44.entities.Run.list('-start_time', 50);
+        const completedRuns = allRuns.filter(r => 
+          r.status === 'completed' && 
+          r.route_points && 
+          r.route_points.length > 5 &&
+          r.distance_km > 0.5
+        );
+        
+        if (completedRuns.length > 0) {
+          // Find best run (fastest pace)
+          const bestRun = completedRuns.reduce((best, run) => 
+            (!best || run.pace_min_per_km < best.pace_min_per_km) ? run : best
+          );
+          setGhostRun(bestRun);
+        }
+      } catch (error) {
+        console.log('Could not load ghost run:', error);
+      }
+    };
+    
+    loadGhostRun();
+  }, []);
 
   // IDLE MODE: Auto GPS tracking on page load
   useEffect(() => {
@@ -143,6 +187,41 @@ export default function ActiveRun() {
       setCalories(Math.round(caloriesPerMinute * (seconds / 60)));
     }
   }, [seconds, currentSpeed, runStatus]);
+
+  // Calculate ghost time difference
+  useEffect(() => {
+    if (!ghostEnabled || !ghostRun || runStatus !== 'RUNNING' || !routePoints.length) {
+      setTimeDifference(0);
+      return;
+    }
+    
+    // Find equivalent ghost time at current distance
+    const currentDist = distance;
+    let ghostTimeAtDist = 0;
+    let accumulatedDist = 0;
+    
+    for (let i = 1; i < ghostRun.route_points.length; i++) {
+      const prevPoint = ghostRun.route_points[i - 1];
+      const currPoint = ghostRun.route_points[i];
+      
+      const segmentDist = calculateDistance(
+        prevPoint.lat, prevPoint.lng,
+        currPoint.lat, currPoint.lng
+      );
+      
+      accumulatedDist += segmentDist;
+      
+      if (accumulatedDist >= currentDist) {
+        const segmentTime = (new Date(currPoint.time) - new Date(ghostRun.route_points[0].time)) / 1000;
+        ghostTimeAtDist = segmentTime;
+        break;
+      }
+    }
+    
+    if (ghostTimeAtDist > 0) {
+      setTimeDifference(ghostTimeAtDist - seconds);
+    }
+  }, [ghostEnabled, ghostRun, distance, seconds, runStatus, routePoints]);
 
   // Timer
   useEffect(() => {
@@ -302,6 +381,52 @@ export default function ActiveRun() {
       });
     }
 
+    // Calculate coins earned (1 coin per km)
+    const coinsEarned = Math.floor(distance);
+    
+    if (coinsEarned > 0) {
+      try {
+        const user = await base44.auth.me();
+        const oldTotalCoins = user.total_coins || 0;
+        const newTotalCoins = oldTotalCoins + coinsEarned;
+        
+        // Calculate levels
+        const oldLevel = Math.floor(Math.sqrt(oldTotalCoins / 10));
+        const newLevel = Math.floor(Math.sqrt(newTotalCoins / 10));
+        const leveledUp = newLevel > oldLevel;
+        
+        // Update user
+        await base44.auth.updateMe({
+          total_coins: newTotalCoins,
+          current_level: newLevel
+        });
+        
+        // Show level modal
+        setLevelUpData({
+          coinsEarned,
+          newLevel,
+          leveledUp
+        });
+        setShowLevelModal(true);
+        
+        // Log to wallet
+        await base44.entities.WalletLog.create({
+          user: user.email,
+          amount: coinsEarned,
+          type: 'run',
+          note: `Run: ${distance.toFixed(2)}km`
+        });
+      } catch (error) {
+        console.log('Could not update coins:', error);
+      }
+    }
+
+    // Check if beat ghost
+    if (ghostEnabled && ghostRun && timeDifference < 0) {
+      // User beat ghost! (timeDifference is negative = ahead)
+      localStorage.setItem('beat_ghost', 'true');
+    }
+
     navigate(createPageUrl(`RunDetails?id=${runId}`));
   };
 
@@ -354,6 +479,44 @@ export default function ActiveRun() {
         </div>
       </div>
 
+      {/* Ghost Run Toggle */}
+      {ghostRun && runStatus === 'IDLE' && (
+        <div className="px-6 pt-4">
+          <motion.button
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            onClick={() => setGhostEnabled(!ghostEnabled)}
+            className={`w-full p-4 rounded-2xl border transition-all ${
+              ghostEnabled
+                ? 'bg-white/10 border-white/30'
+                : 'bg-white/5 border-white/10'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                  <span className="text-xl">👻</span>
+                </div>
+                <div className="text-left">
+                  <p className="text-white font-medium">Ghost Run</p>
+                  <p className="text-xs text-gray-400">
+                    Race your best: {ghostRun.distance_km.toFixed(2)}km in {Math.floor(ghostRun.duration_seconds / 60)}min
+                  </p>
+                </div>
+              </div>
+              <div className={`w-12 h-6 rounded-full transition-colors ${
+                ghostEnabled ? 'bg-emerald-500' : 'bg-gray-600'
+              }`}>
+                <motion.div
+                  animate={{ x: ghostEnabled ? 24 : 2 }}
+                  className="w-5 h-5 bg-white rounded-full mt-0.5"
+                />
+              </div>
+            </div>
+          </motion.button>
+        </div>
+      )}
+
       {/* GPS Error Message */}
       {locationStatus === 'denied' && (
         <div className="px-6 pt-4">
@@ -389,7 +552,25 @@ export default function ActiveRun() {
             preRunPosition={runStatus === 'IDLE' && currentPosition ? currentPosition : null}
             mapCenter={mapCenter}
             mapZoom={mapZoom}
-          />
+          >
+            {ghostEnabled && ghostRun && (
+              <GhostRunner 
+                ghostRoute={ghostRun.route_points}
+                currentSeconds={seconds}
+                isActive={runStatus === 'RUNNING'}
+              />
+            )}
+          </RunMap>
+          
+          {/* Ghost Status */}
+          {ghostEnabled && runStatus === 'RUNNING' && timeDifference !== 0 && (
+            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black/70 backdrop-blur-sm px-4 py-2 rounded-full">
+              <p className={`text-sm font-medium ${timeDifference < 0 ? 'text-emerald-400' : 'text-orange-400'}`}>
+                {timeDifference < 0 ? '👻 Ahead' : '👻 Behind'} {Math.abs(Math.round(timeDifference))}s
+              </p>
+            </div>
+          )}
+          
           {/* Re-center Button */}
           {currentPosition && (
             <button
@@ -453,6 +634,17 @@ export default function ActiveRun() {
         onResume={handleResume}
         onStop={handleStop}
       />
-      </div>
-      );
-      }
+
+      {/* Level Up Modal */}
+      {levelUpData && (
+        <LevelUpModal
+          isOpen={showLevelModal}
+          onClose={() => setShowLevelModal(false)}
+          newLevel={levelUpData.newLevel}
+          coinsEarned={levelUpData.coinsEarned}
+          leveledUp={levelUpData.leveledUp}
+        />
+      )}
+    </div>
+  );
+}

@@ -8,16 +8,31 @@ import { Play, TrendingUp, MapPin, Flame, Clock, Heart, Activity, Trophy, Target
 import StatCard from '@/components/running/StatCard';
 import WeeklyChart from '@/components/running/WeeklyChart';
 import RunListItem from '@/components/running/RunListItem';
+import LevelBadge from '@/components/running/LevelBadge';
 import confetti from 'canvas-confetti';
 
 export default function Home() {
   const [showStreakAnimation, setShowStreakAnimation] = useState(false);
   const [streakMilestone, setStreakMilestone] = useState(null);
+  const [user, setUser] = useState(null);
 
   const { data: runs = [], isLoading } = useQuery({
     queryKey: ['runs'],
     queryFn: () => base44.entities.Run.list('-start_time', 100),
   });
+
+  // Load user data
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const userData = await base44.auth.me();
+        setUser(userData);
+      } catch (error) {
+        console.log('Could not load user:', error);
+      }
+    };
+    loadUser();
+  }, []);
 
   const completedRuns = runs.filter(r => r.status === 'completed');
   const recentRuns = completedRuns.slice(0, 5);
@@ -274,7 +289,13 @@ export default function Home() {
 
         {/* Game Section */}
         <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-3">Game</h2>
-        <div className="grid grid-cols-1 gap-3">
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          {user && (
+            <LevelBadge
+              level={user.current_level || 0}
+              totalCoins={user.total_coins || 0}
+            />
+          )}
           <Link to={createPageUrl('Wallet')}>
             <motion.div
               whileHover={{ scale: 1.02 }}
@@ -282,7 +303,7 @@ export default function Home() {
             >
               <StatCard 
                 label="Coin Balance" 
-                value="0" 
+                value={user?.total_coins || 0} 
                 unit="coins"
                 icon={Coins}
                 accent

@@ -64,7 +64,7 @@ function MapController({ center, zoom }) {
   return null;
 }
 
-export default function RunMap({ routeCoordinates, currentPosition, isActive, preRunPosition, showFullRoute = false, enableZoom = false, onCenterClick, mapCenter: externalMapCenter, mapZoom: externalMapZoom }) {
+export default function RunMap({ routeCoordinates, currentPosition, isActive, preRunPosition, showFullRoute = false, enableZoom = false, onCenterClick, mapCenter: externalMapCenter, mapZoom: externalMapZoom, children }) {
   const [mapCenter, setMapCenter] = useState([13.7563, 100.5018]);
   const [mapZoom, setMapZoom] = useState(16);
   const mapRef = useRef(null);
@@ -254,6 +254,9 @@ export default function RunMap({ routeCoordinates, currentPosition, isActive, pr
             icon={createRunnerIcon()}
           />
         )}
+
+        {/* Render children (e.g., GhostRunner) */}
+        {children}
         </MapContainer>
 
       {/* Map overlay info */}
