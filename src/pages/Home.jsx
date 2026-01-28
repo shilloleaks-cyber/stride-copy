@@ -4,7 +4,7 @@ import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, TrendingUp, MapPin, Flame, Clock, Heart, Activity, Trophy, Target } from 'lucide-react';
+import { Play, TrendingUp, MapPin, Flame, Clock, Heart, Activity, Trophy, Target, Coins, Zap, Award } from 'lucide-react';
 import StatCard from '@/components/running/StatCard';
 import WeeklyChart from '@/components/running/WeeklyChart';
 import RunListItem from '@/components/running/RunListItem';
@@ -18,21 +18,68 @@ export default function Home() {
   const completedRuns = runs.filter(r => r.status === 'completed');
   const recentRuns = completedRuns.slice(0, 5);
 
-  const stats = {
-    totalDistance: completedRuns.reduce((sum, r) => sum + (r.distance_km || 0), 0),
-    totalTime: completedRuns.reduce((sum, r) => sum + (r.duration_seconds || 0), 0),
-    totalCalories: completedRuns.reduce((sum, r) => sum + (r.calories_burned || 0), 0),
-    totalRuns: completedRuns.length,
-    avgPace: completedRuns.length > 0 
-      ? completedRuns.reduce((sum, r) => sum + (r.pace_min_per_km || 0), 0) / completedRuns.length 
-      : 0,
-  };
+  // Today's distance
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayRuns = completedRuns.filter(r => {
+    const runDate = new Date(r.start_time);
+    runDate.setHours(0, 0, 0, 0);
+    return runDate.getTime() === today.getTime();
+  });
+  const todayDistance = todayRuns.reduce((sum, r) => sum + (r.distance_km || 0), 0);
 
-  const formatTotalTime = (seconds) => {
-    const hours = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    if (hours > 0) return `${hours}h ${mins}m`;
-    return `${mins}m`;
+  // Current streak calculation
+  const calculateStreak = () => {
+    if (completedRuns.length === 0) return 0;
+    
+    const sortedRuns = [...completedRuns].sort((a, b) => 
+      new Date(b.start_time) - new Date(a.start_time)
+    );
+    
+    const uniqueDays = new Set();
+    sortedRuns.forEach(run => {
+      const date = new Date(run.start_time);
+      date.setHours(0, 0, 0, 0);
+      uniqueDays.add(date.getTime());
+    });
+    
+    const sortedDays = Array.from(uniqueDays).sort((a, b) => b - a);
+    let streak = 0;
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    
+    for (let i = 0; i < sortedDays.length; i++) {
+      const currentDay = sortedDays[i];
+      const expectedDay = today.getTime() - (i * oneDayMs);
+      
+      if (Math.abs(currentDay - expectedDay) < oneDayMs / 2) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+    
+    return streak;
+  };
+  const currentStreak = calculateStreak();
+
+  // This week's average pace
+  const oneWeekAgo = new Date(today);
+  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+  const weekRuns = completedRuns.filter(r => new Date(r.start_time) >= oneWeekAgo);
+  const weekAvgPace = weekRuns.length > 0
+    ? weekRuns.reduce((sum, r) => sum + (r.pace_min_per_km || 0), 0) / weekRuns.length
+    : 0;
+
+  // Best pace (personal record)
+  const bestPace = completedRuns.length > 0
+    ? Math.min(...completedRuns.map(r => r.pace_min_per_km || 999).filter(p => p > 0))
+    : 0;
+
+  const formatPace = (pace) => {
+    if (!pace || pace === 0) return '--:--';
+    const mins = Math.floor(pace);
+    const secs = Math.round((pace - mins) * 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -74,31 +121,59 @@ export default function Home() {
 
       {/* Stats Grid */}
       <div className="px-6 mb-8">
-        <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-4">Total Stats</h2>
-        <div className="grid grid-cols-2 gap-4">
+        {/* Today Section */}
+        <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-3">Today</h2>
+        <div className="grid grid-cols-2 gap-3 mb-6">
           <StatCard 
             label="Distance" 
-            value={stats.totalDistance.toFixed(1)} 
+            value={todayDistance.toFixed(1)} 
             unit="km" 
             icon={MapPin}
             accent
           />
           <StatCard 
-            label="Time" 
-            value={formatTotalTime(stats.totalTime)} 
-            icon={Clock}
-          />
-          <StatCard 
-            label="Calories" 
-            value={stats.totalCalories.toLocaleString()} 
-            unit="kcal" 
+            label="Streak" 
+            value={currentStreak} 
+            unit="days"
             icon={Flame}
           />
+        </div>
+
+        {/* Performance Section */}
+        <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-3">Performance</h2>
+        <div className="grid grid-cols-2 gap-3 mb-6">
           <StatCard 
-            label="Runs" 
-            value={stats.totalRuns} 
-            icon={Activity}
+            label="Avg Pace (Week)" 
+            value={formatPace(weekAvgPace)} 
+            unit="/km"
+            icon={Zap}
           />
+          <StatCard 
+            label="Best Pace" 
+            value={formatPace(bestPace)} 
+            unit="/km"
+            icon={Award}
+            accent
+          />
+        </div>
+
+        {/* Game Section */}
+        <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-3">Game</h2>
+        <div className="grid grid-cols-1 gap-3">
+          <Link to={createPageUrl('Wallet')}>
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <StatCard 
+                label="Coin Balance" 
+                value="0" 
+                unit="coins"
+                icon={Coins}
+                accent
+              />
+            </motion.div>
+          </Link>
         </div>
       </div>
 
