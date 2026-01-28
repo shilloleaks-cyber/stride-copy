@@ -4,10 +4,10 @@ import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { format, subDays, startOfDay, endOfDay, subWeeks, isToday, differenceInDays } from 'date-fns';
+import { format, subDays, startOfDay, endOfDay, subWeeks } from 'date-fns';
 import { 
   ArrowLeft, TrendingUp, Award, Target, 
-  MapPin, Clock, Flame, Heart, Zap, Calendar, Coins 
+  MapPin, Clock, Flame, Heart, Zap, Calendar 
 } from 'lucide-react';
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 
@@ -19,65 +19,25 @@ export default function Stats() {
     queryFn: () => base44.entities.Run.list('-start_time', 500),
   });
 
-  const { data: user } = useQuery({
-    queryKey: ['user'],
-    queryFn: () => base44.auth.me(),
-  });
-
-  const { data: walletLogs = [] } = useQuery({
-    queryKey: ['wallet-logs'],
-    queryFn: () => base44.entities.WalletLog.filter({ user: user?.email }),
-    enabled: !!user,
-  });
-
-  const coinBalance = walletLogs.reduce((sum, log) => sum + (log.amount || 0), 0);
-  const totalDistance = completedRuns.reduce((sum, r) => sum + (r.distance_km || 0), 0);
-  const nextRewardAt = Math.ceil(totalDistance / 5) * 5;
-  const kmToNextReward = nextRewardAt - totalDistance;
-
   const completedRuns = runs.filter(r => r.status === 'completed');
 
-  // Today's distance
-  const todayRuns = completedRuns.filter(r => isToday(new Date(r.start_time)));
-  const todayDistance = todayRuns.reduce((sum, r) => sum + (r.distance_km || 0), 0);
-
-  // Current streak
-  const calculateStreak = () => {
-    if (completedRuns.length === 0) return 0;
-    const sortedRuns = [...completedRuns].sort((a, b) => 
-      new Date(b.start_time).getTime() - new Date(a.start_time).getTime()
-    );
-    
-    let streak = 0;
-    let currentDate = new Date();
-    currentDate.setHours(0, 0, 0, 0);
-    
-    for (let run of sortedRuns) {
-      const runDate = new Date(run.start_time);
-      runDate.setHours(0, 0, 0, 0);
-      const daysDiff = differenceInDays(currentDate, runDate);
-      
-      if (daysDiff === streak) {
-        streak++;
-        currentDate = runDate;
-      } else if (daysDiff > streak) {
-        break;
-      }
-    }
-    return streak;
-  };
-  const currentStreak = calculateStreak();
-
-  // This week's runs
-  const thisWeekStart = startOfDay(subDays(new Date(), new Date().getDay()));
-  const thisWeekRuns = completedRuns.filter(r => new Date(r.start_time) >= thisWeekStart);
-  const thisWeekAvgPace = thisWeekRuns.length > 0
-    ? thisWeekRuns.reduce((sum, r) => sum + (r.pace_min_per_km || 0), 0) / thisWeekRuns.length
+  // Overall stats
+  const totalDistance = completedRuns.reduce((sum, r) => sum + (r.distance_km || 0), 0);
+  const totalTime = completedRuns.reduce((sum, r) => sum + (r.duration_seconds || 0), 0);
+  const totalCalories = completedRuns.reduce((sum, r) => sum + (r.calories_burned || 0), 0);
+  const avgPace = completedRuns.length > 0 
+    ? completedRuns.reduce((sum, r) => sum + (r.pace_min_per_km || 0), 0) / completedRuns.length 
+    : 0;
+  const avgHeartRate = completedRuns.filter(r => r.avg_heart_rate).length > 0
+    ? completedRuns.reduce((sum, r) => sum + (r.avg_heart_rate || 0), 0) / completedRuns.filter(r => r.avg_heart_rate).length
     : 0;
 
-  // Best pace (personal record)
-  const bestPace = completedRuns.filter(r => r.pace_min_per_km > 0).reduce((min, r) => 
+  // Personal bests
+  const longestRun = completedRuns.reduce((max, r) => (r.distance_km || 0) > (max?.distance_km || 0) ? r : max, null);
+  const fastestPace = completedRuns.filter(r => r.pace_min_per_km > 0).reduce((min, r) => 
     (r.pace_min_per_km || Infinity) < (min?.pace_min_per_km || Infinity) ? r : min, null);
+  const highestCalories = completedRuns.reduce((max, r) => (r.calories_burned || 0) > (max?.calories_burned || 0) ? r : max, null);
+  const longestDuration = completedRuns.reduce((max, r) => (r.duration_seconds || 0) > (max?.duration_seconds || 0) ? r : max, null);
 
   // Weekly data for chart
   const last4Weeks = Array.from({ length: 4 }, (_, i) => {
@@ -143,23 +103,28 @@ export default function Stats() {
         <div className="w-10" />
       </div>
 
-      {/* Top Stats */}
+      {/* Overall Stats */}
       <div className="px-6 pt-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-4">Today</h2>
+          <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-4">All Time Stats</h2>
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-500/30 rounded-2xl p-6 col-span-2">
-              <MapPin className="w-6 h-6 text-emerald-400 mb-4" />
-              <p className="text-5xl font-light text-white mb-2">{todayDistance.toFixed(2)}</p>
-              <p className="text-sm text-emerald-400">km today</p>
+            <div className="bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-500/30 rounded-2xl p-5">
+              <MapPin className="w-5 h-5 text-emerald-400 mb-3" />
+              <p className="text-3xl font-light text-white">{totalDistance.toFixed(1)}</p>
+              <p className="text-sm text-gray-400 mt-1">Total km</p>
+            </div>
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
+              <Clock className="w-5 h-5 text-blue-400 mb-3" />
+              <p className="text-3xl font-light text-white">{formatDuration(totalTime)}</p>
+              <p className="text-sm text-gray-400 mt-1">Total time</p>
             </div>
             <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
               <Flame className="w-5 h-5 text-orange-400 mb-3" />
-              <p className="text-3xl font-light text-white">{currentStreak}</p>
-              <p className="text-sm text-gray-400 mt-1">Day streak</p>
+              <p className="text-3xl font-light text-white">{totalCalories.toLocaleString()}</p>
+              <p className="text-sm text-gray-400 mt-1">Calories burned</p>
             </div>
             <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
               <Calendar className="w-5 h-5 text-purple-400 mb-3" />
@@ -170,47 +135,33 @@ export default function Stats() {
         </motion.div>
       </div>
 
-      {/* Performance */}
+      {/* Averages */}
       <div className="px-6 pt-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-4">Performance</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-              <Zap className="w-5 h-5 text-blue-400 mb-3" />
-              <p className="text-3xl font-light text-white">{formatPace(thisWeekAvgPace)}</p>
-              <p className="text-sm text-gray-400 mt-1">Avg pace (week)</p>
-            </div>
-            <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/30 rounded-2xl p-5">
-              <Award className="w-5 h-5 text-blue-400 mb-3" />
-              <p className="text-3xl font-light text-white">{bestPace ? formatPace(bestPace.pace_min_per_km) : '--:--'}</p>
-              <p className="text-sm text-blue-400 mt-1">Best pace</p>
-            </div>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* Game Stats */}
-      <div className="px-6 pt-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-4">Rewards</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 border border-yellow-500/30 rounded-2xl p-5">
-              <Coins className="w-5 h-5 text-yellow-400 mb-3" />
-              <p className="text-3xl font-light text-white">{coinBalance.toFixed(0)}</p>
-              <p className="text-sm text-yellow-400 mt-1">Coins</p>
-            </div>
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-              <Target className="w-5 h-5 text-emerald-400 mb-3" />
-              <p className="text-3xl font-light text-white">{kmToNextReward.toFixed(1)}</p>
-              <p className="text-sm text-gray-400 mt-1">km to reward</p>
+          <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-4">Averages</h2>
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <Zap className="w-5 h-5 text-blue-400 mx-auto mb-2" />
+                <p className="text-2xl font-light text-white">{formatPace(avgPace)}</p>
+                <p className="text-xs text-gray-500">Avg Pace/km</p>
+              </div>
+              <div>
+                <Heart className="w-5 h-5 text-red-400 mx-auto mb-2" />
+                <p className="text-2xl font-light text-white">{Math.round(avgHeartRate) || '--'}</p>
+                <p className="text-xs text-gray-500">Avg HR (bpm)</p>
+              </div>
+              <div>
+                <TrendingUp className="w-5 h-5 text-emerald-400 mx-auto mb-2" />
+                <p className="text-2xl font-light text-white">
+                  {completedRuns.length > 0 ? (totalDistance / completedRuns.length).toFixed(2) : '0'}
+                </p>
+                <p className="text-xs text-gray-500">Avg km/run</p>
+              </div>
             </div>
           </div>
         </motion.div>
@@ -221,7 +172,7 @@ export default function Stats() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
+          transition={{ delay: 0.2 }}
         >
           <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-4">Weekly Distance</h2>
           <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
@@ -256,7 +207,94 @@ export default function Stats() {
         </motion.div>
       </div>
 
+      {/* Pace Trend */}
+      {paceTrend.length > 0 && (
+        <div className="px-6 pt-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-4">Pace Trend (Last 10 Runs)</h2>
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
+              <div className="h-40">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={paceTrend}>
+                    <XAxis 
+                      dataKey="run" 
+                      axisLine={false} 
+                      tickLine={false}
+                      tick={{ fill: '#6b7280', fontSize: 11 }}
+                    />
+                    <YAxis hide reversed />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Line 
+                      type="monotone" 
+                      dataKey="pace" 
+                      stroke="#3b82f6" 
+                      strokeWidth={2}
+                      dot={{ fill: '#3b82f6', strokeWidth: 0, r: 3 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+              <p className="text-xs text-gray-500 text-center mt-2">Lower is better</p>
+            </div>
+          </motion.div>
+        </div>
+      )}
 
+      {/* Personal Records */}
+      <div className="px-6 pt-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-4 flex items-center gap-2">
+            <Award className="w-4 h-4 text-yellow-400" />
+            Personal Records
+          </h2>
+          <div className="space-y-3">
+            {longestRun && (
+              <div className="bg-gradient-to-r from-yellow-500/10 to-transparent border border-yellow-500/20 rounded-2xl p-4 flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-400">Longest Distance</p>
+                  <p className="text-xl font-light text-white">{longestRun.distance_km?.toFixed(2)} km</p>
+                </div>
+                <p className="text-xs text-gray-500">{format(new Date(longestRun.start_time), 'MMM d, yyyy')}</p>
+              </div>
+            )}
+            {fastestPace && fastestPace.pace_min_per_km > 0 && (
+              <div className="bg-gradient-to-r from-blue-500/10 to-transparent border border-blue-500/20 rounded-2xl p-4 flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-400">Fastest Pace</p>
+                  <p className="text-xl font-light text-white">{formatPace(fastestPace.pace_min_per_km)} /km</p>
+                </div>
+                <p className="text-xs text-gray-500">{format(new Date(fastestPace.start_time), 'MMM d, yyyy')}</p>
+              </div>
+            )}
+            {longestDuration && (
+              <div className="bg-gradient-to-r from-purple-500/10 to-transparent border border-purple-500/20 rounded-2xl p-4 flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-400">Longest Duration</p>
+                  <p className="text-xl font-light text-white">{formatDuration(longestDuration.duration_seconds)}</p>
+                </div>
+                <p className="text-xs text-gray-500">{format(new Date(longestDuration.start_time), 'MMM d, yyyy')}</p>
+              </div>
+            )}
+            {highestCalories && (
+              <div className="bg-gradient-to-r from-orange-500/10 to-transparent border border-orange-500/20 rounded-2xl p-4 flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-400">Most Calories Burned</p>
+                  <p className="text-xl font-light text-white">{highestCalories.calories_burned} kcal</p>
+                </div>
+                <p className="text-xs text-gray-500">{format(new Date(highestCalories.start_time), 'MMM d, yyyy')}</p>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      </div>
     </div>
   );
 }
