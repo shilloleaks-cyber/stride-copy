@@ -1,4 +1,6 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 import { motion } from 'framer-motion';
 import { Zap } from 'lucide-react';
 
@@ -11,11 +13,14 @@ export default function LevelBadge({ level, totalCoins, showProgress = true }) {
   const progress = Math.min((coinsInLevel / coinsNeeded) * 100, 100);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="bg-gradient-to-br from-purple-500/20 to-purple-600/10 border border-purple-500/30 rounded-2xl p-5"
-    >
+    <Link to={createPageUrl('LevelProgress')}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        className="bg-gradient-to-br from-purple-500/20 to-purple-600/10 border border-purple-500/30 rounded-2xl p-5"
+      >
       <div className="flex items-center gap-3 mb-3">
         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/30">
           <Zap className="w-6 h-6 text-white" fill="white" />
@@ -43,6 +48,7 @@ export default function LevelBadge({ level, totalCoins, showProgress = true }) {
           </p>
         </>
       )}
-    </motion.div>
+      </motion.div>
+    </Link>
   );
 }
