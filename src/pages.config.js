@@ -60,9 +60,6 @@ import RunDetails from './pages/RunDetails';
 import Stats from './pages/Stats';
 import Training from './pages/Training';
 import Wallet from './pages/Wallet';
-import Groups from './pages/Groups';
-import GroupDetails from './pages/GroupDetails';
-import ChallengeLeaderboard from './pages/ChallengeLeaderboard';
 import __Layout from './Layout.jsx';
 
 
@@ -80,9 +77,6 @@ export const PAGES = {
     "Stats": Stats,
     "Training": Training,
     "Wallet": Wallet,
-    "Groups": Groups,
-    "GroupDetails": GroupDetails,
-    "ChallengeLeaderboard": ChallengeLeaderboard,
 }
 
 export const pagesConfig = {
