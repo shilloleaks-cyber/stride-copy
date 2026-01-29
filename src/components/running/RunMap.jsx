@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Polyline, Marker, CircleMarker, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import { getRouteColor } from '@/components/utils/itemUtils';
 
 // Fix for default marker icons in Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
@@ -63,8 +64,6 @@ function MapController({ center, zoom }) {
   
   return null;
 }
-
-import { getRouteColor } from '@/utils/itemUtils';
 
 export default function RunMap({ routeCoordinates, currentPosition, isActive, preRunPosition, showFullRoute = false, enableZoom = false, onCenterClick, mapCenter: externalMapCenter, mapZoom: externalMapZoom, children }) {
   const [mapCenter, setMapCenter] = useState([13.7563, 100.5018]);

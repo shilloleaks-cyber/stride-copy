@@ -4,7 +4,7 @@ import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { isUnlocked, isEquipped, equipItem, unequipItem } from '@/utils/itemUtils';
+import { isUnlocked, isEquipped, equipItem, unequipItem } from '@/components/utils/itemUtils';
 
 export default function Redeem() {
   const navigate = useNavigate();
