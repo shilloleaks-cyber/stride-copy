@@ -340,7 +340,7 @@ export default function Home() {
         <div className="sectionLabel">GAME</div>
 
         <div className="grid2">
-          <div className="levelCard">
+          <button className="levelCard" onClick={() => navigate(createPageUrl('LevelProgress'))}>
             <div className="levelTop">
               <div className="levelIcon">⚡</div>
               <div>
@@ -361,7 +361,7 @@ export default function Home() {
             <div className="subNote">
               {levelProgress.current} / {levelProgress.need} coins to Level {level + 1}
             </div>
-          </div>
+          </button>
 
           <div className="statCard activeGlow">
             <div className="statTop">
@@ -710,6 +710,8 @@ const homeStyles = `
   border-radius: 18px;
   padding: 14px;
   box-shadow: var(--shadow);
+  cursor: pointer;
+  text-align: left;
 }
 .levelTop{ display:flex; gap: 12px; align-items:center; }
 .levelIcon{
