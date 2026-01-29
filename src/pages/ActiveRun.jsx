@@ -774,6 +774,56 @@ export default function ActiveRun() {
   );
 }
 
+function FloatingGameHUD({ distance, seconds }) {
+  const [notifications, setNotifications] = useState([]);
+  const notifIdRef = useRef(0);
+  
+  useEffect(() => {
+    if (seconds === 0) return;
+    
+    // Show notification every 20-30 seconds
+    const interval = setInterval(() => {
+      const id = ++notifIdRef.current;
+      const coinGain = Math.floor(Math.random() * 3) + 1;
+      
+      const messages = [
+        { icon: '🪙', text: `+${coinGain} coins`, type: 'coin' },
+        { icon: '🔥', text: 'streak', type: 'streak' },
+        { icon: '⚡', text: 'combo', type: 'combo' },
+      ];
+      
+      const msg = messages[Math.floor(Math.random() * messages.length)];
+      
+      setNotifications(prev => [...prev, { ...msg, id }]);
+      
+      setTimeout(() => {
+        setNotifications(prev => prev.filter(n => n.id !== id));
+      }, 3000);
+    }, Math.random() * 10000 + 20000); // 20-30 seconds
+    
+    return () => clearInterval(interval);
+  }, [seconds]);
+  
+  return (
+    <div className="gameHud">
+      <AnimatePresence>
+        {notifications.map(notif => (
+          <motion.div
+            key={notif.id}
+            initial={{ opacity: 0, y: -10, scale: 0.8 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.8 }}
+            className="hudItem"
+          >
+            <span className="hudIcon">{notif.icon}</span>
+            <span className="hudVal">{notif.text}</span>
+          </motion.div>
+        ))}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 function formatTime(totalSeconds) {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -803,6 +853,16 @@ const styles = `
     color: rgba(255,255,255,0.92);
     padding-bottom: 140px;
     font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    animation: backgroundShift 30s ease-in-out infinite;
+  }
+  
+  @keyframes backgroundShift {
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
   }
   
   .header {
@@ -863,40 +923,36 @@ const styles = `
   
   .gameHud {
     position: fixed;
-    top: 18px;
+    top: 80px;
     right: 16px;
     display: flex;
     flex-direction: column;
     gap: 8px;
     z-index: 100;
-    animation: fadeIn 0.5s ease-out;
-  }
-  
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateX(20px); }
-    to { opacity: 1; transform: translateX(0); }
   }
   
   .hudItem {
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 8px 12px;
+    padding: 10px 14px;
     border-radius: 999px;
-    background: rgba(10,10,10,0.75);
-    border: 1px solid rgba(191,255,0,0.25);
-    backdrop-filter: blur(10px);
-    box-shadow: 0 0 20px rgba(191,255,0,0.2);
+    background: rgba(10,10,10,0.85);
+    border: 1px solid rgba(191,255,0,0.30);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 0 24px rgba(191,255,0,0.35), 0 0 0 1px rgba(191,255,0,0.15) inset;
   }
   
   .hudIcon {
-    filter: drop-shadow(0 0 8px rgba(191,255,0,0.4));
+    filter: drop-shadow(0 0 10px rgba(191,255,0,0.5));
+    font-size: 16px;
   }
   
   .hudVal {
     font-weight: 900;
     color: var(--neon);
-    font-size: 14px;
+    font-size: 13px;
+    text-shadow: 0 0 12px rgba(191,255,0,0.6);
   }
   
   .timerSection {
@@ -920,42 +976,56 @@ const styles = `
   .mapSection {
     position: relative;
     padding: 0 16px;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
   }
   
   .mapOverlay {
     position: absolute;
     inset: 16px;
-    background: rgba(10,10,10,0.60);
+    background: rgba(10,10,10,0.30);
     z-index: 1;
     pointer-events: none;
-    border-radius: 22px;
+    border-radius: 24px;
   }
   
   .mapWrap {
     height: 220px;
-    border-radius: 22px;
+    border-radius: 24px;
     overflow: hidden;
-    border: 1px solid rgba(191,255,0,0.15);
-    box-shadow: 0 0 0 1px rgba(138,43,226,0.10) inset;
+    border: 1px solid rgba(191,255,0,0.20);
+    box-shadow: 
+      0 0 0 1px rgba(138,43,226,0.12) inset,
+      0 0 30px rgba(191,255,0,0.15),
+      0 8px 32px rgba(0,0,0,0.40);
     position: relative;
+    filter: saturate(0.75);
   }
   
   .metricsGrid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    gap: 16px;
     padding: 0 16px;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
   }
   
   .metricCard {
     background: var(--glass);
     backdrop-filter: blur(20px);
     border: 1px solid var(--stroke);
-    border-radius: 18px;
-    padding: 16px;
-    box-shadow: 0 0 0 1px rgba(191,255,0,0.08) inset, 0 8px 24px rgba(0,0,0,0.35);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 
+      0 0 0 1px rgba(191,255,0,0.10) inset, 
+      0 10px 28px rgba(0,0,0,0.40);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .metricCard:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+      0 0 0 1px rgba(191,255,0,0.15) inset,
+      0 12px 32px rgba(0,0,0,0.45);
   }
   
   .heartCard {
@@ -973,13 +1043,16 @@ const styles = `
     width: 20px;
     height: 20px;
     color: var(--neon);
-    animation: heartbeat 1.5s ease-in-out infinite;
+    animation: heartbeat 0.9s ease-in-out infinite;
+    filter: drop-shadow(0 0 8px rgba(191,255,0,0.4));
   }
   
   @keyframes heartbeat {
     0%, 100% { transform: scale(1); }
-    10% { transform: scale(1.1); }
-    20% { transform: scale(1); }
+    7% { transform: scale(1.15); }
+    14% { transform: scale(1); }
+    21% { transform: scale(1.08); }
+    28% { transform: scale(1); }
   }
   
   .metricLabel {
@@ -1004,7 +1077,7 @@ const styles = `
   }
   
   .heartPulseBar {
-    margin-top: 10px;
+    margin-top: 12px;
     height: 6px;
     border-radius: 999px;
     background: rgba(255,255,255,0.08);
@@ -1015,8 +1088,14 @@ const styles = `
     height: 100%;
     background: linear-gradient(90deg, var(--neon), var(--purple));
     border-radius: 999px;
-    box-shadow: 0 0 12px rgba(191,255,0,0.5);
-    transition: width 0.5s ease-out;
+    box-shadow: 0 0 14px rgba(191,255,0,0.6);
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
+  
+  @keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 14px rgba(191,255,0,0.6); }
+    50% { box-shadow: 0 0 20px rgba(191,255,0,0.8); }
   }
   
   .controls {
@@ -1061,21 +1140,45 @@ const styles = `
   }
   
   .resumeBtn, .startBtn {
-    border-color: rgba(191,255,0,0.35);
-    background: linear-gradient(135deg, rgba(191,255,0,0.15), rgba(138,43,226,0.10));
+    border-color: rgba(191,255,0,0.40);
+    background: linear-gradient(135deg, rgba(191,255,0,0.18), rgba(138,43,226,0.12));
     color: var(--neon);
-    box-shadow: 0 0 30px rgba(191,255,0,0.3);
+    box-shadow: 
+      0 0 40px rgba(191,255,0,0.4),
+      0 0 0 0 rgba(191,255,0,0.6);
+    animation: buttonPulse 2.5s ease-in-out infinite, buttonScale 3s ease-in-out infinite;
+  }
+  
+  @keyframes buttonPulse {
+    0%, 100% {
+      box-shadow: 
+        0 0 40px rgba(191,255,0,0.4),
+        0 0 0 0 rgba(191,255,0,0.6);
+    }
+    50% {
+      box-shadow: 
+        0 0 50px rgba(191,255,0,0.5),
+        0 0 0 12px rgba(191,255,0,0);
+    }
+  }
+  
+  @keyframes buttonScale {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.03); }
   }
   
   .resumeBtn:active, .startBtn:active {
     transform: scale(0.95);
+    animation: none;
   }
   
   .finishBtn {
-    border-color: rgba(255,50,50,0.40);
-    background: rgba(255,50,50,0.12);
-    color: rgba(255,80,80,0.95);
-    box-shadow: 0 0 30px rgba(255,50,50,0.25);
+    border-color: rgba(255,50,50,0.45);
+    background: rgba(255,50,50,0.15);
+    color: rgba(255,90,90,1);
+    box-shadow: 
+      0 0 35px rgba(255,50,50,0.35),
+      0 4px 16px rgba(0,0,0,0.40);
   }
   
   .holdProgress {
