@@ -21,7 +21,8 @@ export default function PostCard({
   onLike, 
   onComment, 
   onDelete,
-  onViewComments 
+  onViewComments,
+  isGroupPost = false
 }) {
   const isLiked = post.likes?.includes(currentUserEmail);
   const likesCount = post.likes?.length || 0;

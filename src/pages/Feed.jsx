@@ -4,7 +4,7 @@ import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Users, Compass, RefreshCw, TrendingUp, Clock } from 'lucide-react';
+import { Plus, Users, Compass, RefreshCw, TrendingUp, Clock, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -107,7 +107,7 @@ export default function Feed() {
       {/* Header */}
       <div className="sticky top-0 z-10 backdrop-blur-lg border-b border-white/5" style={{ backgroundColor: 'rgba(10, 10, 10, 0.95)' }}>
         <div className="px-6 pt-6 pb-4">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-3">
             <h1 className="text-2xl font-light">ฟีด</h1>
             <div className="flex items-center gap-2">
               {/* Sort Dropdown */}
@@ -160,6 +160,24 @@ export default function Feed() {
                 <Users className="w-5 h-5" />
               </Button>
             </div>
+          </div>
+
+          {/* Quick Links */}
+          <div className="flex gap-2 mb-3">
+            <button
+              onClick={() => navigate(createPageUrl('Groups'))}
+              className="flex-1 px-3 py-2 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center gap-2 text-sm"
+            >
+              <Users className="w-4 h-4 text-purple-400" />
+              <span className="text-purple-400">Groups</span>
+            </button>
+            <button
+              onClick={() => navigate(createPageUrl('Challenges'))}
+              className="flex-1 px-3 py-2 rounded-xl bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center gap-2 text-sm"
+            >
+              <TrendingUp className="w-4 h-4 text-yellow-400" />
+              <span className="text-yellow-400">Challenges</span>
+            </button>
           </div>
 
           {/* Tabs */}
