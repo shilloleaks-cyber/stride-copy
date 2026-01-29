@@ -1,11 +1,69 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 
+// ===== Coin Pop Animation =====
+function CoinPopLayer({ pops }) {
+  return (
+    <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 99999 }}>
+      {pops.map((pop) => (
+        <div
+          key={pop.id}
+          style={{
+            position: 'absolute',
+            left: pop.x,
+            top: pop.y,
+            transform: 'translate(-50%, -50%)',
+          }}
+        >
+          <div className="coinPopText">+{pop.amount}</div>
+          {pop.particles.map((p) => (
+            <div
+              key={p.k}
+              className="coinParticle"
+              style={{
+                '--dx': `${p.dx}px`,
+                '--dy': `${p.dy}px`,
+                '--s': p.s,
+              }}
+            >
+              🪙
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function Home() {
   const navigate = useNavigate();
+  
+  // Coin pop animation state
+  const [coinPops, setCoinPops] = useState([]);
+  const popId = useRef(0);
+
+  const triggerCoinPop = (amount = 10, opts = {}) => {
+    const x = opts.x ?? "90%";
+    const y = opts.y ?? "12%";
+    const id = ++popId.current;
+
+    const particles = Array.from({ length: 10 }).map((_, i) => {
+      const angle = (Math.PI * 2 * i) / 10;
+      const radius = 26 + Math.random() * 32;
+      const dx = Math.cos(angle) * radius;
+      const dy = Math.sin(angle) * radius * 0.8 - (18 + Math.random() * 18);
+      const s = (0.8 + Math.random() * 0.6).toFixed(2);
+      return { k: `${id}-${i}`, dx, dy, s };
+    });
+
+    setCoinPops((prev) => [...prev, { id, amount, x, y, particles }]);
+    setTimeout(() => {
+      setCoinPops((prev) => prev.filter((p) => p.id !== id));
+    }, 1100);
+  };
 
   // ===== Fetch Real Data =====
   const { data: user } = useQuery({
@@ -116,7 +174,26 @@ export default function Home() {
 
   // ===== UI states =====
   const [showPaceHistory, setShowPaceHistory] = useState(false);
-  const [coinPop, setCoinPop] = useState(false);
+
+  // ===== Watch coin balance changes =====
+  const prevCoinsRef = useRef(null);
+
+  useEffect(() => {
+    if (prevCoinsRef.current === null) {
+      prevCoinsRef.current = coinBalance;
+      return;
+    }
+
+    const prev = prevCoinsRef.current;
+    const next = coinBalance;
+
+    if (typeof prev === "number" && typeof next === "number" && next > prev) {
+      const gained = next - prev;
+      triggerCoinPop(gained, { x: "90%", y: "12%" });
+    }
+
+    prevCoinsRef.current = next;
+  }, [coinBalance]);
 
   const streakTier = useMemo(() => {
     if (streakDays >= 14) return 14;
@@ -161,6 +238,9 @@ export default function Home() {
     <div className="homeRoot">
       <style>{homeStyles}</style>
 
+      {/* Coin Pop Animation */}
+      <CoinPopLayer pops={coinPops} />
+
       {/* Sticky Coin HUD */}
       <button
         className="coinHud"
@@ -169,7 +249,6 @@ export default function Home() {
       >
         <span className="coinIcon">🪙</span>
         <span className="coinText">{coinBalance}</span>
-        {coinPop && <span className="coinPop">+1</span>}
       </button>
 
       <header className="topHeader">
@@ -469,6 +548,52 @@ const homeStyles = `
   --r: 22px;
   --shadow: 0 14px 40px rgba(0,0,0,.55);
   --shadow2: 0 10px 26px rgba(0,0,0,.45);
+}
+/* ===== Coin Pop Animation ===== */
+.coinPopText {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 32px;
+  font-weight: 900;
+  color: var(--lime);
+  text-shadow: 0 0 20px rgba(191,255,0,0.6), 0 0 40px rgba(191,255,0,0.3);
+  animation: coinTextPop 1s ease-out forwards;
+  pointer-events: none;
+}
+@keyframes coinTextPop {
+  0% { 
+    opacity: 0;
+    transform: translateX(-50%) translateY(0) scale(0.5);
+  }
+  20% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-20px) scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-60px) scale(0.9);
+  }
+}
+.coinParticle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-size: 20px;
+  animation: coinParticleBurst 1s ease-out forwards;
+  pointer-events: none;
+  filter: drop-shadow(0 0 8px rgba(191,255,0,0.4));
+}
+@keyframes coinParticleBurst {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(var(--s, 1)) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx, 0), var(--dy, 0)) scale(calc(var(--s, 1) * 0.3)) rotate(360deg);
+  }
 }
 .homeRoot {
   min-height: 100vh;
