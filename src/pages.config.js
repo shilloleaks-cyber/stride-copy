@@ -66,6 +66,7 @@ import Training from './pages/Training';
 import Wallet from './pages/Wallet';
 import Groups from './pages/Groups';
 import GroupDetail from './pages/GroupDetail';
+import CommunityCoach from './pages/CommunityCoach';
 import __Layout from './Layout.jsx';
 
 
@@ -89,6 +90,7 @@ export const PAGES = {
     "Wallet": Wallet,
     "Groups": Groups,
     "GroupDetail": GroupDetail,
+    "CommunityCoach": CommunityCoach,
 }
 
 export const pagesConfig = {
