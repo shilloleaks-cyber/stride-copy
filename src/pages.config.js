@@ -59,11 +59,11 @@ import Leaderboard from './pages/Leaderboard';
 import LevelProgress from './pages/LevelProgress';
 import PaceHistory from './pages/PaceHistory';
 import Profile from './pages/Profile';
+import RedeemCatalog from './pages/RedeemCatalog';
 import RunDetails from './pages/RunDetails';
 import Stats from './pages/Stats';
 import Training from './pages/Training';
 import Wallet from './pages/Wallet';
-import RedeemCatalog from './pages/RedeemCatalog';
 import __Layout from './Layout.jsx';
 
 
@@ -80,11 +80,11 @@ export const PAGES = {
     "LevelProgress": LevelProgress,
     "PaceHistory": PaceHistory,
     "Profile": Profile,
+    "RedeemCatalog": RedeemCatalog,
     "RunDetails": RunDetails,
     "Stats": Stats,
     "Training": Training,
     "Wallet": Wallet,
-    "RedeemCatalog": RedeemCatalog,
 }
 
 export const pagesConfig = {

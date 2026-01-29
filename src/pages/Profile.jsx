@@ -17,6 +17,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import ProfileAvatar from '@/components/shared/ProfileAvatar';
 import SkinsShop from '@/components/skins/SkinsShop';
+import PersonalBestsSection from '@/components/profile/PersonalBestsSection';
+import AchievementBadgesSection from '@/components/profile/AchievementBadgesSection';
+import RunningHistorySection from '@/components/profile/RunningHistorySection';
 import {
   Dialog,
   DialogContent,
@@ -271,44 +274,8 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
         </div>
       </div>
 
-      {/* Personal Records */}
-      <div className="px-6 mb-6">
-        <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-4 flex items-center gap-2">
-          <Award className="w-4 h-4 text-yellow-400" />
-          สถิติส่วนตัว
-        </h2>
-        <div className="space-y-3">
-          {longestRun && (
-            <div className="bg-gradient-to-r from-yellow-500/10 to-transparent border border-yellow-500/20 rounded-2xl p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center">
-                  <MapPin className="w-5 h-5 text-yellow-400" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-400">ระยะทางไกลที่สุด</p>
-                  <p className="text-xl font-light text-white">{longestRun.distance_km?.toFixed(2)} กม.</p>
-                </div>
-              </div>
-              <p className="text-xs text-gray-500">{format(new Date(longestRun.start_time), 'd MMM yyyy')}</p>
-            </div>
-          )}
-          
-          {fastestPace && fastestPace.pace_min_per_km > 0 && (
-            <div className="bg-gradient-to-r from-blue-500/10 to-transparent border border-blue-500/20 rounded-2xl p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-blue-400" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-400">เพซเร็วที่สุด</p>
-                  <p className="text-xl font-light text-white">{formatPace(fastestPace.pace_min_per_km)} /กม.</p>
-                </div>
-              </div>
-              <p className="text-xs text-gray-500">{format(new Date(fastestPace.start_time), 'd MMM yyyy')}</p>
-            </div>
-          )}
-        </div>
-      </div>
+      {/* Personal Bests */}
+      <PersonalBestsSection runs={runs} />
 
       {/* Quick Actions */}
       <div className="px-6 mb-6 space-y-3">
@@ -359,85 +326,11 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
         </motion.div>
       </div>
 
-      {/* Achievements Preview */}
-      <div className="px-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xs uppercase tracking-widest text-gray-500">ความสำเร็จ</h2>
-          <button 
-            onClick={() => navigate(createPageUrl('Achievements'))}
-            className="text-emerald-400 text-xs hover:text-emerald-300 transition-colors"
-          >
-            View All →
-          </button>
-        </div>
-        <div className="grid grid-cols-4 gap-3">
-          {stats.totalRuns >= 1 && (
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="aspect-square bg-gradient-to-br from-emerald-500/30 to-emerald-600/10 border border-emerald-500/30 rounded-2xl flex flex-col items-center justify-center p-2"
-            >
-              <span className="text-2xl mb-1">🏃</span>
-              <p className="text-[10px] text-gray-400 text-center">วิ่งครั้งแรก</p>
-            </motion.div>
-          )}
-          {stats.totalDistance >= 10 && (
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.1 }}
-              className="aspect-square bg-gradient-to-br from-blue-500/30 to-blue-600/10 border border-blue-500/30 rounded-2xl flex flex-col items-center justify-center p-2"
-            >
-              <span className="text-2xl mb-1">🎯</span>
-              <p className="text-[10px] text-gray-400 text-center">10 กม.</p>
-            </motion.div>
-          )}
-          {stats.totalDistance >= 50 && (
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.2 }}
-              className="aspect-square bg-gradient-to-br from-purple-500/30 to-purple-600/10 border border-purple-500/30 rounded-2xl flex flex-col items-center justify-center p-2"
-            >
-              <span className="text-2xl mb-1">⭐</span>
-              <p className="text-[10px] text-gray-400 text-center">50 กม.</p>
-            </motion.div>
-          )}
-          {stats.totalDistance >= 100 && (
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.3 }}
-              className="aspect-square bg-gradient-to-br from-yellow-500/30 to-yellow-600/10 border border-yellow-500/30 rounded-2xl flex flex-col items-center justify-center p-2"
-            >
-              <span className="text-2xl mb-1">🏆</span>
-              <p className="text-[10px] text-gray-400 text-center">100 กม.</p>
-            </motion.div>
-          )}
-          {stats.totalRuns >= 10 && (
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.4 }}
-              className="aspect-square bg-gradient-to-br from-orange-500/30 to-orange-600/10 border border-orange-500/30 rounded-2xl flex flex-col items-center justify-center p-2"
-            >
-              <span className="text-2xl mb-1">🔥</span>
-              <p className="text-[10px] text-gray-400 text-center">10 ครั้ง</p>
-            </motion.div>
-          )}
-          {stats.totalCalories >= 5000 && (
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.5 }}
-              className="aspect-square bg-gradient-to-br from-red-500/30 to-red-600/10 border border-red-500/30 rounded-2xl flex flex-col items-center justify-center p-2"
-            >
-              <span className="text-2xl mb-1">💪</span>
-              <p className="text-[10px] text-gray-400 text-center">5k kcal</p>
-            </motion.div>
-          )}
-        </div>
-      </div>
+      {/* Achievement Badges */}
+      <AchievementBadgesSection stats={stats} />
+
+      {/* Running History */}
+      <RunningHistorySection runs={runs} />
 
       {/* Share Dialog */}
       <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
