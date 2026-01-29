@@ -9,6 +9,7 @@ import { isUnlocked, isEquipped, equipItem, unequipItem } from '@/components/uti
 export default function Redeem() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [justUnlocked, setJustUnlocked] = useState(null);
 
   // --- Theme ---
   const THEME = useMemo(
@@ -105,6 +106,16 @@ export default function Redeem() {
     onSuccess: ({ item, newBalance }) => {
       queryClient.invalidateQueries(['currentUser']);
       toast.success(`Unlocked! ✅\n${item.title}\nRemaining: ${newBalance} coins`);
+      
+      // Trigger unlock animation
+      setJustUnlocked(item.id);
+      
+      // Screen pulse effect
+      document.body.style.animation = 'screenPulse 0.5s ease-out';
+      setTimeout(() => {
+        document.body.style.animation = '';
+        setJustUnlocked(null);
+      }, 500);
     },
     onError: (error) => {
       toast.error('Redeem failed. Please try again.');
@@ -196,7 +207,7 @@ export default function Redeem() {
           return (
             <div
               key={item.id}
-              className={`card ${unlocked ? "unlocked" : ""} ${equipped ? "equipped" : ""}`}
+              className={`card ${unlocked ? "unlocked" : ""} ${equipped ? "equipped" : ""} ${justUnlocked === item.id ? "justUnlocked" : ""}`}
               onClick={() => goDetail(item.id)}
               role="button"
               tabIndex={0}
@@ -346,6 +357,30 @@ function css(T) {
     border-color: rgba(191,255,0,0.55);
     background: linear-gradient(180deg, rgba(191,255,0,0.10), rgba(138,43,226,0.08));
     box-shadow: 0 0 24px rgba(191,255,0,0.3), 0 0 0 1px rgba(191,255,0,0.15) inset;
+  }
+  .card.justUnlocked{
+    animation: unlockGlow 0.5s ease-out;
+  }
+  
+  @keyframes unlockGlow {
+    0% {
+      box-shadow: 0 0 0 rgba(191,255,0,0.8), 0 12px 40px rgba(0,0,0,0.45);
+      transform: scale(1);
+    }
+    50% {
+      box-shadow: 0 0 40px rgba(191,255,0,0.8), 0 0 80px rgba(138,43,226,0.6);
+      transform: scale(1.02);
+    }
+    100% {
+      box-shadow: 0 0 24px rgba(191,255,0,0.3), 0 0 0 1px rgba(191,255,0,0.15) inset;
+      transform: scale(1);
+    }
+  }
+  
+  @keyframes screenPulse {
+    0% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.95; transform: scale(0.998); }
+    100% { opacity: 1; transform: scale(1); }
   }
 
   .cardTop{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }

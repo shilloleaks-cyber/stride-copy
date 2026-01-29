@@ -9,6 +9,7 @@ import { isUnlocked, isEquipped, equipItem, unequipItem } from '@/components/uti
 export default function RedeemDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [justUnlocked, setJustUnlocked] = useState(false);
 
   // Get item ID from URL
   const urlParams = new URLSearchParams(window.location.search);
