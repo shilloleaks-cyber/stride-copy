@@ -499,13 +499,8 @@ export default function ActiveRun() {
       </div>
       
       {/* Game HUD - Top Right */}
-      {runStatus === 'RUNNING' && distance > 0 && (
-        <div className="gameHud">
-          <div className="hudItem">
-            <span className="hudIcon">🪙</span>
-            <span className="hudVal">+{Math.floor(distance)}</span>
-          </div>
-        </div>
+      {runStatus === 'RUNNING' && (
+        <FloatingGameHUD distance={distance} seconds={seconds} />
       )}
 
       {/* Ghost Run Options */}
@@ -1191,9 +1186,17 @@ const styles = `
     z-index: 1;
   }
   
+  .pauseBtn {
+    border-color: rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.82);
+  }
+  
   @media (max-width: 420px) {
     .timerValue { font-size: 56px; }
     .metricValue { font-size: 28px; }
     .ctrlBtn { width: 62px; height: 62px; }
+    .metricsGrid { gap: 14px; }
+    .metricCard { padding: 18px; }
   }
 `;
