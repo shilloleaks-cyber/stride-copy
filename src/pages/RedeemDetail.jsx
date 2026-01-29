@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
@@ -133,6 +133,16 @@ export default function RedeemDetail() {
     onSuccess: ({ item, newBalance }) => {
       queryClient.invalidateQueries(['currentUser']);
       toast.success(`Unlocked! ✅\n${item.title}\nRemaining: ${newBalance} coins`);
+      
+      // Trigger unlock animation
+      setJustUnlocked(true);
+      
+      // Screen pulse effect
+      document.body.style.animation = 'screenPulse 0.5s ease-out';
+      setTimeout(() => {
+        document.body.style.animation = '';
+        setJustUnlocked(false);
+      }, 500);
     },
     onError: () => {
       toast.error('Redeem failed. Please try again.');
@@ -180,7 +190,7 @@ export default function RedeemDetail() {
       </div>
 
       {/* Preview Image */}
-      <div className="preview">
+      <div className={`preview ${justUnlocked ? "justUnlocked" : ""}`}>
         <img src={item.preview} alt={item.title} />
         <div className="previewIcon">{item.icon}</div>
       </div>
@@ -480,6 +490,28 @@ function css(T) {
     background: ${T.neon};
     font-weight: 900;
     box-shadow: 0 0 24px rgba(191,255,0,0.4);
+  }
+  
+  .preview.justUnlocked{
+    animation: unlockGlow 0.5s ease-out;
+  }
+  
+  @keyframes unlockGlow {
+    0% {
+      box-shadow: 0 0 0 rgba(191,255,0,0);
+    }
+    50% {
+      box-shadow: 0 0 60px rgba(191,255,0,0.8), 0 0 120px rgba(138,43,226,0.6);
+    }
+    100% {
+      box-shadow: 0 0 0 rgba(191,255,0,0);
+    }
+  }
+  
+  @keyframes screenPulse {
+    0% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.95; transform: scale(0.998); }
+    100% { opacity: 1; transform: scale(1); }
   }
 `;
 }
