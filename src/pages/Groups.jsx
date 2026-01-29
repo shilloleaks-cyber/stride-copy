@@ -79,11 +79,17 @@ export default function Groups() {
       await base44.entities.Group.update(group.id, {
         member_count: (group.member_count || 1) + 1,
       });
+
+      // Award coins for joining group
+      await base44.functions.invoke('awardActivityCoins', {
+        activityType: 'group_joined',
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['groups']);
       queryClient.invalidateQueries(['myGroupMemberships']);
-      toast.success('Joined group!');
+      queryClient.invalidateQueries(['currentUser']);
+      toast.success('Joined group! +30 coins');
     },
   });
 

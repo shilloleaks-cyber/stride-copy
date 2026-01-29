@@ -52,10 +52,16 @@ export default function Challenges() {
         is_completed: false,
         reward_claimed: false,
       });
+
+      // Award coins for joining challenge
+      await base44.functions.invoke('awardActivityCoins', {
+        activityType: 'challenge_joined',
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['myParticipations']);
-      toast.success('เข้าร่วม Challenge สำเร็จ!');
+      queryClient.invalidateQueries(['currentUser']);
+      toast.success('เข้าร่วม Challenge สำเร็จ! +20 coins');
     },
   });
 
@@ -203,9 +209,10 @@ export default function Challenges() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
+                    onClick={() => navigate(createPageUrl(`ChallengeDetail?id=${challenge.id}`))}
                     className={`bg-gradient-to-br ${
                       isCompleted ? 'from-emerald-500/20 to-emerald-600/10 border-emerald-500/30 neon-border' : 'from-white/5 to-transparent border-emerald-500/20 hover:border-emerald-500/40'
-                    } border rounded-2xl p-5 transition-colors`}
+                    } border rounded-2xl p-5 transition-colors cursor-pointer`}
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-2">
@@ -291,7 +298,8 @@ export default function Challenges() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  className="bg-white/5 border border-white/10 rounded-2xl p-5"
+                  onClick={() => navigate(createPageUrl(`ChallengeDetail?id=${challenge.id}`))}
+                  className="bg-white/5 border border-white/10 rounded-2xl p-5 cursor-pointer hover:bg-white/10 transition-colors"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <span className={`px-2 py-0.5 rounded-full text-xs ${

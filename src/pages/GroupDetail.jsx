@@ -72,11 +72,17 @@ export default function GroupDetail() {
         author_image: user.profile_image,
         likes: [],
       });
+
+      // Award coins for group post
+      await base44.functions.invoke('awardActivityCoins', {
+        activityType: 'group_post',
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['groupPosts']);
+      queryClient.invalidateQueries(['currentUser']);
       setPostContent('');
-      toast.success('Posted!');
+      toast.success('Posted! +15 coins');
     },
   });
 
