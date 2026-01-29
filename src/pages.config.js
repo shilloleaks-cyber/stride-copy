@@ -68,6 +68,8 @@ import RunDetails from './pages/RunDetails';
 import Stats from './pages/Stats';
 import Training from './pages/Training';
 import Wallet from './pages/Wallet';
+import Redeem from './pages/Redeem';
+import RedeemDetail from './pages/RedeemDetail';
 import __Layout from './Layout.jsx';
 
 
@@ -93,6 +95,8 @@ export const PAGES = {
     "Stats": Stats,
     "Training": Training,
     "Wallet": Wallet,
+    "Redeem": Redeem,
+    "RedeemDetail": RedeemDetail,
 }
 
 export const pagesConfig = {
