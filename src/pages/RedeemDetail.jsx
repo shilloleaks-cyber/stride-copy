@@ -4,6 +4,7 @@ import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { isUnlocked, isEquipped, equipItem, unequipItem } from '@/utils/itemUtils';
 
 export default function RedeemDetail() {
   const navigate = useNavigate();
@@ -100,8 +101,21 @@ export default function RedeemDetail() {
   });
 
   const coins = user?.total_coins || 0;
-  const isUnlocked = localStorage.getItem(`unlock:${item.id}`) === "1";
+  const itemUnlocked = isUnlocked(item.id);
+  const itemEquipped = isEquipped(item.id);
   const canAfford = coins >= item.price;
+  
+  const getItemType = (itemId) => {
+    const typeMap = {
+      'neon-route': 'route',
+      'profile-frame': 'frame',
+      'victory-sound': 'sound',
+      'ghost-skin': 'ghost',
+      'animated-badge': 'badge',
+      'streak-boost': 'shield',
+    };
+    return typeMap[itemId] || 'misc';
+  };
 
   // --- Redeem Mutation ---
   const redeemMutation = useMutation({
@@ -125,7 +139,7 @@ export default function RedeemDetail() {
   });
 
   const handleRedeem = () => {
-    if (isUnlocked || !canAfford) return;
+    if (itemUnlocked || !canAfford) return;
 
     const ok = window.confirm(
       `Redeem "${item.title}"?\nCost: ${item.price} coins`
@@ -133,6 +147,20 @@ export default function RedeemDetail() {
     if (!ok) return;
 
     redeemMutation.mutate({ item, currentCoins: coins });
+  };
+  
+  const handleToggleEquip = () => {
+    const itemType = getItemType(item.id);
+    
+    if (itemEquipped) {
+      unequipItem(item.id, itemType);
+      toast.success(`ยกเลิกการใช้งาน ${item.title}`);
+    } else {
+      equipItem(item.id, itemType);
+      toast.success(`ใช้งาน ${item.title} แล้ว!`);
+    }
+    
+    queryClient.invalidateQueries(['currentUser']);
   };
 
   return (
@@ -160,7 +188,11 @@ export default function RedeemDetail() {
       <div className="content">
         <div className="topRow">
           <div className={`tag ${item.tag.toLowerCase()}`}>{item.tag}</div>
-          {isUnlocked && <div className="unlocked">✓ Unlocked</div>}
+          {itemEquipped ? (
+            <div className="equipped">✓ Equipped</div>
+          ) : itemUnlocked ? (
+            <div className="unlocked">✓ Unlocked</div>
+          ) : null}
         </div>
 
         <h1 className="itemTitle">{item.title}</h1>
@@ -192,13 +224,22 @@ export default function RedeemDetail() {
             </div>
           </div>
 
-          <button
-            className={`redeemBtn ${isUnlocked ? "btnDone" : canAfford ? "btnOn" : "btnOff"}`}
-            onClick={handleRedeem}
-            disabled={isUnlocked || !canAfford}
-          >
-            {isUnlocked ? "Already Unlocked" : canAfford ? "Redeem Now" : "Not Enough Coins"}
-          </button>
+          {itemUnlocked ? (
+            <button
+              className={`redeemBtn ${itemEquipped ? "btnEquipped" : "btnEquip"}`}
+              onClick={handleToggleEquip}
+            >
+              {itemEquipped ? "✓ Equipped" : "Equip Now"}
+            </button>
+          ) : (
+            <button
+              className={`redeemBtn ${canAfford ? "btnOn" : "btnOff"}`}
+              onClick={handleRedeem}
+              disabled={!canAfford}
+            >
+              {canAfford ? "Redeem Now" : "Not Enough Coins"}
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -300,6 +341,16 @@ function css(T) {
     border:1px solid rgba(191,255,0,0.35);
     color:${T.neon};
     background: rgba(191,255,0,0.06);
+  }
+  
+  .equipped{
+    font-size:12px;
+    padding:8px 12px;
+    border-radius:999px;
+    border:1px solid rgba(191,255,0,0.45);
+    color: #0A0A0A;
+    background: ${T.neon};
+    font-weight: 900;
   }
 
   .itemTitle{
@@ -413,6 +464,21 @@ function css(T) {
     border-color: rgba(191,255,0,0.35);
     color:${T.neon};
     background: rgba(191,255,0,0.06);
+  }
+  
+  .btnEquip{
+    border-color: rgba(191,255,0,0.35);
+    color: #0A0A0A;
+    background: linear-gradient(135deg, rgba(138,43,226,0.95), rgba(191,255,0,0.95));
+    box-shadow: 0 8px 24px rgba(138,43,226,0.4);
+  }
+  
+  .btnEquipped{
+    border-color: rgba(191,255,0,0.55);
+    color: #0A0A0A;
+    background: ${T.neon};
+    font-weight: 900;
+    box-shadow: 0 0 24px rgba(191,255,0,0.4);
   }
 `;
 }

@@ -4,6 +4,7 @@ import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { isUnlocked, isEquipped, equipItem, unequipItem } from '@/utils/itemUtils';
 
 export default function Redeem() {
   const navigate = useNavigate();
@@ -110,8 +111,34 @@ export default function Redeem() {
     },
   });
 
-  // --- Helpers ---
-  const isUnlocked = (id) => localStorage.getItem(`unlock:${id}`) === "1";
+  // --- Get item type ---
+  const getItemType = (itemId) => {
+    const typeMap = {
+      'neon-route': 'route',
+      'profile-frame': 'frame',
+      'victory-sound': 'sound',
+      'ghost-skin': 'ghost',
+      'animated-badge': 'badge',
+      'streak-boost': 'shield',
+    };
+    return typeMap[itemId] || 'misc';
+  };
+
+  // --- Handle Equip/Unequip ---
+  const handleToggleEquip = (item) => {
+    const itemType = getItemType(item.id);
+    
+    if (isEquipped(item.id)) {
+      unequipItem(item.id, itemType);
+      toast.success(`ยกเลิกการใช้งาน ${item.title}`);
+    } else {
+      equipItem(item.id, itemType);
+      toast.success(`ใช้งาน ${item.title} แล้ว!`);
+    }
+    
+    // Force re-render
+    queryClient.invalidateQueries(['currentUser']);
+  };
 
   const handleRedeem = (item) => {
     // ถ้าปลดล็อกแล้ว
@@ -163,19 +190,22 @@ export default function Redeem() {
       <div className="grid">
         {items.map((item) => {
           const unlocked = isUnlocked(item.id);
+          const equipped = isEquipped(item.id);
           const afford = coins >= item.price;
 
           return (
             <div
               key={item.id}
-              className={`card ${unlocked ? "unlocked" : ""}`}
+              className={`card ${unlocked ? "unlocked" : ""} ${equipped ? "equipped" : ""}`}
               onClick={() => goDetail(item.id)}
               role="button"
               tabIndex={0}
             >
               <div className="cardTop">
                 <div className="icon">{item.icon}</div>
-                <div className={`tag ${item.tag.toLowerCase()}`}>{item.tag}</div>
+                <div className={`tag ${item.tag.toLowerCase()}`}>
+                  {equipped ? "Equipped" : item.tag}
+                </div>
               </div>
 
               <div className="cardTitle">{item.title}</div>
@@ -187,16 +217,28 @@ export default function Redeem() {
                   <span className="priceUnit">coins</span>
                 </div>
 
-                <button
-                  className={`btn ${unlocked ? "btnDone" : afford ? "btnOn" : "btnOff"}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRedeem(item);
-                  }}
-                  disabled={unlocked || !afford}
-                >
-                  {unlocked ? "Unlocked" : afford ? "Redeem" : "Need coins"}
-                </button>
+                {unlocked ? (
+                  <button
+                    className={`btn ${equipped ? "btnEquipped" : "btnEquip"}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleEquip(item);
+                    }}
+                  >
+                    {equipped ? "✓ Equipped" : "Equip"}
+                  </button>
+                ) : (
+                  <button
+                    className={`btn ${afford ? "btnOn" : "btnOff"}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRedeem(item);
+                    }}
+                    disabled={!afford}
+                  >
+                    {afford ? "Redeem" : "Need coins"}
+                  </button>
+                )}
               </div>
             </div>
           );
@@ -300,6 +342,11 @@ function css(T) {
     border-color: rgba(191,255,0,0.35);
     box-shadow: 0 0 0 1px rgba(191,255,0,0.10) inset, 0 12px 40px rgba(0,0,0,0.45);
   }
+  .card.equipped{
+    border-color: rgba(191,255,0,0.55);
+    background: linear-gradient(180deg, rgba(191,255,0,0.10), rgba(138,43,226,0.08));
+    box-shadow: 0 0 24px rgba(191,255,0,0.3), 0 0 0 1px rgba(191,255,0,0.15) inset;
+  }
 
   .cardTop{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
   .icon{
@@ -369,6 +416,17 @@ function css(T) {
     border-color: rgba(191,255,0,0.35);
     color:${T.neon};
     background: rgba(191,255,0,0.06);
+  }
+  .btnEquip{
+    border-color: rgba(191,255,0,0.30);
+    color:${T.neon};
+    background: linear-gradient(180deg, rgba(191,255,0,0.08), rgba(138,43,226,0.05));
+  }
+  .btnEquipped{
+    border-color: rgba(191,255,0,0.45);
+    color: #0A0A0A;
+    background: ${T.neon};
+    font-weight: 900;
   }
 
   .footer{

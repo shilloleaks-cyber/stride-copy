@@ -64,10 +64,15 @@ function MapController({ center, zoom }) {
   return null;
 }
 
+import { getRouteColor } from '@/utils/itemUtils';
+
 export default function RunMap({ routeCoordinates, currentPosition, isActive, preRunPosition, showFullRoute = false, enableZoom = false, onCenterClick, mapCenter: externalMapCenter, mapZoom: externalMapZoom, children }) {
   const [mapCenter, setMapCenter] = useState([13.7563, 100.5018]);
   const [mapZoom, setMapZoom] = useState(16);
   const mapRef = useRef(null);
+  
+  // Get equipped route color
+  const routeStyle = getRouteColor();
 
   // Use external center/zoom if provided (for ActiveRun smart centering)
   useEffect(() => {
@@ -129,24 +134,24 @@ export default function RunMap({ routeCoordinates, currentPosition, isActive, pr
         {/* Draw the route path */}
         {pathCoordinates.length > 1 && (
           <>
-            {/* Purple glow layer */}
+            {/* Glow layer */}
             <Polyline
               positions={pathCoordinates}
               pathOptions={{
-                color: '#8A2BE2',
-                weight: 10,
-                opacity: 0.3,
+                color: routeStyle.glow,
+                weight: routeStyle.glowWeight,
+                opacity: routeStyle.glowOpacity,
                 lineCap: 'round',
                 lineJoin: 'round'
               }}
             />
-            {/* Neon green route */}
+            {/* Main route */}
             <Polyline
               positions={pathCoordinates}
               pathOptions={{
-                color: '#BFFF00',
-                weight: 5,
-                opacity: 1,
+                color: routeStyle.main,
+                weight: routeStyle.weight,
+                opacity: routeStyle.opacity,
                 lineCap: 'round',
                 lineJoin: 'round'
               }}
