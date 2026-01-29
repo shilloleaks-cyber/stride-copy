@@ -446,52 +446,67 @@ export default function ActiveRun() {
 
   const pace = distance > 0 ? (seconds / 60) / distance : 0;
   const formatPace = (pace) => {
-    if (!pace || pace === Infinity || pace === 0) return '--:--';
+    // Show "--:--" for very short distances
+    if (!pace || pace === Infinity || pace === 0 || distance < 0.05) return '--:--';
     const mins = Math.floor(pace);
     const secs = Math.round((pace - mins) * 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
   
+  // Hold to finish state
+  const [holdProgress, setHoldProgress] = useState(0);
+  const holdIntervalRef = useRef(null);
+  
+  const handleFinishHold = () => {
+    setHoldProgress(0);
+    holdIntervalRef.current = setInterval(() => {
+      setHoldProgress(prev => {
+        const next = prev + 5;
+        if (next >= 100) {
+          clearInterval(holdIntervalRef.current);
+          handleStop();
+          return 100;
+        }
+        return next;
+      });
+    }, 100);
+  };
+  
+  const handleFinishRelease = () => {
+    if (holdIntervalRef.current) {
+      clearInterval(holdIntervalRef.current);
+    }
+    setHoldProgress(0);
+  };
+  
   const currentPosition = currentLat && currentLng ? { lat: currentLat, lng: currentLng } : null;
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white pb-32">
+    <div className="activeRunPage">
+      <style>{styles}</style>
       {/* Header */}
-      <div className="px-6 pt-6 flex items-center justify-between">
-        <button 
-          onClick={() => navigate(createPageUrl('Home'))}
-          className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center"
-        >
+      <div className="header">
+        <button onClick={() => navigate(createPageUrl('Home'))} className="backBtn">
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <div className="flex items-center gap-3">
-          {/* Location Status Chip */}
-          <span className={`px-3 py-1 rounded-full text-xs flex items-center gap-2 ${
-            locationStatus === 'loading' ? 'bg-yellow-500/20 text-yellow-400' :
-            locationStatus === 'ready' ? 'bg-emerald-500/20 text-emerald-400' :
-            locationStatus === 'denied' ? 'bg-red-500/20 text-red-400' :
-            'bg-orange-500/20 text-orange-400'
-          }`}>
-            <div className={`w-1.5 h-1.5 rounded-full ${
-              locationStatus === 'loading' ? 'bg-yellow-400 animate-pulse' :
-              locationStatus === 'ready' ? 'bg-emerald-400' :
-              locationStatus === 'denied' ? 'bg-red-400' :
-              'bg-orange-400'
-            }`} />
-            {locationStatus === 'loading' && 'Locating...'}
-            {locationStatus === 'ready' && gpsAccuracyM && `GPS Ready (±${gpsAccuracyM.toFixed(0)}m)`}
-            {locationStatus === 'denied' && 'Location Off'}
-            {locationStatus === 'error' && 'GPS Error'}
-          </span>
-          <span className={`px-3 py-1 rounded-full text-xs uppercase tracking-wider ${
-            runStatus === 'RUNNING' ? 'bg-emerald-500/20 text-emerald-400' :
-            runStatus === 'PAUSED' ? 'bg-amber-500/20 text-amber-400' :
-            'bg-white/10 text-gray-400'
-          }`}>
-            {runStatus}
-          </span>
-        </div>
+        <span className={`statusChip ${locationStatus === 'ready' ? 'ready' : ''}`}>
+          <div className="statusDot" />
+          {locationStatus === 'loading' && 'Locating...'}
+          {locationStatus === 'ready' && gpsAccuracyM && `GPS (±${gpsAccuracyM.toFixed(0)}m)`}
+          {locationStatus === 'denied' && 'Location Off'}
+          {locationStatus === 'error' && 'GPS Error'}
+        </span>
       </div>
+      
+      {/* Game HUD - Top Right */}
+      {runStatus === 'RUNNING' && distance > 0 && (
+        <div className="gameHud">
+          <div className="hudItem">
+            <span className="hudIcon">🪙</span>
+            <span className="hudVal">+{Math.floor(distance)}</span>
+          </div>
+        </div>
+      )}
 
       {/* Ghost Run Options */}
       {user && user.current_level >= 3 && runStatus === 'IDLE' && (
@@ -608,11 +623,14 @@ export default function ActiveRun() {
       )}
 
       {/* Timer */}
-      <RunTimer seconds={seconds} isActive={runStatus === 'active'} />
+      <div className="timerSection">
+        <div className="timerValue">{formatTime(seconds)}</div>
+      </div>
 
       {/* Map */}
-      <div className="px-6 mb-6">
-        <div className="h-64 rounded-2xl overflow-hidden border border-white/10 relative">
+      <div className="mapSection">
+        <div className="mapOverlay" />
+        <div className="mapWrap">
           <RunMap 
             routeCoordinates={routePoints}
             currentPosition={currentPosition}
@@ -655,53 +673,80 @@ export default function ActiveRun() {
         </div>
       </div>
 
-      {/* Main Metrics */}
-      <div className="px-6 mb-6">
-        <div className="grid grid-cols-3 gap-6">
-          <MetricDisplay label="Distance" value={distance.toFixed(2)} unit="km" />
-          <MetricDisplay label="Pace" value={formatPace(pace)} unit="/km" />
-          <MetricDisplay label="Speed" value={currentSpeed.toFixed(1)} unit="km/h" />
+      {/* Metrics Grid */}
+      <div className="metricsGrid">
+        <div className="metricCard">
+          <div className="metricLabel">DISTANCE</div>
+          <div className="metricValue">{distance.toFixed(2)} <span className="metricUnit">km</span></div>
         </div>
-      </div>
-
-      {/* Heart Rate */}
-      <div className="px-6 mb-6">
-        <HeartRateMonitor bpm={heartRate} isActive={runStatus === 'active'} />
-      </div>
-
-      {/* Additional Stats */}
-      <div className="px-6 mb-8">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4">
-            <div className="p-2 rounded-xl bg-orange-500/20">
-              <Flame className="w-5 h-5 text-orange-400" />
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wider">Calories</p>
-              <p className="text-2xl font-light text-white">{calories}</p>
-            </div>
+        <div className="metricCard">
+          <div className="metricLabel">PACE</div>
+          <div className="metricValue">{formatPace(pace)} <span className="metricUnit">/km</span></div>
+        </div>
+        <div className="metricCard">
+          <div className="metricLabel">SPEED</div>
+          <div className="metricValue">{currentSpeed.toFixed(1)} <span className="metricUnit">km/h</span></div>
+        </div>
+        <div className="metricCard heartCard">
+          <div className="heartTop">
+            <Heart className="heartIcon" fill="currentColor" />
+            <div className="metricLabel">HEART RATE</div>
           </div>
-          
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4">
-            <div className="p-2 rounded-xl bg-blue-500/20">
-              <Zap className="w-5 h-5 text-blue-400" />
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wider">Max Speed</p>
-              <p className="text-2xl font-light text-white">{maxSpeed.toFixed(1)}</p>
-            </div>
+          <div className="metricValue">{heartRate} <span className="metricUnit">bpm</span></div>
+          <div className="heartPulseBar">
+            <div className="heartPulse" style={{ width: `${(heartRate / 200) * 100}%` }} />
           </div>
         </div>
       </div>
 
-      {/* Strava-Style Controls */}
-      <StravaRunControls
-        status={runStatus}
-        onStart={handleStart}
-        onPause={handlePause}
-        onResume={handleResume}
-        onStop={handleStop}
-      />
+      {/* Controls */}
+      <div className="controls">
+        {runStatus === 'IDLE' && (
+          <button className="ctrlBtn startBtn" onClick={handleStart}>
+            <span className="ctrlIcon">▶</span>
+          </button>
+        )}
+        
+        {runStatus === 'RUNNING' && (
+          <>
+            <button className="ctrlBtn pauseBtn" onClick={handlePause}>
+              <span className="ctrlIcon">⏸</span>
+            </button>
+            <button 
+              className="ctrlBtn finishBtn"
+              onMouseDown={handleFinishHold}
+              onMouseUp={handleFinishRelease}
+              onTouchStart={handleFinishHold}
+              onTouchEnd={handleFinishRelease}
+            >
+              <span className="ctrlIcon">■</span>
+              {holdProgress > 0 && (
+                <div className="holdProgress" style={{ width: `${holdProgress}%` }} />
+              )}
+            </button>
+          </>
+        )}
+        
+        {runStatus === 'PAUSED' && (
+          <>
+            <button className="ctrlBtn resumeBtn" onClick={handleResume}>
+              <span className="ctrlIcon">▶</span>
+            </button>
+            <button 
+              className="ctrlBtn finishBtn"
+              onMouseDown={handleFinishHold}
+              onMouseUp={handleFinishRelease}
+              onTouchStart={handleFinishHold}
+              onTouchEnd={handleFinishRelease}
+            >
+              <span className="ctrlIcon">■</span>
+              {holdProgress > 0 && (
+                <div className="holdProgress" style={{ width: `${holdProgress}%` }} />
+              )}
+            </button>
+          </>
+        )}
+      </div>
 
       {/* Level Up Modal */}
       {levelUpData && (
@@ -728,3 +773,324 @@ export default function ActiveRun() {
     </div>
   );
 }
+
+function formatTime(totalSeconds) {
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  }
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+const styles = `
+  :root {
+    --neon: #BFFF00;
+    --purple: #8A2BE2;
+    --bg: #0A0A0A;
+    --glass: rgba(255,255,255,0.08);
+    --stroke: rgba(255,255,255,0.12);
+  }
+  
+  .activeRunPage {
+    min-height: 100vh;
+    background: 
+      radial-gradient(1200px 800px at 50% 0%, rgba(138,43,226,0.25), transparent 60%),
+      radial-gradient(900px 600px at 80% 100%, rgba(191,255,0,0.12), transparent 55%),
+      var(--bg);
+    color: rgba(255,255,255,0.92);
+    padding-bottom: 140px;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  }
+  
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 16px;
+  }
+  
+  .backBtn {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    border: 1px solid var(--stroke);
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(10px);
+    color: rgba(255,255,255,0.92);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  
+  .statusChip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--stroke);
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(10px);
+    font-size: 12px;
+    color: rgba(255,255,255,0.62);
+  }
+  
+  .statusChip.ready {
+    border-color: rgba(191,255,0,0.25);
+    background: rgba(191,255,0,0.08);
+    color: var(--neon);
+  }
+  
+  .statusDot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+  
+  .statusChip.ready .statusDot {
+    animation: pulse 2s ease-in-out infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  
+  .gameHud {
+    position: fixed;
+    top: 18px;
+    right: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 100;
+    animation: fadeIn 0.5s ease-out;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  
+  .hudItem {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(10,10,10,0.75);
+    border: 1px solid rgba(191,255,0,0.25);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 20px rgba(191,255,0,0.2);
+  }
+  
+  .hudIcon {
+    filter: drop-shadow(0 0 8px rgba(191,255,0,0.4));
+  }
+  
+  .hudVal {
+    font-weight: 900;
+    color: var(--neon);
+    font-size: 14px;
+  }
+  
+  .timerSection {
+    padding: 24px 16px 16px;
+    text-align: center;
+  }
+  
+  .timerValue {
+    font-size: 64px;
+    font-weight: 900;
+    color: var(--neon);
+    text-shadow: 0 0 30px rgba(191,255,0,0.5);
+    animation: timerPulse 2s ease-in-out infinite;
+  }
+  
+  @keyframes timerPulse {
+    0%, 100% { text-shadow: 0 0 30px rgba(191,255,0,0.5); }
+    50% { text-shadow: 0 0 50px rgba(191,255,0,0.7); }
+  }
+  
+  .mapSection {
+    position: relative;
+    padding: 0 16px;
+    margin-bottom: 20px;
+  }
+  
+  .mapOverlay {
+    position: absolute;
+    inset: 16px;
+    background: rgba(10,10,10,0.60);
+    z-index: 1;
+    pointer-events: none;
+    border-radius: 22px;
+  }
+  
+  .mapWrap {
+    height: 220px;
+    border-radius: 22px;
+    overflow: hidden;
+    border: 1px solid rgba(191,255,0,0.15);
+    box-shadow: 0 0 0 1px rgba(138,43,226,0.10) inset;
+    position: relative;
+  }
+  
+  .metricsGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 0 16px;
+    margin-bottom: 20px;
+  }
+  
+  .metricCard {
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--stroke);
+    border-radius: 18px;
+    padding: 16px;
+    box-shadow: 0 0 0 1px rgba(191,255,0,0.08) inset, 0 8px 24px rgba(0,0,0,0.35);
+  }
+  
+  .heartCard {
+    grid-column: 1 / -1;
+  }
+  
+  .heartTop {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  
+  .heartIcon {
+    width: 20px;
+    height: 20px;
+    color: var(--neon);
+    animation: heartbeat 1.5s ease-in-out infinite;
+  }
+  
+  @keyframes heartbeat {
+    0%, 100% { transform: scale(1); }
+    10% { transform: scale(1.1); }
+    20% { transform: scale(1); }
+  }
+  
+  .metricLabel {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: rgba(255,255,255,0.50);
+    margin-bottom: 8px;
+  }
+  
+  .metricValue {
+    font-size: 32px;
+    font-weight: 900;
+    color: var(--neon);
+    line-height: 1;
+  }
+  
+  .metricUnit {
+    font-size: 14px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.60);
+    margin-left: 4px;
+  }
+  
+  .heartPulseBar {
+    margin-top: 10px;
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.08);
+    overflow: hidden;
+  }
+  
+  .heartPulse {
+    height: 100%;
+    background: linear-gradient(90deg, var(--neon), var(--purple));
+    border-radius: 999px;
+    box-shadow: 0 0 12px rgba(191,255,0,0.5);
+    transition: width 0.5s ease-out;
+  }
+  
+  .controls {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 16px;
+    z-index: 200;
+  }
+  
+  .ctrlBtn {
+    position: relative;
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    border: 2px solid var(--stroke);
+    background: rgba(10,10,10,0.85);
+    backdrop-filter: blur(20px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    overflow: hidden;
+  }
+  
+  .ctrlIcon {
+    position: relative;
+    z-index: 2;
+  }
+  
+  .pauseBtn {
+    border-color: rgba(255,255,255,0.20);
+    color: rgba(255,255,255,0.72);
+  }
+  
+  .pauseBtn:active {
+    transform: scale(0.95);
+  }
+  
+  .resumeBtn, .startBtn {
+    border-color: rgba(191,255,0,0.35);
+    background: linear-gradient(135deg, rgba(191,255,0,0.15), rgba(138,43,226,0.10));
+    color: var(--neon);
+    box-shadow: 0 0 30px rgba(191,255,0,0.3);
+  }
+  
+  .resumeBtn:active, .startBtn:active {
+    transform: scale(0.95);
+  }
+  
+  .finishBtn {
+    border-color: rgba(255,50,50,0.40);
+    background: rgba(255,50,50,0.12);
+    color: rgba(255,80,80,0.95);
+    box-shadow: 0 0 30px rgba(255,50,50,0.25);
+  }
+  
+  .holdProgress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 100%;
+    background: linear-gradient(180deg, rgba(255,50,50,0.40), rgba(255,80,80,0.60));
+    transition: width 0.1s linear;
+    z-index: 1;
+  }
+  
+  @media (max-width: 420px) {
+    .timerValue { font-size: 56px; }
+    .metricValue { font-size: 28px; }
+    .ctrlBtn { width: 62px; height: 62px; }
+  }
+`;
