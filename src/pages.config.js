@@ -56,13 +56,14 @@ import HealthConnect from './pages/HealthConnect';
 import History from './pages/History';
 import Home from './pages/Home';
 import Leaderboard from './pages/Leaderboard';
+import LevelProgress from './pages/LevelProgress';
 import PaceHistory from './pages/PaceHistory';
 import Profile from './pages/Profile';
 import RunDetails from './pages/RunDetails';
 import Stats from './pages/Stats';
 import Training from './pages/Training';
 import Wallet from './pages/Wallet';
-import LevelProgress from './pages/LevelProgress';
+import RedeemCatalog from './pages/RedeemCatalog';
 import __Layout from './Layout.jsx';
 
 
@@ -76,13 +77,14 @@ export const PAGES = {
     "History": History,
     "Home": Home,
     "Leaderboard": Leaderboard,
+    "LevelProgress": LevelProgress,
     "PaceHistory": PaceHistory,
     "Profile": Profile,
     "RunDetails": RunDetails,
     "Stats": Stats,
     "Training": Training,
     "Wallet": Wallet,
-    "LevelProgress": LevelProgress,
+    "RedeemCatalog": RedeemCatalog,
 }
 
 export const pagesConfig = {
