@@ -13,23 +13,28 @@ import { toast } from 'sonner';
 export default function CoinAnimationFlow({
   isActive,
   sourceRef,
-  targetRef,
   rewardAmount,
   onAnimationComplete,
 }) {
   const [coins, setCoins] = useState([]);
   const [targetPillRect, setTargetPillRect] = useState(null);
 
-  // Get target pill position once
+  // Get target pill position from global ref (Home page coin pill)
   useEffect(() => {
-    if (!isActive || !targetRef?.current) return;
+    if (!isActive) return;
     
-    const rect = targetRef.current.getBoundingClientRect();
+    const targetRef = window.__coinPillRef?.current;
+    if (!targetRef) {
+      console.warn('Coin pill ref not found');
+      return;
+    }
+    
+    const rect = targetRef.getBoundingClientRect();
     setTargetPillRect({
       x: rect.left + rect.width / 2,
       y: rect.top + rect.height / 2,
     });
-  }, [isActive, targetRef]);
+  }, [isActive]);
 
   // Spawn coins when animation becomes active
   useEffect(() => {
