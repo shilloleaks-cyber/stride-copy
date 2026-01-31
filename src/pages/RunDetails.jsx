@@ -401,6 +401,26 @@ export default function RunDetails() {
 
   return (
     <div className="min-h-screen text-white pb-24" style={{ backgroundColor: '#0A0A0A' }}>
+      <style>{coinClaimStyles}</style>
+      
+      {/* Coin Claim Toast & Particle Effect */}
+      {showCoinToast && (
+        <>
+          <div className="coinClaimToast">
+            <div className="coinClaimAmount">+{toastAmount.toFixed(2)} RUN</div>
+          </div>
+          {/* Coin particle burst (6-10 dots) */}
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div
+              key={i}
+              className="coinParticle"
+              style={{
+                '--particle-angle': `${(i / 8) * 360}deg`,
+              }}
+            />
+          ))}
+        </>
+      )}
       {/* Header */}
       <div className="px-5 pt-5 flex items-center justify-between">
         <button 
