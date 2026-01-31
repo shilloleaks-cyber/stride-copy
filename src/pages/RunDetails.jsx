@@ -624,11 +624,10 @@ export default function RunDetails() {
 
           {/* Rare Bonus Indicator */}
           {showRareBonus && !isClaimed && (
-            <motion.div
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center mt-2"
-            >
+            <div
+                  className="text-center mt-2"
+                  style={{ animation: 'fadeSlideDown 0.4s ease-out forwards' }}
+                >
               <p className="text-[10px] font-bold" style={{ color: '#C084FC' }}>
                 💎 +{rareBonusAmount.toFixed(2)} bonus included
               </p>
@@ -967,6 +966,16 @@ export default function RunDetails() {
 }
 
 const coinClaimStyles = `
+  @keyframes fadeSlideDown {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+
   @keyframes toastInOut {
     0% {
       opacity: 0;
@@ -1040,5 +1049,13 @@ const coinClaimStyles = `
     animation: coinBurst 0.6s ease-out forwards;
     pointer-events: none;
     z-index: 99998;
+  }
+
+  .claimButton:active {
+    transform: scale(0.98);
+  }
+
+  .rareBonus {
+    animation: fadeSlideDown 0.5s ease-out backwards;
   }
 `;
