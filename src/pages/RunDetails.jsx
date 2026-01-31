@@ -325,73 +325,76 @@ export default function RunDetails() {
         <h2 className="text-xs uppercase tracking-wider mb-3" style={{ color: 'rgba(255,255,255,0.40)' }}>Details</h2>
         <div className="grid grid-cols-2 gap-3">
           <div 
-            className="rounded-2xl p-4 border"
+            className="rounded-2xl p-4 border backdrop-blur-sm"
             style={{ 
               backgroundColor: 'rgba(255,255,255,0.04)',
-              borderColor: 'rgba(255,255,255,0.08)'
+              borderColor: 'rgba(255,255,255,0.08)',
+              boxShadow: '0 0 0 1px rgba(138,43,226,0.06) inset'
             }}
           >
-            <div className="flex items-center gap-2 mb-3">
-              <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(138,43,226,0.15)' }}>
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <div className="p-1.5 rounded-lg" style={{ backgroundColor: 'rgba(191,255,0,0.12)', border: '1px solid rgba(191,255,0,0.2)' }}>
                 <Zap className="w-4 h-4" style={{ color: '#BFFF00' }} />
               </div>
-              <p className="text-xs uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.45)' }}>Speed</p>
             </div>
-            <div className="flex items-baseline justify-between">
-              <div>
-                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>Avg</p>
-                <p className="text-xl font-bold" style={{ color: 'rgba(255,255,255,0.92)' }}>{run.avg_speed_kmh?.toFixed(1) || '0.0'}</p>
+            <p className="text-center text-xs uppercase tracking-wider mb-3" style={{ color: 'rgba(255,255,255,0.45)' }}>Speed</p>
+            <div className="grid grid-cols-2 gap-3 mb-2">
+              <div className="text-center">
+                <p className="text-[10px] uppercase mb-1" style={{ color: 'rgba(255,255,255,0.35)' }}>Avg</p>
+                <p className="text-2xl font-bold" style={{ color: 'rgba(255,255,255,0.92)' }}>{run.avg_speed_kmh?.toFixed(1) || '0.0'}</p>
               </div>
-              <div className="text-right">
-                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>Max</p>
-                <p className="text-xl font-bold" style={{ color: '#BFFF00' }}>{run.max_speed_kmh?.toFixed(1) || '0.0'}</p>
+              <div className="text-center">
+                <p className="text-[10px] uppercase mb-1" style={{ color: 'rgba(255,255,255,0.35)' }}>Max</p>
+                <p className="text-2xl font-bold" style={{ color: '#BFFF00', textShadow: '0 0 15px rgba(191,255,0,0.3)' }}>{run.max_speed_kmh?.toFixed(1) || '0.0'}</p>
               </div>
             </div>
-            <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.30)' }}>km/h</p>
+            <p className="text-center text-xs" style={{ color: 'rgba(255,255,255,0.30)' }}>km/h</p>
           </div>
 
           <div 
-            className="rounded-2xl p-4 border"
+            className="rounded-2xl p-4 border backdrop-blur-sm"
             style={{ 
               backgroundColor: 'rgba(255,255,255,0.04)',
-              borderColor: 'rgba(255,255,255,0.08)'
+              borderColor: 'rgba(255,255,255,0.08)',
+              boxShadow: '0 0 0 1px rgba(138,43,226,0.06) inset'
             }}
           >
-            <div className="flex items-center gap-2 mb-3">
-              <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(138,43,226,0.15)' }}>
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <div className="p-1.5 rounded-lg" style={{ backgroundColor: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.2)' }}>
                 <Heart className="w-4 h-4 text-red-400" />
               </div>
-              <p className="text-xs uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.45)' }}>Heart Rate</p>
             </div>
-            <div className="flex items-baseline justify-between">
-              <div>
-                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>Avg</p>
-                <p className="text-xl font-bold" style={{ color: 'rgba(255,255,255,0.92)' }}>{run.avg_heart_rate || '--'}</p>
+            <p className="text-center text-xs uppercase tracking-wider mb-3" style={{ color: 'rgba(255,255,255,0.45)' }}>Heart Rate</p>
+            <div className="grid grid-cols-2 gap-3 mb-2">
+              <div className="text-center">
+                <p className="text-[10px] uppercase mb-1" style={{ color: 'rgba(255,255,255,0.35)' }}>Avg</p>
+                <p className="text-2xl font-bold" style={{ color: 'rgba(255,255,255,0.92)' }}>{run.avg_heart_rate || '--'}</p>
               </div>
-              <div className="text-right">
-                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>Max</p>
-                <p className="text-xl font-bold text-red-400">{run.max_heart_rate || '--'}</p>
+              <div className="text-center">
+                <p className="text-[10px] uppercase mb-1" style={{ color: 'rgba(255,255,255,0.35)' }}>Max</p>
+                <p className="text-2xl font-bold" style={{ color: '#BFFF00', textShadow: '0 0 15px rgba(191,255,0,0.3)' }}>{run.max_heart_rate || '--'}</p>
               </div>
             </div>
-            <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.30)' }}>bpm</p>
+            <p className="text-center text-xs" style={{ color: 'rgba(255,255,255,0.30)' }}>bpm</p>
           </div>
 
           <div 
-            className="rounded-2xl p-4 border col-span-2"
+            className="rounded-2xl p-4 border col-span-2 backdrop-blur-sm"
             style={{ 
               backgroundColor: 'rgba(255,255,255,0.04)',
-              borderColor: 'rgba(255,255,255,0.08)'
+              borderColor: 'rgba(255,255,255,0.08)',
+              boxShadow: '0 0 0 1px rgba(138,43,226,0.06) inset'
             }}
           >
-            <div className="flex items-center gap-2 mb-3">
-              <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(138,43,226,0.15)' }}>
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <div className="p-1.5 rounded-lg" style={{ backgroundColor: 'rgba(249,115,22,0.12)', border: '1px solid rgba(249,115,22,0.2)' }}>
                 <Flame className="w-4 h-4 text-orange-400" />
               </div>
-              <p className="text-xs uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.45)' }}>Calories Burned</p>
             </div>
-            <div className="flex items-baseline gap-2">
-              <p className="text-3xl font-bold" style={{ color: 'rgba(255,255,255,0.95)' }}>{run.calories_burned || 0}</p>
-              <p className="text-sm" style={{ color: 'rgba(255,255,255,0.35)' }}>kcal</p>
+            <p className="text-center text-xs uppercase tracking-wider mb-3" style={{ color: 'rgba(255,255,255,0.45)' }}>Calories Burned</p>
+            <div className="text-center">
+              <p className="text-4xl font-bold mb-1" style={{ color: '#BFFF00', textShadow: '0 0 20px rgba(191,255,0,0.3)' }}>{run.calories_burned || 0}</p>
+              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.30)' }}>kcal</p>
             </div>
           </div>
         </div>
