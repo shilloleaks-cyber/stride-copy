@@ -844,8 +844,16 @@ export default function ActiveRun() {
         {showStopToast && (
           <motion.div
             initial={{ opacity: 0, y: 20, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
+            animate={{ 
+              opacity: 1, 
+              y: 0, 
+              scale: 1,
+              rotate: [0, -2, 2, -2, 2, 0]
+            }}
             exit={{ opacity: 0, y: 10, scale: 0.9 }}
+            transition={{
+              rotate: { duration: 0.4, ease: "easeInOut" }
+            }}
             className="stopToast"
           >
             <p className="stopToastTitle">⚠️ Hold to stop your run</p>
@@ -1465,13 +1473,6 @@ const styles = `
       0 8px 32px rgba(0,0,0,0.60);
     min-width: 280px;
     text-align: center;
-    animation: toastShake 0.4s ease-in-out;
-  }
-  
-  @keyframes toastShake {
-    0%, 100% { transform: translateX(-50%) rotate(0deg); }
-    25% { transform: translateX(-50%) rotate(-2deg); }
-    75% { transform: translateX(-50%) rotate(2deg); }
   }
   
   .stopToastTitle {
