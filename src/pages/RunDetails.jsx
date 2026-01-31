@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
@@ -12,6 +12,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+
+import CoinAnimationFlow, { showCoinRewardToast } from '@/components/running/CoinAnimationFlow';
 
 import RunMap from '@/components/running/RunMap';
 import ShareRunDialog from '@/components/running/ShareRunDialog';
@@ -68,6 +70,11 @@ export default function RunDetails() {
   // Claim reward state
   const [isClaimed, setIsClaimed] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
+  const [showCoinAnimation, setShowCoinAnimation] = useState(false);
+  
+  // Refs for animation targets
+  const coinsEarnedCardRef = useRef(null);
+  const claimButtonRef = useRef(null);
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
@@ -239,7 +246,7 @@ export default function RunDetails() {
     }
   }, [run]);
   
-  // Handle claim reward
+  // Handle claim reward with animation
   const handleClaimReward = async () => {
     if (isClaiming || isClaimed || !currentUser) return;
     
@@ -248,6 +255,14 @@ export default function RunDetails() {
     try {
       // Get minimum reward
       const rewardAmount = Math.max(coinData.total, 0.25);
+      
+      // Trigger button animation
+      if (claimButtonRef.current) {
+        claimButtonRef.current.style.animation = 'claimPulse 0.4s ease-out';
+      }
+      
+      // Start coin animation
+      setShowCoinAnimation(true);
       
       // Update user RUN balance (single source of truth)
       const currentBalance = currentUser.coin_balance || 0;
@@ -276,19 +291,24 @@ export default function RunDetails() {
       // Update local state
       setIsClaimed(true);
       
-      // Show success toast
-      toast.success(`+${rewardAmount.toFixed(2)} RUN added to Wallet`);
-      
-      // Auto-redirect to Home after short delay
-      setTimeout(() => {
-        navigate(createPageUrl('Home'));
-      }, 1000);
+      // Show coin reward toast near pill (animated)
+      showCoinRewardToast(rewardAmount);
       
     } catch (error) {
       console.error('Error claiming reward:', error);
       toast.error('Failed to claim reward');
       setIsClaiming(false);
+      setShowCoinAnimation(false);
     }
+  };
+  
+  const handleAnimationComplete = () => {
+    setShowCoinAnimation(false);
+    
+    // Delay before navigation
+    setTimeout(() => {
+      navigate(createPageUrl('Home'));
+    }, 400);
   };
 
   const updateMutation = useMutation({
@@ -379,6 +399,33 @@ export default function RunDetails() {
 
   return (
     <div className="min-h-screen text-white pb-24" style={{ backgroundColor: '#0A0A0A' }}>
+      {/* Coin animation flow */}
+      {showCoinAnimation && (
+        <CoinAnimationFlow
+          isActive={showCoinAnimation}
+          sourceRef={coinsEarnedCardRef}
+          targetRef={{ current: null }} // Will find pill on Home page via global ref
+          rewardAmount={Math.max(coinData.total, 0.25)}
+          onAnimationComplete={handleAnimationComplete}
+        />
+      )}
+
+      <style>{`
+        @keyframes claimPulse {
+          0% {
+            transform: scale(0.96);
+            box-shadow: 0 0 0 0 rgba(191, 255, 0, 0.8);
+          }
+          50% {
+            box-shadow: 0 0 30px 10px rgba(191, 255, 0, 0.4);
+          }
+          100% {
+            transform: scale(1);
+            box-shadow: 0 0 25px rgba(191, 255, 0, 0.4);
+          }
+        }
+      `}</style>
+
       {/* Header */}
       <div className="px-5 pt-5 flex items-center justify-between">
         <button 
@@ -503,13 +550,14 @@ export default function RunDetails() {
 
       {/* Coin Reward Card - Compact */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: isClaimed ? 0.6 : 1, y: 0 }}
-        transition={{ delay: 0.4, duration: 0.5 }}
-        className="px-5 pb-3"
+       initial={{ opacity: 0, y: 20 }}
+       animate={{ opacity: isClaimed ? 0.6 : 1, y: 0 }}
+       transition={{ delay: 0.4, duration: 0.5 }}
+       className="px-5 pb-3"
+       ref={coinsEarnedCardRef}
       >
-        <div 
-          className="rounded-2xl backdrop-blur-sm border p-4 relative overflow-hidden"
+       <div 
+         className="rounded-2xl backdrop-blur-sm border p-4 relative overflow-hidden"
           style={{ 
             backgroundColor: 'rgba(255,255,255,0.04)',
             borderColor: 'rgba(191,255,0,0.2)',
@@ -566,6 +614,7 @@ export default function RunDetails() {
 
           {/* Claim Button */}
           <motion.button
+            ref={claimButtonRef}
             onClick={handleClaimReward}
             disabled={isClaiming || isClaimed}
             whileTap={{ scale: 0.98 }}
