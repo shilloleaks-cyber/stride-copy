@@ -113,8 +113,44 @@ export default function RunMap({ routeCoordinates, currentPosition, isActive, pr
     : null;
 
   return (
-    <div className="relative w-full h-full rounded-2xl overflow-hidden">
-      <MapContainer
+    <div className="relative w-full h-full">
+      <style>{`
+        .runmap-container {
+          position: relative;
+          width: 100%;
+          height: 100%;
+          border-radius: 24px;
+          overflow: hidden;
+          box-shadow: 
+            0 0 60px rgba(191,255,0,0.25),
+            0 0 0 1px rgba(191,255,0,0.20) inset;
+        }
+        
+        .runmap-container::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(circle at center, transparent 30%, rgba(10,10,10,0.60) 100%);
+          pointer-events: none;
+          z-index: 1000;
+        }
+        
+        .runmap-container::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          box-shadow: inset 0 0 80px rgba(0,0,0,0.70);
+          pointer-events: none;
+          z-index: 1001;
+          border-radius: 24px;
+        }
+        
+        .leaflet-container {
+          filter: brightness(0.75) contrast(1.1);
+        }
+      `}</style>
+      <div className="runmap-container">
+        <MapContainer
         center={mapCenter}
         zoom={mapZoom}
         style={{ height: '100%', width: '100%' }}
@@ -123,7 +159,7 @@ export default function RunMap({ routeCoordinates, currentPosition, isActive, pr
         ref={mapRef}
       >
         <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          url="https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png"
           maxZoom={19}
         />
         
@@ -215,7 +251,8 @@ export default function RunMap({ routeCoordinates, currentPosition, isActive, pr
 
         {/* Render children (e.g., GhostRunner) */}
         {children}
-        </MapContainer>
+      </MapContainer>
+      </div>
 
       {/* Map overlay info */}
       {isActive && (
