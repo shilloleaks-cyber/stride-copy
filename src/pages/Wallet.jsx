@@ -58,159 +58,427 @@ export default function Wallet() {
     }
   };
 
+  const lastRunLog = walletLogs.find(log => log.type === 'run');
+  const lastRunAmount = lastRunLog ? lastRunLog.amount : 0;
+
   return (
-    <div className="min-h-screen bg-gray-950 text-white pb-24">
+    <div className="walletRoot">
+      <style>{walletStyles}</style>
+
       {/* Header */}
-      <div className="px-6 pt-6 flex items-center justify-between">
-        <button 
-          onClick={() => navigate(createPageUrl('Home'))}
-          className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center"
-        >
+      <div className="walletHeader">
+        <button onClick={() => navigate(createPageUrl('Home'))} className="backBtn">
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-lg font-medium">กระเป๋าเงิน</h1>
+        <h1 className="headerTitle">Wallet</h1>
         <div className="w-10" />
       </div>
 
-      {/* Token Balance Card */}
+      {/* Balance Hero Card */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mx-6 mt-6"
+        className="balanceHero"
       >
-        <div className="relative overflow-hidden bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-700 rounded-3xl p-6">
-          <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-          <div className="absolute bottom-0 left-0 w-32 h-32 bg-black/10 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2" />
-          
-          <div className="relative">
-            <div className="flex items-center gap-2 mb-2">
-              <Coins className="w-5 h-5 text-emerald-200" />
-              <span className="text-emerald-100 text-sm">ยอดโทเค็นของคุณ</span>
-            </div>
-            
-            <div className="flex items-baseline gap-2">
-              <span className="text-5xl font-light text-white">
-                {(user?.token_balance || 0).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
-              </span>
-              <span className="text-emerald-200 text-lg">RUN</span>
-            </div>
-
-            <div className="mt-6 pt-4 border-t border-white/20 grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-emerald-200 text-xs mb-1">ระยะทางรวม</p>
-                <div className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4 text-white/70" />
-                  <span className="text-lg text-white">{(user?.total_distance_km || 0).toFixed(1)} กม.</span>
-                </div>
-              </div>
-              <div>
-                <p className="text-emerald-200 text-xs mb-1">จำนวนครั้งที่วิ่ง</p>
-                <div className="flex items-center gap-1">
-                  <Award className="w-4 h-4 text-white/70" />
-                  <span className="text-lg text-white">{user?.total_runs || 0} ครั้ง</span>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div className="balanceLabel">RUN BALANCE</div>
+        <div className="balanceValue">
+          {(user?.token_balance || 0).toFixed(2)}
         </div>
+        {lastRunAmount > 0 && (
+          <div className="balanceSubtitle">+{lastRunAmount.toFixed(2)} from last run</div>
+        )}
       </motion.div>
 
-      {/* Tokenomics Info */}
+      {/* Quick Actions */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+        className="quickActions"
+      >
+        <button className="actionButton" onClick={() => navigate(createPageUrl('Home'))}>
+          <TrendingUp className="w-4 h-4" />
+          <span>Earn More</span>
+        </button>
+        <button className="actionButton">
+          <History className="w-4 h-4" />
+          <span>History</span>
+        </button>
+        <button className="actionButton">
+          <WalletIcon className="w-4 h-4" />
+          <span>Withdraw</span>
+        </button>
+      </motion.div>
+
+      {/* RUN Economy Card */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="mx-6 mt-6"
+        className="economyCard"
       >
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <Sparkles className="w-5 h-5 text-yellow-400" />
-            <span className="font-medium">RUN Tokenomics</span>
+        <div className="economyHeader">
+          <Sparkles className="w-4 h-4" />
+          <span>RUN ECONOMY</span>
+        </div>
+        
+        <div className="economyStats">
+          <div className="economyStat">
+            <div className="economyLabel">Total Supply</div>
+            <div className="economyValue">{totalSupply.toLocaleString()} RUN</div>
           </div>
-          
-          <div className="space-y-3">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Total Supply</span>
-              <span className="text-white">{totalSupply.toLocaleString()} RUN</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-400">แจกไปแล้ว</span>
-              <span className="text-emerald-400">{distributed.toLocaleString()} RUN</span>
-            </div>
-            <Progress value={distributedPercent} className="h-2 bg-white/10" />
-            <p className="text-xs text-gray-500 text-center">
-              {distributedPercent.toFixed(4)}% of total supply distributed
-            </p>
+          <div className="economyStat">
+            <div className="economyLabel">Earn Rate</div>
+            <div className="economyValue">0.1 km = 0.1 RUN</div>
           </div>
+        </div>
 
-          <div className="mt-4 pt-4 border-t border-white/10">
-            <div className="flex items-center gap-2 text-sm">
-              <div className="w-2 h-2 rounded-full bg-emerald-400" />
-              <span className="text-gray-400">อัตราการได้รับ:</span>
-              <span className="text-white font-medium">0.1 กม. = 0.1 RUN</span>
-            </div>
+        <div className="economyProgress">
+          <div className="economyProgressBar">
+            <div className="economyProgressFill" style={{ width: `${distributedPercent}%` }} />
           </div>
+          <div className="economyProgressText">{distributedPercent.toFixed(2)}% distributed</div>
         </div>
       </motion.div>
 
-      {/* Transaction History */}
+      {/* Activity Feed */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="mx-6 mt-6"
+        transition={{ delay: 0.15 }}
+        className="activitySection"
       >
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <History className="w-5 h-5 text-gray-400" />
-            <span className="font-medium">ประวัติธุรกรรม</span>
-          </div>
+        <div className="activityHeader">
+          <History className="w-4 h-4" />
+          <span>ACTIVITY FEED</span>
         </div>
 
         {walletLogs.length > 0 ? (
-          <div className="space-y-3">
+          <div className="activityFeed">
             {walletLogs.map((log, index) => (
               <motion.div
                 key={log.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05 }}
-                className="bg-white/5 border border-white/10 rounded-xl p-4 flex items-center justify-between"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.03 }}
+                className="activityItem"
               >
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    log.type === 'run' ? 'bg-emerald-500/20' :
-                    log.type === 'bonus' ? 'bg-yellow-500/20' :
-                    log.type === 'spend' ? 'bg-red-500/20' : 'bg-blue-500/20'
-                  }`}>
-                    {log.type === 'run' ? <MapPin className="w-5 h-5 text-emerald-400" /> :
-                     log.type === 'bonus' ? <Sparkles className="w-5 h-5 text-yellow-400" /> :
-                     <Coins className="w-5 h-5 text-gray-400" />}
-                  </div>
-                  <div>
-                    <p className="text-white text-sm font-medium">{log.note || getTypeLabel(log.type)}</p>
-                    <p className="text-xs text-gray-500">
-                      {format(new Date(log.created_date), 'd MMM yyyy, HH:mm', { locale: th })}
-                    </p>
+                <div className="activityIconWrap">
+                  {log.type === 'run' ? (
+                    <MapPin className="w-4 h-4 activityIcon" />
+                  ) : log.type === 'bonus' ? (
+                    <Sparkles className="w-4 h-4 activityIcon" />
+                  ) : (
+                    <Coins className="w-4 h-4 activityIcon" />
+                  )}
+                </div>
+                <div className="activityContent">
+                  <div className="activityTitle">{log.note || getTypeLabel(log.type)}</div>
+                  <div className="activityTime">
+                    {format(new Date(log.created_date), 'd MMM yyyy, HH:mm', { locale: th })}
                   </div>
                 </div>
-                <div className={`text-right ${log.amount >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                  <span className="font-medium">
-                    {log.amount >= 0 ? '+' : ''}{log.amount.toFixed(1)}
-                  </span>
-                  <span className="text-xs ml-1">RUN</span>
+                <div className="activityAmount">
+                  {log.amount >= 0 ? '+' : ''}{log.amount.toFixed(1)} RUN
                 </div>
               </motion.div>
             ))}
           </div>
         ) : (
-          <div className="text-center py-12 bg-white/5 rounded-2xl border border-white/10">
-            <History className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-400">ยังไม่มีประวัติธุรกรรม</p>
-            <p className="text-sm text-gray-600 mt-1">เริ่มวิ่งเพื่อรับโทเค็น RUN</p>
+          <div className="activityEmpty">
+            <History className="w-10 h-10 activityEmptyIcon" />
+            <p className="activityEmptyText">No activity yet</p>
+            <p className="activityEmptySub">Start running to earn RUN tokens</p>
           </div>
         )}
       </motion.div>
     </div>
   );
 }
+
+const walletStyles = `
+  .walletRoot {
+    min-height: 100vh;
+    background: radial-gradient(1200px 800px at 50% 0%, rgba(123,77,255,0.12), transparent 65%),
+                #050508;
+    color: rgba(255,255,255,0.95);
+    padding: 0 0 100px;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  }
+
+  .walletHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 20px;
+  }
+
+  .backBtn {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .backBtn:hover {
+    background: rgba(182,255,0,0.1);
+    border-color: rgba(182,255,0,0.25);
+    color: #B6FF00;
+  }
+
+  .headerTitle {
+    font-size: 16px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.95);
+  }
+
+  /* Balance Hero Card */
+  .balanceHero {
+    margin: 0 20px 24px;
+    padding: 32px 24px;
+    background: rgba(20,20,20,0.5);
+    border: 1px solid rgba(182,255,0,0.2);
+    border-radius: 24px;
+    box-shadow: 0 0 20px rgba(182,255,0,0.15);
+    text-align: center;
+  }
+
+  .balanceLabel {
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+
+  .balanceValue {
+    font-size: 56px;
+    font-weight: 900;
+    color: #B6FF00;
+    text-shadow: 0 0 28px rgba(182,255,0,0.5);
+    margin-bottom: 8px;
+  }
+
+  .balanceSubtitle {
+    font-size: 13px;
+    color: rgba(255,255,255,0.6);
+    padding: 8px 16px;
+    background: rgba(182,255,0,0.08);
+    border-radius: 999px;
+    display: inline-block;
+  }
+
+  /* Quick Actions */
+  .quickActions {
+    display: flex;
+    gap: 10px;
+    padding: 0 20px 24px;
+  }
+
+  .actionButton {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 12px;
+    background: rgba(20,20,20,0.5);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    color: rgba(255,255,255,0.8);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .actionButton:hover {
+    background: rgba(182,255,0,0.1);
+    border-color: rgba(182,255,0,0.25);
+    color: #B6FF00;
+  }
+
+  /* Economy Card */
+  .economyCard {
+    margin: 0 20px 24px;
+    padding: 20px;
+    background: rgba(20,20,20,0.5);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+  }
+
+  .economyHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    color: rgba(255,255,255,0.5);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+  }
+
+  .economyStats {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .economyStat {
+    flex: 1;
+  }
+
+  .economyLabel {
+    font-size: 10px;
+    color: rgba(255,255,255,0.45);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+  }
+
+  .economyValue {
+    font-size: 16px;
+    font-weight: 900;
+    color: #B6FF00;
+  }
+
+  .economyProgress {
+    margin-top: 12px;
+  }
+
+  .economyProgressBar {
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(60,60,60,0.6);
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+
+  .economyProgressFill {
+    height: 100%;
+    background: #B6FF00;
+    border-radius: 999px;
+    box-shadow: 0 0 12px rgba(182,255,0,0.6);
+    transition: width 0.4s ease;
+  }
+
+  .economyProgressText {
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    text-align: center;
+  }
+
+  /* Activity Feed */
+  .activitySection {
+    padding: 0 20px;
+  }
+
+  .activityHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    color: rgba(255,255,255,0.5);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+  }
+
+  .activityFeed {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .activityItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    background: rgba(20,20,20,0.5);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    transition: all 0.2s;
+  }
+
+  .activityItem:hover {
+    border-color: rgba(182,255,0,0.2);
+  }
+
+  .activityIconWrap {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    background: rgba(182,255,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .activityIcon {
+    color: #B6FF00;
+  }
+
+  .activityContent {
+    flex: 1;
+  }
+
+  .activityTitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.95);
+    margin-bottom: 2px;
+  }
+
+  .activityTime {
+    font-size: 11px;
+    color: rgba(255,255,255,0.45);
+  }
+
+  .activityAmount {
+    font-size: 16px;
+    font-weight: 900;
+    color: #B6FF00;
+  }
+
+  .activityEmpty {
+    text-align: center;
+    padding: 48px 24px;
+    background: rgba(20,20,20,0.5);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+  }
+
+  .activityEmptyIcon {
+    color: rgba(255,255,255,0.15);
+    margin: 0 auto 16px;
+  }
+
+  .activityEmptyText {
+    font-size: 14px;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 4px;
+  }
+
+  .activityEmptySub {
+    font-size: 12px;
+    color: rgba(255,255,255,0.4);
+  }
+
+  @media (max-width: 420px) {
+    .balanceValue { font-size: 48px; }
+    .quickActions { gap: 8px; }
+    .actionButton { padding: 14px 10px; font-size: 11px; }
+  }
+`;
