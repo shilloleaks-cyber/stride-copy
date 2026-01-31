@@ -76,6 +76,22 @@ export default function LevelProgress() {
 
   return (
     <div className="min-h-screen text-white pb-32" style={{ backgroundColor: '#0A0A0A' }}>
+      <style>{levelUpStyles}</style>
+
+      {/* Level Up Overlay */}
+      {showLevelUpOverlay && newLevel && (
+        <div className={`levelUpOverlay ${isRare ? 'isRare' : ''}`}>
+          <div className="levelUpContent">
+            <div className={`levelUpRing ${isRare ? 'withShimmer' : ''}`}>
+              <div className="levelUpNumber">{newLevel}</div>
+            </div>
+            <div className="levelUpText">
+              <div className="levelUpTitle">LEVEL UP!</div>
+              <div className="levelUpSubtitle">You're now Level {newLevel}</div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="px-6 pt-6 flex items-center justify-between">
         <button 
