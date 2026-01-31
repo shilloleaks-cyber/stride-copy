@@ -1011,39 +1011,6 @@ const styles = `
     border-radius: 22px;
   }
   
-  /* Leaflet controls fix - force visibility */
-  .mapWrap, .mapWrap * { 
-    transform: none !important; 
-  }
-  
-  .leaflet-control-container { 
-    position: relative !important; 
-    z-index: 999999 !important; 
-  }
-  
-  .leaflet-top, .leaflet-bottom { 
-    z-index: 999999 !important; 
-  }
-  
-  .leaflet-control { 
-    z-index: 999999 !important; 
-  }
-  
-  .leaflet-control, .leaflet-control * {
-    visibility: visible !important;
-    opacity: 1 !important;
-    display: block !important;
-  }
-  
-  .mapOverlay { 
-    pointer-events: none !important; 
-    z-index: 2 !important; 
-  }
-  
-  .leaflet-container { 
-    z-index: 1 !important; 
-  }
-  
   .metricsGrid {
     display: grid;
     grid-template-columns: 1fr 1fr;
