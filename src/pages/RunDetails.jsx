@@ -249,12 +249,20 @@ export default function RunDetails() {
       // Get minimum reward
       const rewardAmount = Math.max(coinData.total, 0.25);
       
-      // Update user wallet
-      const currentWallet = currentUser.total_coins || 0;
-      const newWallet = parseFloat((currentWallet + rewardAmount).toFixed(2));
+      // Update user RUN balance (single source of truth)
+      const currentBalance = currentUser.run_balance || 0;
+      const newBalance = parseFloat((currentBalance + rewardAmount).toFixed(2));
       
       await base44.auth.updateMe({
-        total_coins: newWallet
+        run_balance: newBalance
+      });
+      
+      // Log transaction to WalletLog
+      await base44.entities.WalletLog.create({
+        user: currentUser.email,
+        amount: rewardAmount,
+        type: 'run',
+        note: `Run: ${run.distance_km?.toFixed(2)}km`
       });
       
       // Mark run as claimed
@@ -262,11 +270,14 @@ export default function RunDetails() {
         reward_claimed: true
       });
       
+      // Invalidate user query to refresh balance everywhere
+      queryClient.invalidateQueries(['currentUser']);
+      
       // Update local state
       setIsClaimed(true);
       
       // Show success toast
-      toast.success(`+${rewardAmount.toFixed(2)} coins added to Wallet`);
+      toast.success(`+${rewardAmount.toFixed(2)} RUN added to Wallet`);
       
       // Auto-redirect to Home after short delay
       setTimeout(() => {

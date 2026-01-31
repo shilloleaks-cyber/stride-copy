@@ -165,10 +165,10 @@ export default function Home() {
   });
 
   // Game stats
-  const coinBalance = user?.total_coins || 0;
+  const coinBalance = user?.run_balance || 0;
   const level = user?.current_level || 1;
   const levelProgress = {
-    current: coinBalance % 100,
+    current: Math.floor(coinBalance % 100),
     need: 100,
   };
 

@@ -82,33 +82,14 @@ export default function Wallet() {
       >
         <div className="balanceLabel">RUN BALANCE</div>
         <div className="balanceValue">
-          {(user?.token_balance || 0).toFixed(2)}
+          {(user?.run_balance || 0).toFixed(2)}
         </div>
         {lastRunAmount > 0 && (
           <div className="balanceSubtitle">+{lastRunAmount.toFixed(2)} from last run</div>
         )}
       </motion.div>
 
-      {/* Quick Actions */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.05 }}
-        className="quickActions"
-      >
-        <button className="actionButton" onClick={() => navigate(createPageUrl('Home'))}>
-          <TrendingUp className="w-4 h-4" />
-          <span>Earn More</span>
-        </button>
-        <button className="actionButton">
-          <History className="w-4 h-4" />
-          <span>History</span>
-        </button>
-        <button className="actionButton">
-          <WalletIcon className="w-4 h-4" />
-          <span>Withdraw</span>
-        </button>
-      </motion.div>
+
 
       {/* RUN Economy Card */}
       <motion.div
@@ -276,35 +257,7 @@ const walletStyles = `
     display: inline-block;
   }
 
-  /* Quick Actions */
-  .quickActions {
-    display: flex;
-    gap: 10px;
-    padding: 0 20px 24px;
-  }
 
-  .actionButton {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    padding: 16px 12px;
-    background: rgba(20,20,20,0.5);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 16px;
-    color: rgba(255,255,255,0.8);
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .actionButton:hover {
-    background: rgba(182,255,0,0.1);
-    border-color: rgba(182,255,0,0.25);
-    color: #B6FF00;
-  }
 
   /* Economy Card */
   .economyCard {
