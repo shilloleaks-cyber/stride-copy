@@ -839,26 +839,18 @@ export default function ActiveRun() {
         )}
       </div>
       
-      {/* Stop Hold Overlay */}
+      {/* Stop Hold Toast */}
       <AnimatePresence>
         {showStopToast && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="stopOverlayBackdrop"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="stopOverlay"
-            >
-              <p className="stopOverlayTitle">⚠️ Hold to stop your run</p>
-              <p className="stopOverlaySubtitle">Press & hold for 1 second to finish</p>
-            </motion.div>
-          </>
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.9 }}
+            className="stopToast"
+          >
+            <p className="stopToastTitle">⚠️ Hold to stop your run</p>
+            <p className="stopToastSubtitle">Press & hold for 1 second to finish</p>
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -1455,55 +1447,44 @@ const styles = `
     }
   }
   
-  /* Stop Hold Overlay */
-  .stopOverlayBackdrop {
+  /* Stop Hold Toast */
+  .stopToast {
     position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.30);
-    backdrop-filter: blur(4px);
-    z-index: 9998;
-    pointer-events: none;
-  }
-  
-  .stopOverlay {
-    position: fixed;
-    top: 50%;
+    bottom: 130px;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translateX(-50%);
     z-index: 9999;
     background: rgba(18,10,28,0.95);
     backdrop-filter: blur(30px);
     border: 1.5px solid rgba(255,60,60,0.50);
-    border-radius: 18px;
-    padding: 24px 28px;
+    border-radius: 16px;
+    padding: 16px 20px;
     box-shadow: 
       0 0 0 1px rgba(255,60,60,0.25) inset,
-      0 0 40px rgba(255,60,60,0.40),
-      0 0 20px rgba(138,43,226,0.20),
-      0 12px 40px rgba(0,0,0,0.70);
-    min-width: 300px;
+      0 0 30px rgba(255,60,60,0.35),
+      0 8px 32px rgba(0,0,0,0.60);
+    min-width: 280px;
     text-align: center;
-    animation: overlayShake 0.4s ease-in-out;
-    pointer-events: none;
+    animation: toastShake 0.4s ease-in-out;
   }
   
-  @keyframes overlayShake {
-    0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
-    25% { transform: translate(-50%, -50%) rotate(-1.5deg); }
-    75% { transform: translate(-50%, -50%) rotate(1.5deg); }
+  @keyframes toastShake {
+    0%, 100% { transform: translateX(-50%) rotate(0deg); }
+    25% { transform: translateX(-50%) rotate(-2deg); }
+    75% { transform: translateX(-50%) rotate(2deg); }
   }
   
-  .stopOverlayTitle {
-    font-size: 17px;
+  .stopToastTitle {
+    font-size: 15px;
     font-weight: 700;
     color: rgba(255,255,255,0.95);
-    margin: 0 0 8px 0;
+    margin: 0 0 6px 0;
     line-height: 1.3;
   }
   
-  .stopOverlaySubtitle {
-    font-size: 14px;
-    color: rgba(255,255,255,0.65);
+  .stopToastSubtitle {
+    font-size: 13px;
+    color: rgba(255,255,255,0.60);
     margin: 0;
     line-height: 1.4;
   }
@@ -1516,11 +1497,12 @@ const styles = `
     .resumeBtn, .startBtn { width: 92px; height: 92px; font-size: 32px; }
     .metricsGrid { gap: 8px; }
     .metricCard { padding: 10px 12px; min-height: 85px; }
-    .stopOverlay { 
-      min-width: 280px;
-      padding: 20px 24px;
+    .stopToast { 
+      min-width: 260px;
+      padding: 14px 18px;
+      bottom: 120px;
     }
-    .stopOverlayTitle { font-size: 16px; }
-    .stopOverlaySubtitle { font-size: 13px; }
+    .stopToastTitle { font-size: 14px; }
+    .stopToastSubtitle { font-size: 12px; }
   }
 `;
