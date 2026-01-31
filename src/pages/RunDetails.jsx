@@ -23,18 +23,24 @@ import PerKilometerBreakdown from '@/components/running/PerKilometerBreakdown';
 import AIFormInsights from '@/components/running/AIFormInsights';
 
 const motivationQuotes = [
-  "You showed up. That's already a win.",
   "No excuses. Just progress.",
-  "One run closer to your best self.",
-  "Small steps. Big energy.",
-  "You didn't quit. Respect.",
-  "Today you moved. Tomorrow you level up.",
-  "Run done. Mind stronger.",
-  "Consistency beats motivation.",
-  "Not fast. Not slow. Just forward.",
+  "You showed up. That's power.",
+  "Small run. Big mindset.",
+  "Built different today.",
+  "Step by step. Beast mode loading.",
   "Every step counts. Every breath matters.",
   "You're lapping everyone on the couch.",
   "The finish line was just the start.",
+  "You didn't quit. Respect.",
+  "Consistency beats motivation.",
+];
+
+const rareQuotes = [
+  "You're not chasing goals. You're becoming them.",
+  "Main character energy unlocked.",
+  "Discipline just leveled up.",
+  "The grind doesn't stop. Neither do you.",
+  "You're writing your own comeback story.",
 ];
 
 export default function RunDetails() {
@@ -47,13 +53,39 @@ export default function RunDetails() {
   const [isDeleteSheetOpen, setIsDeleteSheetOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
-  const [randomQuote] = useState(() => 
-    motivationQuotes[Math.floor(Math.random() * motivationQuotes.length)]
-  );
+  
+  // Quote system
+  const [isRareQuote] = useState(() => Math.random() < 0.03);
+  const [randomQuote] = useState(() => {
+    const quotes = isRareQuote ? rareQuotes : motivationQuotes;
+    return quotes[Math.floor(Math.random() * quotes.length)];
+  });
+  
+  // Rare coin bonus (5% chance)
+  const [hasRareBonus] = useState(() => Math.random() < 0.05);
+  const [rareBonusAmount] = useState(() => parseFloat((Math.random() * 5 + 1).toFixed(2)));
+  
+  // Animated coin counter
+  const [displayedCoins, setDisplayedCoins] = useState(0);
+  const [showRareBonus, setShowRareBonus] = useState(false);
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
+  });
+  
+  // Fetch user's recent runs for streak calculation
+  const { data: recentRuns } = useQuery({
+    queryKey: ['recentRuns', currentUser?.email],
+    queryFn: async () => {
+      if (!currentUser) return [];
+      const runs = await base44.entities.Run.filter({ 
+        created_by: currentUser.email,
+        status: 'completed'
+      });
+      return runs.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)).slice(0, 10);
+    },
+    enabled: !!currentUser,
   });
 
   const { data: run, isLoading } = useQuery({
@@ -63,10 +95,94 @@ export default function RunDetails() {
       return runs[0];
     },
     enabled: !!runId,
-    onSuccess: (data) => {
-      if (data?.notes) setNotes(data.notes);
-    }
   });
+  
+  // Calculate coin breakdown
+  const calculateCoins = () => {
+    if (!run) return { total: 0, breakdown: {} };
+    
+    const distance = run.distance_km || 0;
+    const pace = run.pace_min_per_km || 0;
+    const avgPace = 6.0; // Reference pace
+    
+    // Distance bonus: 10 coins per km
+    const distanceBonus = parseFloat((distance * 10).toFixed(2));
+    
+    // Pace bonus: bonus for running faster than average
+    const paceBonus = pace > 0 && pace < avgPace 
+      ? parseFloat(((avgPace - pace) * 2).toFixed(2))
+      : 0;
+    
+    // Streak bonus (if user has consecutive runs)
+    const streak = recentRuns?.length || 0;
+    const streakBonus = streak > 1 ? parseFloat((streak * 1.5).toFixed(2)) : 0;
+    
+    // Daily bonus
+    const dailyBonus = 1.25;
+    
+    let total = distanceBonus + paceBonus + streakBonus + dailyBonus;
+    
+    // Add rare bonus if triggered
+    if (hasRareBonus) {
+      total += rareBonusAmount;
+    }
+    
+    // Combo bonus (level up + streak > 3)
+    const userLeveledUp = currentUser?.current_level > (currentUser?.previous_level || 0);
+    const comboBonus = userLeveledUp && streak > 3 ? 2.22 : 0;
+    if (comboBonus > 0) total += comboBonus;
+    
+    return {
+      total: parseFloat(total.toFixed(2)),
+      breakdown: {
+        distance: distanceBonus,
+        pace: paceBonus,
+        streak: streakBonus,
+        daily: dailyBonus,
+        rare: hasRareBonus ? rareBonusAmount : 0,
+        combo: comboBonus,
+      },
+      hasCombo: comboBonus > 0,
+      streak,
+    };
+  };
+  
+  const coinData = calculateCoins();
+  
+  // Animate coin count-up
+  useEffect(() => {
+    if (!run || displayedCoins > 0) return;
+    
+    const duration = 1500;
+    const steps = 60;
+    const increment = coinData.total / steps;
+    let current = 0;
+    let step = 0;
+    
+    const timer = setInterval(() => {
+      step++;
+      current += increment;
+      
+      if (step >= steps) {
+        setDisplayedCoins(coinData.total);
+        clearInterval(timer);
+        
+        // Show rare bonus after main animation
+        if (hasRareBonus) {
+          setTimeout(() => setShowRareBonus(true), 300);
+        }
+      } else {
+        setDisplayedCoins(parseFloat(current.toFixed(2)));
+      }
+    }, duration / steps);
+    
+    return () => clearInterval(timer);
+  }, [run, coinData.total, hasRareBonus]);
+  
+  // Update notes when run loads
+  useEffect(() => {
+    if (run?.notes) setNotes(run.notes);
+  }, [run]);
 
   const updateMutation = useMutation({
     mutationFn: (data) => base44.entities.Run.update(runId, data),
@@ -234,28 +350,155 @@ export default function RunDetails() {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.2, duration: 0.4 }}
-        className="px-5 pb-5"
+        className="px-5 pb-3"
       >
         <div 
-          className="rounded-2xl backdrop-blur-sm border px-5 py-4 text-center"
+          className="rounded-2xl backdrop-blur-sm border px-5 py-4 text-center relative overflow-hidden"
           style={{ 
-            backgroundColor: 'rgba(138,43,226,0.08)',
-            borderColor: 'rgba(138,43,226,0.2)',
-            boxShadow: '0 0 30px rgba(138,43,226,0.15), 0 0 0 1px rgba(138,43,226,0.08) inset'
+            backgroundColor: isRareQuote ? 'rgba(138,43,226,0.15)' : 'rgba(138,43,226,0.08)',
+            borderColor: isRareQuote ? 'rgba(138,43,226,0.4)' : 'rgba(138,43,226,0.2)',
+            boxShadow: isRareQuote 
+              ? '0 0 40px rgba(138,43,226,0.3), 0 0 0 1px rgba(138,43,226,0.15) inset'
+              : '0 0 30px rgba(138,43,226,0.15), 0 0 0 1px rgba(138,43,226,0.08) inset'
           }}
         >
+          {isRareQuote && (
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute top-0 left-1/4 w-2 h-2 bg-purple-400 rounded-full animate-ping" style={{ animationDuration: '2s' }} />
+              <div className="absolute top-1/2 right-1/4 w-1.5 h-1.5 bg-purple-300 rounded-full animate-ping" style={{ animationDuration: '2.5s', animationDelay: '0.5s' }} />
+            </div>
+          )}
           <p className="text-xs mb-2" style={{ color: 'rgba(255,255,255,0.50)' }}>
-            🔥 Today's vibe
+            {isRareQuote ? '💎 RARE VIBE' : '🔥 Today\'s vibe'}
           </p>
           <p 
-            className="text-base font-medium leading-relaxed animate-pulse"
+            className="text-base font-medium leading-relaxed"
             style={{ 
-              color: '#BFFF00',
-              textShadow: '0 0 20px rgba(191,255,0,0.4)'
+              color: isRareQuote ? '#C084FC' : '#BFFF00',
+              textShadow: isRareQuote 
+                ? '0 0 25px rgba(192,132,252,0.5)' 
+                : '0 0 20px rgba(191,255,0,0.4)',
+              animation: 'pulse 2s ease-in-out infinite'
             }}
           >
             "{randomQuote}"
           </p>
+        </div>
+      </motion.div>
+
+      {/* Coin Reward Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4, duration: 0.5 }}
+        className="px-5 pb-3"
+      >
+        <div 
+          className="rounded-2xl backdrop-blur-sm border p-5 relative overflow-hidden"
+          style={{ 
+            backgroundColor: 'rgba(255,255,255,0.04)',
+            borderColor: 'rgba(191,255,0,0.2)',
+            boxShadow: '0 0 30px rgba(191,255,0,0.15), 0 0 0 1px rgba(191,255,0,0.08) inset'
+          }}
+        >
+          {/* Rare Bonus Overlay */}
+          {showRareBonus && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.5, y: -20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ type: 'spring', damping: 12 }}
+              className="absolute top-3 right-3 px-3 py-1.5 rounded-full"
+              style={{
+                backgroundColor: 'rgba(138,43,226,0.3)',
+                border: '1px solid rgba(138,43,226,0.5)',
+                boxShadow: '0 0 20px rgba(138,43,226,0.4)'
+              }}
+            >
+              <p className="text-xs font-bold" style={{ color: '#C084FC' }}>
+                💎 BONUS +{rareBonusAmount.toFixed(2)}
+              </p>
+            </motion.div>
+          )}
+          
+          {/* Combo Banner */}
+          {coinData.hasCombo && (
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 1, type: 'spring' }}
+              className="absolute top-3 left-3 px-3 py-1.5 rounded-full"
+              style={{
+                backgroundColor: 'rgba(191,255,0,0.2)',
+                border: '1px solid rgba(191,255,0,0.4)',
+                boxShadow: '0 0 20px rgba(191,255,0,0.3)'
+              }}
+            >
+              <p className="text-xs font-bold" style={{ color: '#BFFF00' }}>
+                ⚡ COMBO +{coinData.breakdown.combo}
+              </p>
+            </motion.div>
+          )}
+
+          <div className="text-center mb-5 mt-8">
+            <p className="text-xs uppercase tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.40)' }}>
+              Coins Earned
+            </p>
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-4xl">🪙</span>
+              <motion.p
+                className="text-5xl font-black"
+                style={{ 
+                  color: '#BFFF00',
+                  textShadow: '0 0 30px rgba(191,255,0,0.5)'
+                }}
+                key={displayedCoins}
+              >
+                {displayedCoins.toFixed(2)}
+              </motion.p>
+            </div>
+          </div>
+
+          {/* Breakdown */}
+          <div className="space-y-2">
+            <div 
+              className="h-px w-full mb-3"
+              style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
+            />
+            
+            <div className="flex justify-between items-center py-1.5">
+              <p className="text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>Distance</p>
+              <p className="text-sm font-bold" style={{ color: '#BFFF00' }}>
+                +{coinData.breakdown.distance.toFixed(2)}
+              </p>
+            </div>
+            
+            {coinData.breakdown.pace > 0 && (
+              <div className="flex justify-between items-center py-1.5">
+                <p className="text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>Pace</p>
+                <p className="text-sm font-bold" style={{ color: '#BFFF00' }}>
+                  +{coinData.breakdown.pace.toFixed(2)}
+                </p>
+              </div>
+            )}
+            
+            {coinData.breakdown.streak > 0 && (
+              <div className="flex justify-between items-center py-1.5">
+                <p className="text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                  Streak {coinData.streak > 1 ? `(${coinData.streak}x)` : ''}
+                </p>
+                <p className="text-sm font-bold" style={{ color: '#BFFF00' }}>
+                  +{coinData.breakdown.streak.toFixed(2)}
+                </p>
+              </div>
+            )}
+            
+            <div className="flex justify-between items-center py-1.5">
+              <p className="text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>Daily</p>
+              <p className="text-sm font-bold" style={{ color: '#BFFF00' }}>
+                +{coinData.breakdown.daily.toFixed(2)}
+              </p>
+            </div>
+          </div>
         </div>
       </motion.div>
 
