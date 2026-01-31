@@ -306,12 +306,6 @@ const modalStyles = `
   animation: fadeSlideDown 0.5s ease-out 0.7s backwards;
 }
 
-.featureItem {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
 .featureItemAnimate {
   animation: fadeSlideLeft 0.4s ease-out backwards;
 }
@@ -340,12 +334,6 @@ const modalStyles = `
 .featureList {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-}
-
-.featureItem {
-  display: flex;
-  align-items: center;
   gap: 12px;
 }
 
