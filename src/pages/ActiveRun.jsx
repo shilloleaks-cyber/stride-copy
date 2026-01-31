@@ -397,18 +397,17 @@ export default function ActiveRun() {
     if (coinsEarned > 0) {
       try {
         const user = await base44.auth.me();
-        const oldTotalCoins = user.total_coins || 0;
-        const newTotalCoins = oldTotalCoins + coinsEarned;
+        const prevCoin = user.coin_balance ?? 0;
+        const newCoin = prevCoin + coinsEarned;
         
-        // Calculate levels
-        const oldLevel = Math.floor(Math.sqrt(oldTotalCoins / 10));
-        const newLevel = Math.floor(Math.sqrt(newTotalCoins / 10));
-        const leveledUp = newLevel > oldLevel;
+        // Calculate levels from coin_balance
+        const prevLevel = Math.floor(prevCoin / 100) + 1;
+        const newLevel = Math.floor(newCoin / 100) + 1;
+        const leveledUp = newLevel > prevLevel;
         
-        // Update user
+        // Update user with new coin balance
         await base44.auth.updateMe({
-          total_coins: newTotalCoins,
-          current_level: newLevel
+          coin_balance: newCoin
         });
         
         // Show level modal
