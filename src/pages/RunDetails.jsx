@@ -969,3 +969,80 @@ export default function RunDetails() {
     </div>
   );
 }
+
+const coinClaimStyles = `
+  @keyframes toastInOut {
+    0% {
+      opacity: 0;
+      transform: translate(-50%, -50%) translateY(12px) scale(0.9);
+    }
+    5% {
+      opacity: 1;
+      transform: translate(-50%, -50%) translateY(0) scale(1);
+    }
+    95% {
+      opacity: 1;
+      transform: translate(-50%, -50%) translateY(0) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translate(-50%, -50%) translateY(-12px) scale(0.95);
+    }
+  }
+
+  @keyframes coinBurst {
+    0% {
+      opacity: 1;
+      transform: translate(-50%, -50%) 
+        translate(0, 0) 
+        scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translate(-50%, -50%) 
+        translate(calc(cos(var(--particle-angle)) * 60px), calc(sin(var(--particle-angle)) * 60px)) 
+        scale(0);
+    }
+  }
+
+  .coinClaimToast {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 99999;
+    width: 92vw;
+    max-width: 300px;
+    padding: 12px 14px;
+    background: rgba(10, 10, 10, 0.94);
+    border: 1px solid rgba(122, 43, 255, 0.5);
+    border-radius: 999px;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.7), 0 0 35px rgba(183, 255, 26, 0.15);
+    backdrop-filter: blur(10px);
+    animation: toastInOut 0.7s ease-out forwards;
+    text-align: center;
+  }
+
+  .coinClaimAmount {
+    font-size: 18px;
+    font-weight: 800;
+    color: #B7FF1A;
+    text-shadow: 0 0 16px rgba(183, 255, 26, 0.6);
+    letter-spacing: 0.02em;
+    text-wrap: balance;
+  }
+
+  .coinParticle {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #B7FF1A;
+    box-shadow: 0 0 12px rgba(183, 255, 26, 0.7);
+    animation: coinBurst 0.6s ease-out forwards;
+    pointer-events: none;
+    z-index: 99998;
+  }
+`;
