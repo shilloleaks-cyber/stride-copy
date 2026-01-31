@@ -453,30 +453,20 @@ export default function ActiveRun() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
   
-  // Hold to finish state
-  const [holdProgress, setHoldProgress] = useState(0);
-  const holdIntervalRef = useRef(null);
+  // Stop confirmation modal
+  const [showStopConfirm, setShowStopConfirm] = useState(false);
   
-  const handleFinishHold = () => {
-    setHoldProgress(0);
-    holdIntervalRef.current = setInterval(() => {
-      setHoldProgress(prev => {
-        const next = prev + 5;
-        if (next >= 100) {
-          clearInterval(holdIntervalRef.current);
-          handleStop();
-          return 100;
-        }
-        return next;
-      });
-    }, 100);
+  const handleStopClick = () => {
+    // Haptic feedback if >5 minutes
+    if (seconds > 300 && 'vibrate' in navigator) {
+      navigator.vibrate(50);
+    }
+    setShowStopConfirm(true);
   };
   
-  const handleFinishRelease = () => {
-    if (holdIntervalRef.current) {
-      clearInterval(holdIntervalRef.current);
-    }
-    setHoldProgress(0);
+  const confirmStop = () => {
+    setShowStopConfirm(false);
+    handleStop();
   };
   
   const currentPosition = currentLat && currentLng ? { lat: currentLat, lng: currentLng } : null;
@@ -713,20 +703,19 @@ export default function ActiveRun() {
         
         {runStatus === 'RUNNING' && (
           <>
-            <button className="ctrlBtn pauseBtn" onClick={handlePause}>
-              <span className="ctrlIcon">⏸</span>
+            <button className={`ctrlBtn pauseBtn ${runStatus === 'RUNNING' ? 'running' : ''}`} onClick={handlePause}>
+              <svg className="pauseIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <rect x="6" y="4" width="4" height="16" rx="1" />
+                <rect x="14" y="4" width="4" height="16" rx="1" />
+              </svg>
             </button>
             <button 
-              className="ctrlBtn finishBtn"
-              onMouseDown={handleFinishHold}
-              onMouseUp={handleFinishRelease}
-              onTouchStart={handleFinishHold}
-              onTouchEnd={handleFinishRelease}
+              className={`ctrlBtn stopBtn ${runStatus === 'RUNNING' ? 'running' : ''}`}
+              onClick={handleStopClick}
             >
-              <span className="ctrlIcon">■</span>
-              {holdProgress > 0 && (
-                <div className="holdProgress" style={{ width: `${holdProgress}%` }} />
-              )}
+              <svg className="stopIcon" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="6" y="6" width="12" height="12" rx="1" />
+              </svg>
             </button>
           </>
         )}
@@ -737,20 +726,59 @@ export default function ActiveRun() {
               <span className="ctrlIcon">▶</span>
             </button>
             <button 
-              className="ctrlBtn finishBtn"
-              onMouseDown={handleFinishHold}
-              onMouseUp={handleFinishRelease}
-              onTouchStart={handleFinishHold}
-              onTouchEnd={handleFinishRelease}
+              className={`ctrlBtn stopBtn ${runStatus === 'PAUSED' ? 'paused' : ''}`}
+              onClick={handleStopClick}
             >
-              <span className="ctrlIcon">■</span>
-              {holdProgress > 0 && (
-                <div className="holdProgress" style={{ width: `${holdProgress}%` }} />
-              )}
+              <svg className="stopIcon" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="6" y="6" width="12" height="12" rx="1" />
+              </svg>
             </button>
           </>
         )}
       </div>
+      
+      {/* Stop Confirmation Modal */}
+      <AnimatePresence>
+        {showStopConfirm && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="stopModalBackdrop"
+              onClick={() => setShowStopConfirm(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="stopModal"
+            >
+              <div className="stopModalHeader">
+                <span className="stopModalEmoji">🔥</span>
+                <h3 className="stopModalTitle">End Run?</h3>
+              </div>
+              <p className="stopModalText">
+                Once stopped, this run will be saved.
+              </p>
+              <div className="stopModalButtons">
+                <button 
+                  className="stopModalBtn continueBtn"
+                  onClick={() => setShowStopConfirm(false)}
+                >
+                  Continue Run
+                </button>
+                <button 
+                  className="stopModalBtn endBtn"
+                  onClick={confirmStop}
+                >
+                  End Run
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Level Up Modal */}
       {levelUpData && (
@@ -1144,48 +1172,86 @@ const styles = `
   }
   
   .controls {
+    position: fixed;
+    bottom: 32px;
+    left: 0;
+    right: 0;
     display: flex;
-    gap: 16px;
+    gap: 20px;
     justify-content: center;
-    padding: 0 16px 100px;
-    margin-top: 16px;
+    padding: 0 16px;
+    z-index: 10;
   }
   
   .ctrlBtn {
     position: relative;
-    width: 104px;
-    height: 104px;
+    width: 76px;
+    height: 76px;
     border-radius: 50%;
-    border: 2px solid var(--stroke);
-    background: rgba(10,10,10,0.85);
-    backdrop-filter: blur(20px);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 36px;
     cursor: pointer;
-    transition: all 0.2s ease;
-    overflow: hidden;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
+    outline: none;
   }
   
-  .ctrlIcon {
-    position: relative;
-    z-index: 2;
+  .ctrlBtn:active {
+    transform: scale(0.96);
   }
   
+  /* Pause Button */
   .pauseBtn {
-    border-color: rgba(255,255,255,0.20);
-    color: rgba(255,255,255,0.72);
+    background: rgba(139,92,246,0.12);
+    border: 1px solid rgba(139,92,246,0.20);
+    box-shadow: 
+      0 0 0 1px rgba(139,92,246,0.15) inset,
+      0 0 25px rgba(139,92,246,0.25),
+      0 4px 16px rgba(0,0,0,0.3);
+    animation: breathingGlow 2s ease-in-out infinite;
   }
   
-  .pauseBtn:active {
-    transform: scale(0.95);
+  .pauseBtn.running {
+    background: rgba(139,92,246,0.18);
+    border-color: rgba(139,92,246,0.35);
+    box-shadow: 
+      0 0 0 1px rgba(139,92,246,0.20) inset,
+      0 0 30px rgba(139,92,246,0.35),
+      0 4px 16px rgba(0,0,0,0.3);
   }
   
+  .pauseIcon {
+    width: 26px;
+    height: 26px;
+    color: #8B5CF6;
+    stroke-width: 2.5;
+    filter: drop-shadow(0 0 8px rgba(139,92,246,0.4));
+  }
+  
+  @keyframes breathingGlow {
+    0%, 100% {
+      box-shadow: 
+        0 0 0 1px rgba(139,92,246,0.15) inset,
+        0 0 25px rgba(139,92,246,0.25),
+        0 4px 16px rgba(0,0,0,0.3);
+    }
+    50% {
+      box-shadow: 
+        0 0 0 1px rgba(139,92,246,0.25) inset,
+        0 0 35px rgba(139,92,246,0.4),
+        0 4px 16px rgba(0,0,0,0.3);
+    }
+  }
+  
+  /* Resume & Start Button */
   .resumeBtn, .startBtn {
-    border-color: rgba(191,255,0,0.60);
+    border: 2px solid rgba(191,255,0,0.60);
     background: linear-gradient(135deg, rgba(191,255,0,0.22), rgba(138,43,226,0.18));
     color: var(--neon);
+    font-size: 36px;
+    width: 104px;
+    height: 104px;
     box-shadow: 
       0 0 60px rgba(191,255,0,0.6),
       0 0 0 0 rgba(191,255,0,0.8),
@@ -1218,36 +1284,182 @@ const styles = `
     animation: none;
   }
   
-  .finishBtn {
-    border-color: rgba(255,50,50,0.45);
-    background: rgba(255,50,50,0.15);
-    color: rgba(255,90,90,1);
+  .ctrlIcon {
+    position: relative;
+    z-index: 2;
+  }
+  
+  /* Stop Button */
+  .stopBtn {
+    background: radial-gradient(circle at center, #2A0000, #000000);
+    border: 1px solid rgba(255,60,60,0.55);
     box-shadow: 
-      0 0 35px rgba(255,50,50,0.35),
-      0 4px 16px rgba(0,0,0,0.40);
+      0 0 0 1px rgba(255,60,60,0.25) inset,
+      0 0 18px rgba(255,70,70,0.35),
+      0 4px 16px rgba(0,0,0,0.4);
   }
   
-  .holdProgress {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    height: 100%;
-    background: linear-gradient(180deg, rgba(255,50,50,0.40), rgba(255,80,80,0.60));
-    transition: width 0.1s linear;
-    z-index: 1;
+  .stopBtn.running {
+    border-color: rgba(255,60,60,0.45);
+    box-shadow: 
+      0 0 0 1px rgba(255,60,60,0.20) inset,
+      0 0 16px rgba(255,70,70,0.28),
+      0 4px 16px rgba(0,0,0,0.4);
   }
   
-  .pauseBtn {
-    border-color: rgba(255,255,255,0.25);
-    background: rgba(255,255,255,0.08);
-    color: rgba(255,255,255,0.82);
+  .stopBtn.paused {
+    border-color: rgba(255,60,60,0.70);
+    background: radial-gradient(circle at center, #3A0000, #000000);
+    box-shadow: 
+      0 0 0 1px rgba(255,60,60,0.35) inset,
+      0 0 24px rgba(255,70,70,0.50),
+      0 4px 16px rgba(0,0,0,0.4);
+    animation: stopPulse 1.5s ease-in-out infinite;
+  }
+  
+  @keyframes stopPulse {
+    0%, 100% {
+      box-shadow: 
+        0 0 0 1px rgba(255,60,60,0.35) inset,
+        0 0 24px rgba(255,70,70,0.50),
+        0 4px 16px rgba(0,0,0,0.4);
+    }
+    50% {
+      box-shadow: 
+        0 0 0 1px rgba(255,60,60,0.45) inset,
+        0 0 32px rgba(255,70,70,0.65),
+        0 4px 16px rgba(0,0,0,0.4);
+    }
+  }
+  
+  .stopIcon {
+    width: 26px;
+    height: 26px;
+    color: #FF4A4A;
+    filter: drop-shadow(0 0 8px rgba(255,74,74,0.5));
+  }
+  
+  /* Stop Confirmation Modal */
+  .stopModalBackdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.70);
+    backdrop-filter: blur(8px);
+    z-index: 9998;
+  }
+  
+  .stopModal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: calc(100% - 48px);
+    max-width: 340px;
+    background: rgba(18,10,28,0.95);
+    backdrop-filter: blur(30px);
+    border: 1px solid rgba(138,43,226,0.30);
+    border-radius: 24px;
+    padding: 28px 24px;
+    z-index: 9999;
+    box-shadow: 
+      0 0 0 1px rgba(138,43,226,0.15) inset,
+      0 0 50px rgba(138,43,226,0.25),
+      0 20px 60px rgba(0,0,0,0.70);
+  }
+  
+  .stopModalHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  
+  .stopModalEmoji {
+    font-size: 28px;
+    filter: drop-shadow(0 0 12px rgba(255,100,0,0.6));
+  }
+  
+  .stopModalTitle {
+    font-size: 22px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.95);
+    margin: 0;
+  }
+  
+  .stopModalText {
+    font-size: 15px;
+    color: rgba(255,255,255,0.60);
+    line-height: 1.5;
+    margin: 0 0 24px 0;
+  }
+  
+  .stopModalButtons {
+    display: flex;
+    gap: 12px;
+  }
+  
+  .stopModalBtn {
+    flex: 1;
+    height: 48px;
+    border-radius: 14px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    border: none;
+    outline: none;
+  }
+  
+  .continueBtn {
+    background: rgba(191,255,0,0.08);
+    border: 1.5px solid rgba(191,255,0,0.30);
+    color: var(--neon);
+    box-shadow: 0 0 0 1px rgba(191,255,0,0.15) inset;
+  }
+  
+  .continueBtn:hover {
+    background: rgba(191,255,0,0.12);
+    border-color: rgba(191,255,0,0.40);
+    box-shadow: 
+      0 0 0 1px rgba(191,255,0,0.20) inset,
+      0 0 20px rgba(191,255,0,0.15);
+  }
+  
+  .continueBtn:active {
+    transform: scale(0.97);
+  }
+  
+  .endBtn {
+    background: linear-gradient(135deg, rgba(255,60,60,0.18), rgba(200,30,30,0.22));
+    border: 1.5px solid rgba(255,60,60,0.45);
+    color: #FF5A5A;
+    box-shadow: 
+      0 0 0 1px rgba(255,60,60,0.20) inset,
+      0 0 20px rgba(255,60,60,0.20);
+  }
+  
+  .endBtn:hover {
+    background: linear-gradient(135deg, rgba(255,60,60,0.24), rgba(200,30,30,0.28));
+    border-color: rgba(255,60,60,0.60);
+    box-shadow: 
+      0 0 0 1px rgba(255,60,60,0.30) inset,
+      0 0 28px rgba(255,60,60,0.35);
+  }
+  
+  .endBtn:active {
+    transform: scale(0.97);
   }
   
   @media (max-width: 420px) {
     .timerValue { font-size: 48px; }
     .centeredCard .metricValue { font-size: 28px; }
-    .ctrlBtn { width: 92px; height: 92px; font-size: 32px; }
+    .pauseBtn, .stopBtn { width: 68px; height: 68px; }
+    .pauseIcon, .stopIcon { width: 22px; height: 22px; }
+    .resumeBtn, .startBtn { width: 92px; height: 92px; font-size: 32px; }
     .metricsGrid { gap: 8px; }
     .metricCard { padding: 10px 12px; min-height: 85px; }
+    .stopModal { padding: 24px 20px; }
+    .stopModalTitle { font-size: 20px; }
+    .stopModalText { font-size: 14px; }
   }
 `;
