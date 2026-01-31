@@ -670,17 +670,25 @@ export default function ActiveRun() {
 
       {/* Metrics Grid */}
       <div className="metricsGrid">
-        <div className="metricCard">
+        <div className="metricCard centeredCard">
           <div className="metricLabel">DISTANCE</div>
-          <div className="metricValue">{distance.toFixed(2)} <span className="metricUnit">km</span></div>
+          <div className="metricValue">{distance.toFixed(2)}</div>
+          <div className="metricUnit">km</div>
         </div>
-        <div className="metricCard">
+        <div className="metricCard centeredCard">
           <div className="metricLabel">PACE</div>
-          <div className="metricValue">{formatPace(pace)} <span className="metricUnit">/km</span></div>
+          <div className="metricValue">{formatPace(pace)}</div>
+          <div className="metricUnit">/km</div>
         </div>
-        <div className="metricCard">
+        <div className="metricCard centeredCard">
           <div className="metricLabel">SPEED</div>
-          <div className="metricValue">{currentSpeed.toFixed(1)} <span className="metricUnit">km/h</span></div>
+          <div className="metricValue">{currentSpeed.toFixed(1)}</div>
+          <div className="metricUnit">km/h</div>
+        </div>
+        <div className="metricCard centeredCard">
+          <div className="metricLabel">CALORIES</div>
+          <div className="metricValue">{calories}</div>
+          <div className="metricUnit">kcal</div>
         </div>
         <div className="metricCard heartCard">
           <div className="heartTop">
@@ -977,23 +985,27 @@ const styles = `
   .mapOverlay {
     position: absolute;
     inset: 16px;
-    background: rgba(10,10,10,0.30);
+    background: linear-gradient(
+      to bottom,
+      rgba(10,10,10,0.40),
+      rgba(10,10,10,0.10)
+    );
     z-index: 1;
     pointer-events: none;
-    border-radius: 24px;
+    border-radius: 28px;
   }
   
   .mapWrap {
     height: 220px;
-    border-radius: 24px;
+    border-radius: 28px;
     overflow: hidden;
-    border: 1px solid rgba(191,255,0,0.20);
+    border: 1px solid rgba(191,255,0,0.25);
     box-shadow: 
-      0 0 0 1px rgba(138,43,226,0.12) inset,
-      0 0 30px rgba(191,255,0,0.15),
-      0 8px 32px rgba(0,0,0,0.40);
+      0 0 0 1px rgba(138,43,226,0.15) inset,
+      0 0 35px rgba(191,255,0,0.18),
+      0 12px 40px rgba(0,0,0,0.50);
     position: relative;
-    filter: saturate(0.75);
+    filter: saturate(0.70) brightness(0.92);
   }
   
   .metricsGrid {
@@ -1009,8 +1021,8 @@ const styles = `
     backdrop-filter: blur(20px);
     border: 1px solid rgba(255,255,255,0.15);
     border-radius: 16px;
-    padding: 12px 14px;
-    min-height: 75px;
+    padding: 14px;
+    min-height: 90px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -1018,6 +1030,27 @@ const styles = `
       0 0 0 1px rgba(191,255,0,0.12) inset,
       0 0 20px rgba(191,255,0,0.08),
       0 8px 24px rgba(0,0,0,0.35);
+  }
+  
+  .centeredCard {
+    text-align: center;
+    align-items: center;
+  }
+  
+  .centeredCard .metricLabel {
+    margin-bottom: 8px;
+  }
+  
+  .centeredCard .metricValue {
+    margin-bottom: 6px;
+  }
+  
+  .centeredCard .metricUnit {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.50);
+    margin-left: 0;
+    display: block;
   }
   
   .heartCard {
@@ -1056,7 +1089,7 @@ const styles = `
   }
   
   .metricValue {
-    font-size: 28px;
+    font-size: 32px;
     font-weight: 900;
     color: var(--neon);
     line-height: 1;
@@ -1067,6 +1100,10 @@ const styles = `
     font-weight: 700;
     color: rgba(255,255,255,0.55);
     margin-left: 3px;
+  }
+  
+  .heartCard .metricValue {
+    font-size: 28px;
   }
   
   .heartPulseBar {
@@ -1101,8 +1138,8 @@ const styles = `
   
   .ctrlBtn {
     position: relative;
-    width: 68px;
-    height: 68px;
+    width: 85px;
+    height: 85px;
     border-radius: 50%;
     border: 2px solid var(--stroke);
     background: rgba(10,10,10,0.85);
@@ -1110,7 +1147,7 @@ const styles = `
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 30px;
     cursor: pointer;
     transition: all 0.2s ease;
     overflow: hidden;
@@ -1131,35 +1168,38 @@ const styles = `
   }
   
   .resumeBtn, .startBtn {
-    border-color: rgba(191,255,0,0.40);
-    background: linear-gradient(135deg, rgba(191,255,0,0.18), rgba(138,43,226,0.12));
+    border-color: rgba(191,255,0,0.50);
+    background: linear-gradient(135deg, rgba(191,255,0,0.20), rgba(138,43,226,0.15));
     color: var(--neon);
     box-shadow: 
-      0 0 40px rgba(191,255,0,0.4),
-      0 0 0 0 rgba(191,255,0,0.6);
-    animation: buttonPulse 2.5s ease-in-out infinite, buttonScale 3s ease-in-out infinite;
+      0 0 50px rgba(191,255,0,0.5),
+      0 0 0 0 rgba(191,255,0,0.7),
+      0 0 0 3px rgba(191,255,0,0.15);
+    animation: buttonPulse 3s ease-in-out infinite, buttonBreathing 4s ease-in-out infinite;
   }
   
   @keyframes buttonPulse {
     0%, 100% {
       box-shadow: 
-        0 0 40px rgba(191,255,0,0.4),
-        0 0 0 0 rgba(191,255,0,0.6);
+        0 0 50px rgba(191,255,0,0.5),
+        0 0 0 0 rgba(191,255,0,0.7),
+        0 0 0 3px rgba(191,255,0,0.15);
     }
     50% {
       box-shadow: 
-        0 0 50px rgba(191,255,0,0.5),
-        0 0 0 12px rgba(191,255,0,0);
+        0 0 60px rgba(191,255,0,0.6),
+        0 0 0 16px rgba(191,255,0,0),
+        0 0 0 3px rgba(191,255,0,0.20);
     }
   }
   
-  @keyframes buttonScale {
+  @keyframes buttonBreathing {
     0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.03); }
+    50% { transform: scale(1.04); }
   }
   
   .resumeBtn:active, .startBtn:active {
-    transform: scale(0.95);
+    transform: scale(0.92);
     animation: none;
   }
   
@@ -1190,9 +1230,9 @@ const styles = `
   
   @media (max-width: 420px) {
     .timerValue { font-size: 48px; }
-    .metricValue { font-size: 24px; }
-    .ctrlBtn { width: 62px; height: 62px; }
+    .centeredCard .metricValue { font-size: 26px; }
+    .ctrlBtn { width: 75px; height: 75px; font-size: 26px; }
     .metricsGrid { gap: 8px; }
-    .metricCard { padding: 10px 12px; min-height: 70px; }
+    .metricCard { padding: 10px 12px; min-height: 85px; }
   }
 `;
