@@ -23,6 +23,12 @@ import PerKilometerBreakdown from '@/components/running/PerKilometerBreakdown';
 import AIFormInsights from '@/components/running/AIFormInsights';
 import CoinFlyAnimation from '@/components/coins/CoinFlyAnimation';
 import FloatingToast from '@/components/coins/FloatingToast';
+import { 
+  playCollectSound, 
+  playBatchCollectSound, 
+  playSettleSound, 
+  playRarePrelude 
+} from '@/components/utils/audioSystem';
 
 const COMMON_QUOTES = [
   "No excuses. Just progress.",
@@ -269,6 +275,18 @@ export default function RunDetails() {
       // Trigger coin fly animation
       setShowCoinFly(true);
       
+      // Play collect sounds staggered (sparkle per coin or batched)
+      const coinCount = Math.round(rewardAmount);
+      if (coinCount > 5) {
+        setTimeout(() => playBatchCollectSound(coinCount), 200);
+      } else {
+        Array.from({ length: coinCount }).forEach((_, i) => {
+          setTimeout(() => {
+            playCollectSound(i, coinCount);
+          }, 200 + i * 80);
+        });
+      }
+      
       // Wait for coins to reach destination
       await new Promise(resolve => setTimeout(resolve, 800));
       
@@ -300,6 +318,15 @@ export default function RunDetails() {
       // Update local state
       setIsClaimed(true);
       setShowCoinFly(false);
+      
+      // Play rare prelude if applicable
+      if (hasRareBonus) {
+        playRarePrelude();
+        await new Promise(resolve => setTimeout(resolve, 400));
+      }
+      
+      // Play balance settle sound
+      playSettleSound(hasRareBonus);
       
       // Show floating toast near destination
       setToastAmount(rewardAmount);
