@@ -22,7 +22,7 @@ import PaceConsistencyScore from '@/components/running/PaceConsistencyScore';
 import PerKilometerBreakdown from '@/components/running/PerKilometerBreakdown';
 import AIFormInsights from '@/components/running/AIFormInsights';
 
-const motivationQuotes = [
+const COMMON_QUOTES = [
   "No excuses. Just progress.",
   "You showed up. That's power.",
   "Small run. Big mindset.",
@@ -35,7 +35,7 @@ const motivationQuotes = [
   "Consistency beats motivation.",
 ];
 
-const rareQuotes = [
+const RARE_QUOTES = [
   "You're not chasing goals. You're becoming them.",
   "Main character energy unlocked.",
   "Discipline just leveled up.",
@@ -54,12 +54,8 @@ export default function RunDetails() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   
-  // Quote system
-  const [isRareQuote] = useState(() => Math.random() < 0.03);
-  const [randomQuote] = useState(() => {
-    const quotes = isRareQuote ? rareQuotes : motivationQuotes;
-    return quotes[Math.floor(Math.random() * quotes.length)];
-  });
+  // Quote state (loaded from run)
+  const [quoteData, setQuoteData] = useState(null);
   
   // Rare coin bonus (5% chance)
   const [hasRareBonus] = useState(() => Math.random() < 0.05);
@@ -100,6 +96,54 @@ export default function RunDetails() {
     },
     enabled: !!runId,
   });
+  
+  // Generate and save quote if not exists
+  useEffect(() => {
+    const initializeQuote = async () => {
+      if (!run || quoteData) return;
+      
+      // If run already has quote, use it
+      if (run.quote_text) {
+        setQuoteData({
+          text: run.quote_text,
+          rarity: run.quote_rarity || 'common',
+          tag: run.quote_tag || (run.quote_rarity === 'rare' ? '💎 RARE DROP' : '🔥 Today\'s vibe')
+        });
+        return;
+      }
+      
+      // Generate new quote (only happens once for old runs without quotes)
+      const isRare = Math.random() < 0.05;
+      const quotes = isRare ? RARE_QUOTES : COMMON_QUOTES;
+      const selectedQuote = quotes[Math.floor(Math.random() * quotes.length)];
+      const tag = isRare ? '💎 RARE DROP' : '🔥 Today\'s vibe';
+      
+      // Save to run record
+      try {
+        await base44.entities.Run.update(runId, {
+          quote_text: selectedQuote,
+          quote_rarity: isRare ? 'rare' : 'common',
+          quote_tag: tag
+        });
+        
+        setQuoteData({
+          text: selectedQuote,
+          rarity: isRare ? 'rare' : 'common',
+          tag
+        });
+      } catch (error) {
+        console.error('Error saving quote:', error);
+        // Fallback: set locally without save
+        setQuoteData({
+          text: selectedQuote,
+          rarity: isRare ? 'rare' : 'common',
+          tag
+        });
+      }
+    };
+    
+    initializeQuote();
+  }, [run, runId, quoteData]);
   
   // Calculate coin breakdown
   const calculateCoins = () => {
@@ -398,45 +442,53 @@ export default function RunDetails() {
       </motion.div>
 
       {/* Motivation Quote */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.2, duration: 0.4 }}
-        className="px-5 pb-3"
-      >
-        <div 
-          className="rounded-2xl backdrop-blur-sm border px-5 py-4 text-center relative overflow-hidden"
-          style={{ 
-            backgroundColor: isRareQuote ? 'rgba(138,43,226,0.15)' : 'rgba(138,43,226,0.08)',
-            borderColor: isRareQuote ? 'rgba(138,43,226,0.4)' : 'rgba(138,43,226,0.2)',
-            boxShadow: isRareQuote 
-              ? '0 0 40px rgba(138,43,226,0.3), 0 0 0 1px rgba(138,43,226,0.15) inset'
-              : '0 0 30px rgba(138,43,226,0.15), 0 0 0 1px rgba(138,43,226,0.08) inset'
-          }}
+      {quoteData && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2, duration: 0.4 }}
+          className="px-5 pb-3"
         >
-          {isRareQuote && (
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute top-0 left-1/4 w-2 h-2 bg-purple-400 rounded-full animate-ping" style={{ animationDuration: '2s' }} />
-              <div className="absolute top-1/2 right-1/4 w-1.5 h-1.5 bg-purple-300 rounded-full animate-ping" style={{ animationDuration: '2.5s', animationDelay: '0.5s' }} />
-            </div>
-          )}
-          <p className="text-xs mb-2" style={{ color: 'rgba(255,255,255,0.50)' }}>
-            {isRareQuote ? '💎 RARE VIBE' : '🔥 Today\'s vibe'}
-          </p>
-          <p 
-            className="text-base font-medium leading-relaxed"
+          <div 
+            className="rounded-2xl backdrop-blur-sm border px-5 py-4 text-center relative overflow-hidden"
             style={{ 
-              color: isRareQuote ? '#C084FC' : '#BFFF00',
-              textShadow: isRareQuote 
-                ? '0 0 25px rgba(192,132,252,0.5)' 
-                : '0 0 20px rgba(191,255,0,0.4)',
-              animation: 'pulse 2s ease-in-out infinite'
+              backgroundColor: quoteData.rarity === 'rare' ? 'rgba(138,43,226,0.15)' : 'rgba(138,43,226,0.08)',
+              borderColor: quoteData.rarity === 'rare' ? 'rgba(191,255,0,0.25)' : 'rgba(138,43,226,0.2)',
+              boxShadow: quoteData.rarity === 'rare'
+                ? '0 0 40px rgba(138,43,226,0.3), 0 0 20px rgba(191,255,0,0.15), 0 0 0 1px rgba(191,255,0,0.12) inset'
+                : '0 0 30px rgba(138,43,226,0.15), 0 0 0 1px rgba(138,43,226,0.08) inset'
             }}
           >
-            "{randomQuote}"
-          </p>
-        </div>
-      </motion.div>
+            {quoteData.rarity === 'rare' && (
+              <motion.div 
+                className="absolute inset-0 pointer-events-none"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.8 }}
+              >
+                <div className="absolute top-0 left-1/4 w-2 h-2 bg-purple-400 rounded-full animate-ping" style={{ animationDuration: '2s' }} />
+                <div className="absolute top-1/2 right-1/4 w-1.5 h-1.5 bg-purple-300 rounded-full animate-ping" style={{ animationDuration: '2.5s', animationDelay: '0.5s' }} />
+                <div className="absolute bottom-1/4 left-1/3 w-1 h-1 rounded-full" style={{ backgroundColor: '#BFFF00', boxShadow: '0 0 8px #BFFF00', animation: 'ping 3s ease-in-out infinite' }} />
+              </motion.div>
+            )}
+            <p className="text-xs mb-2 font-semibold" style={{ color: 'rgba(255,255,255,0.50)' }}>
+              {quoteData.tag}
+            </p>
+            <p 
+              className="text-base font-medium leading-relaxed"
+              style={{ 
+                color: quoteData.rarity === 'rare' ? '#C084FC' : '#BFFF00',
+                textShadow: quoteData.rarity === 'rare'
+                  ? '0 0 25px rgba(192,132,252,0.5)' 
+                  : '0 0 20px rgba(191,255,0,0.4)',
+                animation: 'pulse 2s ease-in-out infinite'
+              }}
+            >
+              "{quoteData.text}"
+            </p>
+          </div>
+        </motion.div>
+      )}
 
       {/* Coin Reward Card - Compact */}
       <motion.div
