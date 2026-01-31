@@ -34,8 +34,9 @@ export default function LevelProgress() {
     queryFn: () => base44.auth.me(),
   });
 
-  const currentLevel = user?.current_level || 1;
-  const totalCoins = user?.total_coins || 0;
+  const currentLevel = user?.level ?? 1;
+  const levelProgressCoins = user?.level_progress_coins ?? 0;
+  const coinsPerLevel = 100;
 
   // Check for level up
   useEffect(() => {
@@ -56,14 +57,8 @@ export default function LevelProgress() {
     prevLevelRef.current = currentLevel;
   }, [currentLevel]);
 
-  const currentLevelConfig = LEVELS_CONFIG.find(l => l.level === currentLevel) || LEVELS_CONFIG[0];
-  const nextLevelConfig = LEVELS_CONFIG.find(l => l.level === currentLevel + 1);
-
-  const coinsForCurrentLevel = currentLevelConfig.coinsRequired;
-  const coinsForNextLevel = nextLevelConfig?.coinsRequired || coinsForCurrentLevel;
-  const coinsInCurrentLevel = totalCoins - coinsForCurrentLevel;
-  const coinsNeededForNext = coinsForNextLevel - coinsForCurrentLevel;
-  const progress = (coinsInCurrentLevel / coinsNeededForNext) * 100;
+  // Progress bar: levelProgressCoins / coinsPerLevel
+  const progress = (levelProgressCoins / coinsPerLevel) * 100;
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -134,7 +129,7 @@ export default function LevelProgress() {
           <div className="flex items-center justify-between text-sm mb-2">
             <span style={{ color: '#8A2BE2' }}>Progress</span>
             <span className="text-gray-400">
-              {totalCoins.toLocaleString()} / {nextLevelConfig ? coinsForNextLevel.toLocaleString() : 'MAX'} coins
+              {levelProgressCoins.toFixed(0)} / {coinsPerLevel} coins
             </span>
           </div>
           <div className="h-3 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
@@ -149,16 +144,14 @@ export default function LevelProgress() {
               }}
             />
           </div>
-          {nextLevelConfig && (
-            <p className="text-xs text-gray-500 mt-2 text-center">
-              {(coinsNeededForNext - coinsInCurrentLevel).toLocaleString()} coins to Level {currentLevel + 1}
-            </p>
-          )}
+          <p className="text-xs text-gray-500 mt-2 text-center">
+            {(coinsPerLevel - levelProgressCoins).toFixed(0)} coins to Level {currentLevel + 1}
+          </p>
         </div>
       </motion.div>
 
       {/* Next Unlock */}
-      {nextLevelConfig && (
+      {currentLevel < 10 && (
         <div className="px-6 mb-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -170,16 +163,21 @@ export default function LevelProgress() {
               borderColor: 'rgba(138, 43, 226, 0.3)'
             }}
           >
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(191, 255, 0, 0.2)' }}>
-                {React.createElement(nextLevelConfig.icon, { className: 'w-6 h-6', style: { color: '#BFFF00' } })}
-              </div>
-              <div className="flex-1">
-                <p className="text-sm text-gray-400">Next Unlock</p>
-                <p className="text-lg font-medium" style={{ color: '#8A2BE2' }}>{nextLevelConfig.reward}</p>
-                <p className="text-xs text-gray-500 mt-0.5">Level <span style={{ color: '#BFFF00' }}>{nextLevelConfig.level}</span> • {nextLevelConfig.description}</p>
-              </div>
-            </div>
+            {(() => {
+              const nextConfig = LEVELS_CONFIG.find(l => l.level === currentLevel + 1);
+              return nextConfig ? (
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(191, 255, 0, 0.2)' }}>
+                    {React.createElement(nextConfig.icon, { className: 'w-6 h-6', style: { color: '#BFFF00' } })}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-400">Next Unlock</p>
+                    <p className="text-lg font-medium" style={{ color: '#8A2BE2' }}>{nextConfig.reward}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Level <span style={{ color: '#BFFF00' }}>{nextConfig.level}</span> • {nextConfig.description}</p>
+                  </div>
+                </div>
+              ) : null;
+            })()
           </motion.div>
         </div>
       )}
@@ -279,9 +277,9 @@ export default function LevelProgress() {
             borderColor: 'rgba(191, 255, 0, 0.3)'
           }}
         >
-          <p className="text-sm text-gray-400 mb-2">Total Coins Earned</p>
+          <p className="text-sm text-gray-400 mb-2">Wallet Balance</p>
           <p className="text-5xl font-light mb-1" style={{ color: '#BFFF00' }}>
-            {totalCoins.toLocaleString()}
+            {(user?.coin_balance ?? 0).toFixed(2)}
           </p>
           <p className="text-xs text-gray-500">Keep running to earn more!</p>
         </motion.div>

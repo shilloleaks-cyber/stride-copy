@@ -164,12 +164,14 @@ export default function Home() {
     };
   });
 
-  // Game stats
-  const coinBalance = user?.coin_balance || 0;
-  const level = user?.current_level || 1;
+  // Game stats - read from user object (single source of truth)
+  const coinBalance = user?.coin_balance ?? 0;
+  const level = user?.level ?? 1;
+  const levelProgressCoins = user?.level_progress_coins ?? 0;
+  const coinsPerLevel = 100;
   const levelProgress = {
-    current: Math.floor(coinBalance % 100),
-    need: 100,
+    current: Math.round(levelProgressCoins * 100) / 100,
+    need: coinsPerLevel,
   };
 
   // ===== UI states =====
