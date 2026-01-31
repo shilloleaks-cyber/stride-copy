@@ -570,7 +570,7 @@ export default function RunDetails() {
           {/* Claim Button */}
           <motion.button
             onClick={handleClaimReward}
-            disabled={isClaiming || isClaimed}
+            disabled={isClaiming || isClaimed || !isRunOwner}
             whileTap={{ scale: 0.98 }}
             className="w-full h-11 rounded-full font-bold text-sm transition-all disabled:opacity-70 disabled:cursor-not-allowed"
             style={{
@@ -584,7 +584,7 @@ export default function RunDetails() {
               border: isClaimed ? '1px solid rgba(255,255,255,0.1)' : 'none'
             }}
           >
-            {isClaiming ? 'Claiming...' : isClaimed ? '✅ Claimed' : 'Claim Reward'}
+            {isClaiming ? 'Claiming...' : isClaimed ? '✅ Claimed' : !isRunOwner ? 'Only Owner Can Claim' : 'Claim Reward'}
           </motion.button>
 
           {/* Rare Bonus Indicator */}
