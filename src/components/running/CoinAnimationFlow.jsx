@@ -88,31 +88,35 @@ export default function CoinAnimationFlow({
 function CoinParticle({ startX, startY, endX, endY, delay }) {
   const dx = endX - startX;
   const dy = endY - startY;
-  const distance = Math.sqrt(dx * dx + dy * dy);
 
-  // Curved arc: control point for quadratic bezier
-  const midX = (startX + endX) / 2 + (Math.random() - 0.5) * 80;
-  const midY = (startY + endY) / 2 - distance * 0.3;
+  const animationDelay = `${delay}s`;
+  const keyframeName = `coinFly-${Date.now()}-${Math.random()}`;
 
   return (
-    <motion.div
-      initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
-      animate={{ x: dx, y: dy, opacity: 0, scale: 0.5 }}
-      transition={{
-        duration: 1.2,
-        delay,
-        ease: [0.25, 0.46, 0.45, 0.94], // custom cubic-bezier (accelerate near end)
-      }}
+    <div
       style={{
         position: 'fixed',
         left: startX,
         top: startY,
         fontSize: '20px',
         filter: 'drop-shadow(0 0 10px rgba(191, 255, 0, 0.6))',
+        animation: `${keyframeName} 1.2s ease-out ${animationDelay} forwards`,
       }}
     >
+      <style>{`
+        @keyframes ${keyframeName} {
+          0% {
+            transform: translate(0, 0) scale(1);
+            opacity: 1;
+          }
+          100% {
+            transform: translate(${dx}px, ${dy}px) scale(0.5);
+            opacity: 0;
+          }
+        }
+      `}</style>
       🪙
-    </motion.div>
+    </div>
   );
 }
 
