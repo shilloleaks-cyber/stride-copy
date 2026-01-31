@@ -182,138 +182,129 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
   };
 
   const currentStreak = calculateStreak();
+  const currentLevel = user?.current_level || 1;
+  const currentCoins = user?.total_coins || 0;
+  
+  // Level progress calculation (100 coins per level)
+  const coinsForCurrentLevel = currentCoins % 100;
+  const levelProgress = coinsForCurrentLevel / 100;
+  const levelProgressPercent = Math.round(levelProgress * 100);
+
+  // Recent run coins earned
+  const lastRun = completedRuns[0];
+  const lastRunCoins = lastRun ? Math.floor(lastRun.distance_km || 0) : 0;
 
   return (
     <div className="profileRoot">
       <style>{profileStyles}</style>
 
-      {/* Header */}
-      <div className="profileHeader">
-        <div className="headerActions">
-          <button onClick={handleLogout} className="logoutBtn">
-            <LogOut className="w-4 h-4" />
-          </button>
-          <button onClick={() => setEditBioOpen(true)} className="editBtn">
-            <Edit3 className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* Avatar Section */}
+      {/* Identity + Level Header */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="avatarSection"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="identityHeader"
       >
-        <div className="avatarGlow">
-          <ProfileAvatar 
-            user={user} 
-            size="lg" 
-            editable 
-            onImageUpdate={() => refetchUser()}
-            className="avatar"
-          />
+        <div className="avatarContainer">
+          <div className="avatarGlow">
+            <ProfileAvatar 
+              user={user} 
+              size="lg" 
+              editable 
+              onImageUpdate={() => refetchUser()}
+            />
+          </div>
         </div>
-        <h2 className="userName">{user?.full_name || 'Runner'}</h2>
-        <p className="userEmail">{user?.email}</p>
+
+        <h2 className="userNameLarge">{user?.full_name || 'Runner'}</h2>
+        
         <div className="levelBadge">
-          <Trophy className="w-3 h-3" />
-          Lv.{user?.current_level || 1} Runner
+          <Trophy className="w-3.5 h-3.5" />
+          <span>Lv.{currentLevel} Runner</span>
+        </div>
+
+        <div className="levelProgressSection">
+          <div className="levelProgressBar">
+            <div className="levelProgressFill" style={{ width: `${levelProgressPercent}%` }} />
+          </div>
+          <p className="levelProgressText">{levelProgressPercent}%</p>
         </div>
       </motion.div>
 
-      {/* Mini Stats Row */}
-      <div className="miniStatsRow">
-        <div className="miniStat">
-          <MapPin className="w-4 h-4 miniIcon" />
-          <div className="miniVal">{stats.totalDistance.toFixed(1)}</div>
-          <div className="miniLbl">km</div>
+      {/* Quick Stats Mini Cards */}
+      <div className="quickStatsRow">
+        <div className="quickStatCard">
+          <MapPin className="w-5 h-5 quickIcon" />
+          <div className="quickValue">{stats.totalDistance.toFixed(1)}</div>
+          <div className="quickLabel">KM</div>
         </div>
-        <div className="miniStat">
-          <Calendar className="w-4 h-4 miniIcon" />
-          <div className="miniVal">{stats.totalRuns}</div>
-          <div className="miniLbl">runs</div>
+        <div className="quickStatCard">
+          <Calendar className="w-5 h-5 quickIcon" />
+          <div className="quickValue">{stats.totalRuns}</div>
+          <div className="quickLabel">Runs</div>
         </div>
-        <div className="miniStat">
-          <Flame className="w-4 h-4 miniIcon" />
-          <div className="miniVal">{(stats.totalCalories / 1000).toFixed(1)}k</div>
-          <div className="miniLbl">kcal</div>
+        <div className="quickStatCard">
+          <TrendingUp className="w-5 h-5 quickIcon" />
+          <div className="quickValue">{formatPace(stats.avgPace)}</div>
+          <div className="quickLabel">Pace</div>
         </div>
-        <div className="miniStat">
-          <Wallet className="w-4 h-4 miniIcon" />
-          <div className="miniVal">{user?.total_coins || 0}</div>
-          <div className="miniLbl">coins</div>
+        <div className="quickStatCard">
+          <Flame className="w-5 h-5 quickIcon" />
+          <div className="quickValue">{currentStreak}</div>
+          <div className="quickLabel">Streak</div>
         </div>
       </div>
 
-      {/* Main Progress Card */}
-      <div className="progressCard">
-        <div className="progressGrid">
-          <div className="progressItem">
-            <div className="progressVal">{stats.totalDistance.toFixed(1)}</div>
-            <div className="progressLbl">Total Distance</div>
-            <div className="progressUnit">km</div>
+      {/* Performance Summary Big Card */}
+      <div className="performanceCard">
+        <div className="perfGrid">
+          <div className="perfItem">
+            <div className="perfLabel">TOTAL DISTANCE</div>
+            <div className="perfValue">{stats.totalDistance.toFixed(1)} km</div>
           </div>
-          <div className="progressItem">
-            <div className="progressVal">{stats.totalRuns}</div>
-            <div className="progressLbl">Total Runs</div>
-            <div className="progressUnit">times</div>
+          <div className="perfItem">
+            <div className="perfLabel">TOTAL TIME</div>
+            <div className="perfValue">{Math.floor(stats.totalTime / 3600)} hrs</div>
           </div>
-          <div className="progressItem">
-            <div className="progressVal">{(stats.totalCalories / 1000).toFixed(1)}k</div>
-            <div className="progressLbl">Total Calories</div>
-            <div className="progressUnit">kcal</div>
+          <div className="perfItem">
+            <div className="perfLabel">TOTAL CALORIES</div>
+            <div className="perfValue">{(stats.totalCalories / 1000).toFixed(1)}k kcal</div>
           </div>
-          <div className="progressItem">
-            <div className="progressVal">{Math.floor(stats.totalTime / 3600)}</div>
-            <div className="progressLbl">Total Time</div>
-            <div className="progressUnit">hrs</div>
+          <div className="perfItem">
+            <div className="perfLabel">AVG PACE</div>
+            <div className="perfValue">{formatPace(stats.avgPace)}</div>
           </div>
         </div>
       </div>
 
-      {/* Coin & Streak Capsule */}
-      <div className="capsuleCard">
-        <div className="capsuleItem">
-          <Wallet className="w-5 h-5 capsuleIcon" />
-          <div>
-            <div className="capsuleLbl">Coin Balance</div>
-            <div className="capsuleVal">{(user?.total_coins || 0).toFixed(2)}</div>
-          </div>
+      {/* Coin + Economy Card */}
+      <div className="coinWalletCard">
+        <div className="coinHeader">
+          <span className="coinEmoji">🪙</span>
+          <span className="coinTitle">COIN WALLET</span>
         </div>
-        <div className="capsuleDivider" />
-        <div className="capsuleItem">
-          <Flame className="w-5 h-5 capsuleIcon flame" />
-          <div className="flex-1">
-            <div className="capsuleLbl">Streak</div>
-            <div className="capsuleVal">{currentStreak} days</div>
-            <div className="streakBar">
-              <div className="streakFill" style={{ width: `${Math.min(100, (currentStreak / 7) * 100)}%` }} />
-            </div>
-          </div>
+        <div className="coinBalance">{currentCoins.toFixed(2)}</div>
+        <div className="coinBalanceLabel">Balance</div>
+        {lastRunCoins > 0 && (
+          <div className="coinLastRun">+{lastRunCoins.toFixed(2)} from last run</div>
+        )}
+      </div>
+
+      {/* Achievements */}
+      <div className="achievementsSection">
+        <div className="sectionHeader">
+          <span className="sectionEmoji">🏆</span>
+          <span className="sectionTitle">ACHIEVEMENTS</span>
         </div>
+        <AchievementBadgesSection stats={stats} />
       </div>
 
       {/* Personal Bests */}
-      <PersonalBestsSection runs={runs} />
-
-      {/* Achievement Badges */}
-      <AchievementBadgesSection stats={stats} />
+      <div className="personalBestsSection">
+        <PersonalBestsSection runs={runs} />
+      </div>
 
       {/* Running History */}
       <RunningHistorySection runs={runs} />
-
-      {/* Bottom Buttons */}
-      <div className="bottomActions">
-        <button onClick={() => setShowSkins(true)} className="actionBtn">
-          <Palette className="w-4 h-4" />
-          Customize
-        </button>
-        <button onClick={() => navigate(createPageUrl('HealthConnect'))} className="actionBtn">
-          <Heart className="w-4 h-4" />
-          Health Connect
-        </button>
-      </div>
 
       {/* Edit Bio Dialog */}
       <Dialog open={editBioOpen} onOpenChange={setEditBioOpen}>
