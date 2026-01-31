@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Zap, Sparkles } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -40,29 +39,23 @@ export default function LevelUpModal({ isOpen, onClose, newLevel, coinsEarned, l
     { icon: '✨', title: 'Exclusive Skins', desc: 'Customize your experience' },
   ];
 
+  if (!isOpen) return null;
+
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          <style>{modalStyles}</style>
-          
-          {/* Dark Overlay */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            style={{ backgroundColor: '#0A0A0A' }}
-            className="fixed inset-0 z-[99998] flex items-center justify-center p-4"
-            onClick={onClose}
-          />
-          
-          {/* Modal Content */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.85, y: 40 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.85, y: 40 }}
-            className="fixed inset-0 z-[99999] flex items-center justify-center p-4 pointer-events-none"
-          >
+    <>
+      <style>{modalStyles}</style>
+      
+      {/* Dark Overlay */}
+      <div
+        style={{ backgroundColor: '#0A0A0A' }}
+        className="levelUpOverlay fixed inset-0 z-[99998] flex items-center justify-center p-4"
+        onClick={onClose}
+      />
+      
+      {/* Modal Content */}
+      <div
+        className="levelUpContainer fixed inset-0 z-[99999] flex items-center justify-center p-4 pointer-events-none"
+      >
             <div className="levelUpModalCard">
               {leveledUp ? (
                 <>
@@ -71,54 +64,33 @@ export default function LevelUpModal({ isOpen, onClose, newLevel, coinsEarned, l
                   <div className="particleGlow particleGlow2" />
                   
                   {/* Glowing Purple Circle with Level */}
-                  <motion.div
-                    animate={{ 
-                      scale: [1, 1.05, 1],
-                      boxShadow: [
-                        '0 0 40px rgba(138, 43, 226, 0.6)',
-                        '0 0 60px rgba(138, 43, 226, 0.8)',
-                        '0 0 40px rgba(138, 43, 226, 0.6)'
-                      ]
-                    }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    className="levelCircle"
+                  <div
+                    className="levelCircle levelCircleAnimate"
                   >
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.5 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.3 }}
-                      className="levelNumber"
+                    <div
+                      className="levelNumber levelNumberAnimate"
                     >
                       {newLevel}
-                    </motion.div>
-                  </motion.div>
+                    </div>
+                  </div>
                   
                   {/* Title */}
-                  <motion.h2
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                    className="levelUpTitle"
+                  <h2
+                    className="levelUpTitle levelUpTitleAnimate"
                   >
                     LEVEL UP!
-                  </motion.h2>
+                  </h2>
                   
                   {/* Coins Earned */}
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.6 }}
-                    className="coinsText"
+                  <p
+                    className="coinsText coinsTextAnimate"
                   >
                     +{coinsEarned} coins earned
-                  </motion.p>
+                  </p>
                   
                   {/* Unlocked Features Card */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.7 }}
-                    className="featureCard"
+                  <div
+                    className="featureCard featureCardAnimate"
                   >
                     <div className="featureHeader">
                       <Sparkles className="w-5 h-5" style={{ color: '#BFFF00' }} />
@@ -126,22 +98,20 @@ export default function LevelUpModal({ isOpen, onClose, newLevel, coinsEarned, l
                     </div>
                     <div className="featureList">
                       {unlockedFeatures.map((feature, idx) => (
-                        <motion.div
+                        <div
                           key={idx}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: 0.8 + idx * 0.1 }}
-                          className="featureItem"
+                          className="featureItem featureItemAnimate"
+                          style={{ animationDelay: `${0.8 + idx * 0.1}s` }}
                         >
                           <span className="featureIcon">{feature.icon}</span>
                           <div>
                             <div className="featureName">{feature.title}</div>
                             <div className="featureDesc">{feature.desc}</div>
                           </div>
-                        </motion.div>
+                        </div>
                       ))}
                     </div>
-                  </motion.div>
+                  </div>
                 </>
               ) : (
                 <>
@@ -155,26 +125,39 @@ export default function LevelUpModal({ isOpen, onClose, newLevel, coinsEarned, l
               )}
               
               {/* Large Gradient CTA Button */}
-              <motion.button
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: leveledUp ? 1.2 : 0.5 }}
+              <button
                 onClick={onClose}
-                className="ctaButton"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                className={`ctaButton ${leveledUp ? 'ctaButtonAnimateLevelUp' : 'ctaButtonAnimateProgress'}`}
               >
                 Continue Running
-              </motion.button>
+              </button>
             </div>
-          </motion.div>
+          </div>
         </>
       )}
-    </AnimatePresence>
+    </>
   );
 }
 
 const modalStyles = `
+.levelUpOverlay {
+  animation: overlayFadeIn 0.3s ease-out forwards;
+}
+
+@keyframes overlayFadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.levelUpContainer {
+  animation: containerSlideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes containerSlideIn {
+  0% { opacity: 0; transform: scale(0.85) translateY(40px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
 .levelUpModalCard {
   background: #0A0A0A;
   border: 1px solid rgba(138, 43, 226, 0.3);
@@ -236,12 +219,36 @@ const modalStyles = `
   box-shadow: 0 0 40px rgba(138, 43, 226, 0.6), 0 0 80px rgba(138, 43, 226, 0.3) inset;
 }
 
+.levelCircleAnimate {
+  animation: levelCirclePulse 2s ease-in-out infinite 0.3s;
+}
+
+@keyframes levelCirclePulse {
+  0%, 100% { 
+    transform: scale(1);
+    box-shadow: 0 0 40px rgba(138, 43, 226, 0.6), 0 0 80px rgba(138, 43, 226, 0.3) inset;
+  }
+  50% { 
+    transform: scale(1.05);
+    box-shadow: 0 0 60px rgba(138, 43, 226, 0.8), 0 0 100px rgba(138, 43, 226, 0.4) inset;
+  }
+}
+
 .levelNumber {
   font-size: 72px;
   font-weight: 900;
   color: #BFFF00;
   text-shadow: 0 0 20px rgba(191, 255, 0, 0.8), 0 0 40px rgba(191, 255, 0, 0.4);
   animation: neonPulse 2s ease-in-out infinite;
+}
+
+.levelNumberAnimate {
+  animation: levelNumberEntry 0.6s ease-out 0.3s backwards;
+}
+
+@keyframes levelNumberEntry {
+  0% { opacity: 0; transform: scale(0.5); }
+  100% { opacity: 1; transform: scale(1); }
 }
 
 @keyframes neonPulse {
@@ -262,10 +269,28 @@ const modalStyles = `
   text-shadow: 0 2px 20px rgba(255, 255, 255, 0.3);
 }
 
+.levelUpTitleAnimate {
+  animation: fadeSlideDown 0.5s ease-out 0.4s backwards;
+}
+
+@keyframes fadeSlideDown {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
 .coinsText {
   font-size: 16px;
   color: rgba(255, 255, 255, 0.6);
   margin-bottom: 28px;
+}
+
+.coinsTextAnimate {
+  animation: fadeIn 0.4s ease-out 0.6s backwards;
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
 }
 
 .featureCard {
@@ -275,6 +300,25 @@ const modalStyles = `
   padding: 18px;
   margin-bottom: 28px;
   text-align: left;
+}
+
+.featureCardAnimate {
+  animation: fadeSlideDown 0.5s ease-out 0.7s backwards;
+}
+
+.featureItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.featureItemAnimate {
+  animation: fadeSlideLeft 0.4s ease-out backwards;
+}
+
+@keyframes fadeSlideLeft {
+  0% { opacity: 0; transform: translateX(-20px); }
+  100% { opacity: 1; transform: translateX(0); }
 }
 
 .featureHeader {
@@ -344,5 +388,18 @@ const modalStyles = `
 
 .ctaButton:hover {
   box-shadow: 0 12px 32px rgba(138, 43, 226, 0.6), 0 0 0 1px rgba(191, 255, 0, 0.5) inset;
+  transform: scale(1.02);
+}
+
+.ctaButton:active {
+  transform: scale(0.98);
+}
+
+.ctaButtonAnimateLevelUp {
+  animation: fadeSlideDown 0.5s ease-out 1.2s backwards;
+}
+
+.ctaButtonAnimateProgress {
+  animation: fadeSlideDown 0.5s ease-out 0.5s backwards;
 }
 `;
