@@ -439,94 +439,43 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
 const profileStyles = `
   .profileRoot {
     min-height: 100vh;
-    background: radial-gradient(1200px 800px at 50% 0%, rgba(123,77,255,0.15), transparent 60%),
-                radial-gradient(900px 600px at 80% 100%, rgba(182,255,0,0.08), transparent 55%),
+    background: radial-gradient(1200px 800px at 50% 0%, rgba(123,77,255,0.12), transparent 65%),
                 #050508;
     color: rgba(255,255,255,0.95);
-    padding: 0 0 90px;
+    padding: 28px 0 100px;
     font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
   }
 
-  .profileHeader {
-    padding: 16px 20px;
-    display: flex;
-    justify-content: flex-end;
-  }
-
-  .headerActions {
-    display: flex;
-    gap: 10px;
-  }
-
-  .logoutBtn, .editBtn {
-    width: 38px;
-    height: 38px;
-    border-radius: 12px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
-    color: rgba(255,255,255,0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .logoutBtn:hover {
-    background: rgba(255,60,60,0.15);
-    border-color: rgba(255,60,60,0.3);
-    color: #ff6b6b;
-  }
-
-  .editBtn:hover {
-    background: rgba(182,255,0,0.1);
-    border-color: rgba(182,255,0,0.25);
-    color: #B6FF00;
-  }
-
-  .avatarSection {
+  /* Identity + Level Header */
+  .identityHeader {
     text-align: center;
-    padding: 0 20px 24px;
+    padding: 0 24px 32px;
+  }
+
+  .avatarContainer {
+    margin-bottom: 16px;
   }
 
   .avatarGlow {
     display: inline-block;
     position: relative;
-    margin-bottom: 14px;
-  }
-
-  .avatarGlow::before {
-    content: '';
-    position: absolute;
-    inset: -8px;
+    padding: 6px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(182,255,0,0.3), transparent 70%);
-    animation: avatarPulse 3s ease-in-out infinite;
+    background: transparent;
+    border: 3px solid #B6FF00;
+    box-shadow: 0 0 28px rgba(182,255,0,0.5), 0 0 0 1px rgba(182,255,0,0.2) inset;
+    animation: avatarRingPulse 3s ease-in-out infinite;
   }
 
-  @keyframes avatarPulse {
-    0%, 100% { transform: scale(1); opacity: 0.6; }
-    50% { transform: scale(1.1); opacity: 0.3; }
+  @keyframes avatarRingPulse {
+    0%, 100% { box-shadow: 0 0 28px rgba(182,255,0,0.5), 0 0 0 1px rgba(182,255,0,0.2) inset; }
+    50% { box-shadow: 0 0 38px rgba(182,255,0,0.7), 0 0 0 1px rgba(182,255,0,0.3) inset; }
   }
 
-  .avatar {
-    position: relative;
-    z-index: 1;
-  }
-
-  .userName {
-    font-size: 26px;
+  .userNameLarge {
+    font-size: 28px;
     font-weight: 700;
-    margin-bottom: 4px;
-    background: linear-gradient(135deg, #B6FF00, #7B4DFF);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .userEmail {
-    font-size: 13px;
-    color: rgba(255,255,255,0.45);
+    color: #fff;
     margin-bottom: 12px;
   }
 
@@ -534,191 +483,206 @@ const profileStyles = `
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 14px;
+    padding: 8px 18px;
     border-radius: 999px;
-    background: rgba(182,255,0,0.12);
-    border: 1px solid rgba(182,255,0,0.3);
+    background: rgba(10,10,10,0.6);
+    border: 1px solid #B6FF00;
     color: #B6FF00;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 700;
-    box-shadow: 0 0 20px rgba(182,255,0,0.15);
+    box-shadow: 0 0 20px rgba(182,255,0,0.25);
+    margin-bottom: 20px;
   }
 
-  .miniStatsRow {
-    display: flex;
-    gap: 12px;
-    padding: 0 20px 18px;
+  .levelProgressSection {
+    max-width: 280px;
+    margin: 0 auto;
   }
 
-  .miniStat {
-    flex: 1;
+  .levelProgressBar {
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(60,60,60,0.6);
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+
+  .levelProgressFill {
+    height: 100%;
+    background: #B6FF00;
+    border-radius: 999px;
+    box-shadow: 0 0 16px rgba(182,255,0,0.6);
+    transition: width 0.4s ease;
+  }
+
+  .levelProgressText {
+    font-size: 13px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.6);
     text-align: center;
-    padding: 12px 8px;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 14px;
+    margin: 0;
   }
 
-  .miniIcon {
-    color: #B6FF00;
-    margin: 0 auto 6px;
-    filter: drop-shadow(0 0 8px rgba(182,255,0,0.3));
-  }
-
-  .miniVal {
-    font-size: 18px;
-    font-weight: 900;
-    color: rgba(255,255,255,0.95);
-    margin-bottom: 2px;
-  }
-
-  .miniLbl {
-    font-size: 10px;
-    color: rgba(255,255,255,0.4);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .progressCard {
-    margin: 0 20px 18px;
-    padding: 20px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(182,255,0,0.35);
-    border-radius: 20px;
-    box-shadow: 0 0 20px rgba(182,255,0,0.25), 0 0 0 1px rgba(182,255,0,0.15) inset;
-  }
-
-  .progressGrid {
+  /* Quick Stats Mini Cards */
+  .quickStatsRow {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    padding: 0 20px 28px;
   }
 
-  .progressItem {
+  .quickStatCard {
+    background: rgba(20,20,20,0.5);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 14px 8px;
     text-align: center;
   }
 
-  .progressVal {
-    font-size: 36px;
+  .quickIcon {
+    color: #B6FF00;
+    margin: 0 auto 8px;
+  }
+
+  .quickValue {
+    font-size: 20px;
     font-weight: 900;
     color: #B6FF00;
-    text-shadow: 0 0 20px rgba(182,255,0,0.4);
     margin-bottom: 4px;
   }
 
-  .progressLbl {
-    font-size: 11px;
+  .quickLabel {
+    font-size: 10px;
     color: rgba(255,255,255,0.5);
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-bottom: 2px;
+    letter-spacing: 0.05em;
   }
 
-  .progressUnit {
-    font-size: 12px;
-    color: rgba(255,255,255,0.35);
+  /* Performance Summary Big Card */
+  .performanceCard {
+    margin: 0 20px 28px;
+    padding: 24px 20px;
+    background: rgba(20,20,20,0.5);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    box-shadow: 0 0 16px rgba(182,255,0,0.08);
+  }
+
+  .perfGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+
+  .perfItem {
+    text-align: center;
+  }
+
+  .perfLabel {
+    font-size: 10px;
+    color: rgba(255,255,255,0.45);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
     font-weight: 600;
   }
 
-  .capsuleCard {
-    margin: 0 20px 18px;
-    padding: 16px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 18px;
-    display: flex;
-    gap: 16px;
-  }
-
-  .capsuleItem {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .capsuleIcon {
-    color: #B6FF00;
-    filter: drop-shadow(0 0 10px rgba(182,255,0,0.35));
-  }
-
-  .capsuleIcon.flame {
-    color: #ff9500;
-    animation: flameFlicker 1.5s ease-in-out infinite;
-  }
-
-  @keyframes flameFlicker {
-    0%, 100% { filter: drop-shadow(0 0 10px rgba(255,149,0,0.5)); }
-    50% { filter: drop-shadow(0 0 16px rgba(255,149,0,0.7)); }
-  }
-
-  .capsuleLbl {
-    font-size: 11px;
-    color: rgba(255,255,255,0.45);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 2px;
-  }
-
-  .capsuleVal {
-    font-size: 22px;
+  .perfValue {
+    font-size: 26px;
     font-weight: 900;
-    color: rgba(255,255,255,0.95);
+    color: #B6FF00;
   }
 
-  .capsuleDivider {
-    width: 1px;
-    background: rgba(255,255,255,0.1);
+  /* Coin Wallet Card */
+  .coinWalletCard {
+    margin: 0 20px 28px;
+    padding: 24px;
+    background: rgba(20,20,20,0.5);
+    border: 1px solid rgba(182,255,0,0.2);
+    border-radius: 20px;
+    box-shadow: 0 0 20px rgba(182,255,0,0.15);
+    text-align: center;
   }
 
-  .streakBar {
-    height: 6px;
-    border-radius: 999px;
-    background: rgba(255,255,255,0.08);
-    margin-top: 6px;
-    overflow: hidden;
-  }
-
-  .streakFill {
-    height: 100%;
-    background: linear-gradient(90deg, #B6FF00, #ff9500);
-    border-radius: 999px;
-    box-shadow: 0 0 12px rgba(182,255,0,0.6);
-    transition: width 0.5s ease;
-  }
-
-  .bottomActions {
-    display: flex;
-    gap: 12px;
-    padding: 0 20px 20px;
-  }
-
-  .actionBtn {
-    flex: 1;
+  .coinHeader {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 14px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 16px;
-    color: rgba(255,255,255,0.8);
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
+    margin-bottom: 16px;
   }
 
-  .actionBtn:hover {
-    background: rgba(182,255,0,0.1);
-    border-color: rgba(182,255,0,0.25);
+  .coinEmoji {
+    font-size: 20px;
+  }
+
+  .coinTitle {
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+  }
+
+  .coinBalance {
+    font-size: 48px;
+    font-weight: 900;
     color: #B6FF00;
+    text-shadow: 0 0 24px rgba(182,255,0,0.5);
+    margin-bottom: 4px;
+  }
+
+  .coinBalanceLabel {
+    font-size: 13px;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 12px;
+  }
+
+  .coinLastRun {
+    font-size: 13px;
+    color: rgba(255,255,255,0.6);
+    padding: 8px 16px;
+    background: rgba(182,255,0,0.08);
+    border-radius: 999px;
+    display: inline-block;
+  }
+
+  /* Achievements Section */
+  .achievementsSection {
+    margin-bottom: 28px;
+  }
+
+  .sectionHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 20px 14px;
+  }
+
+  .sectionEmoji {
+    font-size: 18px;
+  }
+
+  .sectionTitle {
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+  }
+
+  /* Personal Bests Section */
+  .personalBestsSection {
+    margin-bottom: 28px;
   }
 
   @media (max-width: 420px) {
-    .progressVal { font-size: 32px; }
-    .miniVal { font-size: 16px; }
-    .progressGrid { gap: 16px; }
+    .quickStatsRow { gap: 8px; padding: 0 16px 24px; }
+    .quickStatCard { padding: 12px 6px; }
+    .quickValue { font-size: 18px; }
+    .perfValue { font-size: 24px; }
+    .coinBalance { font-size: 42px; }
   }
 `;
