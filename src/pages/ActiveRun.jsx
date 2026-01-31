@@ -12,8 +12,6 @@ import RunMap from '@/components/running/RunMap';
 import GhostRunner from '@/components/running/GhostRunner';
 import LevelUpModal from '@/components/running/LevelUpModal';
 import FriendGhostSelector from '@/components/ghost/FriendGhostSelector';
-import WorkoutTypeSelector from '@/components/workout/WorkoutTypeSelector';
-import IntervalTimer from '@/components/workout/IntervalTimer';
 
 export default function ActiveRun() {
   const navigate = useNavigate();
@@ -42,10 +40,6 @@ export default function ActiveRun() {
   
   // User state
   const [user, setUser] = useState(null);
-  
-  // Workout type state
-  const [workoutType, setWorkoutType] = useState('standard');
-  const [intervalData, setIntervalData] = useState(null);
   
   // GPS state
   const [currentLat, setCurrentLat] = useState(null);
@@ -347,7 +341,6 @@ export default function ActiveRun() {
     const run = await base44.entities.Run.create({
       start_time: startTimeRef.current,
       status: 'active',
-      workout_type: workoutType,
     });
     setRunId(run.id);
   };
@@ -508,24 +501,6 @@ export default function ActiveRun() {
       {/* Game HUD - Top Right */}
       {runStatus === 'RUNNING' && (
         <FloatingGameHUD distance={distance} seconds={seconds} />
-      )}
-
-      {/* Workout Type Selector */}
-      {runStatus === 'IDLE' && (
-        <WorkoutTypeSelector
-          selectedType={workoutType}
-          onSelect={setWorkoutType}
-          onStart={handleStart}
-        />
-      )}
-      
-      {/* Interval Timer */}
-      {(workoutType === 'interval' || workoutType === 'tempo' || workoutType === 'fartlek') && runStatus === 'RUNNING' && (
-        <IntervalTimer
-          workoutType={workoutType}
-          isRunning={runStatus === 'RUNNING'}
-          onIntervalChange={setIntervalData}
-        />
       )}
 
       {/* Ghost Run Options */}
