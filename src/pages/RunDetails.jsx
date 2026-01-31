@@ -239,9 +239,12 @@ export default function RunDetails() {
     }
   }, [run]);
   
+  // Check if current user is the run owner
+  const isRunOwner = currentUser && run && currentUser.email === run.created_by;
+
   // Handle claim reward
   const handleClaimReward = async () => {
-    if (isClaiming || isClaimed || !currentUser) return;
+    if (isClaiming || isClaimed || !currentUser || !isRunOwner) return;
     
     setIsClaiming(true);
     

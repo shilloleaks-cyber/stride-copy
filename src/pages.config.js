@@ -58,7 +58,6 @@ import GroupDetail from './pages/GroupDetail';
 import Groups from './pages/Groups';
 import HealthConnect from './pages/HealthConnect';
 import History from './pages/History';
-import Home from './pages/Home';
 import Leaderboard from './pages/Leaderboard';
 import LevelProgress from './pages/LevelProgress';
 import PaceHistory from './pages/PaceHistory';
@@ -66,9 +65,10 @@ import Profile from './pages/Profile';
 import Redeem from './pages/Redeem';
 import RedeemCatalog from './pages/RedeemCatalog';
 import RedeemDetail from './pages/RedeemDetail';
-import RunDetails from './pages/RunDetails';
 import Stats from './pages/Stats';
 import Training from './pages/Training';
+import Home from './pages/Home';
+import RunDetails from './pages/RunDetails';
 import Wallet from './pages/Wallet';
 import __Layout from './Layout.jsx';
 
@@ -85,7 +85,6 @@ export const PAGES = {
     "Groups": Groups,
     "HealthConnect": HealthConnect,
     "History": History,
-    "Home": Home,
     "Leaderboard": Leaderboard,
     "LevelProgress": LevelProgress,
     "PaceHistory": PaceHistory,
@@ -93,9 +92,10 @@ export const PAGES = {
     "Redeem": Redeem,
     "RedeemCatalog": RedeemCatalog,
     "RedeemDetail": RedeemDetail,
-    "RunDetails": RunDetails,
     "Stats": Stats,
     "Training": Training,
+    "Home": Home,
+    "RunDetails": RunDetails,
     "Wallet": Wallet,
 }
 
