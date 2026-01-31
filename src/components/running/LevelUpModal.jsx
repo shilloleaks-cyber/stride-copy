@@ -133,7 +133,6 @@ export default function LevelUpModal({ isOpen, onClose, newLevel, coinsEarned, l
               </button>
             </div>
           </div>
-      </div>
     </>
   );
 }
