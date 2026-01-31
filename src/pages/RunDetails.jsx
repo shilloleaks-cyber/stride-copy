@@ -68,6 +68,9 @@ export default function RunDetails() {
   // Claim reward state
   const [isClaimed, setIsClaimed] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
+  const [showCoinToast, setShowCoinToast] = useState(false);
+  const [toastAmount, setToastAmount] = useState(0);
+  const claimTimeoutRef = useRef(null);
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
