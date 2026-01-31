@@ -183,7 +183,7 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
 
   const currentStreak = calculateStreak();
   const currentLevel = user?.current_level || 1;
-  const currentCoins = user?.total_coins || 0;
+  const currentCoins = user?.coin_balance || 0;
   
   // Level progress calculation (100 coins per level)
   const coinsForCurrentLevel = currentCoins % 100;
