@@ -118,31 +118,49 @@ function CoinParticle({ startX, startY, endX, endY, delay }) {
 
 /**
  * Toast notification for "+X.XX RUN"
+ * Anchored to coin pill with safe viewport positioning
  */
 export function showCoinRewardToast(amount) {
+  // Get coin pill position
+  const coinPill = window.__coinPillRef?.current;
+  let pillX = typeof window !== 'undefined' ? window.innerWidth * 0.9 : 0;
+  
+  if (coinPill) {
+    const rect = coinPill.getBoundingClientRect();
+    pillX = rect.left + rect.width / 2;
+  }
+
   const toastId = toast.custom((t) => (
     <motion.div
       initial={{ opacity: 0, y: 0 }}
-      animate={{ opacity: 1, y: -12 }}
+      animate={{ opacity: 1, y: -8 }}
       exit={{ opacity: 0, y: 0 }}
-      transition={{ duration: 0.7 }}
+      transition={{ duration: 0.7, ease: 'easeOut' }}
       style={{
-        background: 'rgba(10, 10, 10, 0.9)',
+        position: 'fixed',
+        top: 'calc(14px + 10px + 20px + env(safe-area-inset-top, 0px))',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        maxWidth: 'min(260px, calc(100vw - 32px))',
+        background: 'rgba(10, 10, 10, 0.92)',
         border: '1px solid rgba(191, 255, 0, 0.3)',
         borderRadius: '999px',
-        padding: '10px 16px',
+        padding: '10px 14px',
         color: '#BFFF00',
         fontSize: '14px',
         fontWeight: '800',
         textShadow: '0 0 10px rgba(191, 255, 0, 0.5)',
         backdropFilter: 'blur(10px)',
+        boxShadow: '0 0 20px rgba(191, 255, 0, 0.2)',
+        whiteSpace: 'nowrap',
+        zIndex: 99999,
       }}
     >
       +{amount.toFixed(2)} RUN
     </motion.div>
   ), {
     duration: 700,
-    position: 'top-right',
+    position: 'top-center',
   });
 
   return toastId;
