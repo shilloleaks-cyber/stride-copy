@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { 
   ArrowLeft, Share2, Trash2, MapPin, Clock, Zap, Heart, 
@@ -21,6 +21,8 @@ import SpeedChart from '@/components/running/SpeedChart';
 import PaceConsistencyScore from '@/components/running/PaceConsistencyScore';
 import PerKilometerBreakdown from '@/components/running/PerKilometerBreakdown';
 import AIFormInsights from '@/components/running/AIFormInsights';
+import CoinFlyAnimation from '@/components/coins/CoinFlyAnimation';
+import FloatingToast from '@/components/coins/FloatingToast';
 
 const COMMON_QUOTES = [
   "No excuses. Just progress.",
@@ -68,6 +70,12 @@ export default function RunDetails() {
   // Claim reward state
   const [isClaimed, setIsClaimed] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
+  
+  // Animation states
+  const [showCoinFly, setShowCoinFly] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastAmount, setToastAmount] = useState(0);
+  const coinCardRef = useRef(null);
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
@@ -239,7 +247,7 @@ export default function RunDetails() {
     }
   }, [run]);
   
-  // Handle claim reward
+  // Handle claim reward with animation
   const handleClaimReward = async () => {
     if (isClaiming || isClaimed || !currentUser) return;
     
@@ -249,7 +257,22 @@ export default function RunDetails() {
       // Get minimum reward
       const rewardAmount = Math.max(coinData.total, 0.25);
       
-      // Update user RUN balance (single source of truth)
+      // Get coin card position for animation origin
+      const cardRect = coinCardRef.current?.getBoundingClientRect();
+      const originX = cardRect ? cardRect.left + cardRect.width / 2 : window.innerWidth / 2;
+      const originY = cardRect ? cardRect.top + cardRect.height / 2 : window.innerHeight / 2;
+      
+      // Calculate Home coin pill destination (top-right)
+      const destX = window.innerWidth - 60; // Right side with padding
+      const destY = 30; // Top with padding
+      
+      // Trigger coin fly animation
+      setShowCoinFly(true);
+      
+      // Wait for coins to reach destination
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Update backend
       const currentBalance = currentUser.coin_balance || 0;
       const newBalance = parseFloat((currentBalance + rewardAmount).toFixed(2));
       
@@ -270,24 +293,29 @@ export default function RunDetails() {
         reward_claimed: true
       });
       
-      // Invalidate user query to refresh balance everywhere
+      // Invalidate queries
       queryClient.invalidateQueries(['currentUser']);
+      queryClient.invalidateQueries(['walletLogs']);
       
       // Update local state
       setIsClaimed(true);
+      setShowCoinFly(false);
       
-      // Show success toast
-      toast.success(`+${rewardAmount.toFixed(2)} RUN added to Wallet`);
+      // Show floating toast near destination
+      setToastAmount(rewardAmount);
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 700);
       
-      // Auto-redirect to Home after short delay
+      // Auto-redirect to Home with fade
       setTimeout(() => {
         navigate(createPageUrl('Home'));
-      }, 1000);
+      }, 400);
       
     } catch (error) {
       console.error('Error claiming reward:', error);
       toast.error('Failed to claim reward');
       setIsClaiming(false);
+      setShowCoinFly(false);
     }
   };
 
@@ -377,8 +405,45 @@ export default function RunDetails() {
     );
   }
 
+  // Calculate animation origin/destination
+  const getAnimationPositions = () => {
+    const cardRect = coinCardRef.current?.getBoundingClientRect();
+    return {
+      origin: {
+        x: cardRect ? cardRect.left + cardRect.width / 2 : window.innerWidth / 2,
+        y: cardRect ? cardRect.top + cardRect.height / 2 : window.innerHeight / 2,
+      },
+      destination: {
+        x: window.innerWidth - 60,
+        y: 30,
+      },
+    };
+  };
+
   return (
     <div className="min-h-screen text-white pb-24" style={{ backgroundColor: '#0A0A0A' }}>
+      {/* Coin Fly Animation */}
+      <AnimatePresence>
+        {showCoinFly && (
+          <CoinFlyAnimation
+            count={8}
+            origin={getAnimationPositions().origin}
+            destination={getAnimationPositions().destination}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Floating Toast */}
+      <AnimatePresence>
+        {showToast && (
+          <FloatingToast
+            message={`+${toastAmount.toFixed(2)} RUN`}
+            isRare={hasRareBonus}
+            position={{ x: '90%', y: '12%' }}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <div className="px-5 pt-5 flex items-center justify-between">
         <button 
@@ -503,6 +568,7 @@ export default function RunDetails() {
 
       {/* Coin Reward Card - Compact */}
       <motion.div
+        ref={coinCardRef}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: isClaimed ? 0.6 : 1, y: 0 }}
         transition={{ delay: 0.4, duration: 0.5 }}
@@ -564,20 +630,31 @@ export default function RunDetails() {
             </span>
           </div>
 
-          {/* Claim Button */}
+          {/* Claim Button with Animation */}
           <motion.button
             onClick={handleClaimReward}
             disabled={isClaiming || isClaimed}
-            whileTap={{ scale: 0.98 }}
+            whileTap={{ scale: 0.96 }}
+            animate={{
+              scale: isClaiming ? [1, 0.96, 1] : 1,
+              boxShadow: isClaiming
+                ? [
+                    '0 0 25px rgba(191,255,0,0.4), 0 4px 12px rgba(0,0,0,0.3)',
+                    '0 0 40px rgba(191,255,0,0.7), 0 4px 12px rgba(0,0,0,0.3)',
+                    '0 0 25px rgba(191,255,0,0.4), 0 4px 12px rgba(0,0,0,0.3)',
+                  ]
+                : '0 0 25px rgba(191,255,0,0.4), 0 4px 12px rgba(0,0,0,0.3)',
+            }}
+            transition={{
+              scale: { duration: 0.6, repeat: isClaiming ? Infinity : 0 },
+              boxShadow: { duration: 0.8, repeat: isClaiming ? Infinity : 0 },
+            }}
             className="w-full h-11 rounded-full font-bold text-sm transition-all disabled:opacity-70 disabled:cursor-not-allowed"
             style={{
               background: isClaimed 
                 ? 'rgba(255,255,255,0.08)'
                 : 'linear-gradient(135deg, #BFFF00 0%, #8FD400 100%)',
               color: isClaimed ? 'rgba(255,255,255,0.50)' : '#0A0A0A',
-              boxShadow: isClaimed 
-                ? 'none'
-                : '0 0 25px rgba(191,255,0,0.4), 0 4px 12px rgba(0,0,0,0.3)',
               border: isClaimed ? '1px solid rgba(255,255,255,0.1)' : 'none'
             }}
           >

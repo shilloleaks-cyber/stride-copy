@@ -241,15 +241,32 @@ export default function Home() {
       {/* Coin Pop Animation */}
       <CoinPopLayer pops={coinPops} />
 
-      {/* Sticky Coin HUD */}
-      <button
+      {/* Sticky Coin HUD with breathe animation */}
+      <motion.button
         className="coinHud"
         onClick={handleCoinClick}
         aria-label="Coin balance"
+        initial={{ scale: 0.98, opacity: 0 }}
+        animate={{ 
+          scale: [0.98, 1, 0.98],
+          opacity: 1,
+        }}
+        transition={{
+          scale: { duration: 2, repeat: Infinity, ease: "easeInOut" },
+          opacity: { duration: 0.3 },
+        }}
       >
         <span className="coinIcon">🪙</span>
-        <span className="coinText">{coinBalance}</span>
-      </button>
+        <motion.span 
+          className="coinText"
+          key={coinBalance}
+          initial={{ scale: 1 }}
+          animate={{ scale: [1, 1.15, 1] }}
+          transition={{ duration: 0.3 }}
+        >
+          {coinBalance}
+        </motion.span>
+      </motion.button>
 
       <header className="topHeader">
         <div className="welcome">WELCOME BACK</div>
