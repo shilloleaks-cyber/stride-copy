@@ -990,7 +990,7 @@ const styles = `
       rgba(18,10,28,0.25),
       rgba(0,0,0,0.30)
     );
-    z-index: 1;
+    z-index: 2;
     pointer-events: none;
   }
   
@@ -1009,6 +1009,50 @@ const styles = `
   
   .mapWrap > div {
     border-radius: 22px;
+  }
+  
+  .mapWrap .leaflet-container {
+    position: relative;
+    z-index: 1;
+  }
+  
+  .mapWrap .leaflet-top,
+  .mapWrap .leaflet-bottom {
+    z-index: 20 !important;
+  }
+  
+  .mapWrap .leaflet-control {
+    z-index: 25 !important;
+  }
+  
+  .mapWrap .leaflet-control,
+  .mapWrap .leaflet-bar,
+  .mapWrap .leaflet-bar a {
+    background: rgba(10,10,10,0.85) !important;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(138,43,226,0.30) !important;
+    border-radius: 10px !important;
+    color: var(--neon) !important;
+    box-shadow: 0 0 20px rgba(138,43,226,0.20), 0 4px 12px rgba(0,0,0,0.40) !important;
+  }
+  
+  .mapWrap .leaflet-bar a:hover,
+  .mapWrap .leaflet-bar a:focus {
+    background: rgba(10,10,10,0.95) !important;
+    border-color: rgba(191,255,0,0.40) !important;
+    box-shadow: 0 0 25px rgba(191,255,0,0.30), 0 4px 14px rgba(0,0,0,0.50) !important;
+  }
+  
+  .mapWrap .leaflet-control-attribution {
+    opacity: 0.35;
+    font-size: 9px;
+    background: rgba(10,10,10,0.70) !important;
+    color: rgba(255,255,255,0.50) !important;
+    backdrop-filter: blur(8px);
+  }
+  
+  .mapWrap .leaflet-control-attribution a {
+    color: rgba(191,255,0,0.60) !important;
   }
   
   .metricsGrid {
