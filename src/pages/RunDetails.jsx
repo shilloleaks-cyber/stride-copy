@@ -478,10 +478,9 @@ export default function RunDetails() {
       </div>
 
       {/* Date & Time */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="px-5 pt-6 pb-4"
+      <div
+        className="px-5 pt-6 pb-4 runDetailsFadeIn"
+        style={{ animation: 'fadeSlideDown 0.5s ease-out 0.2s backwards' }}
       >
         <p className="text-sm uppercase tracking-[0.15em] mb-1" style={{ color: 'rgba(255,255,255,0.45)' }}>
           COMPLETED RUN
@@ -576,16 +575,16 @@ export default function RunDetails() {
           {/* Middle Row - Coin Display */}
           <div className="flex items-center justify-center gap-2 mb-3">
             <span className="text-3xl">🪙</span>
-            <motion.p
+            <p
               className="text-4xl font-black"
               style={{ 
                 color: '#BFFF00',
-                textShadow: '0 0 20px rgba(191,255,0,0.4)'
+                textShadow: '0 0 20px rgba(191,255,0,0.4)',
+                opacity: isClaimed ? 0.95 : 1
               }}
-              animate={{ scale: isClaimed ? 0.95 : 1 }}
             >
               {displayedCoins.toFixed(2)}
-            </motion.p>
+            </p>
           </div>
 
           {/* Bottom Row - Compact Breakdown */}
@@ -605,9 +604,9 @@ export default function RunDetails() {
 
           {/* Claim Button */}
           <button
-                onClick={handleClaimReward}
-                disabled={isClaiming || isClaimed}
-                className="w-full h-11 rounded-full font-bold text-sm transition-all disabled:opacity-70 disabled:cursor-not-allowed claimButton"
+            onClick={handleClaimReward}
+            disabled={isClaiming || isClaimed}
+            className="w-full h-11 rounded-full font-bold text-sm transition-all disabled:opacity-70 disabled:cursor-not-allowed claimButton"
             style={{
               background: isClaimed 
                 ? 'rgba(255,255,255,0.08)'
@@ -620,14 +619,14 @@ export default function RunDetails() {
             }}
           >
             {isClaiming ? 'Claiming...' : isClaimed ? '✅ Claimed' : 'Claim Reward'}
-          </motion.button>
+          </button>
 
           {/* Rare Bonus Indicator */}
           {showRareBonus && !isClaimed && (
             <div
-                  className="text-center mt-2"
-                  style={{ animation: 'fadeSlideDown 0.4s ease-out forwards' }}
-                >
+              className="text-center mt-2"
+              style={{ animation: 'fadeSlideDown 0.4s ease-out forwards' }}
+            >
               <p className="text-[10px] font-bold" style={{ color: '#C084FC' }}>
                 💎 +{rareBonusAmount.toFixed(2)} bonus included
               </p>
