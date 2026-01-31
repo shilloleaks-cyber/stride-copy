@@ -896,6 +896,25 @@ export default function RunDetails() {
         )}
       </div>
 
+      {/* Coin Claim Toast & Particle Effect */}
+      {showCoinToast && (
+        <>
+          <div className="coinClaimToast">
+            <div className="coinClaimAmount">+{toastAmount.toFixed(2)} RUN</div>
+          </div>
+          {/* Coin particle burst (6-10 dots) */}
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div
+              key={i}
+              className="coinParticle"
+              style={{
+                '--particle-angle': `${(i / 8) * 360}deg`,
+              }}
+            />
+          ))}
+        </>
+      )}
+
       {/* Delete Modal */}
       {isDeleteSheetOpen && (
         <>
