@@ -69,11 +69,6 @@ export default function RunDetails() {
   const [isClaimed, setIsClaimed] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
 
-  // Coin animation state
-  const [flyingCoins, setFlyingCoins] = useState([]);
-  const [showRewardToast, setShowRewardToast] = useState(false);
-  const coinIdRef = useRef(0);
-
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
@@ -244,40 +239,24 @@ export default function RunDetails() {
     }
   }, [run]);
   
-  // Handle claim reward with coin animation
+  // Handle claim reward
   const handleClaimReward = async () => {
     if (isClaiming || isClaimed || !currentUser) return;
-
+    
     setIsClaiming(true);
-
+    
     try {
-      // Spawn flying coins
-      const coinCount = 8;
-      const coins = Array.from({ length: coinCount }).map((_, i) => ({
-        id: ++coinIdRef.current,
-        delay: i * 60,
-      }));
-      setFlyingCoins(coins);
-
-      // Vibrate on spawn
-      if ('vibrate' in navigator) {
-        navigator.vibrate([20, 10, 20]);
-      }
-
-      // Wait for coins to fly
-      await new Promise(resolve => setTimeout(resolve, 800));
-
       // Get minimum reward
       const rewardAmount = Math.max(coinData.total, 0.25);
-
+      
       // Update user RUN balance (single source of truth)
       const currentBalance = currentUser.coin_balance || 0;
       const newBalance = parseFloat((currentBalance + rewardAmount).toFixed(2));
-
+      
       await base44.auth.updateMe({
         coin_balance: newBalance
       });
-
+      
       // Log transaction to WalletLog
       await base44.entities.WalletLog.create({
         user: currentUser.email,
@@ -285,37 +264,30 @@ export default function RunDetails() {
         type: 'run',
         note: `Run: ${run.distance_km?.toFixed(2)}km`
       });
-
+      
       // Mark run as claimed
       await base44.entities.Run.update(runId, {
         reward_claimed: true
       });
-
+      
       // Invalidate user query to refresh balance everywhere
       queryClient.invalidateQueries(['currentUser']);
-
+      
       // Update local state
       setIsClaimed(true);
-
-      // Show floating toast near coin pill
-      setShowRewardToast(true);
-      setTimeout(() => setShowRewardToast(false), 1200);
-
-      // Success vibration
-      if ('vibrate' in navigator) {
-        navigator.vibrate([30, 20, 40]);
-      }
-
-      // Auto-redirect to Home after delay
+      
+      // Show success toast
+      toast.success(`+${rewardAmount.toFixed(2)} RUN added to Wallet`);
+      
+      // Auto-redirect to Home after short delay
       setTimeout(() => {
         navigate(createPageUrl('Home'));
-      }, 1200);
-
+      }, 1000);
+      
     } catch (error) {
       console.error('Error claiming reward:', error);
       toast.error('Failed to claim reward');
       setIsClaiming(false);
-      setFlyingCoins([]);
     }
   };
 
@@ -407,80 +379,6 @@ export default function RunDetails() {
 
   return (
     <div className="min-h-screen text-white pb-24" style={{ backgroundColor: '#0A0A0A' }}>
-      {/* Flying Coins Animation */}
-      {flyingCoins.length > 0 && (
-        <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 99999 }}>
-          {flyingCoins.map((coin) => (
-            <motion.div
-              key={coin.id}
-              initial={{ 
-                x: window.innerWidth / 2,
-                y: window.innerHeight * 0.35,
-                scale: 0,
-                opacity: 0,
-              }}
-              animate={{ 
-                x: [
-                  window.innerWidth / 2,
-                  window.innerWidth / 2 + (Math.random() - 0.5) * 80,
-                  window.innerWidth - 50,
-                ],
-                y: [
-                  window.innerHeight * 0.35,
-                  window.innerHeight * 0.35 - 60,
-                  20,
-                ],
-                scale: [0, 1, 0.8],
-                opacity: [0, 1, 0],
-              }}
-              transition={{
-                delay: coin.delay / 1000,
-                duration: 0.8,
-                ease: [0.4, 0, 0.2, 1],
-              }}
-              style={{
-                position: 'absolute',
-                fontSize: '24px',
-                filter: 'drop-shadow(0 0 8px rgba(191,255,0,0.6))',
-              }}
-            >
-              🪙
-            </motion.div>
-          ))}
-        </div>
-      )}
-
-      {/* Reward Toast */}
-      {showRewardToast && (
-        <motion.div
-          initial={{ opacity: 0, y: 0, scale: 0.9 }}
-          animate={{ opacity: 1, y: -12, scale: 1 }}
-          exit={{ opacity: 0, y: -20 }}
-          style={{
-            position: 'fixed',
-            top: '60px',
-            right: '16px',
-            zIndex: 99998,
-            background: 'rgba(10,10,10,0.95)',
-            border: '1px solid rgba(191,255,0,0.4)',
-            borderRadius: '12px',
-            padding: '8px 14px',
-            boxShadow: '0 0 30px rgba(191,255,0,0.3)',
-            backdropFilter: 'blur(10px)',
-          }}
-        >
-          <p style={{ 
-            color: '#BFFF00', 
-            fontWeight: 900, 
-            fontSize: '14px',
-            textShadow: '0 0 10px rgba(191,255,0,0.5)',
-          }}>
-            +{coinData.total.toFixed(2)} RUN
-            {hasRareBonus && <span style={{ marginLeft: '6px' }}>✨</span>}
-          </p>
-        </motion.div>
-      )}
-
       {/* Header */}
       <div className="px-5 pt-5 flex items-center justify-between">
         <button 
@@ -670,18 +568,7 @@ export default function RunDetails() {
           <motion.button
             onClick={handleClaimReward}
             disabled={isClaiming || isClaimed}
-            whileTap={{ scale: 0.96 }}
-            animate={isClaiming ? {
-              boxShadow: [
-                '0 0 25px rgba(191,255,0,0.4)',
-                '0 0 40px rgba(191,255,0,0.7)',
-                '0 0 25px rgba(191,255,0,0.4)',
-              ]
-            } : {}}
-            transition={isClaiming ? {
-              duration: 0.8,
-              repeat: Infinity,
-            } : {}}
+            whileTap={{ scale: 0.98 }}
             className="w-full h-11 rounded-full font-bold text-sm transition-all disabled:opacity-70 disabled:cursor-not-allowed"
             style={{
               background: isClaimed 

@@ -140,25 +140,8 @@ export default function Wallet() {
               <motion.div
                 key={log.id}
                 initial={{ opacity: 0, y: 10 }}
-                animate={{ 
-                  opacity: 1, 
-                  y: 0,
-                  boxShadow: index === 0 ? [
-                    '0 0 0 rgba(191,255,0,0)',
-                    '0 0 20px rgba(191,255,0,0.3)',
-                    '0 0 0 rgba(191,255,0,0)',
-                  ] : undefined,
-                  borderColor: index === 0 ? [
-                    'rgba(255,255,255,0.08)',
-                    'rgba(191,255,0,0.4)',
-                    'rgba(255,255,255,0.08)',
-                  ] : undefined,
-                }}
-                transition={{ 
-                  delay: index * 0.03,
-                  boxShadow: { duration: 1.5, times: [0, 0.5, 1] },
-                  borderColor: { duration: 1.5, times: [0, 0.5, 1] },
-                }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.03 }}
                 className="activityItem"
               >
                 <div className="activityIconWrap">

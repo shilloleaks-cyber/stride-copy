@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
 
 // ===== Coin Pop Animation =====
 function CoinPopLayer({ pops }) {
@@ -243,31 +242,14 @@ export default function Home() {
       <CoinPopLayer pops={coinPops} />
 
       {/* Sticky Coin HUD */}
-      <motion.button
+      <button
         className="coinHud"
         onClick={handleCoinClick}
         aria-label="Coin balance"
-        initial={{ scale: 0.98, opacity: 0 }}
-        animate={{ 
-          scale: 1, 
-          opacity: 1,
-        }}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
       >
         <span className="coinIcon">🪙</span>
-        <motion.span 
-          className="coinText"
-          key={coinBalance}
-          initial={{ scale: 1 }}
-          animate={{ 
-            scale: [1, 1.15, 1],
-          }}
-          transition={{ duration: 0.3 }}
-        >
-          {coinBalance}
-        </motion.span>
-      </motion.button>
+        <span className="coinText">{coinBalance}</span>
+      </button>
 
       <header className="topHeader">
         <div className="welcome">WELCOME BACK</div>
@@ -632,17 +614,11 @@ const homeStyles = `
   padding: 10px 12px;
   border-radius: 999px;
   background: rgba(10,10,10,0.72);
-  border: 1px solid rgba(191,255,0,0.25);
+  border: 1px solid rgba(255,255,255,0.12);
   color: var(--text);
   backdrop-filter: blur(10px);
   z-index: 9999;
   cursor: pointer;
-  box-shadow: 0 0 20px rgba(191,255,0,0.15);
-  transition: all 0.2s ease;
-}
-.coinHud:hover {
-  box-shadow: 0 0 30px rgba(191,255,0,0.25);
-  border-color: rgba(191,255,0,0.35);
 }
 .coinIcon{ filter: drop-shadow(0 0 10px rgba(191,255,0,0.35)); }
 .coinText{ font-weight: 800; color:var(--lime); }
