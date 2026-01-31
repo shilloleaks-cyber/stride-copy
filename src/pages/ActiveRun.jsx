@@ -645,7 +645,7 @@ export default function ActiveRun() {
           
           {/* Ghost Status */}
           {ghostEnabled && runStatus === 'RUNNING' && timeDifference !== 0 && (
-            <div className="ghostStatus">
+            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black/70 backdrop-blur-sm px-4 py-2 rounded-full">
               <p className={`text-sm font-medium ${timeDifference < 0 ? 'text-emerald-400' : 'text-orange-400'}`}>
                 {timeDifference < 0 ? (ghostFriend ? '🏆 Ahead' : '👻 Ahead') : (ghostFriend ? '😅 Behind' : '👻 Behind')} {Math.abs(Math.round(timeDifference))}s
               </p>
@@ -656,7 +656,7 @@ export default function ActiveRun() {
           {currentPosition && (
             <button
               onClick={handleRecenter}
-              className="recenterBtn"
+              className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-sm text-white p-3 rounded-full hover:bg-black/80 transition-colors shadow-lg"
               aria-label="Re-center map"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1009,53 +1009,6 @@ const styles = `
   
   .mapWrap > div {
     border-radius: 22px;
-  }
-  
-  .ghostStatus {
-    position: absolute;
-    top: 16px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0,0,0,0.70);
-    backdrop-filter: blur(10px);
-    padding: 10px 16px;
-    border-radius: 999px;
-    z-index: 10;
-  }
-  
-  .recenterBtn {
-    position: absolute;
-    bottom: 16px;
-    right: 16px;
-    width: 52px;
-    height: 52px;
-    background: rgba(10,10,10,0.75);
-    backdrop-filter: blur(20px);
-    color: var(--neon);
-    border-radius: 999px;
-    border: 1px solid rgba(191,255,0,0.25);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 
-      0 0 20px rgba(191,255,0,0.15),
-      0 4px 16px rgba(0,0,0,0.40);
-    z-index: 10;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .recenterBtn:hover {
-    background: rgba(10,10,10,0.85);
-    border-color: rgba(191,255,0,0.40);
-    box-shadow: 
-      0 0 30px rgba(191,255,0,0.25),
-      0 4px 20px rgba(0,0,0,0.50);
-    transform: scale(1.05);
-  }
-  
-  .recenterBtn:active {
-    transform: scale(0.95);
   }
   
   .metricsGrid {
