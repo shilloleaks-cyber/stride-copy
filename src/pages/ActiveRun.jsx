@@ -959,7 +959,7 @@ const styles = `
   }
   
   .timerSection {
-    padding: 16px 16px 8px;
+    padding: 16px 16px 6px;
     text-align: center;
   }
   
@@ -979,33 +979,36 @@ const styles = `
   .mapSection {
     position: relative;
     padding: 0 16px;
-    margin-bottom: 14px;
+    margin-bottom: 12px;
   }
   
   .mapOverlay {
     position: absolute;
-    inset: 16px;
+    inset: 0;
     background: linear-gradient(
-      to bottom,
-      rgba(10,10,10,0.40),
-      rgba(10,10,10,0.10)
+      180deg,
+      rgba(18,10,28,0.25),
+      rgba(0,0,0,0.30)
     );
     z-index: 1;
     pointer-events: none;
-    border-radius: 28px;
   }
   
   .mapWrap {
     height: 220px;
-    border-radius: 28px;
+    border-radius: 22px;
     overflow: hidden;
-    border: 1px solid rgba(191,255,0,0.25);
+    background: #0b0b10;
+    border: 1px solid rgba(138,43,226,0.30);
     box-shadow: 
-      0 0 0 1px rgba(138,43,226,0.15) inset,
-      0 0 35px rgba(191,255,0,0.18),
-      0 12px 40px rgba(0,0,0,0.50);
+      0 0 0 1px rgba(138,43,226,0.20) inset,
+      0 0 30px rgba(138,43,226,0.25),
+      0 10px 35px rgba(0,0,0,0.60);
     position: relative;
-    filter: saturate(0.70) brightness(0.92);
+  }
+  
+  .mapWrap > div {
+    border-radius: 22px;
   }
   
   .metricsGrid {
@@ -1085,50 +1088,57 @@ const styles = `
   }
   
   .metricLabel {
-    font-size: 10px;
-    letter-spacing: 0.14em;
-    color: rgba(255,255,255,0.45);
-    margin-bottom: 6px;
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.40);
+    margin-bottom: 8px;
+    font-weight: 600;
   }
   
   .metricValue {
-    font-size: 32px;
+    font-size: 34px;
     font-weight: 900;
     color: var(--neon);
     line-height: 1;
+    text-shadow: 0 0 20px rgba(191,255,0,0.4);
   }
   
   .metricUnit {
-    font-size: 13px;
-    font-weight: 700;
-    color: rgba(255,255,255,0.55);
-    margin-left: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.45);
+    margin-left: 0;
+    margin-top: 4px;
   }
   
   .heartCard .metricValue {
-    font-size: 28px;
+    font-size: 32px;
   }
   
   .heartPulseBar {
-    margin-top: 10px;
-    height: 5px;
+    margin-top: 12px;
+    height: 10px;
     border-radius: 999px;
     background: rgba(255,255,255,0.08);
-    overflow: hidden;
+    overflow: visible;
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
   }
   
   .heartPulse {
     height: 100%;
     background: linear-gradient(90deg, var(--neon), var(--purple));
     border-radius: 999px;
-    box-shadow: 0 0 14px rgba(191,255,0,0.6);
+    box-shadow: 0 0 18px rgba(191,255,0,0.7);
     transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     animation: pulseGlow 2s ease-in-out infinite;
   }
   
   @keyframes pulseGlow {
-    0%, 100% { box-shadow: 0 0 14px rgba(191,255,0,0.6); }
-    50% { box-shadow: 0 0 20px rgba(191,255,0,0.8); }
+    0%, 100% { box-shadow: 0 0 18px rgba(191,255,0,0.7); }
+    50% { box-shadow: 0 0 26px rgba(191,255,0,0.9); }
   }
   
   .controls {
@@ -1141,8 +1151,8 @@ const styles = `
   
   .ctrlBtn {
     position: relative;
-    width: 85px;
-    height: 85px;
+    width: 104px;
+    height: 104px;
     border-radius: 50%;
     border: 2px solid var(--stroke);
     background: rgba(10,10,10,0.85);
@@ -1150,7 +1160,7 @@ const styles = `
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 30px;
+    font-size: 36px;
     cursor: pointer;
     transition: all 0.2s ease;
     overflow: hidden;
@@ -1171,28 +1181,28 @@ const styles = `
   }
   
   .resumeBtn, .startBtn {
-    border-color: rgba(191,255,0,0.50);
-    background: linear-gradient(135deg, rgba(191,255,0,0.20), rgba(138,43,226,0.15));
+    border-color: rgba(191,255,0,0.60);
+    background: linear-gradient(135deg, rgba(191,255,0,0.22), rgba(138,43,226,0.18));
     color: var(--neon);
     box-shadow: 
-      0 0 50px rgba(191,255,0,0.5),
-      0 0 0 0 rgba(191,255,0,0.7),
-      0 0 0 3px rgba(191,255,0,0.15);
+      0 0 60px rgba(191,255,0,0.6),
+      0 0 0 0 rgba(191,255,0,0.8),
+      0 0 0 4px rgba(191,255,0,0.18);
     animation: buttonPulse 3s ease-in-out infinite, buttonBreathing 4s ease-in-out infinite;
   }
   
   @keyframes buttonPulse {
     0%, 100% {
       box-shadow: 
-        0 0 50px rgba(191,255,0,0.5),
-        0 0 0 0 rgba(191,255,0,0.7),
-        0 0 0 3px rgba(191,255,0,0.15);
+        0 0 60px rgba(191,255,0,0.6),
+        0 0 0 0 rgba(191,255,0,0.8),
+        0 0 0 4px rgba(191,255,0,0.18);
     }
     50% {
       box-shadow: 
-        0 0 60px rgba(191,255,0,0.6),
-        0 0 0 16px rgba(191,255,0,0),
-        0 0 0 3px rgba(191,255,0,0.20);
+        0 0 80px rgba(191,255,0,0.8),
+        0 0 0 20px rgba(191,255,0,0),
+        0 0 0 4px rgba(191,255,0,0.25);
     }
   }
   
@@ -1233,8 +1243,8 @@ const styles = `
   
   @media (max-width: 420px) {
     .timerValue { font-size: 48px; }
-    .centeredCard .metricValue { font-size: 26px; }
-    .ctrlBtn { width: 75px; height: 75px; font-size: 26px; }
+    .centeredCard .metricValue { font-size: 28px; }
+    .ctrlBtn { width: 92px; height: 92px; font-size: 32px; }
     .metricsGrid { gap: 8px; }
     .metricCard { padding: 10px 12px; min-height: 85px; }
   }
