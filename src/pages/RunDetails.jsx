@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
+
 import { format } from 'date-fns';
 import { 
   ArrowLeft, Share2, Trash2, MapPin, Clock, Zap, Heart, 
@@ -492,15 +492,13 @@ export default function RunDetails() {
         <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.40)' }}>
           {run.start_time && format(new Date(run.start_time), 'h:mm a')}
         </p>
-      </motion.div>
+      </div>
 
       {/* Motivation Quote */}
       {quoteData && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.2, duration: 0.4 }}
-          className="px-5 pb-3"
+        <div
+          className="px-5 pb-3 quoteCardFadeIn"
+          style={{ animation: 'fadeSlideDown 0.5s ease-out 0.2s backwards' }}
         >
           <div 
             className="rounded-2xl backdrop-blur-sm border px-5 py-4 text-center relative overflow-hidden"
@@ -513,16 +511,14 @@ export default function RunDetails() {
             }}
           >
             {quoteData.rarity === 'rare' && (
-              <motion.div 
-                className="absolute inset-0 pointer-events-none"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.8 }}
-              >
+              <div 
+                        className="absolute inset-0 pointer-events-none"
+                        style={{ animation: 'fadeIn 0.8s ease-out forwards' }}
+                      >
                 <div className="absolute top-0 left-1/4 w-2 h-2 bg-purple-400 rounded-full animate-ping" style={{ animationDuration: '2s' }} />
                 <div className="absolute top-1/2 right-1/4 w-1.5 h-1.5 bg-purple-300 rounded-full animate-ping" style={{ animationDuration: '2.5s', animationDelay: '0.5s' }} />
                 <div className="absolute bottom-1/4 left-1/3 w-1 h-1 rounded-full" style={{ backgroundColor: '#BFFF00', boxShadow: '0 0 8px #BFFF00', animation: 'ping 3s ease-in-out infinite' }} />
-              </motion.div>
+              </div>
             )}
             <p className="text-xs mb-2 font-semibold" style={{ color: 'rgba(255,255,255,0.50)' }}>
               {quoteData.tag}
@@ -540,15 +536,16 @@ export default function RunDetails() {
               "{quoteData.text}"
             </p>
           </div>
-        </motion.div>
+        </div>
       )}
 
       {/* Coin Reward Card - Compact */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: isClaimed ? 0.6 : 1, y: 0 }}
-        transition={{ delay: 0.4, duration: 0.5 }}
+      <div
         className="px-5 pb-3"
+        style={{
+          animation: 'fadeSlideDown 0.5s ease-out 0.4s backwards',
+          opacity: isClaimed ? 0.6 : 1
+        }}
       >
         <div 
           className="rounded-2xl backdrop-blur-sm border p-4 relative overflow-hidden"
@@ -607,11 +604,10 @@ export default function RunDetails() {
           </div>
 
           {/* Claim Button */}
-          <motion.button
-            onClick={handleClaimReward}
-            disabled={isClaiming || isClaimed}
-            whileTap={{ scale: 0.98 }}
-            className="w-full h-11 rounded-full font-bold text-sm transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+          <button
+                onClick={handleClaimReward}
+                disabled={isClaiming || isClaimed}
+                className="w-full h-11 rounded-full font-bold text-sm transition-all disabled:opacity-70 disabled:cursor-not-allowed claimButton"
             style={{
               background: isClaimed 
                 ? 'rgba(255,255,255,0.08)'
@@ -636,10 +632,10 @@ export default function RunDetails() {
               <p className="text-[10px] font-bold" style={{ color: '#C084FC' }}>
                 💎 +{rareBonusAmount.toFixed(2)} bonus included
               </p>
-            </motion.div>
+            </div>
           )}
         </div>
-      </motion.div>
+      </div>
 
       {/* Route Map */}
       {run.route_points && run.route_points.length >= 2 ? (
