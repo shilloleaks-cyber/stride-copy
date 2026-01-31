@@ -44,14 +44,6 @@ export default function Home() {
   // Coin pop animation state
   const [coinPops, setCoinPops] = useState([]);
   const popId = useRef(0);
-  
-  // Ref for coin pill (animation target)
-  const coinPillRef = useRef(null);
-  
-  // Expose pill ref globally for CoinAnimationFlow
-  useEffect(() => {
-    window.__coinPillRef = coinPillRef;
-  }, []);
 
   const triggerCoinPop = (amount = 10, opts = {}) => {
     const x = opts.x ?? "90%";
@@ -250,25 +242,14 @@ export default function Home() {
       <CoinPopLayer pops={coinPops} />
 
       {/* Sticky Coin HUD */}
-      <motion.button
-        ref={coinPillRef}
+      <button
         className="coinHud"
         onClick={handleCoinClick}
         aria-label="Coin balance"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.98 }}
       >
         <span className="coinIcon">🪙</span>
-        <motion.span 
-          className="coinText"
-          key={coinBalance}
-          initial={{ scale: 1 }}
-          animate={{ scale: [1, 1.2, 1] }}
-          transition={{ duration: 0.4 }}
-        >
-          {coinBalance}
-        </motion.span>
-      </motion.button>
+        <span className="coinText">{coinBalance}</span>
+      </button>
 
       <header className="topHeader">
         <div className="welcome">WELCOME BACK</div>
