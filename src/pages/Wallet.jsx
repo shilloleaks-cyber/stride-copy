@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
 import { 
@@ -14,13 +14,6 @@ import { Progress } from '@/components/ui/progress';
 
 export default function Wallet() {
   const navigate = useNavigate();
-  const [highlightNewest, setHighlightNewest] = useState(true);
-
-  useEffect(() => {
-    // Fade out highlight after 1s
-    const timer = setTimeout(() => setHighlightNewest(false), 1000);
-    return () => clearTimeout(timer);
-  }, []);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -81,26 +74,10 @@ export default function Wallet() {
         <div className="w-10" />
       </div>
 
-      {/* Balance Hero Card with morph entrance */}
+      {/* Balance Hero Card */}
       <motion.div
-        initial={{ 
-          opacity: 0, 
-          scale: 0.3,
-          x: window.innerWidth * 0.35,
-          y: -window.innerHeight * 0.4,
-          borderRadius: '999px',
-        }}
-        animate={{ 
-          opacity: 1, 
-          scale: 1,
-          x: 0,
-          y: 0,
-          borderRadius: '24px',
-        }}
-        transition={{ 
-          duration: 0.6,
-          ease: [0.34, 1.56, 0.64, 1],
-        }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
         className="balanceHero"
       >
         <div className="balanceLabel">COIN WALLET</div>
@@ -163,21 +140,9 @@ export default function Wallet() {
               <motion.div
                 key={log.id}
                 initial={{ opacity: 0, y: 10 }}
-                animate={{ 
-                  opacity: 1, 
-                  y: 0,
-                }}
-                transition={{ delay: index * 0.03 + 0.6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.03 }}
                 className="activityItem"
-                style={{
-                  border: index === 0 && highlightNewest
-                    ? '1px solid rgba(191,255,0,0.4)'
-                    : '1px solid rgba(255,255,255,0.08)',
-                  boxShadow: index === 0 && highlightNewest
-                    ? '0 0 20px rgba(191,255,0,0.2)'
-                    : 'none',
-                  transition: 'all 0.5s ease-out',
-                }}
               >
                 <div className="activityIconWrap">
                   {log.type === 'run' ? (
@@ -294,25 +259,13 @@ const walletStyles = `
 
 
 
-  /* Economy Card with entrance */
+  /* Economy Card */
   .economyCard {
     margin: 0 20px 24px;
     padding: 20px;
     background: rgba(20,20,20,0.5);
     border: 1px solid rgba(255,255,255,0.08);
     border-radius: 20px;
-    animation: fadeInUp 0.5s ease-out 0.4s backwards;
-  }
-
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
   }
 
   .economyHeader {
@@ -406,7 +359,13 @@ const walletStyles = `
     gap: 12px;
     padding: 14px;
     background: rgba(20,20,20,0.5);
+    border: 1px solid rgba(255,255,255,0.08);
     border-radius: 16px;
+    transition: all 0.2s;
+  }
+
+  .activityItem:hover {
+    border-color: rgba(182,255,0,0.2);
   }
 
   .activityIconWrap {
