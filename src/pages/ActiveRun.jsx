@@ -657,7 +657,7 @@ export default function ActiveRun() {
         {currentPosition && (
           <button
             onClick={handleRecenter}
-            className="absolute bottom-6 left-6 bg-black/70 backdrop-blur-sm text-[#BFFF00] p-3 rounded-full hover:bg-[#BFFF00]/20 transition-colors shadow-lg z-[1000] border border-[#BFFF00]/30"
+            className="absolute bottom-6 right-6 bg-black/70 backdrop-blur-sm text-[#BFFF00] p-3 rounded-full hover:bg-[#BFFF00]/20 transition-colors shadow-lg z-[1000] border border-[#BFFF00]/30"
             style={{ boxShadow: '0 0 20px rgba(191, 255, 0, 0.2)' }}
             aria-label="Re-center map"
           >
