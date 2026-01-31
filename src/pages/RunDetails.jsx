@@ -239,12 +239,9 @@ export default function RunDetails() {
     }
   }, [run]);
   
-  // Check if current user is the run owner
-  const isRunOwner = currentUser && run && currentUser.email === run.created_by;
-
   // Handle claim reward
   const handleClaimReward = async () => {
-    if (isClaiming || isClaimed || !currentUser || !isRunOwner) return;
+    if (isClaiming || isClaimed || !currentUser) return;
     
     setIsClaiming(true);
     
@@ -570,7 +567,7 @@ export default function RunDetails() {
           {/* Claim Button */}
           <motion.button
             onClick={handleClaimReward}
-            disabled={isClaiming || isClaimed || !isRunOwner}
+            disabled={isClaiming || isClaimed}
             whileTap={{ scale: 0.98 }}
             className="w-full h-11 rounded-full font-bold text-sm transition-all disabled:opacity-70 disabled:cursor-not-allowed"
             style={{
@@ -584,7 +581,7 @@ export default function RunDetails() {
               border: isClaimed ? '1px solid rgba(255,255,255,0.1)' : 'none'
             }}
           >
-            {isClaiming ? 'Claiming...' : isClaimed ? '✅ Claimed' : !isRunOwner ? 'Only Owner Can Claim' : 'Claim Reward'}
+            {isClaiming ? 'Claiming...' : isClaimed ? '✅ Claimed' : 'Claim Reward'}
           </motion.button>
 
           {/* Rare Bonus Indicator */}
