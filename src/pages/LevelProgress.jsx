@@ -24,6 +24,10 @@ const LEVELS_CONFIG = [
 export default function LevelProgress() {
   const navigate = useNavigate();
   const [progressPercentage, setProgressPercentage] = useState(0);
+  const [showLevelUpOverlay, setShowLevelUpOverlay] = useState(false);
+  const [newLevel, setNewLevel] = useState(null);
+  const [isRare, setIsRare] = useState(false);
+  const prevLevelRef = useRef(null);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -32,6 +36,25 @@ export default function LevelProgress() {
 
   const currentLevel = user?.current_level || 1;
   const totalCoins = user?.total_coins || 0;
+
+  // Check for level up
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    if (prevLevelRef.current !== null && currentLevel > prevLevelRef.current) {
+      setNewLevel(currentLevel);
+      setIsRare(Math.random() < 0.065);
+      setShowLevelUpOverlay(true);
+      
+      const timer = setTimeout(() => {
+        setShowLevelUpOverlay(false);
+      }, 900);
+      
+      return () => clearTimeout(timer);
+    }
+    
+    prevLevelRef.current = currentLevel;
+  }, [currentLevel]);
 
   const currentLevelConfig = LEVELS_CONFIG.find(l => l.level === currentLevel) || LEVELS_CONFIG[0];
   const nextLevelConfig = LEVELS_CONFIG.find(l => l.level === currentLevel + 1);
