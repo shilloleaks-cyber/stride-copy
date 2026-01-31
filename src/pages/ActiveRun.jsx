@@ -690,12 +690,10 @@ export default function ActiveRun() {
           <div className="metricValue">{calories}</div>
           <div className="metricUnit">kcal</div>
         </div>
-        <div className="metricCard heartCard">
-          <div className="heartTop">
-            <Heart className="heartIcon" fill="currentColor" />
-            <div className="metricLabel">HEART RATE</div>
-          </div>
-          <div className="metricValue">{heartRate} <span className="metricUnit">bpm</span></div>
+        <div className="metricCard heartCard centeredHeartCard">
+          <Heart className="heartIcon" fill="currentColor" />
+          <div className="metricValue">{heartRate}</div>
+          <div className="heartUnit">bpm</div>
           <div className="heartPulseBar">
             <div className="heartPulse" style={{ width: `${(heartRate / 200) * 100}%` }} />
           </div>
@@ -1001,11 +999,26 @@ const styles = `
     overflow: hidden;
     border: 1px solid rgba(191,255,0,0.25);
     box-shadow: 
+      inset 0 0 20px rgba(0,0,0,0.6),
       0 0 0 1px rgba(138,43,226,0.15) inset,
       0 0 35px rgba(191,255,0,0.18),
       0 12px 40px rgba(0,0,0,0.50);
     position: relative;
     filter: saturate(0.70) brightness(0.92);
+  }
+  
+  .mapWrap::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(10,10,10,0.45),
+      rgba(10,10,10,0.15)
+    );
+    z-index: 2;
+    pointer-events: none;
+    border-radius: 28px;
   }
   
   .metricsGrid {
@@ -1058,19 +1071,29 @@ const styles = `
     min-height: 85px;
   }
   
-  .heartTop {
-    display: flex;
+  .centeredHeartCard {
+    text-align: center;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 6px;
   }
   
-  .heartIcon {
-    width: 18px;
-    height: 18px;
+  .centeredHeartCard .heartIcon {
+    width: 20px;
+    height: 20px;
     color: var(--neon);
     animation: heartbeat 0.9s ease-in-out infinite;
     filter: drop-shadow(0 0 8px rgba(191,255,0,0.4));
+    margin-bottom: 6px;
+  }
+  
+  .centeredHeartCard .metricValue {
+    margin-bottom: 4px;
+  }
+  
+  .heartUnit {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.50);
+    margin-bottom: 10px;
   }
   
   @keyframes heartbeat {
