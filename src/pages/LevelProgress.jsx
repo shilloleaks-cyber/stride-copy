@@ -34,9 +34,10 @@ export default function LevelProgress() {
     queryFn: () => base44.auth.me(),
   });
 
-  const currentLevel = user?.level ?? 1;
-  const levelProgressCoins = user?.level_progress_coins ?? 0;
-  const coinsPerLevel = 100;
+  // Derive level and progress from coin_balance (single source of truth)
+  const coinBalance = user?.coin_balance ?? 0;
+  const currentLevel = Math.floor(coinBalance / 100) + 1;
+  const progress = coinBalance % 100;
 
   // Check for level up
   useEffect(() => {
@@ -57,14 +58,11 @@ export default function LevelProgress() {
     prevLevelRef.current = currentLevel;
   }, [currentLevel]);
 
-  // Progress bar: levelProgressCoins / coinsPerLevel
-  const progress = (levelProgressCoins / coinsPerLevel) * 100;
-
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setProgressPercentage(Math.min(progress, 100));
-    }, 300);
-    return () => clearTimeout(timer);
+   const timer = setTimeout(() => {
+     setProgressPercentage(Math.min((progress / 100) * 100, 100));
+   }, 300);
+   return () => clearTimeout(timer);
   }, [progress]);
 
   const isCloseToNextLevel = progress >= 75;
@@ -129,7 +127,7 @@ export default function LevelProgress() {
           <div className="flex items-center justify-between text-sm mb-2">
             <span style={{ color: '#8A2BE2' }}>Progress</span>
             <span className="text-gray-400">
-              {levelProgressCoins.toFixed(0)} / {coinsPerLevel} coins
+              {progress.toFixed(0)} / 100 coins
             </span>
           </div>
           <div className="h-3 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
@@ -145,7 +143,7 @@ export default function LevelProgress() {
             />
           </div>
           <p className="text-xs text-gray-500 mt-2 text-center">
-            {(coinsPerLevel - levelProgressCoins).toFixed(0)} coins to Level {currentLevel + 1}
+            {(100 - progress).toFixed(0)} coins to Level {currentLevel + 1}
           </p>
         </div>
       </motion.div>
