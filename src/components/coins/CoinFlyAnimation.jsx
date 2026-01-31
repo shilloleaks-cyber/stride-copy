@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { playSpawnSound, playTravelSound } from '@/components/utils/audioSystem';
 
 /**
  * Spawns animated coins that fly to a destination (Home coin pill)
@@ -37,6 +38,13 @@ export default function CoinFlyAnimation({ count = 8, origin, destination, onCom
       endY: safeDest.y,
     }));
     setCoins(newCoins);
+
+    // Play spawn sound for each coin
+    newCoins.forEach((coin, idx) => {
+      setTimeout(() => {
+        playSpawnSound();
+      }, idx * 80);
+    });
 
     // Trigger completion callback
     const totalDuration = (count * 0.08 + 0.8) * 1000;
@@ -82,6 +90,20 @@ export default function CoinFlyAnimation({ count = 8, origin, destination, onCom
             duration: 0.8,
             delay: coin.delay,
             ease: [0.34, 1.56, 0.64, 1],
+            onUpdate: (latest) => {
+              // Play travel sound mid-flight
+              if (latest.y > coin.startY + coin.offsetY - Math.min(100, window.innerHeight * 0.25) * 0.8 &&
+                  latest.y < coin.startY + coin.offsetY - Math.min(100, window.innerHeight * 0.25) * 0.2) {
+                if (!window._coinTravelPlayed) {
+                  const panValue = (coin.endX - coin.startX) / window.innerWidth;
+                  playTravelSound(Math.max(-1, Math.min(1, panValue)));
+                  window._coinTravelPlayed = true;
+                }
+              }
+            },
+          }}
+          onAnimationComplete={() => {
+            delete window._coinTravelPlayed;
           }}
           style={{
             position: 'absolute',
