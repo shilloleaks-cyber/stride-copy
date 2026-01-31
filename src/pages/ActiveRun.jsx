@@ -1459,8 +1459,9 @@ const styles = `
   .stopToast {
     position: fixed;
     bottom: 130px;
-    left: 50%;
-    transform: translateX(-50%);
+    left: 0;
+    right: 0;
+    margin: 0 auto;
     z-index: 9999;
     background: rgba(18,10,28,0.95);
     backdrop-filter: blur(30px);
@@ -1471,7 +1472,8 @@ const styles = `
       0 0 0 1px rgba(255,60,60,0.25) inset,
       0 0 30px rgba(255,60,60,0.35),
       0 8px 32px rgba(0,0,0,0.60);
-    min-width: 280px;
+    width: fit-content;
+    max-width: 90%;
     text-align: center;
   }
   
