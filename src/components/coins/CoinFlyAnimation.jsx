@@ -10,25 +10,42 @@ import { motion } from 'framer-motion';
  */
 export default function CoinFlyAnimation({ count = 8, origin, destination, onComplete }) {
   const [coins, setCoins] = useState([]);
+  const [safe, setSafe] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
+    // Validate positions and use safe fallbacks
+    const safeOrigin = {
+      x: origin?.x ?? window.innerWidth / 2,
+      y: origin?.y ?? window.innerHeight / 3,
+    };
+    const safeDest = {
+      x: destination?.x ?? window.innerWidth - 50,
+      y: destination?.y ?? 30,
+    };
+    
+    setSafe(safeDest);
+
     // Generate coins with slight random offsets
     const newCoins = Array.from({ length: count }).map((_, i) => ({
       id: i,
       delay: i * 0.08, // Stagger spawning
-      offsetX: (Math.random() - 0.5) * 40, // Random spread
+      offsetX: (Math.random() - 0.5) * 40,
       offsetY: (Math.random() - 0.5) * 40,
+      startX: safeOrigin.x,
+      startY: safeOrigin.y,
+      endX: safeDest.x,
+      endY: safeDest.y,
     }));
     setCoins(newCoins);
 
     // Trigger completion callback
-    const totalDuration = (count * 0.08 + 0.8) * 1000; // delay + animation time
+    const totalDuration = (count * 0.08 + 0.8) * 1000;
     const timer = setTimeout(() => {
       if (onComplete) onComplete();
     }, totalDuration);
 
     return () => clearTimeout(timer);
-  }, [count, onComplete]);
+  }, [origin, destination, count, onComplete]);
 
   return (
     <div style={{ 
@@ -41,21 +58,21 @@ export default function CoinFlyAnimation({ count = 8, origin, destination, onCom
         <motion.div
           key={coin.id}
           initial={{
-            x: origin.x + coin.offsetX,
-            y: origin.y + coin.offsetY,
+            x: coin.startX + coin.offsetX,
+            y: coin.startY + coin.offsetY,
             scale: 0,
             opacity: 0,
           }}
           animate={{
             x: [
-              origin.x + coin.offsetX,
-              origin.x + coin.offsetX + (Math.random() - 0.5) * 60,
-              destination.x,
+              coin.startX + coin.offsetX,
+              coin.startX + coin.offsetX + (Math.random() - 0.5) * 60,
+              coin.endX,
             ],
             y: [
-              origin.y + coin.offsetY,
-              origin.y + coin.offsetY - 100 - Math.random() * 60, // Arc up
-              destination.y,
+              coin.startY + coin.offsetY,
+              coin.startY + coin.offsetY - Math.min(100, window.innerHeight * 0.25),
+              coin.endY,
             ],
             scale: [0, 1.2, 0.8],
             opacity: [0, 1, 1],
@@ -64,11 +81,11 @@ export default function CoinFlyAnimation({ count = 8, origin, destination, onCom
           transition={{
             duration: 0.8,
             delay: coin.delay,
-            ease: [0.34, 1.56, 0.64, 1], // Bouncy cubic-bezier
+            ease: [0.34, 1.56, 0.64, 1],
           }}
           style={{
             position: 'absolute',
-            fontSize: '28px',
+            fontSize: 'clamp(20px, 5vw, 28px)',
             filter: 'drop-shadow(0 0 8px rgba(191,255,0,0.5))',
           }}
         >
