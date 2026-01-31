@@ -951,12 +951,12 @@ const styles = `
   }
   
   .timerSection {
-    padding: 24px 16px 16px;
+    padding: 16px 16px 8px;
     text-align: center;
   }
   
   .timerValue {
-    font-size: 64px;
+    font-size: 56px;
     font-weight: 900;
     color: var(--neon);
     text-shadow: 0 0 30px rgba(191,255,0,0.5);
@@ -971,7 +971,7 @@ const styles = `
   .mapSection {
     position: relative;
     padding: 0 16px;
-    margin-bottom: 24px;
+    margin-bottom: 14px;
   }
   
   .mapOverlay {
@@ -999,44 +999,42 @@ const styles = `
   .metricsGrid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
+    gap: 10px;
     padding: 0 16px;
-    margin-bottom: 24px;
+    margin-bottom: 12px;
   }
   
   .metricCard {
-    background: var(--glass);
+    background: rgba(255,255,255,0.10);
     backdrop-filter: blur(20px);
-    border: 1px solid var(--stroke);
-    border-radius: 20px;
-    padding: 20px;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 16px;
+    padding: 12px 14px;
+    min-height: 75px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     box-shadow: 
-      0 0 0 1px rgba(191,255,0,0.10) inset, 
-      0 10px 28px rgba(0,0,0,0.40);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-  
-  .metricCard:hover {
-    transform: translateY(-2px);
-    box-shadow: 
-      0 0 0 1px rgba(191,255,0,0.15) inset,
-      0 12px 32px rgba(0,0,0,0.45);
+      0 0 0 1px rgba(191,255,0,0.12) inset,
+      0 0 20px rgba(191,255,0,0.08),
+      0 8px 24px rgba(0,0,0,0.35);
   }
   
   .heartCard {
     grid-column: 1 / -1;
+    min-height: 85px;
   }
   
   .heartTop {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 8px;
+    gap: 8px;
+    margin-bottom: 6px;
   }
   
   .heartIcon {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     color: var(--neon);
     animation: heartbeat 0.9s ease-in-out infinite;
     filter: drop-shadow(0 0 8px rgba(191,255,0,0.4));
@@ -1051,29 +1049,29 @@ const styles = `
   }
   
   .metricLabel {
-    font-size: 11px;
-    letter-spacing: 0.12em;
-    color: rgba(255,255,255,0.50);
-    margin-bottom: 8px;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    color: rgba(255,255,255,0.45);
+    margin-bottom: 6px;
   }
   
   .metricValue {
-    font-size: 32px;
+    font-size: 28px;
     font-weight: 900;
     color: var(--neon);
     line-height: 1;
   }
   
   .metricUnit {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
-    color: rgba(255,255,255,0.60);
-    margin-left: 4px;
+    color: rgba(255,255,255,0.55);
+    margin-left: 3px;
   }
   
   .heartPulseBar {
-    margin-top: 12px;
-    height: 6px;
+    margin-top: 10px;
+    height: 5px;
     border-radius: 999px;
     background: rgba(255,255,255,0.08);
     overflow: hidden;
@@ -1094,13 +1092,11 @@ const styles = `
   }
   
   .controls {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
     display: flex;
     gap: 16px;
-    z-index: 200;
+    justify-content: center;
+    padding: 0 16px 100px;
+    margin-top: 16px;
   }
   
   .ctrlBtn {
@@ -1193,10 +1189,10 @@ const styles = `
   }
   
   @media (max-width: 420px) {
-    .timerValue { font-size: 56px; }
-    .metricValue { font-size: 28px; }
+    .timerValue { font-size: 48px; }
+    .metricValue { font-size: 24px; }
     .ctrlBtn { width: 62px; height: 62px; }
-    .metricsGrid { gap: 14px; }
-    .metricCard { padding: 18px; }
+    .metricsGrid { gap: 8px; }
+    .metricCard { padding: 10px 12px; min-height: 70px; }
   }
 `;
