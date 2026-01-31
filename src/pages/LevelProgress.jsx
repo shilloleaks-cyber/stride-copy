@@ -177,7 +177,7 @@ export default function LevelProgress() {
                   </div>
                 </div>
               ) : null;
-            })()
+            })()}
           </motion.div>
         </div>
       )}
