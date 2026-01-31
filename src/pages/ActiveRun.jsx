@@ -1027,20 +1027,35 @@ const styles = `
     position: absolute;
     bottom: 16px;
     right: 16px;
-    background: rgba(0,0,0,0.60);
-    backdrop-filter: blur(10px);
-    color: white;
-    padding: 12px;
+    width: 52px;
+    height: 52px;
+    background: rgba(10,10,10,0.75);
+    backdrop-filter: blur(20px);
+    color: var(--neon);
     border-radius: 999px;
+    border: 1px solid rgba(191,255,0,0.25);
     cursor: pointer;
-    transition: background 0.2s;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.40);
+    transition: all 0.2s ease;
+    box-shadow: 
+      0 0 20px rgba(191,255,0,0.15),
+      0 4px 16px rgba(0,0,0,0.40);
     z-index: 10;
-    border: 1px solid rgba(255,255,255,0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   
   .recenterBtn:hover {
-    background: rgba(0,0,0,0.80);
+    background: rgba(10,10,10,0.85);
+    border-color: rgba(191,255,0,0.40);
+    box-shadow: 
+      0 0 30px rgba(191,255,0,0.25),
+      0 4px 20px rgba(0,0,0,0.50);
+    transform: scale(1.05);
+  }
+  
+  .recenterBtn:active {
+    transform: scale(0.95);
   }
   
   .metricsGrid {
