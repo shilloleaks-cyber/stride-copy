@@ -657,7 +657,8 @@ export default function ActiveRun() {
         {currentPosition && (
           <button
             onClick={handleRecenter}
-            className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-sm text-white p-3 rounded-full hover:bg-black/80 transition-colors shadow-lg z-[1000]"
+            className="absolute bottom-6 left-6 bg-black/70 backdrop-blur-sm text-[#BFFF00] p-3 rounded-full hover:bg-[#BFFF00]/20 transition-colors shadow-lg z-[1000] border border-[#BFFF00]/30"
+            style={{ boxShadow: '0 0 20px rgba(191, 255, 0, 0.2)' }}
             aria-label="Re-center map"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
