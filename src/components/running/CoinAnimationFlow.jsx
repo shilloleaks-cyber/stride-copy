@@ -121,21 +121,8 @@ function CoinParticle({ startX, startY, endX, endY, delay }) {
  * Anchored to coin pill with safe viewport positioning
  */
 export function showCoinRewardToast(amount) {
-  // Get coin pill position
-  const coinPill = window.__coinPillRef?.current;
-  let pillX = typeof window !== 'undefined' ? window.innerWidth * 0.9 : 0;
-  
-  if (coinPill) {
-    const rect = coinPill.getBoundingClientRect();
-    pillX = rect.left + rect.width / 2;
-  }
-
   const toastId = toast.custom((t) => (
-    <motion.div
-      initial={{ opacity: 0, y: 0 }}
-      animate={{ opacity: 1, y: -8 }}
-      exit={{ opacity: 0, y: 0 }}
-      transition={{ duration: 0.7, ease: 'easeOut' }}
+    <div
       style={{
         position: 'fixed',
         top: 'calc(14px + 10px + 20px + env(safe-area-inset-top, 0px))',
@@ -154,10 +141,26 @@ export function showCoinRewardToast(amount) {
         boxShadow: '0 0 20px rgba(191, 255, 0, 0.2)',
         whiteSpace: 'nowrap',
         zIndex: 99999,
+        animation: 'coinToastRise 0.7s ease-out forwards',
       }}
     >
+      <style>{`
+        @keyframes coinToastRise {
+          0% {
+            opacity: 0;
+            transform: translateX(-50%) translateY(0);
+          }
+          10% {
+            opacity: 1;
+          }
+          100% {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-8px);
+          }
+        }
+      `}</style>
       +{amount.toFixed(2)} RUN
-    </motion.div>
+    </div>
   ), {
     duration: 700,
     position: 'top-center',
