@@ -82,7 +82,7 @@ export default function Wallet() {
       >
         <div className="balanceLabel">RUN BALANCE</div>
         <div className="balanceValue">
-          {(user?.run_balance || 0).toFixed(2)}
+          {(user?.coin_balance || 0).toFixed(2)}
         </div>
         {lastRunAmount > 0 && (
           <div className="balanceSubtitle">+{lastRunAmount.toFixed(2)} from last run</div>

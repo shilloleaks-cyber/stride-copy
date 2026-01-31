@@ -250,11 +250,11 @@ export default function RunDetails() {
       const rewardAmount = Math.max(coinData.total, 0.25);
       
       // Update user RUN balance (single source of truth)
-      const currentBalance = currentUser.run_balance || 0;
+      const currentBalance = currentUser.coin_balance || 0;
       const newBalance = parseFloat((currentBalance + rewardAmount).toFixed(2));
       
       await base44.auth.updateMe({
-        run_balance: newBalance
+        coin_balance: newBalance
       });
       
       // Log transaction to WalletLog
