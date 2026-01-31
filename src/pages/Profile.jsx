@@ -182,13 +182,10 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
   };
 
   const currentStreak = calculateStreak();
-  const currentLevel = user?.level ?? 1;
   const currentCoins = user?.coin_balance ?? 0;
-  const levelProgressCoins = user?.level_progress_coins ?? 0;
-  const coinsPerLevel = 100;
-  
-  // Level progress calculation - read from user object
-  const levelProgressPercent = Math.round((levelProgressCoins / coinsPerLevel) * 100);
+  const currentLevel = Math.floor(currentCoins / 100) + 1;
+  const progress = currentCoins % 100;
+  const levelProgressPercent = Math.round((progress / 100) * 100);
 
   // Recent run coins earned
   const lastRun = completedRuns[0];

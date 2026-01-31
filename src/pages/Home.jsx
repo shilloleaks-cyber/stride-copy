@@ -164,15 +164,10 @@ export default function Home() {
     };
   });
 
-  // Game stats - read from user object (single source of truth)
+  // Game stats - derived from coin_balance (single source of truth)
   const coinBalance = user?.coin_balance ?? 0;
-  const level = user?.level ?? 1;
-  const levelProgressCoins = user?.level_progress_coins ?? 0;
-  const coinsPerLevel = 100;
-  const levelProgress = {
-    current: Math.round(levelProgressCoins * 100) / 100,
-    need: coinsPerLevel,
-  };
+  const level = Math.floor(coinBalance / 100) + 1;
+  const progress = coinBalance % 100;
 
   // ===== UI states =====
   const [showPaceHistory, setShowPaceHistory] = useState(false);
@@ -355,13 +350,13 @@ export default function Home() {
               <div
                 className="progressFill"
                 style={{
-                  width: `${Math.min(100, Math.round((levelProgress.current / levelProgress.need) * 100))}%`,
+                  width: `${Math.min(100, Math.round((progress / 100) * 100))}%`,
                 }}
               />
             </div>
 
             <div className="subNote">
-              {levelProgress.current} / {levelProgress.need} coins to Level {level + 1}
+              {progress.toFixed(0)} / 100 coins to Level {level + 1}
             </div>
           </button>
 
