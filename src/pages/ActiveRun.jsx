@@ -657,7 +657,7 @@ export default function ActiveRun() {
         {currentPosition && (
           <button
             onClick={handleRecenter}
-            className="recenterBtn"
+            className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-sm text-white p-3 rounded-full hover:bg-black/80 transition-colors shadow-lg z-[1000]"
             aria-label="Re-center map"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1242,53 +1242,6 @@ const styles = `
     color: rgba(255,255,255,0.82);
   }
   
-  .recenterBtn {
-    position: absolute;
-    bottom: 14px;
-    right: 14px;
-    z-index: 50;
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: rgba(15,15,20,0.55);
-    border: 1px solid rgba(180,255,0,0.35);
-    box-shadow: 
-      0 10px 30px rgba(0,0,0,0.55), 
-      0 0 0 2px rgba(180,255,0,0.12), 
-      0 0 24px rgba(140,60,255,0.25);
-    backdrop-filter: blur(10px);
-    color: var(--neon);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    animation: recenterPulse 3s ease-in-out infinite;
-  }
-
-  .recenterBtn:active {
-    transform: scale(0.96);
-    box-shadow: 
-      0 8px 25px rgba(0,0,0,0.60), 
-      0 0 0 2px rgba(180,255,0,0.20), 
-      0 0 30px rgba(140,60,255,0.35);
-  }
-
-  @keyframes recenterPulse {
-    0%, 100% {
-      box-shadow: 
-        0 10px 30px rgba(0,0,0,0.55), 
-        0 0 0 2px rgba(180,255,0,0.12), 
-        0 0 24px rgba(140,60,255,0.25);
-    }
-    50% {
-      box-shadow: 
-        0 10px 30px rgba(0,0,0,0.55), 
-        0 0 0 2px rgba(180,255,0,0.18), 
-        0 0 30px rgba(140,60,255,0.35);
-    }
-  }
-
   @media (max-width: 420px) {
     .timerValue { font-size: 48px; }
     .centeredCard .metricValue { font-size: 28px; }
@@ -1296,4 +1249,4 @@ const styles = `
     .metricsGrid { gap: 8px; }
     .metricCard { padding: 10px 12px; min-height: 85px; }
   }
-  `;
+`;
