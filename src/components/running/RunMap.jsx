@@ -18,37 +18,47 @@ const createRunnerIcon = () => {
     className: 'custom-runner-marker',
     html: `<div style="
       position: relative;
-      width: 24px;
-      height: 24px;
+      width: 28px;
+      height: 28px;
     ">
       <div style="
         position: absolute;
-        width: 24px;
-        height: 24px;
-        background: rgba(16, 185, 129, 0.3);
+        width: 28px;
+        height: 28px;
+        background: rgba(191, 255, 0, 0.4);
         border-radius: 50%;
-        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        animation: neonPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        box-shadow: 0 0 20px rgba(191, 255, 0, 0.6);
       "></div>
       <div style="
         position: absolute;
-        top: 2px;
-        left: 2px;
+        top: 4px;
+        left: 4px;
         width: 20px;
         height: 20px;
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        border: 3px solid white;
+        background: linear-gradient(135deg, #BFFF00 0%, #8FD400 100%);
+        border: 3px solid rgba(10, 10, 10, 0.90);
         border-radius: 50%;
-        box-shadow: 0 2px 12px rgba(16, 185, 129, 0.6), 0 0 0 4px rgba(16, 185, 129, 0.2);
+        box-shadow: 
+          0 0 20px rgba(191, 255, 0, 0.8),
+          0 0 0 4px rgba(191, 255, 0, 0.25),
+          inset 0 1px 2px rgba(255, 255, 255, 0.3);
       "></div>
     </div>
     <style>
-      @keyframes pulse {
-        0%, 100% { transform: scale(1); opacity: 1; }
-        50% { transform: scale(1.5); opacity: 0; }
+      @keyframes neonPulse {
+        0%, 100% { 
+          transform: scale(1); 
+          opacity: 0.6; 
+        }
+        50% { 
+          transform: scale(1.6); 
+          opacity: 0; 
+        }
       }
     </style>`,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
   });
 };
 
