@@ -453,20 +453,84 @@ export default function ActiveRun() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
   
-  // Stop confirmation modal
-  const [showStopConfirm, setShowStopConfirm] = useState(false);
+  // Stop button hold logic
+  const [stopHoldProgress, setStopHoldProgress] = useState(0);
+  const [showStopToast, setShowStopToast] = useState(false);
+  const [isHoldingStop, setIsHoldingStop] = useState(false);
+  const stopHoldIntervalRef = useRef(null);
+  const stopTapTimeoutRef = useRef(null);
+  const stopPressStartRef = useRef(null);
   
-  const handleStopClick = () => {
-    // Haptic feedback if >5 minutes
-    if (seconds > 300 && 'vibrate' in navigator) {
-      navigator.vibrate(50);
+  const handleStopPress = () => {
+    stopPressStartRef.current = Date.now();
+    setIsHoldingStop(true);
+    setStopHoldProgress(0);
+    
+    // Vibrate on press
+    if ('vibrate' in navigator) {
+      navigator.vibrate(30);
     }
-    setShowStopConfirm(true);
+    
+    // Start progress animation
+    stopHoldIntervalRef.current = setInterval(() => {
+      setStopHoldProgress(prev => {
+        const next = prev + 5;
+        if (next >= 100) {
+          clearInterval(stopHoldIntervalRef.current);
+          // Success vibration
+          if ('vibrate' in navigator) {
+            navigator.vibrate([50, 30, 50]);
+          }
+          handleStop();
+          return 100;
+        }
+        return next;
+      });
+    }, 50); // 1 second total (20 steps * 50ms)
+    
+    // Continuous gentle vibration while holding
+    if ('vibrate' in navigator) {
+      const vibrateInterval = setInterval(() => {
+        if (stopHoldIntervalRef.current) {
+          navigator.vibrate(15);
+        } else {
+          clearInterval(vibrateInterval);
+        }
+      }, 200);
+    }
   };
   
-  const confirmStop = () => {
-    setShowStopConfirm(false);
-    handleStop();
+  const handleStopRelease = () => {
+    const pressDuration = Date.now() - (stopPressStartRef.current || 0);
+    
+    if (stopHoldIntervalRef.current) {
+      clearInterval(stopHoldIntervalRef.current);
+    }
+    
+    setIsHoldingStop(false);
+    
+    // Short tap - show toast
+    if (pressDuration < 1000 && stopHoldProgress < 100) {
+      // Shake feedback
+      if ('vibrate' in navigator) {
+        navigator.vibrate([30, 20, 30]);
+      }
+      
+      setShowStopToast(true);
+      
+      // Hide toast after 1.5s
+      if (stopTapTimeoutRef.current) {
+        clearTimeout(stopTapTimeoutRef.current);
+      }
+      stopTapTimeoutRef.current = setTimeout(() => {
+        setShowStopToast(false);
+      }, 1500);
+    }
+    
+    // Reset progress
+    setTimeout(() => {
+      setStopHoldProgress(0);
+    }, 100);
   };
   
   const currentPosition = currentLat && currentLng ? { lat: currentLat, lng: currentLng } : null;
@@ -710,9 +774,28 @@ export default function ActiveRun() {
               </svg>
             </button>
             <button 
-              className={`ctrlBtn stopBtn ${runStatus === 'RUNNING' ? 'running' : ''}`}
-              onClick={handleStopClick}
+              className={`ctrlBtn stopBtn ${runStatus === 'RUNNING' ? 'running' : ''} ${isHoldingStop ? 'holding' : ''}`}
+              onMouseDown={handleStopPress}
+              onMouseUp={handleStopRelease}
+              onMouseLeave={handleStopRelease}
+              onTouchStart={handleStopPress}
+              onTouchEnd={handleStopRelease}
             >
+              {stopHoldProgress > 0 && (
+                <svg className="stopProgressRing" viewBox="0 0 100 100">
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="45"
+                    fill="none"
+                    stroke="#FF4A4A"
+                    strokeWidth="4"
+                    strokeDasharray={`${stopHoldProgress * 2.827} 282.7`}
+                    strokeLinecap="round"
+                    transform="rotate(-90 50 50)"
+                  />
+                </svg>
+              )}
               <svg className="stopIcon" viewBox="0 0 24 24" fill="currentColor">
                 <rect x="6" y="6" width="12" height="12" rx="1" />
               </svg>
@@ -726,9 +809,28 @@ export default function ActiveRun() {
               <span className="ctrlIcon">▶</span>
             </button>
             <button 
-              className={`ctrlBtn stopBtn ${runStatus === 'PAUSED' ? 'paused' : ''}`}
-              onClick={handleStopClick}
+              className={`ctrlBtn stopBtn ${runStatus === 'PAUSED' ? 'paused' : ''} ${isHoldingStop ? 'holding' : ''}`}
+              onMouseDown={handleStopPress}
+              onMouseUp={handleStopRelease}
+              onMouseLeave={handleStopRelease}
+              onTouchStart={handleStopPress}
+              onTouchEnd={handleStopRelease}
             >
+              {stopHoldProgress > 0 && (
+                <svg className="stopProgressRing" viewBox="0 0 100 100">
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="45"
+                    fill="none"
+                    stroke="#FF4A4A"
+                    strokeWidth="4"
+                    strokeDasharray={`${stopHoldProgress * 2.827} 282.7`}
+                    strokeLinecap="round"
+                    transform="rotate(-90 50 50)"
+                  />
+                </svg>
+              )}
               <svg className="stopIcon" viewBox="0 0 24 24" fill="currentColor">
                 <rect x="6" y="6" width="12" height="12" rx="1" />
               </svg>
@@ -737,46 +839,18 @@ export default function ActiveRun() {
         )}
       </div>
       
-      {/* Stop Confirmation Modal */}
+      {/* Stop Hold Toast */}
       <AnimatePresence>
-        {showStopConfirm && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="stopModalBackdrop"
-              onClick={() => setShowStopConfirm(false)}
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="stopModal"
-            >
-              <div className="stopModalHeader">
-                <span className="stopModalEmoji">🔥</span>
-                <h3 className="stopModalTitle">End Run?</h3>
-              </div>
-              <p className="stopModalText">
-                Once stopped, this run will be saved.
-              </p>
-              <div className="stopModalButtons">
-                <button 
-                  className="stopModalBtn continueBtn"
-                  onClick={() => setShowStopConfirm(false)}
-                >
-                  Continue Run
-                </button>
-                <button 
-                  className="stopModalBtn endBtn"
-                  onClick={confirmStop}
-                >
-                  End Run
-                </button>
-              </div>
-            </motion.div>
-          </>
+        {showStopToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.9 }}
+            className="stopToast"
+          >
+            <p className="stopToastTitle">⚠️ Hold to stop your run</p>
+            <p className="stopToastSubtitle">Press & hold for 1 second to finish</p>
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -1291,12 +1365,14 @@ const styles = `
   
   /* Stop Button */
   .stopBtn {
+    position: relative;
     background: radial-gradient(circle at center, #2A0000, #000000);
     border: 1px solid rgba(255,60,60,0.55);
     box-shadow: 
       0 0 0 1px rgba(255,60,60,0.25) inset,
       0 0 18px rgba(255,70,70,0.35),
       0 4px 16px rgba(0,0,0,0.4);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
   .stopBtn.running {
@@ -1315,6 +1391,16 @@ const styles = `
       0 0 24px rgba(255,70,70,0.50),
       0 4px 16px rgba(0,0,0,0.4);
     animation: stopPulse 1.5s ease-in-out infinite;
+  }
+  
+  .stopBtn.holding {
+    transform: scale(0.95) !important;
+    background: radial-gradient(circle at center, #4A0000, #000000);
+    border-color: rgba(255,80,80,0.80);
+    box-shadow: 
+      0 0 0 1px rgba(255,80,80,0.40) inset,
+      0 0 35px rgba(255,80,80,0.65),
+      0 4px 16px rgba(0,0,0,0.4);
   }
   
   @keyframes stopPulse {
@@ -1337,117 +1423,70 @@ const styles = `
     height: 26px;
     color: #FF4A4A;
     filter: drop-shadow(0 0 8px rgba(255,74,74,0.5));
+    position: relative;
+    z-index: 2;
   }
   
-  /* Stop Confirmation Modal */
-  .stopModalBackdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.70);
-    backdrop-filter: blur(8px);
-    z-index: 9998;
+  .stopProgressRing {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    filter: drop-shadow(0 0 8px rgba(255,74,74,0.8));
+    animation: ringPulse 0.5s ease-in-out infinite;
   }
   
-  .stopModal {
+  @keyframes ringPulse {
+    0%, 100% {
+      filter: drop-shadow(0 0 8px rgba(255,74,74,0.8));
+    }
+    50% {
+      filter: drop-shadow(0 0 14px rgba(255,74,74,1));
+    }
+  }
+  
+  /* Stop Hold Toast */
+  .stopToast {
     position: fixed;
-    top: 50%;
+    bottom: 130px;
     left: 50%;
-    transform: translate(-50%, -50%);
-    width: calc(100% - 48px);
-    max-width: 340px;
+    transform: translateX(-50%);
+    z-index: 9999;
     background: rgba(18,10,28,0.95);
     backdrop-filter: blur(30px);
-    border: 1px solid rgba(138,43,226,0.30);
-    border-radius: 24px;
-    padding: 28px 24px;
-    z-index: 9999;
+    border: 1.5px solid rgba(255,60,60,0.50);
+    border-radius: 16px;
+    padding: 16px 20px;
     box-shadow: 
-      0 0 0 1px rgba(138,43,226,0.15) inset,
-      0 0 50px rgba(138,43,226,0.25),
-      0 20px 60px rgba(0,0,0,0.70);
+      0 0 0 1px rgba(255,60,60,0.25) inset,
+      0 0 30px rgba(255,60,60,0.35),
+      0 8px 32px rgba(0,0,0,0.60);
+    min-width: 280px;
+    text-align: center;
+    animation: toastShake 0.4s ease-in-out;
   }
   
-  .stopModalHeader {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 14px;
+  @keyframes toastShake {
+    0%, 100% { transform: translateX(-50%) rotate(0deg); }
+    25% { transform: translateX(-50%) rotate(-2deg); }
+    75% { transform: translateX(-50%) rotate(2deg); }
   }
   
-  .stopModalEmoji {
-    font-size: 28px;
-    filter: drop-shadow(0 0 12px rgba(255,100,0,0.6));
-  }
-  
-  .stopModalTitle {
-    font-size: 22px;
+  .stopToastTitle {
+    font-size: 15px;
     font-weight: 700;
     color: rgba(255,255,255,0.95);
-    margin: 0;
+    margin: 0 0 6px 0;
+    line-height: 1.3;
   }
   
-  .stopModalText {
-    font-size: 15px;
+  .stopToastSubtitle {
+    font-size: 13px;
     color: rgba(255,255,255,0.60);
-    line-height: 1.5;
-    margin: 0 0 24px 0;
-  }
-  
-  .stopModalButtons {
-    display: flex;
-    gap: 12px;
-  }
-  
-  .stopModalBtn {
-    flex: 1;
-    height: 48px;
-    border-radius: 14px;
-    font-weight: 600;
-    font-size: 15px;
-    cursor: pointer;
-    transition: all 0.25s ease;
-    border: none;
-    outline: none;
-  }
-  
-  .continueBtn {
-    background: rgba(191,255,0,0.08);
-    border: 1.5px solid rgba(191,255,0,0.30);
-    color: var(--neon);
-    box-shadow: 0 0 0 1px rgba(191,255,0,0.15) inset;
-  }
-  
-  .continueBtn:hover {
-    background: rgba(191,255,0,0.12);
-    border-color: rgba(191,255,0,0.40);
-    box-shadow: 
-      0 0 0 1px rgba(191,255,0,0.20) inset,
-      0 0 20px rgba(191,255,0,0.15);
-  }
-  
-  .continueBtn:active {
-    transform: scale(0.97);
-  }
-  
-  .endBtn {
-    background: linear-gradient(135deg, rgba(255,60,60,0.18), rgba(200,30,30,0.22));
-    border: 1.5px solid rgba(255,60,60,0.45);
-    color: #FF5A5A;
-    box-shadow: 
-      0 0 0 1px rgba(255,60,60,0.20) inset,
-      0 0 20px rgba(255,60,60,0.20);
-  }
-  
-  .endBtn:hover {
-    background: linear-gradient(135deg, rgba(255,60,60,0.24), rgba(200,30,30,0.28));
-    border-color: rgba(255,60,60,0.60);
-    box-shadow: 
-      0 0 0 1px rgba(255,60,60,0.30) inset,
-      0 0 28px rgba(255,60,60,0.35);
-  }
-  
-  .endBtn:active {
-    transform: scale(0.97);
+    margin: 0;
+    line-height: 1.4;
   }
   
   @media (max-width: 420px) {
@@ -1458,8 +1497,12 @@ const styles = `
     .resumeBtn, .startBtn { width: 92px; height: 92px; font-size: 32px; }
     .metricsGrid { gap: 8px; }
     .metricCard { padding: 10px 12px; min-height: 85px; }
-    .stopModal { padding: 24px 20px; }
-    .stopModalTitle { font-size: 20px; }
-    .stopModalText { font-size: 14px; }
+    .stopToast { 
+      min-width: 260px;
+      padding: 14px 18px;
+      bottom: 120px;
+    }
+    .stopToastTitle { font-size: 14px; }
+    .stopToastSubtitle { font-size: 12px; }
   }
 `;
