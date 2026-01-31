@@ -251,6 +251,16 @@ export default function RunDetails() {
     try {
       // Get minimum reward
       const rewardAmount = Math.max(coinData.total, 0.25);
+      setToastAmount(rewardAmount);
+      
+      // Haptic feedback if available
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        try {
+          navigator.vibrate(50);
+        } catch (e) {
+          // Ignore vibration errors
+        }
+      }
       
       // Update user RUN balance (single source of truth)
       const currentBalance = currentUser.coin_balance || 0;
@@ -279,13 +289,13 @@ export default function RunDetails() {
       // Update local state
       setIsClaimed(true);
       
-      // Show success toast
-      toast.success(`+${rewardAmount.toFixed(2)} RUN added to Wallet`);
+      // Show coin toast animation
+      setShowCoinToast(true);
       
-      // Auto-redirect to Home after short delay
-      setTimeout(() => {
+      // Auto-redirect to Home after animation completes
+      claimTimeoutRef.current = setTimeout(() => {
         navigate(createPageUrl('Home'));
-      }, 1000);
+      }, 1200);
       
     } catch (error) {
       console.error('Error claiming reward:', error);
@@ -293,6 +303,15 @@ export default function RunDetails() {
       setIsClaiming(false);
     }
   };
+  
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (claimTimeoutRef.current) {
+        clearTimeout(claimTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const updateMutation = useMutation({
     mutationFn: (data) => base44.entities.Run.update(runId, data),
