@@ -404,7 +404,6 @@ export default function RunDetails() {
         <CoinAnimationFlow
           isActive={showCoinAnimation}
           sourceRef={coinsEarnedCardRef}
-          targetRef={{ current: null }} // Will find pill on Home page via global ref
           rewardAmount={Math.max(coinData.total, 0.25)}
           onAnimationComplete={handleAnimationComplete}
         />
