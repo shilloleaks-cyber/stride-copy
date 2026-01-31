@@ -1056,11 +1056,14 @@ const styles = `
   .heartCard {
     grid-column: 1 / -1;
     min-height: 85px;
+    text-align: center;
+    align-items: center;
   }
   
   .heartTop {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     margin-bottom: 6px;
   }
