@@ -68,6 +68,10 @@ export default function RunDetails() {
   // Animated coin counter
   const [displayedCoins, setDisplayedCoins] = useState(0);
   const [showRareBonus, setShowRareBonus] = useState(false);
+  
+  // Claim reward state
+  const [isClaimed, setIsClaimed] = useState(false);
+  const [isClaiming, setIsClaiming] = useState(false);
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
@@ -183,6 +187,54 @@ export default function RunDetails() {
   useEffect(() => {
     if (run?.notes) setNotes(run.notes);
   }, [run]);
+  
+  // Check if reward already claimed
+  useEffect(() => {
+    if (run?.reward_claimed) {
+      setIsClaimed(true);
+    }
+  }, [run]);
+  
+  // Handle claim reward
+  const handleClaimReward = async () => {
+    if (isClaiming || isClaimed || !currentUser) return;
+    
+    setIsClaiming(true);
+    
+    try {
+      // Get minimum reward
+      const rewardAmount = Math.max(coinData.total, 0.25);
+      
+      // Update user wallet
+      const currentWallet = currentUser.total_coins || 0;
+      const newWallet = parseFloat((currentWallet + rewardAmount).toFixed(2));
+      
+      await base44.auth.updateMe({
+        total_coins: newWallet
+      });
+      
+      // Mark run as claimed
+      await base44.entities.Run.update(runId, {
+        reward_claimed: true
+      });
+      
+      // Update local state
+      setIsClaimed(true);
+      
+      // Show success toast
+      toast.success(`+${rewardAmount.toFixed(2)} coins added to Wallet`);
+      
+      // Auto-redirect to Home after short delay
+      setTimeout(() => {
+        navigate(createPageUrl('Home'));
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Error claiming reward:', error);
+      toast.error('Failed to claim reward');
+      setIsClaiming(false);
+    }
+  };
 
   const updateMutation = useMutation({
     mutationFn: (data) => base44.entities.Run.update(runId, data),
@@ -386,119 +438,101 @@ export default function RunDetails() {
         </div>
       </motion.div>
 
-      {/* Coin Reward Card */}
+      {/* Coin Reward Card - Compact */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        animate={{ opacity: isClaimed ? 0.6 : 1, y: 0 }}
         transition={{ delay: 0.4, duration: 0.5 }}
         className="px-5 pb-3"
       >
         <div 
-          className="rounded-2xl backdrop-blur-sm border p-5 relative overflow-hidden"
+          className="rounded-2xl backdrop-blur-sm border p-4 relative overflow-hidden"
           style={{ 
             backgroundColor: 'rgba(255,255,255,0.04)',
             borderColor: 'rgba(191,255,0,0.2)',
-            boxShadow: '0 0 30px rgba(191,255,0,0.15), 0 0 0 1px rgba(191,255,0,0.08) inset'
+            boxShadow: '0 0 25px rgba(191,255,0,0.12), 0 0 0 1px rgba(191,255,0,0.06) inset'
           }}
         >
-          {/* Rare Bonus Overlay */}
-          {showRareBonus && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.5, y: -20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ type: 'spring', damping: 12 }}
-              className="absolute top-3 right-3 px-3 py-1.5 rounded-full"
-              style={{
-                backgroundColor: 'rgba(138,43,226,0.3)',
-                border: '1px solid rgba(138,43,226,0.5)',
-                boxShadow: '0 0 20px rgba(138,43,226,0.4)'
-              }}
-            >
-              <p className="text-xs font-bold" style={{ color: '#C084FC' }}>
-                💎 BONUS +{rareBonusAmount.toFixed(2)}
-              </p>
-            </motion.div>
-          )}
-          
-          {/* Combo Banner */}
-          {coinData.hasCombo && (
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 1, type: 'spring' }}
-              className="absolute top-3 left-3 px-3 py-1.5 rounded-full"
-              style={{
-                backgroundColor: 'rgba(191,255,0,0.2)',
-                border: '1px solid rgba(191,255,0,0.4)',
-                boxShadow: '0 0 20px rgba(191,255,0,0.3)'
-              }}
-            >
-              <p className="text-xs font-bold" style={{ color: '#BFFF00' }}>
-                ⚡ COMBO +{coinData.breakdown.combo}
-              </p>
-            </motion.div>
-          )}
-
-          <div className="text-center mb-5 mt-8">
-            <p className="text-xs uppercase tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.40)' }}>
-              Coins Earned
+          {/* Header Row */}
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[10px] uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.45)' }}>
+              COINS EARNED
             </p>
-            <div className="flex items-center justify-center gap-2">
-              <span className="text-4xl">🪙</span>
-              <motion.p
-                className="text-5xl font-black"
-                style={{ 
-                  color: '#BFFF00',
-                  textShadow: '0 0 30px rgba(191,255,0,0.5)'
-                }}
-                key={displayedCoins}
-              >
-                {displayedCoins.toFixed(2)}
-              </motion.p>
+            <div 
+              className="px-2.5 py-1 rounded-full text-[9px] uppercase tracking-wider font-bold"
+              style={{
+                backgroundColor: isClaimed ? 'rgba(191,255,0,0.15)' : 'rgba(138,43,226,0.15)',
+                color: isClaimed ? '#BFFF00' : '#C084FC',
+                border: `1px solid ${isClaimed ? 'rgba(191,255,0,0.3)' : 'rgba(138,43,226,0.3)'}`,
+                boxShadow: isClaimed ? '0 0 15px rgba(191,255,0,0.2)' : '0 0 15px rgba(138,43,226,0.2)'
+              }}
+            >
+              {isClaimed ? 'ADDED TO WALLET' : 'PENDING'}
             </div>
           </div>
 
-          {/* Breakdown */}
-          <div className="space-y-2">
-            <div 
-              className="h-px w-full mb-3"
-              style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
-            />
-            
-            <div className="flex justify-between items-center py-1.5">
-              <p className="text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>Distance</p>
-              <p className="text-sm font-bold" style={{ color: '#BFFF00' }}>
-                +{coinData.breakdown.distance.toFixed(2)}
-              </p>
-            </div>
-            
-            {coinData.breakdown.pace > 0 && (
-              <div className="flex justify-between items-center py-1.5">
-                <p className="text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>Pace</p>
-                <p className="text-sm font-bold" style={{ color: '#BFFF00' }}>
-                  +{coinData.breakdown.pace.toFixed(2)}
-                </p>
-              </div>
-            )}
-            
-            {coinData.breakdown.streak > 0 && (
-              <div className="flex justify-between items-center py-1.5">
-                <p className="text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
-                  Streak {coinData.streak > 1 ? `(${coinData.streak}x)` : ''}
-                </p>
-                <p className="text-sm font-bold" style={{ color: '#BFFF00' }}>
-                  +{coinData.breakdown.streak.toFixed(2)}
-                </p>
-              </div>
-            )}
-            
-            <div className="flex justify-between items-center py-1.5">
-              <p className="text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>Daily</p>
-              <p className="text-sm font-bold" style={{ color: '#BFFF00' }}>
-                +{coinData.breakdown.daily.toFixed(2)}
-              </p>
-            </div>
+          {/* Middle Row - Coin Display */}
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <span className="text-3xl">🪙</span>
+            <motion.p
+              className="text-4xl font-black"
+              style={{ 
+                color: '#BFFF00',
+                textShadow: '0 0 20px rgba(191,255,0,0.4)'
+              }}
+              animate={{ scale: isClaimed ? 0.95 : 1 }}
+            >
+              {displayedCoins.toFixed(2)}
+            </motion.p>
           </div>
+
+          {/* Bottom Row - Compact Breakdown */}
+          <div className="flex items-center justify-center gap-3 text-[11px] mb-4">
+            <span style={{ color: 'rgba(255,255,255,0.45)' }}>
+              Dist <span style={{ color: '#BFFF00', fontWeight: 'bold' }}>+{coinData.breakdown.distance.toFixed(2)}</span>
+            </span>
+            <span style={{ color: 'rgba(255,255,255,0.25)' }}>|</span>
+            <span style={{ color: 'rgba(255,255,255,0.45)' }}>
+              Streak <span style={{ color: '#BFFF00', fontWeight: 'bold' }}>+{coinData.breakdown.streak.toFixed(2)}</span>
+            </span>
+            <span style={{ color: 'rgba(255,255,255,0.25)' }}>|</span>
+            <span style={{ color: 'rgba(255,255,255,0.45)' }}>
+              Daily <span style={{ color: '#BFFF00', fontWeight: 'bold' }}>+{coinData.breakdown.daily.toFixed(2)}</span>
+            </span>
+          </div>
+
+          {/* Claim Button */}
+          <motion.button
+            onClick={handleClaimReward}
+            disabled={isClaiming || isClaimed}
+            whileTap={{ scale: 0.98 }}
+            className="w-full h-11 rounded-full font-bold text-sm transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+            style={{
+              background: isClaimed 
+                ? 'rgba(255,255,255,0.08)'
+                : 'linear-gradient(135deg, #BFFF00 0%, #8FD400 100%)',
+              color: isClaimed ? 'rgba(255,255,255,0.50)' : '#0A0A0A',
+              boxShadow: isClaimed 
+                ? 'none'
+                : '0 0 25px rgba(191,255,0,0.4), 0 4px 12px rgba(0,0,0,0.3)',
+              border: isClaimed ? '1px solid rgba(255,255,255,0.1)' : 'none'
+            }}
+          >
+            {isClaiming ? 'Claiming...' : isClaimed ? '✅ Claimed' : 'Claim Reward'}
+          </motion.button>
+
+          {/* Rare Bonus Indicator */}
+          {showRareBonus && !isClaimed && (
+            <motion.div
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center mt-2"
+            >
+              <p className="text-[10px] font-bold" style={{ color: '#C084FC' }}>
+                💎 +{rareBonusAmount.toFixed(2)} bonus included
+              </p>
+            </motion.div>
+          )}
         </div>
       </motion.div>
 
