@@ -624,8 +624,8 @@ export default function ActiveRun() {
 
       {/* Map */}
       <div className="mapSection">
-        <div className="mapOverlay" />
         <div className="mapWrap">
+          <div className="mapOverlay" />
           <RunMap 
             routeCoordinates={routePoints}
             currentPosition={currentPosition}
@@ -642,21 +642,21 @@ export default function ActiveRun() {
               />
             )}
           </RunMap>
-          
+
           {/* Ghost Status */}
           {ghostEnabled && runStatus === 'RUNNING' && timeDifference !== 0 && (
-            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black/70 backdrop-blur-sm px-4 py-2 rounded-full">
+            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black/70 backdrop-blur-sm px-4 py-2 rounded-full z-10">
               <p className={`text-sm font-medium ${timeDifference < 0 ? 'text-emerald-400' : 'text-orange-400'}`}>
                 {timeDifference < 0 ? (ghostFriend ? '🏆 Ahead' : '👻 Ahead') : (ghostFriend ? '😅 Behind' : '👻 Behind')} {Math.abs(Math.round(timeDifference))}s
               </p>
             </div>
           )}
-          
+
           {/* Re-center Button */}
           {currentPosition && (
             <button
               onClick={handleRecenter}
-              className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-sm text-white p-3 rounded-full hover:bg-black/80 transition-colors shadow-lg"
+              className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-sm text-white p-3 rounded-full hover:bg-black/80 transition-colors shadow-lg z-10"
               aria-label="Re-center map"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -990,7 +990,7 @@ const styles = `
       rgba(18,10,28,0.25),
       rgba(0,0,0,0.30)
     );
-    z-index: 1;
+    z-index: 0;
     pointer-events: none;
   }
   
