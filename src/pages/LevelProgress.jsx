@@ -308,3 +308,117 @@ export default function LevelProgress() {
     </div>
   );
 }
+
+const levelUpStyles = `
+  @keyframes ringPulse {
+    0%, 100% {
+      box-shadow: 0 0 0 0 rgba(122, 43, 255, 0.8), inset 0 0 30px rgba(122, 43, 255, 0.4);
+    }
+    50% {
+      box-shadow: 0 0 0 12px rgba(122, 43, 255, 0.3), inset 0 0 50px rgba(122, 43, 255, 0.6);
+    }
+  }
+
+  @keyframes numberPop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.06); }
+    100% { transform: scale(1); }
+  }
+
+  @keyframes overlayInOut {
+    0% {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.8);
+    }
+    10% {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    90% {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.9);
+    }
+  }
+
+  @keyframes rareShimmer {
+    0%, 100% {
+      box-shadow: 0 0 0 0 rgba(122, 43, 255, 0.8), 0 0 40px rgba(200, 150, 255, 0.3), inset 0 0 30px rgba(122, 43, 255, 0.4);
+    }
+    50% {
+      box-shadow: 0 0 0 12px rgba(122, 43, 255, 0.3), 0 0 80px rgba(200, 150, 255, 0.6), inset 0 0 50px rgba(122, 43, 255, 0.6);
+    }
+  }
+
+  .levelUpOverlay {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+    width: 92vw;
+    max-width: 400px;
+    padding: 16px;
+    margin: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    background: rgba(10, 10, 10, 0.92);
+    border: 1px solid rgba(122, 43, 255, 0.4);
+    border-radius: 24px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 40px rgba(122, 43, 255, 0.2);
+    backdrop-filter: blur(8px);
+    animation: overlayInOut 0.9s ease-in-out forwards;
+  }
+
+  .levelUpContent {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .levelUpRing {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 3px solid rgba(122, 43, 255, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(122, 43, 255, 0.08);
+    animation: ringPulse 0.45s ease-in-out infinite;
+  }
+
+  .levelUpRing.withShimmer {
+    animation: rareShimmer 0.45s ease-in-out infinite;
+  }
+
+  .levelUpNumber {
+    font-size: 52px;
+    font-weight: 900;
+    color: #B7FF1A;
+    text-shadow: 0 0 20px rgba(183, 255, 26, 0.6);
+    animation: numberPop 0.6s ease-out;
+  }
+
+  .levelUpText {
+    text-align: center;
+  }
+
+  .levelUpTitle {
+    font-size: 24px;
+    font-weight: 800;
+    color: #B7FF1A;
+    text-shadow: 0 0 16px rgba(183, 255, 26, 0.5);
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+  }
+
+  .levelUpSubtitle {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.75);
+    letter-spacing: 0.02em;
+  }
+`;
