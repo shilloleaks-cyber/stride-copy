@@ -80,7 +80,7 @@ export default function Wallet() {
         animate={{ opacity: 1, y: 0 }}
         className="balanceHero"
       >
-        <div className="balanceLabel">RUN BALANCE</div>
+        <div className="balanceLabel">COIN WALLET</div>
         <div className="balanceValue">
           {(user?.coin_balance || 0).toFixed(2)}
         </div>
