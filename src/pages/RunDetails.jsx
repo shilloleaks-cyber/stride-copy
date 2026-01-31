@@ -22,6 +22,21 @@ import PaceConsistencyScore from '@/components/running/PaceConsistencyScore';
 import PerKilometerBreakdown from '@/components/running/PerKilometerBreakdown';
 import AIFormInsights from '@/components/running/AIFormInsights';
 
+const motivationQuotes = [
+  "You showed up. That's already a win.",
+  "No excuses. Just progress.",
+  "One run closer to your best self.",
+  "Small steps. Big energy.",
+  "You didn't quit. Respect.",
+  "Today you moved. Tomorrow you level up.",
+  "Run done. Mind stronger.",
+  "Consistency beats motivation.",
+  "Not fast. Not slow. Just forward.",
+  "Every step counts. Every breath matters.",
+  "You're lapping everyone on the couch.",
+  "The finish line was just the start.",
+];
+
 export default function RunDetails() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -32,6 +47,9 @@ export default function RunDetails() {
   const [isDeleteSheetOpen, setIsDeleteSheetOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [randomQuote] = useState(() => 
+    motivationQuotes[Math.floor(Math.random() * motivationQuotes.length)]
+  );
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
@@ -137,12 +155,17 @@ export default function RunDetails() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white pb-24">
+    <div className="min-h-screen text-white pb-24" style={{ backgroundColor: '#0A0A0A' }}>
       {/* Header */}
-      <div className="px-6 pt-6 flex items-center justify-between">
+      <div className="px-5 pt-5 flex items-center justify-between">
         <button 
           onClick={() => navigate(createPageUrl('History'))}
-          className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center"
+          className="w-11 h-11 rounded-full backdrop-blur-sm flex items-center justify-center border transition-all"
+          style={{ 
+            backgroundColor: 'rgba(255,255,255,0.04)',
+            borderColor: 'rgba(255,255,255,0.08)',
+            boxShadow: '0 0 0 1px rgba(138,43,226,0.1) inset'
+          }}
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
@@ -150,7 +173,13 @@ export default function RunDetails() {
           <button 
             onClick={handleShareToFeed}
             disabled={isSharing}
-            className="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center hover:bg-emerald-700 transition-colors disabled:opacity-50"
+            className="w-11 h-11 rounded-full backdrop-blur-sm flex items-center justify-center border transition-all disabled:opacity-50"
+            style={{ 
+              backgroundColor: 'rgba(191,255,0,0.12)',
+              borderColor: 'rgba(191,255,0,0.25)',
+              color: '#BFFF00',
+              boxShadow: '0 0 20px rgba(191,255,0,0.15)'
+            }}
             title="Share to Feed"
           >
             <Users className="w-5 h-5" />
@@ -158,14 +187,25 @@ export default function RunDetails() {
           <ShareRunDialog 
             run={run}
             trigger={
-              <button className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors">
+              <button className="w-11 h-11 rounded-full backdrop-blur-sm flex items-center justify-center border transition-all"
+                style={{ 
+                  backgroundColor: 'rgba(255,255,255,0.04)',
+                  borderColor: 'rgba(255,255,255,0.08)',
+                  boxShadow: '0 0 0 1px rgba(138,43,226,0.1) inset'
+                }}
+              >
                 <Share2 className="w-5 h-5" />
               </button>
             }
           />
           <button 
             onClick={() => setIsDeleteSheetOpen(true)}
-            className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center"
+            className="w-11 h-11 rounded-full backdrop-blur-sm flex items-center justify-center border transition-all"
+            style={{ 
+              backgroundColor: 'rgba(255,255,255,0.04)',
+              borderColor: 'rgba(255,255,255,0.08)',
+              boxShadow: '0 0 0 1px rgba(138,43,226,0.1) inset'
+            }}
           >
             <Trash2 className="w-5 h-5 text-red-400" />
           </button>
@@ -176,22 +216,54 @@ export default function RunDetails() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="px-6 pt-8 pb-6"
+        className="px-5 pt-6 pb-4"
       >
-        <p className="text-emerald-400 text-sm uppercase tracking-widest mb-1">Completed Run</p>
-        <h1 className="text-3xl font-light">
+        <p className="text-sm uppercase tracking-[0.15em] mb-1" style={{ color: 'rgba(255,255,255,0.45)' }}>
+          COMPLETED RUN
+        </p>
+        <h1 className="text-2xl font-bold" style={{ color: 'rgba(255,255,255,0.95)' }}>
           {run.start_time && format(new Date(run.start_time), 'EEEE, MMMM d')}
         </h1>
-        <p className="text-gray-500 mt-1">
+        <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.40)' }}>
           {run.start_time && format(new Date(run.start_time), 'h:mm a')}
         </p>
       </motion.div>
 
+      {/* Motivation Quote */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.2, duration: 0.4 }}
+        className="px-5 pb-5"
+      >
+        <div 
+          className="rounded-2xl backdrop-blur-sm border px-5 py-4 text-center"
+          style={{ 
+            backgroundColor: 'rgba(138,43,226,0.08)',
+            borderColor: 'rgba(138,43,226,0.2)',
+            boxShadow: '0 0 30px rgba(138,43,226,0.15), 0 0 0 1px rgba(138,43,226,0.08) inset'
+          }}
+        >
+          <p className="text-xs mb-2" style={{ color: 'rgba(255,255,255,0.50)' }}>
+            🔥 Today's vibe
+          </p>
+          <p 
+            className="text-base font-medium leading-relaxed animate-pulse"
+            style={{ 
+              color: '#BFFF00',
+              textShadow: '0 0 20px rgba(191,255,0,0.4)'
+            }}
+          >
+            "{randomQuote}"
+          </p>
+        </div>
+      </motion.div>
+
       {/* Route Map */}
       {run.route_points && run.route_points.length >= 2 ? (
-        <div className="px-6 mb-6">
-          <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-4">Route</h2>
-          <div className="h-64 rounded-2xl overflow-hidden border border-white/10">
+        <div className="px-5 mb-4">
+          <h2 className="text-xs uppercase tracking-wider mb-3" style={{ color: 'rgba(255,255,255,0.40)' }}>Route</h2>
+          <div className="h-56 rounded-2xl overflow-hidden border" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
             <RunMap 
               routeCoordinates={run.route_points}
               currentPosition={null}
@@ -199,96 +271,127 @@ export default function RunDetails() {
               showFullRoute={true}
               enableZoom={true}
             />
-            </div>
-            </div>
+          </div>
+        </div>
       ) : (
-        <div className="px-6 mb-6">
-          <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-4">Route</h2>
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-8 text-center">
-            <MapPin className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-            <p className="text-gray-400">Route not available for this run</p>
-            <p className="text-sm text-gray-600 mt-1">GPS tracking was not enabled during this run</p>
+        <div className="px-5 mb-4">
+          <h2 className="text-xs uppercase tracking-wider mb-3" style={{ color: 'rgba(255,255,255,0.40)' }}>Route</h2>
+          <div 
+            className="rounded-2xl p-8 text-center border"
+            style={{ 
+              backgroundColor: 'rgba(255,255,255,0.03)',
+              borderColor: 'rgba(255,255,255,0.08)'
+            }}
+          >
+            <MapPin className="w-12 h-12 mx-auto mb-3" style={{ color: 'rgba(255,255,255,0.25)' }} />
+            <p style={{ color: 'rgba(255,255,255,0.50)' }}>Route not available for this run</p>
+            <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.30)' }}>GPS tracking was not enabled during this run</p>
           </div>
         </div>
       )}
 
       {/* Main Stats */}
-      <div className="px-6 mb-6">
-        <div className="bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-500/30 rounded-3xl p-6">
-          <div className="grid grid-cols-3 gap-6 text-center">
+      <div className="px-5 mb-4">
+        <div 
+          className="rounded-2xl backdrop-blur-sm border p-5"
+          style={{ 
+            backgroundColor: 'rgba(255,255,255,0.04)',
+            borderColor: 'rgba(255,255,255,0.08)',
+            boxShadow: '0 0 0 1px rgba(138,43,226,0.08) inset'
+          }}
+        >
+          <div className="grid grid-cols-3 gap-4 text-center">
             <div>
-              <p className="text-xs uppercase tracking-widest text-gray-400 mb-2">Distance</p>
-              <p className="text-4xl font-light text-white">{run.distance_km?.toFixed(2) || '0.00'}</p>
-              <p className="text-sm text-gray-500">km</p>
+              <p className="text-xs uppercase tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.45)' }}>Distance</p>
+              <p className="text-3xl font-bold" style={{ color: '#BFFF00' }}>{run.distance_km?.toFixed(2) || '0.00'}</p>
+              <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>km</p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-widest text-gray-400 mb-2">Duration</p>
-              <p className="text-4xl font-light text-white">{formatDuration(run.duration_seconds)}</p>
-              <p className="text-sm text-gray-500">time</p>
+              <p className="text-xs uppercase tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.45)' }}>Duration</p>
+              <p className="text-3xl font-bold" style={{ color: 'rgba(255,255,255,0.95)' }}>{formatDuration(run.duration_seconds)}</p>
+              <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>time</p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-widest text-gray-400 mb-2">Pace</p>
-              <p className="text-4xl font-light text-white">{formatPace(run.pace_min_per_km)}</p>
-              <p className="text-sm text-gray-500">/km</p>
+              <p className="text-xs uppercase tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.45)' }}>Pace</p>
+              <p className="text-3xl font-bold" style={{ color: '#BFFF00' }}>{formatPace(run.pace_min_per_km)}</p>
+              <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>/km</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Detailed Stats */}
-      <div className="px-6 mb-6">
-        <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-4">Details</h2>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 rounded-xl bg-blue-500/20">
-                <Zap className="w-5 h-5 text-blue-400" />
+      <div className="px-5 mb-4">
+        <h2 className="text-xs uppercase tracking-wider mb-3" style={{ color: 'rgba(255,255,255,0.40)' }}>Details</h2>
+        <div className="grid grid-cols-2 gap-3">
+          <div 
+            className="rounded-2xl p-4 border"
+            style={{ 
+              backgroundColor: 'rgba(255,255,255,0.04)',
+              borderColor: 'rgba(255,255,255,0.08)'
+            }}
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(138,43,226,0.15)' }}>
+                <Zap className="w-4 h-4" style={{ color: '#BFFF00' }} />
               </div>
-              <p className="text-xs uppercase tracking-widest text-gray-400">Speed</p>
+              <p className="text-xs uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.45)' }}>Speed</p>
             </div>
             <div className="flex items-baseline justify-between">
               <div>
-                <p className="text-xs text-gray-500">Avg</p>
-                <p className="text-2xl font-light text-white">{run.avg_speed_kmh?.toFixed(1) || '0.0'}</p>
+                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>Avg</p>
+                <p className="text-xl font-bold" style={{ color: 'rgba(255,255,255,0.92)' }}>{run.avg_speed_kmh?.toFixed(1) || '0.0'}</p>
               </div>
               <div className="text-right">
-                <p className="text-xs text-gray-500">Max</p>
-                <p className="text-2xl font-light text-emerald-400">{run.max_speed_kmh?.toFixed(1) || '0.0'}</p>
+                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>Max</p>
+                <p className="text-xl font-bold" style={{ color: '#BFFF00' }}>{run.max_speed_kmh?.toFixed(1) || '0.0'}</p>
               </div>
             </div>
-            <p className="text-xs text-gray-500 mt-1">km/h</p>
+            <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.30)' }}>km/h</p>
           </div>
 
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 rounded-xl bg-red-500/20">
-                <Heart className="w-5 h-5 text-red-400" />
+          <div 
+            className="rounded-2xl p-4 border"
+            style={{ 
+              backgroundColor: 'rgba(255,255,255,0.04)',
+              borderColor: 'rgba(255,255,255,0.08)'
+            }}
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(138,43,226,0.15)' }}>
+                <Heart className="w-4 h-4 text-red-400" />
               </div>
-              <p className="text-xs uppercase tracking-widest text-gray-400">Heart Rate</p>
+              <p className="text-xs uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.45)' }}>Heart Rate</p>
             </div>
             <div className="flex items-baseline justify-between">
               <div>
-                <p className="text-xs text-gray-500">Avg</p>
-                <p className="text-2xl font-light text-white">{run.avg_heart_rate || '--'}</p>
+                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>Avg</p>
+                <p className="text-xl font-bold" style={{ color: 'rgba(255,255,255,0.92)' }}>{run.avg_heart_rate || '--'}</p>
               </div>
               <div className="text-right">
-                <p className="text-xs text-gray-500">Max</p>
-                <p className="text-2xl font-light text-red-400">{run.max_heart_rate || '--'}</p>
+                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>Max</p>
+                <p className="text-xl font-bold text-red-400">{run.max_heart_rate || '--'}</p>
               </div>
             </div>
-            <p className="text-xs text-gray-500 mt-1">bpm</p>
+            <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.30)' }}>bpm</p>
           </div>
 
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-5 col-span-2">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 rounded-xl bg-orange-500/20">
-                <Flame className="w-5 h-5 text-orange-400" />
+          <div 
+            className="rounded-2xl p-4 border col-span-2"
+            style={{ 
+              backgroundColor: 'rgba(255,255,255,0.04)',
+              borderColor: 'rgba(255,255,255,0.08)'
+            }}
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(138,43,226,0.15)' }}>
+                <Flame className="w-4 h-4 text-orange-400" />
               </div>
-              <p className="text-xs uppercase tracking-widest text-gray-400">Calories Burned</p>
+              <p className="text-xs uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.45)' }}>Calories Burned</p>
             </div>
             <div className="flex items-baseline gap-2">
-              <p className="text-4xl font-light text-white">{run.calories_burned || 0}</p>
-              <p className="text-sm text-gray-500">kcal</p>
+              <p className="text-3xl font-bold" style={{ color: 'rgba(255,255,255,0.95)' }}>{run.calories_burned || 0}</p>
+              <p className="text-sm" style={{ color: 'rgba(255,255,255,0.35)' }}>kcal</p>
             </div>
           </div>
         </div>
@@ -296,8 +399,8 @@ export default function RunDetails() {
 
       {/* Performance Analysis */}
       {run.route_points && run.route_points.length >= 2 && (
-        <div className="px-6 mb-6">
-          <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-4">Performance Analysis</h2>
+        <div className="px-5 mb-4">
+          <h2 className="text-xs uppercase tracking-wider mb-3" style={{ color: 'rgba(255,255,255,0.40)' }}>Performance Analysis</h2>
           
           {/* Pace Consistency Score */}
           <div className="mb-4">
@@ -325,8 +428,8 @@ export default function RunDetails() {
       )}
 
       {/* Insights & Tips */}
-      <div className="px-6 mb-6">
-        <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-4">Insights & Tips</h2>
+      <div className="px-5 mb-4">
+        <h2 className="text-xs uppercase tracking-wider mb-3" style={{ color: 'rgba(255,255,255,0.40)' }}>Insights & Tips</h2>
         <div className="space-y-4">
           <AIFormInsights run={run} />
           <RunInsights run={run} />
@@ -334,16 +437,17 @@ export default function RunDetails() {
       </div>
 
       {/* Notes */}
-      <div className="px-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xs uppercase tracking-widest text-gray-500">Notes</h2>
+      <div className="px-5">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-xs uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.40)' }}>Notes</h2>
           {!editingNotes && (
             <button 
               onClick={() => {
                 setNotes(run.notes || '');
                 setEditingNotes(true);
               }}
-              className="text-emerald-400 text-sm flex items-center gap-1"
+              className="text-sm flex items-center gap-1"
+              style={{ color: '#BFFF00' }}
             >
               <Edit2 className="w-4 h-4" />
               Edit
@@ -352,19 +456,26 @@ export default function RunDetails() {
         </div>
         
         {editingNotes ? (
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+          <div 
+            className="rounded-2xl p-4 border"
+            style={{ 
+              backgroundColor: 'rgba(255,255,255,0.04)',
+              borderColor: 'rgba(255,255,255,0.08)'
+            }}
+          >
             <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="How did this run feel? Add notes here..."
-              className="bg-transparent border-none text-white placeholder:text-gray-600 resize-none min-h-[100px] focus-visible:ring-0"
+              className="bg-transparent border-none text-white resize-none min-h-[100px] focus-visible:ring-0"
+              style={{ color: 'rgba(255,255,255,0.92)' }}
             />
             <div className="flex justify-end gap-2 mt-3">
               <Button 
                 variant="ghost" 
                 size="sm"
                 onClick={() => setEditingNotes(false)}
-                className="text-gray-400"
+                style={{ color: 'rgba(255,255,255,0.50)' }}
               >
                 <X className="w-4 h-4 mr-1" />
                 Cancel
@@ -372,7 +483,11 @@ export default function RunDetails() {
               <Button 
                 size="sm"
                 onClick={() => updateMutation.mutate({ notes })}
-                className="bg-emerald-600 hover:bg-emerald-700"
+                className="font-medium"
+                style={{ 
+                  backgroundColor: '#BFFF00',
+                  color: '#0A0A0A'
+                }}
               >
                 <Save className="w-4 h-4 mr-1" />
                 Save
@@ -380,11 +495,17 @@ export default function RunDetails() {
             </div>
           </div>
         ) : (
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
+          <div 
+            className="rounded-2xl p-4 border"
+            style={{ 
+              backgroundColor: 'rgba(255,255,255,0.04)',
+              borderColor: 'rgba(255,255,255,0.08)'
+            }}
+          >
             {run.notes ? (
-              <p className="text-gray-300 whitespace-pre-wrap">{run.notes}</p>
+              <p className="whitespace-pre-wrap" style={{ color: 'rgba(255,255,255,0.75)' }}>{run.notes}</p>
             ) : (
-              <p className="text-gray-600 italic">No notes for this run</p>
+              <p className="italic" style={{ color: 'rgba(255,255,255,0.35)' }}>No notes for this run</p>
             )}
           </div>
         )}
