@@ -419,7 +419,8 @@ export default function ActiveRun() {
         setLevelUpData({
           coinsEarned,
           newLevel,
-          leveledUp
+          leveledUp,
+          reducedRewards: false
         });
         setShowLevelModal(true);
         
