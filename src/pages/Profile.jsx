@@ -68,11 +68,26 @@ export default function Profile() {
 
   const completedChallenges = myParticipations.filter(p => p.is_completed);
 
-  // Fetch achievements from entity
-  const { data: achievements = [] } = useQuery({
+  // Fetch achievements from entity with auto-seed
+  const { data: achievements = [], refetch: refetchAchievements } = useQuery({
     queryKey: ['achievements'],
     queryFn: () => base44.entities.Achievement.list(),
   });
+
+  // Auto-seed achievements if empty
+  React.useEffect(() => {
+    const seedIfEmpty = async () => {
+      if (achievements.length === 0 && user) {
+        try {
+          await base44.functions.invoke('seedAchievements', {});
+          await refetchAchievements();
+        } catch (error) {
+          console.log('Could not seed achievements:', error);
+        }
+      }
+    };
+    seedIfEmpty();
+  }, [achievements.length, user]);
 
   React.useEffect(() => {
     if (user?.bio) setBio(user.bio);
@@ -198,6 +213,13 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
   const lastRun = completedRuns[0];
   const lastRunCoins = lastRun ? Math.floor(lastRun.distance_km || 0) : 0;
 
+  // Fetch user achievements to track unlocked status
+  const { data: userAchievements = [] } = useQuery({
+    queryKey: ['userAchievements', user?.email],
+    queryFn: () => base44.entities.UserAchievement.filter({ user_email: user?.email }),
+    enabled: !!user?.email,
+  });
+
   // Map achievements with unlock status
   const achievementsWithStatus = achievements.map(achievement => {
     let unlocked = false;
@@ -214,12 +236,16 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
       }
     }
     
+    // Check if already claimed from UserAchievement
+    const userAchievement = userAchievements.find(ua => ua.achievement_id === achievement.id);
+    
     return {
       ...achievement,
       unlocked,
       emoji: achievement.badge_emoji,
       name: achievement.title,
       rewardCoins: achievement.reward_coins,
+      userAchievement,
     };
   });
   
@@ -325,9 +351,9 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
         <div className="achievementsHeader">
           <div className="achievementsHeaderLeft">
             <Trophy className="achievementsIcon" />
-            <span className="achievementsTitle">ACHIEVEMENT BADGES</span>
-            <span className="achievementsCount">{unlockedAchievements.length}/{achievements.length}</span>
+            <span className="achievementsTitle">Achievement Badges</span>
           </div>
+          <span className="achievementsCount">{unlockedAchievements.length}/{achievements.length}</span>
           <button 
             onClick={() => setIsAchievementsOpen(true)}
             className="achievementsDetailsBtn"
@@ -802,7 +828,7 @@ const profileStyles = `
   .achievementsHeader {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 12px;
     margin-bottom: 14px;
   }
 
@@ -810,30 +836,30 @@ const profileStyles = `
     display: flex;
     align-items: center;
     gap: 8px;
+    flex: 1;
   }
 
   .achievementsIcon {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     color: #BFFF00;
-    filter: drop-shadow(0 0 4px rgba(191, 255, 0, 0.4));
+    filter: drop-shadow(0 0 6px rgba(191, 255, 0, 0.5));
   }
 
   .achievementsTitle {
-    font-size: 11px;
-    color: rgba(255,255,255,0.5);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
+    font-size: 15px;
+    color: #FFFFFF;
     font-weight: 700;
   }
 
   .achievementsCount {
-    font-size: 11px;
+    font-size: 14px;
     font-weight: 700;
     color: #BFFF00;
-    padding: 2px 8px;
+    padding: 4px 12px;
     border-radius: 999px;
-    background: rgba(191, 255, 0, 0.1);
+    background: rgba(191, 255, 0, 0.12);
+    border: 1px solid rgba(191, 255, 0, 0.2);
   }
 
   .achievementsDetailsBtn {
@@ -949,11 +975,13 @@ const profileStyles = `
     width: 100%;
     max-width: 600px;
     max-height: 85vh;
-    background: #0b0b10;
+    background: linear-gradient(180deg, #0b0b10 0%, #0a0a0a 100%);
     border-top-left-radius: 24px;
     border-top-right-radius: 24px;
-    border: 1px solid rgba(138, 43, 226, 0.4);
-    box-shadow: 0 0 60px rgba(138, 43, 226, 0.4);
+    border: 2px solid;
+    border-image: linear-gradient(135deg, rgba(138, 43, 226, 0.6) 0%, rgba(191, 255, 0, 0.4) 100%) 1;
+    border-bottom: none;
+    box-shadow: 0 0 60px rgba(138, 43, 226, 0.5), 0 0 40px rgba(191, 255, 0, 0.3);
     overflow-y: auto;
     padding: 24px;
     padding-bottom: calc(24px + env(safe-area-inset-bottom));
@@ -1023,23 +1051,30 @@ const profileStyles = `
     display: flex;
     align-items: center;
     gap: 14px;
-    padding: 14px;
+    padding: 16px;
     border-radius: 16px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: radial-gradient(circle at top left, rgba(138, 43, 226, 0.15), rgba(10, 10, 10, 0.8));
+    border: 1px solid;
+    border-image: linear-gradient(135deg, rgba(138, 43, 226, 0.4), rgba(191, 255, 0, 0.25)) 1;
+    box-shadow: 0 0 20px rgba(138, 43, 226, 0.2);
     transition: all 0.2s;
+  }
+  
+  .achievementModalItem:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 30px rgba(138, 43, 226, 0.35), 0 0 15px rgba(191, 255, 0, 0.2);
   }
 
   .achievementModalIcon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 28px;
     flex-shrink: 0;
-    box-shadow: 0 0 15px rgba(138, 43, 226, 0.3);
+    box-shadow: 0 0 20px rgba(138, 43, 226, 0.4), 0 0 10px rgba(191, 255, 0, 0.25);
   }
 
   .achievementModalContent {
@@ -1054,9 +1089,10 @@ const profileStyles = `
   }
 
   .achievementModalReward {
-    font-size: 12px;
-    font-weight: 600;
+    font-size: 13px;
+    font-weight: 700;
     color: #BFFF00;
+    text-shadow: 0 0 10px rgba(191, 255, 0, 0.4);
     margin-bottom: 4px;
   }
 
