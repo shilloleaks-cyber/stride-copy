@@ -1,76 +1,77 @@
 import React, { useState, useEffect } from 'react';
 
+const COIN_PARTICLES = 12;
+
 export default function AchievementRevealModal({ achievement, rewardCoins, onClose, isOpen }) {
-  const [playBurst, setPlayBurst] = useState(false);
+  const [burstActive, setBurstActive] = useState(false);
+  const [particles, setParticles] = useState([]);
   const [hudTarget, setHudTarget] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
-    if (isOpen) {
-      // Calculate target position for coins
-      const coinHud = document.querySelector('[data-coin-hud="true"]');
-      if (coinHud) {
-        const rect = coinHud.getBoundingClientRect();
-        setHudTarget({ 
-          x: rect.left + rect.width / 2, 
-          y: rect.top + rect.height / 2 
-        });
-      } else {
-        // Fallback to top-right corner
-        setHudTarget({ 
-          x: window.innerWidth - 40, 
-          y: 30 
-        });
-      }
-
-      // Trigger burst animation
-      setPlayBurst(true);
-      const timer = setTimeout(() => setPlayBurst(false), 1200);
-      return () => clearTimeout(timer);
-    } else {
-      setPlayBurst(false);
+    if (!isOpen) {
+      setBurstActive(false);
+      return;
     }
+
+    // Calculate target position for coins
+    const coinHud = document.querySelector('[data-coin-hud="true"]');
+    let targetX, targetY;
+    
+    if (coinHud) {
+      const rect = coinHud.getBoundingClientRect();
+      targetX = rect.left + rect.width / 2;
+      targetY = rect.top + rect.height / 2;
+    } else {
+      // Fallback to top-right corner
+      targetX = window.innerWidth - 40;
+      targetY = 30;
+    }
+
+    // Calculate travel vector from modal center
+    const modalCenterX = window.innerWidth / 2;
+    const modalCenterY = window.innerHeight / 2;
+    const tx = targetX - modalCenterX;
+    const ty = targetY - modalCenterY;
+
+    setHudTarget({ x: tx, y: ty });
+
+    // Generate random particle parameters
+    const newParticles = Array.from({ length: COIN_PARTICLES }, () => ({
+      dx: Math.random() * 48 - 24,
+      dy: Math.random() * 36 - 18,
+      rot: Math.random() * 360 - 180,
+      s: Math.random() * 0.3 + 0.85,
+    }));
+    setParticles(newParticles);
+
+    // Delay burst start for cinematic effect
+    setBurstActive(false);
+    const timer = setTimeout(() => setBurstActive(true), 200);
+
+    return () => clearTimeout(timer);
   }, [isOpen]);
 
   if (!achievement) return null;
-
-  // Predefined coin trajectories
-  const coinOffsets = [
-    { dx: -80, dy: -100 },
-    { dx: -60, dy: -120 },
-    { dx: -40, dy: -90 },
-    { dx: 0, dy: -130 },
-    { dx: 40, dy: -90 },
-    { dx: 60, dy: -120 },
-    { dx: 80, dy: -100 },
-    { dx: -90, dy: -60 },
-    { dx: 90, dy: -60 },
-    { dx: -70, dy: -80 },
-    { dx: 70, dy: -80 },
-    { dx: 0, dy: -110 },
-  ];
 
   return (
     <>
       <style>{styles}</style>
       <div className="achievementOverlay" onClick={onClose}>
         {/* Coin Burst Animation */}
-        {playBurst && (
-          <div 
-            className="coinBurstLayer" 
-            aria-hidden="true"
-            style={{
-              '--target-x': `${hudTarget.x}px`,
-              '--target-y': `${hudTarget.y}px`
-            }}
-          >
-            {coinOffsets.map((offset, i) => (
+        {burstActive && (
+          <div className="coinBurstLayer" aria-hidden="true">
+            {particles.map((particle, i) => (
               <div
                 key={i}
                 className="coinBurstParticle"
                 style={{
-                  '--dx': `${offset.dx}px`,
-                  '--dy': `${offset.dy}px`,
-                  '--delay': `${i * 0.05}s`
+                  '--dx': `${particle.dx}px`,
+                  '--dy': `${particle.dy}px`,
+                  '--tx': `${hudTarget.x}px`,
+                  '--ty': `${hudTarget.y}px`,
+                  '--rot': `${particle.rot}deg`,
+                  '--s': particle.s,
+                  animationDelay: `${i * 25}ms`
                 }}
               >
                 🪙
@@ -289,47 +290,42 @@ const styles = `
 /* Coin Burst Animation */
 .coinBurstLayer {
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  inset: 0;
   pointer-events: none;
   z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .coinBurstParticle {
   position: absolute;
-  top: 0;
-  left: 0;
   font-size: 24px;
-  filter: drop-shadow(0 0 8px rgba(191, 255, 0, 0.6));
-  animation: 
-    coinBurstOut 0.3s ease-out var(--delay, 0s) forwards,
-    coinFlyToHud 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) calc(var(--delay, 0s) + 0.3s) forwards;
+  filter: drop-shadow(0 0 6px rgba(191, 255, 0, 0.5));
+  will-change: transform, opacity;
+  animation: coinFly 1000ms cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
-@keyframes coinBurstOut {
+@keyframes coinFly {
   0% {
+    transform: translate3d(0, 0, 0) scale(0.6) rotate(0deg);
     opacity: 0;
-    transform: translate3d(0, 0, 0) scale(0.5) rotate(0deg);
+    filter: drop-shadow(0 0 6px rgba(191, 255, 0, 0.5)) blur(0.2px);
+  }
+  15% {
+    opacity: 1;
+    transform: translate3d(var(--dx), var(--dy), 0) scale(1.0) rotate(calc(var(--rot) * 0.3));
+    filter: drop-shadow(0 0 8px rgba(191, 255, 0, 0.6)) blur(0px);
+  }
+  70% {
+    opacity: 1;
+    transform: translate3d(calc(var(--tx) * 0.75), calc(var(--ty) * 0.75), 0) scale(var(--s)) rotate(var(--rot));
+    filter: drop-shadow(0 0 10px rgba(191, 255, 0, 0.7)) blur(0px);
   }
   100% {
-    opacity: 1;
-    transform: translate3d(var(--dx, 0), var(--dy, 0), 0) scale(1) rotate(180deg);
-  }
-}
-
-@keyframes coinFlyToHud {
-  0% {
-    opacity: 1;
-    transform: translate3d(var(--dx, 0), var(--dy, 0), 0) scale(1) rotate(180deg);
-  }
-  100% {
     opacity: 0;
-    transform: translate3d(
-      calc(var(--target-x) - 50vw), 
-      calc(var(--target-y) - 50vh), 
-      0
-    ) scale(0.3) rotate(720deg);
+    transform: translate3d(var(--tx), var(--ty), 0) scale(0.7) rotate(calc(var(--rot) * 1.2));
+    filter: drop-shadow(0 0 4px rgba(191, 255, 0, 0.3)) blur(0.5px);
   }
 }
 `;
