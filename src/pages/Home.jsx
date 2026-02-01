@@ -241,6 +241,7 @@ export default function Home() {
       {/* Sticky Coin HUD */}
       <button
         className="coinHud"
+        data-coin-hud="true"
         onClick={handleCoinClick}
         aria-label="Coin balance"
       >

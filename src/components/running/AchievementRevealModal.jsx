@@ -1,12 +1,84 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
-export default function AchievementRevealModal({ achievement, rewardCoins, onClose }) {
+export default function AchievementRevealModal({ achievement, rewardCoins, onClose, isOpen }) {
+  const [playBurst, setPlayBurst] = useState(false);
+  const [hudTarget, setHudTarget] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    if (isOpen) {
+      // Calculate target position for coins
+      const coinHud = document.querySelector('[data-coin-hud="true"]');
+      if (coinHud) {
+        const rect = coinHud.getBoundingClientRect();
+        setHudTarget({ 
+          x: rect.left + rect.width / 2, 
+          y: rect.top + rect.height / 2 
+        });
+      } else {
+        // Fallback to top-right corner
+        setHudTarget({ 
+          x: window.innerWidth - 40, 
+          y: 30 
+        });
+      }
+
+      // Trigger burst animation
+      setPlayBurst(true);
+      const timer = setTimeout(() => setPlayBurst(false), 1200);
+      return () => clearTimeout(timer);
+    } else {
+      setPlayBurst(false);
+    }
+  }, [isOpen]);
+
   if (!achievement) return null;
+
+  // Predefined coin trajectories
+  const coinOffsets = [
+    { dx: -80, dy: -100 },
+    { dx: -60, dy: -120 },
+    { dx: -40, dy: -90 },
+    { dx: 0, dy: -130 },
+    { dx: 40, dy: -90 },
+    { dx: 60, dy: -120 },
+    { dx: 80, dy: -100 },
+    { dx: -90, dy: -60 },
+    { dx: 90, dy: -60 },
+    { dx: -70, dy: -80 },
+    { dx: 70, dy: -80 },
+    { dx: 0, dy: -110 },
+  ];
 
   return (
     <>
       <style>{styles}</style>
       <div className="achievementOverlay" onClick={onClose}>
+        {/* Coin Burst Animation */}
+        {playBurst && (
+          <div 
+            className="coinBurstLayer" 
+            aria-hidden="true"
+            style={{
+              '--target-x': `${hudTarget.x}px`,
+              '--target-y': `${hudTarget.y}px`
+            }}
+          >
+            {coinOffsets.map((offset, i) => (
+              <div
+                key={i}
+                className="coinBurstParticle"
+                style={{
+                  '--dx': `${offset.dx}px`,
+                  '--dy': `${offset.dy}px`,
+                  '--delay': `${i * 0.05}s`
+                }}
+              >
+                🪙
+              </div>
+            ))}
+          </div>
+        )}
+
         <div className="achievementCard" onClick={e => e.stopPropagation()}>
           {/* Achievement Icon */}
           <div className="achievementIcon">
@@ -211,6 +283,53 @@ const styles = `
   }
   .achievementTitle {
     font-size: 24px;
+  }
+}
+
+/* Coin Burst Animation */
+.coinBurstLayer {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 10000;
+}
+
+.coinBurstParticle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-size: 24px;
+  filter: drop-shadow(0 0 8px rgba(191, 255, 0, 0.6));
+  animation: 
+    coinBurstOut 0.3s ease-out var(--delay, 0s) forwards,
+    coinFlyToHud 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) calc(var(--delay, 0s) + 0.3s) forwards;
+}
+
+@keyframes coinBurstOut {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(0.5) rotate(0deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(var(--dx, 0), var(--dy, 0), 0) scale(1) rotate(180deg);
+  }
+}
+
+@keyframes coinFlyToHud {
+  0% {
+    opacity: 1;
+    transform: translate3d(var(--dx, 0), var(--dy, 0), 0) scale(1) rotate(180deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(
+      calc(var(--target-x) - 50vw), 
+      calc(var(--target-y) - 50vh), 
+      0
+    ) scale(0.3) rotate(720deg);
   }
 }
 `;
