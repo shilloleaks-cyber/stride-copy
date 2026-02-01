@@ -47,7 +47,6 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
-import Achievements from './pages/Achievements';
 import ActiveRun from './pages/ActiveRun';
 import ChallengeDetail from './pages/ChallengeDetail';
 import Challenges from './pages/Challenges';
@@ -74,7 +73,6 @@ import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Achievements": Achievements,
     "ActiveRun": ActiveRun,
     "ChallengeDetail": ChallengeDetail,
     "Challenges": Challenges,
