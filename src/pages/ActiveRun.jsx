@@ -12,6 +12,7 @@ import RunMap from '@/components/running/RunMap';
 import GhostRunner from '@/components/running/GhostRunner';
 import LevelUpModal from '@/components/running/LevelUpModal';
 import FriendGhostSelector from '@/components/ghost/FriendGhostSelector';
+import AchievementRevealModal from '@/components/running/AchievementRevealModal';
 
 export default function ActiveRun() {
   const navigate = useNavigate();
@@ -37,6 +38,10 @@ export default function ActiveRun() {
   // Level up state
   const [showLevelModal, setShowLevelModal] = useState(false);
   const [levelUpData, setLevelUpData] = useState(null);
+  
+  // Achievement state
+  const [showAchievementModal, setShowAchievementModal] = useState(false);
+  const [achievementData, setAchievementData] = useState(null);
   
   // User state
   const [user, setUser] = useState(null);
@@ -425,6 +430,21 @@ export default function ActiveRun() {
           type: 'run',
           note: `Run: ${distance.toFixed(2)}km`
         });
+        
+        // Check for achievements
+        try {
+          const achievementResponse = await base44.functions.invoke('checkAchievements', {});
+          if (achievementResponse.data?.newlyUnlocked?.length > 0) {
+            const firstAchievement = achievementResponse.data.newlyUnlocked[0];
+            setAchievementData({
+              achievement: firstAchievement,
+              rewardCoins: firstAchievement.reward_coins || 0
+            });
+            setShowAchievementModal(true);
+          }
+        } catch (error) {
+          console.log('Could not check achievements:', error);
+        }
       } catch (error) {
         console.log('Could not update coins:', error);
       }
@@ -883,6 +903,16 @@ export default function ActiveRun() {
         }}
         user={user}
       />
+
+      {/* Achievement Reveal Modal */}
+      {achievementData && (
+        <AchievementRevealModal
+          achievement={achievementData.achievement}
+          rewardCoins={achievementData.rewardCoins}
+          isOpen={showAchievementModal}
+          onClose={() => setShowAchievementModal(false)}
+        />
+      )}
     </div>
   );
 }
