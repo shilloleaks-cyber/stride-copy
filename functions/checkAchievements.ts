@@ -65,6 +65,16 @@ Deno.serve(async (req) => {
       }
 
       if (qualified) {
+        // Double-check not already unlocked (race condition safety)
+        const existingUnlock = await base44.entities.UserAchievement.filter({
+          user_email: user.email,
+          achievement_id: achievement.id
+        });
+        
+        if (existingUnlock.length > 0) {
+          continue; // Already unlocked, skip silently
+        }
+
         // Unlock achievement
         await base44.entities.UserAchievement.create({
           user_email: user.email,
@@ -78,21 +88,29 @@ Deno.serve(async (req) => {
           const baseReward = achievement.reward_coins;
           const finalReward = baseReward * rewardMultiplier;
           
-          const currentCoins = user.coin_balance || 0;
-          await base44.auth.updateMe({ 
-            coin_balance: currentCoins + finalReward 
-          });
-
-          // Log to WalletLog
-          await base44.entities.WalletLog.create({
+          // Check for duplicate wallet log
+          const existingLog = await base44.entities.WalletLog.filter({
             user: user.email,
-            amount: finalReward,
-            type: 'bonus',
-            note: `Achievement unlocked: ${achievement.title}`,
-            base_reward: baseReward,
-            final_reward: finalReward,
-            multiplier_used: rewardMultiplier
+            note: `Achievement unlocked: ${achievement.title}`
           });
+          
+          if (existingLog.length === 0) {
+            const currentCoins = user.coin_balance || 0;
+            await base44.auth.updateMe({ 
+              coin_balance: currentCoins + finalReward 
+            });
+
+            // Log to WalletLog
+            await base44.entities.WalletLog.create({
+              user: user.email,
+              amount: finalReward,
+              type: 'bonus',
+              note: `Achievement unlocked: ${achievement.title}`,
+              base_reward: baseReward,
+              final_reward: finalReward,
+              multiplier_used: rewardMultiplier
+            });
+          }
         }
 
         newlyUnlocked.push(achievement);
