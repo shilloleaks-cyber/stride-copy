@@ -9,11 +9,33 @@ export default function AchievementBadgesSection({ stats }) {
   const [selectedBadge, setSelectedBadge] = useState(null);
   const [showAllModal, setShowAllModal] = useState(false);
 
-  // Fetch real achievements
-  const { data: achievements = [] } = useQuery({
+  // Fetch achievements with auto-seed and sorting
+  const { data: rawAchievements = [], refetch: refetchAchievements } = useQuery({
     queryKey: ['achievements'],
     queryFn: () => base44.entities.Achievement.list(),
   });
+
+  // Auto-seed if not exactly 8 achievements
+  React.useEffect(() => {
+    const seedIfNeeded = async () => {
+      if (rawAchievements.length !== 8 && user) {
+        try {
+          await base44.functions.invoke('seedAchievements', {});
+          await refetchAchievements();
+        } catch (error) {
+          console.log('Could not seed achievements:', error);
+        }
+      }
+    };
+    seedIfNeeded();
+  }, [rawAchievements.length, user]);
+
+  // Sort by display_order
+  const achievements = React.useMemo(() => {
+    return [...rawAchievements].sort((a, b) => 
+      (a.display_order || 0) - (b.display_order || 0)
+    );
+  }, [rawAchievements]);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -53,7 +75,7 @@ export default function AchievementBadgesSection({ stats }) {
               Achievement Badges
             </h2>
             <span className="text-xs font-bold" style={{ color: '#BFFF00' }}>
-              {unlockedCount}/{totalCount}
+              {unlockedCount}/8
             </span>
           </div>
           <button 
@@ -157,17 +179,15 @@ function AllBadgesModal({ achievements, onClose, onSelectBadge, user }) {
       const amounts = {};
       for (const achievement of achievements.filter(a => a.unlocked)) {
         try {
+          // Query WalletLog with achievement_id for accurate tracking
           const logs = await base44.entities.WalletLog.filter({
             user: user.email,
-            type: 'bonus'
+            type: 'achievement',
+            achievement_id: achievement.id
           });
           
-          const achievementLogs = logs.filter(log => 
-            log.note && log.note.includes(achievement.title)
-          );
-          
-          if (achievementLogs.length > 0) {
-            const sum = achievementLogs.reduce((acc, log) => acc + (log.final_reward || log.amount), 0);
+          if (logs.length > 0) {
+            const sum = logs.reduce((acc, log) => acc + (log.final_reward || log.amount), 0);
             amounts[achievement.id] = sum;
           } else {
             amounts[achievement.id] = 0;
@@ -202,7 +222,7 @@ function AllBadgesModal({ achievements, onClose, onSelectBadge, user }) {
           <div>
             <h3 className="badgeTitle">All Achievement Badges</h3>
             <p className="badgeSubtitle">
-              {achievements.filter(a => a.unlocked).length} / {achievements.length} Unlocked
+              {achievements.filter(a => a.unlocked).length} / 8 Unlocked
             </p>
           </div>
           <button onClick={onClose} className="closeBtn">
@@ -234,13 +254,16 @@ function AllBadgesModal({ achievements, onClose, onSelectBadge, user }) {
               </div>
               <div className="badgeListContent">
                 <div className="badgeListName">{achievement.title}</div>
+                <div className="badgeListReward">
+                  🪙 {achievement.reward_coins} coins
+                </div>
                 {achievement.unlocked && claimedAmounts[achievement.id] !== undefined && (
                   <div className="badgeListClaimed">
-                    {claimedAmounts[achievement.id].toFixed(2)} coins claimed
+                    Claimed: {claimedAmounts[achievement.id].toFixed(2)} coins
                   </div>
                 )}
                 {!achievement.unlocked && (
-                  <div className="badgeListLocked">Locked</div>
+                  <div className="badgeListLocked">🔒 Locked</div>
                 )}
               </div>
               <div className="badgeListArrow">›</div>
@@ -369,10 +392,17 @@ const allBadgesStyles = `
   margin-bottom: 4px;
 }
 
-.badgeListClaimed {
+.badgeListReward {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   color: #BFFF00;
+  margin-bottom: 2px;
+}
+
+.badgeListClaimed {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(191, 255, 0, 0.7);
 }
 
 .badgeListLocked {
