@@ -177,17 +177,17 @@ function AllBadgesModal({ achievements, onClose, onSelectBadge, user }) {
       if (!user) return;
       
       const amounts = {};
-      for (const achievement of achievements.filter(a => a.unlocked)) {
+      for (const achievement of achievements) {
         try {
           // Query WalletLog with achievement_id for accurate tracking
           const logs = await base44.entities.WalletLog.filter({
             user: user.email,
-            type: 'achievement',
+            source_type: 'achievement',
             achievement_id: achievement.id
           });
           
           if (logs.length > 0) {
-            const sum = logs.reduce((acc, log) => acc + (log.final_reward || log.amount), 0);
+            const sum = logs.reduce((acc, log) => acc + (log.amount || 0), 0);
             amounts[achievement.id] = sum;
           } else {
             amounts[achievement.id] = 0;
@@ -224,6 +224,20 @@ function AllBadgesModal({ achievements, onClose, onSelectBadge, user }) {
             <p className="badgeSubtitle">
               {achievements.filter(a => a.unlocked).length} / 8 Unlocked
             </p>
+            <div className="summaryCoinInfo">
+              <div className="summaryRow">
+                <span className="summaryLabel">Total rewards available:</span>
+                <span className="summaryValue">
+                  {achievements.filter(a => a.unlocked).reduce((sum, a) => sum + (a.reward_coins || 0), 0).toFixed(0)} coins
+                </span>
+              </div>
+              <div className="summaryRow">
+                <span className="summaryLabel">Total claimed:</span>
+                <span className="summaryValue claimed">
+                  {Object.values(claimedAmounts).reduce((sum, val) => sum + val, 0).toFixed(0)} coins
+                </span>
+              </div>
+            </div>
           </div>
           <button onClick={onClose} className="closeBtn">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -255,11 +269,11 @@ function AllBadgesModal({ achievements, onClose, onSelectBadge, user }) {
               <div className="badgeListContent">
                 <div className="badgeListName">{achievement.title}</div>
                 <div className="badgeListReward">
-                  🪙 {achievement.reward_coins} coins
+                  Reward: {achievement.reward_coins} coins
                 </div>
-                {achievement.unlocked && claimedAmounts[achievement.id] !== undefined && (
+                {claimedAmounts[achievement.id] !== undefined && claimedAmounts[achievement.id] > 0 && (
                   <div className="badgeListClaimed">
-                    Claimed: {claimedAmounts[achievement.id].toFixed(2)} coins
+                    Claimed: {claimedAmounts[achievement.id].toFixed(0)} coins
                   </div>
                 )}
                 {!achievement.unlocked && (
@@ -323,6 +337,38 @@ const allBadgesStyles = `
   font-size: 13px;
   color: #BFFF00;
   font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.summaryCoinInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(191, 255, 0, 0.08);
+  border: 1px solid rgba(191, 255, 0, 0.2);
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+
+.summaryLabel {
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+}
+
+.summaryValue {
+  color: #BFFF00;
+  font-weight: 700;
+}
+
+.summaryValue.claimed {
+  color: rgba(191, 255, 0, 0.8);
 }
 
 .closeBtn {
