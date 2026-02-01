@@ -31,6 +31,11 @@ Deno.serve(async (req) => {
     const follows = await base44.entities.Follow.filter({ follower_email: user.email });
     const friendCount = follows.length;
 
+    // Get reward multiplier from TokenConfig
+    const tokenConfigs = await base44.entities.TokenConfig.list();
+    const tokenConfig = tokenConfigs.length > 0 ? tokenConfigs[0] : null;
+    const rewardMultiplier = tokenConfig?.reward_multiplier || 1.0;
+
     // Check each achievement
     for (const achievement of achievements) {
       if (unlockedIds.includes(achievement.id)) continue;
@@ -68,11 +73,25 @@ Deno.serve(async (req) => {
           progress: progress
         });
 
-        // Award coins
+        // Award coins with multiplier
         if (achievement.reward_coins > 0) {
-          const currentCoins = user.total_coins || 0;
+          const baseReward = achievement.reward_coins;
+          const finalReward = baseReward * rewardMultiplier;
+          
+          const currentCoins = user.coin_balance || 0;
           await base44.auth.updateMe({ 
-            total_coins: currentCoins + achievement.reward_coins 
+            coin_balance: currentCoins + finalReward 
+          });
+
+          // Log to WalletLog
+          await base44.entities.WalletLog.create({
+            user: user.email,
+            amount: finalReward,
+            type: 'bonus',
+            note: `Achievement unlocked: ${achievement.title}`,
+            base_reward: baseReward,
+            final_reward: finalReward,
+            multiplier_used: rewardMultiplier
           });
         }
 
