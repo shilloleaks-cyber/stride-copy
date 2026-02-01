@@ -9,8 +9,8 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
+    // FIXED ORDER: These 8 achievements are the ONLY source of truth
     const achievements = [
-      // Core 8 Achievements - Balanced Economy
       {
         title: 'First Run',
         description: 'Complete your first run',
@@ -19,7 +19,8 @@ Deno.serve(async (req) => {
         requirement_type: 'total_runs',
         requirement_value: 1,
         reward_coins: 15,
-        rarity: 'common'
+        rarity: 'common',
+        display_order: 1
       },
       {
         title: '10km Club',
@@ -29,7 +30,8 @@ Deno.serve(async (req) => {
         requirement_type: 'total_distance',
         requirement_value: 10,
         reward_coins: 25,
-        rarity: 'common'
+        rarity: 'common',
+        display_order: 2
       },
       {
         title: '10 Runs Streak',
@@ -39,7 +41,8 @@ Deno.serve(async (req) => {
         requirement_type: 'total_runs',
         requirement_value: 10,
         reward_coins: 30,
-        rarity: 'common'
+        rarity: 'common',
+        display_order: 3
       },
       {
         title: 'Calorie Burner',
@@ -49,7 +52,8 @@ Deno.serve(async (req) => {
         requirement_type: 'total_distance',
         requirement_value: 5000,
         reward_coins: 30,
-        rarity: 'common'
+        rarity: 'common',
+        display_order: 4
       },
       {
         title: '50km Star',
@@ -59,7 +63,8 @@ Deno.serve(async (req) => {
         requirement_type: 'total_distance',
         requirement_value: 50,
         reward_coins: 40,
-        rarity: 'rare'
+        rarity: 'rare',
+        display_order: 5
       },
       {
         title: 'Inferno',
@@ -69,7 +74,8 @@ Deno.serve(async (req) => {
         requirement_type: 'total_distance',
         requirement_value: 20000,
         reward_coins: 45,
-        rarity: 'rare'
+        rarity: 'rare',
+        display_order: 6
       },
       {
         title: '50 Runs Master',
@@ -79,7 +85,8 @@ Deno.serve(async (req) => {
         requirement_type: 'total_runs',
         requirement_value: 50,
         reward_coins: 60,
-        rarity: 'rare'
+        rarity: 'rare',
+        display_order: 7
       },
       {
         title: '100km Legend',
@@ -89,17 +96,18 @@ Deno.serve(async (req) => {
         requirement_type: 'total_distance',
         requirement_value: 100,
         reward_coins: 80,
-        rarity: 'epic'
+        rarity: 'epic',
+        display_order: 8
       }
     ];
 
-    // Clear existing achievements
+    // Idempotent: Clear and recreate to ensure consistency
     const existing = await base44.asServiceRole.entities.Achievement.list();
     for (const ach of existing) {
       await base44.asServiceRole.entities.Achievement.delete(ach.id);
     }
 
-    // Create new achievements
+    // Create all 8 achievements in order
     for (const achievement of achievements) {
       await base44.asServiceRole.entities.Achievement.create(achievement);
     }
@@ -107,7 +115,8 @@ Deno.serve(async (req) => {
     return Response.json({ 
       success: true, 
       count: achievements.length,
-      message: 'Achievements seeded successfully' 
+      message: '8 achievements seeded successfully',
+      achievements: achievements.map(a => ({ title: a.title, reward: a.reward_coins }))
     });
 
   } catch (error) {

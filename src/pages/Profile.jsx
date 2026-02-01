@@ -69,15 +69,15 @@ export default function Profile() {
   const completedChallenges = myParticipations.filter(p => p.is_completed);
 
   // Fetch achievements from entity with auto-seed
-  const { data: achievements = [], refetch: refetchAchievements } = useQuery({
+  const { data: rawAchievements = [], refetch: refetchAchievements } = useQuery({
     queryKey: ['achievements'],
     queryFn: () => base44.entities.Achievement.list(),
   });
 
-  // Auto-seed achievements if empty
+  // Auto-seed achievements if empty or incomplete
   React.useEffect(() => {
-    const seedIfEmpty = async () => {
-      if (achievements.length === 0 && user) {
+    const seedIfNeeded = async () => {
+      if (rawAchievements.length !== 8 && user) {
         try {
           await base44.functions.invoke('seedAchievements', {});
           await refetchAchievements();
@@ -86,8 +86,15 @@ export default function Profile() {
         }
       }
     };
-    seedIfEmpty();
-  }, [achievements.length, user]);
+    seedIfNeeded();
+  }, [rawAchievements.length, user]);
+
+  // Sort achievements by display_order (fixed order)
+  const achievements = React.useMemo(() => {
+    return [...rawAchievements].sort((a, b) => 
+      (a.display_order || 0) - (b.display_order || 0)
+    );
+  }, [rawAchievements]);
 
   React.useEffect(() => {
     if (user?.bio) setBio(user.bio);
@@ -353,7 +360,7 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
             <Trophy className="achievementsIcon" />
             <span className="achievementsTitle">Achievement Badges</span>
           </div>
-          <span className="achievementsCount">{unlockedAchievements.length}/{achievements.length}</span>
+          <span className="achievementsCount">{unlockedAchievements.length}/8</span>
           <button 
             onClick={() => setIsAchievementsOpen(true)}
             className="achievementsDetailsBtn"
@@ -545,13 +552,7 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
               <div>
                 <h3 className="achievementsModalTitle">All Achievement Badges</h3>
                 <p className="achievementsModalSubtitle">
-                  Unlocked: {unlockedAchievements.length} / {achievements.length}
-                </p>
-                <p className="achievementsModalCoins">
-                  Coins claimed from badges: 0
-                </p>
-                <p className="achievementsModalNote">
-                  Claim tracking will appear after WalletLog is linked to achievements.
+                  Unlocked: {unlockedAchievements.length} / 8
                 </p>
               </div>
               <button 
@@ -584,16 +585,14 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
                   <div className="achievementModalContent">
                     <div className="achievementModalName">{achievement.name}</div>
                     <div className="achievementModalReward">
-                      Reward: {achievement.rewardCoins} coins
+                      🪙 {achievement.rewardCoins} coins
                     </div>
                     <div className="achievementModalStatus">
                       {achievement.unlocked ? (
-                        <span className="achievementModalUnlocked">Unlocked</span>
+                        <span className="achievementModalUnlocked">✓ Unlocked</span>
                       ) : (
-                        <span className="achievementModalLocked">Locked</span>
+                        <span className="achievementModalLocked">🔒 Locked</span>
                       )}
-                      {' • '}
-                      <span className="achievementModalClaimed">Claim status: N/A</span>
                     </div>
                   </div>
                 </div>
