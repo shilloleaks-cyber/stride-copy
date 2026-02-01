@@ -41,6 +41,7 @@ export default function Profile() {
   const [bio, setBio] = useState('');
   const [copied, setCopied] = useState(false);
   const [showSkins, setShowSkins] = useState(false);
+  const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
 
   const { data: user, refetch: refetchUser } = useQuery({
     queryKey: ['currentUser'],
@@ -191,6 +192,19 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
   const lastRun = completedRuns[0];
   const lastRunCoins = lastRun ? Math.floor(lastRun.distance_km || 0) : 0;
 
+  // Achievements data
+  const achievements = [
+    { id: 'first_run', emoji: '🏃', name: 'First Run', unlocked: stats.totalRuns >= 1, rewardCoins: 50 },
+    { id: '10km', emoji: '🎯', name: '10km Club', unlocked: stats.totalDistance >= 10, rewardCoins: 100 },
+    { id: '50km', emoji: '⭐', name: '50km Star', unlocked: stats.totalDistance >= 50, rewardCoins: 200 },
+    { id: '100km', emoji: '🏆', name: '100km Legend', unlocked: stats.totalDistance >= 100, rewardCoins: 500 },
+    { id: '10_runs', emoji: '🔥', name: '10 Runs Streak', unlocked: stats.totalRuns >= 10, rewardCoins: 150 },
+    { id: '50_runs', emoji: '💎', name: '50 Runs Master', unlocked: stats.totalRuns >= 50, rewardCoins: 400 },
+    { id: '5k_calories', emoji: '💪', name: 'Calorie Burner', unlocked: stats.totalCalories >= 5000, rewardCoins: 100 },
+    { id: '20k_calories', emoji: '🔥', name: 'Inferno', unlocked: stats.totalCalories >= 20000, rewardCoins: 300 },
+  ];
+  const unlockedAchievements = achievements.filter(a => a.unlocked);
+
   return (
     <div className="profileRoot">
       <style>{profileStyles}</style>
@@ -288,11 +302,45 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
 
       {/* Achievements */}
       <div className="achievementsSection">
-        <div className="sectionHeader">
-          <span className="sectionEmoji">🏆</span>
-          <span className="sectionTitle">ACHIEVEMENTS</span>
+        <div className="achievementsHeader">
+          <div className="achievementsHeaderLeft">
+            <Trophy className="achievementsIcon" />
+            <span className="achievementsTitle">ACHIEVEMENT BADGES</span>
+            <span className="achievementsCount">{unlockedAchievements.length}/{achievements.length}</span>
+          </div>
+          <button 
+            onClick={() => setIsAchievementsOpen(true)}
+            className="achievementsDetailsBtn"
+          >
+            Details
+          </button>
         </div>
-        <AchievementBadgesSection stats={stats} />
+        
+        <div className="achievementsDivider" />
+        
+        <div className="achievementsGrid">
+          {achievements.map((achievement, index) => (
+            <motion.div
+              key={achievement.id}
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ 
+                scale: achievement.unlocked ? 1 : 0.9, 
+                opacity: achievement.unlocked ? 1 : 0.4 
+              }}
+              transition={{ delay: index * 0.05 }}
+              whileHover={achievement.unlocked ? { scale: 1.08 } : { scale: 0.92 }}
+              className={`achievementBadge ${achievement.unlocked ? 'unlocked' : 'locked'}`}
+            >
+              {!achievement.unlocked && (
+                <div className="achievementLockOverlay">
+                  <span className="text-2xl">🔒</span>
+                </div>
+              )}
+              <span className="achievementEmoji">{achievement.emoji}</span>
+              <p className="achievementName">{achievement.name}</p>
+            </motion.div>
+          ))}
+        </div>
       </div>
 
       {/* Personal Bests */}
@@ -429,6 +477,85 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
           </Tabs>
         </DialogContent>
       </Dialog>
+
+      {/* Achievements Details Bottom Sheet */}
+      {isAchievementsOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="achievementsModalOverlay"
+          onClick={() => setIsAchievementsOpen(false)}
+        >
+          <motion.div
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+            className="achievementsModalSheet"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="achievementsModalHeader">
+              <div>
+                <h3 className="achievementsModalTitle">All Achievement Badges</h3>
+                <p className="achievementsModalSubtitle">
+                  Unlocked: {unlockedAchievements.length} / {achievements.length}
+                </p>
+                <p className="achievementsModalCoins">
+                  Coins claimed from badges: 0
+                </p>
+                <p className="achievementsModalNote">
+                  Claim tracking will appear after WalletLog is linked to achievements.
+                </p>
+              </div>
+              <button 
+                onClick={() => setIsAchievementsOpen(false)} 
+                className="achievementsModalClose"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="achievementsModalList">
+              {achievements.map((achievement) => (
+                <div
+                  key={achievement.id}
+                  className="achievementModalItem"
+                  style={{ opacity: achievement.unlocked ? 1 : 0.5 }}
+                >
+                  <div className="achievementModalIcon" style={{
+                    background: achievement.unlocked 
+                      ? 'linear-gradient(135deg, rgba(138, 43, 226, 0.3), rgba(191, 255, 0, 0.2))'
+                      : 'rgba(255, 255, 255, 0.05)',
+                    border: achievement.unlocked 
+                      ? '2px solid rgba(191, 255, 0, 0.4)'
+                      : '1px solid rgba(255, 255, 255, 0.1)',
+                  }}>
+                    {achievement.unlocked ? achievement.emoji : '🔒'}
+                  </div>
+                  <div className="achievementModalContent">
+                    <div className="achievementModalName">{achievement.name}</div>
+                    <div className="achievementModalReward">
+                      Reward: {achievement.rewardCoins} coins
+                    </div>
+                    <div className="achievementModalStatus">
+                      {achievement.unlocked ? (
+                        <span className="achievementModalUnlocked">Unlocked</span>
+                      ) : (
+                        <span className="achievementModalLocked">Locked</span>
+                      )}
+                      {' • '}
+                      <span className="achievementModalClaimed">Claim status: N/A</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
     </div>
   );
 }
@@ -649,25 +776,286 @@ const profileStyles = `
   /* Achievements Section */
   .achievementsSection {
     margin-bottom: 28px;
+    padding: 0 20px;
   }
 
-  .sectionHeader {
+  .achievementsHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .achievementsHeaderLeft {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 0 20px 14px;
   }
 
-  .sectionEmoji {
-    font-size: 18px;
+  .achievementsIcon {
+    width: 16px;
+    height: 16px;
+    color: #BFFF00;
+    filter: drop-shadow(0 0 4px rgba(191, 255, 0, 0.4));
   }
 
-  .sectionTitle {
+  .achievementsTitle {
     font-size: 11px;
     color: rgba(255,255,255,0.5);
     text-transform: uppercase;
     letter-spacing: 0.1em;
     font-weight: 700;
+  }
+
+  .achievementsCount {
+    font-size: 11px;
+    font-weight: 700;
+    color: #BFFF00;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(191, 255, 0, 0.1);
+  }
+
+  .achievementsDetailsBtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: rgba(191, 255, 0, 0.12);
+    border: 1px solid rgba(191, 255, 0, 0.3);
+    color: #BFFF00;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 0 10px rgba(191, 255, 0, 0.2);
+  }
+
+  .achievementsDetailsBtn:hover {
+    background: rgba(191, 255, 0, 0.18);
+    box-shadow: 0 0 15px rgba(191, 255, 0, 0.3);
+    transform: translateY(-1px);
+  }
+
+  .achievementsDivider {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(138, 43, 226, 0.4) 20%,
+      rgba(191, 255, 0, 0.3) 50%,
+      rgba(138, 43, 226, 0.4) 80%,
+      transparent
+    );
+    margin-bottom: 16px;
+  }
+
+  .achievementsGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+
+  .achievementBadge {
+    aspect-ratio: 1;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 8px;
+    position: relative;
+    overflow: hidden;
+    border: 2px solid;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .achievementBadge.unlocked {
+    background: radial-gradient(circle at top, rgba(138, 43, 226, 0.25), rgba(10, 10, 10, 0.4));
+    border-color: rgba(191, 255, 0, 0.4);
+    box-shadow: 0 0 20px rgba(138, 43, 226, 0.3), 0 0 0 1px rgba(191, 255, 0, 0.15) inset;
+  }
+
+  .achievementBadge.locked {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .achievementLockOverlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .achievementEmoji {
+    font-size: 28px;
+    margin-bottom: 6px;
+    filter: drop-shadow(0 0 6px rgba(191, 255, 0, 0.3));
+  }
+
+  .achievementBadge.locked .achievementEmoji {
+    filter: none;
+  }
+
+  .achievementName {
+    font-size: 10px;
+    text-align: center;
+    line-height: 1.3;
+    color: rgba(255, 255, 255, 0.8);
+    margin: 0;
+  }
+
+  .achievementBadge.locked .achievementName {
+    color: rgba(255, 255, 255, 0.4);
+  }
+
+  /* Achievements Modal */
+  .achievementsModalOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 9999;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+
+  .achievementsModalSheet {
+    width: 100%;
+    max-width: 600px;
+    max-height: 85vh;
+    background: #0b0b10;
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
+    border: 1px solid rgba(138, 43, 226, 0.4);
+    box-shadow: 0 0 60px rgba(138, 43, 226, 0.4);
+    overflow-y: auto;
+    padding: 24px;
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
+  }
+
+  .achievementsModalHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .achievementsModalTitle {
+    font-size: 20px;
+    font-weight: 800;
+    color: #FFFFFF;
+    margin: 0 0 6px;
+  }
+
+  .achievementsModalSubtitle {
+    font-size: 13px;
+    color: #BFFF00;
+    font-weight: 600;
+    margin: 0 0 4px;
+  }
+
+  .achievementsModalCoins {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0 0 6px;
+  }
+
+  .achievementsModalNote {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.4);
+    font-style: italic;
+    margin: 0;
+  }
+
+  .achievementsModalClose {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .achievementsModalClose:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.25);
+  }
+
+  .achievementsModalList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .achievementModalItem {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.2s;
+  }
+
+  .achievementModalIcon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+    box-shadow: 0 0 15px rgba(138, 43, 226, 0.3);
+  }
+
+  .achievementModalContent {
+    flex: 1;
+  }
+
+  .achievementModalName {
+    font-size: 15px;
+    font-weight: 700;
+    color: #FFFFFF;
+    margin-bottom: 4px;
+  }
+
+  .achievementModalReward {
+    font-size: 12px;
+    font-weight: 600;
+    color: #BFFF00;
+    margin-bottom: 4px;
+  }
+
+  .achievementModalStatus {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  .achievementModalUnlocked {
+    color: #BFFF00;
+    font-weight: 600;
+  }
+
+  .achievementModalLocked {
+    color: rgba(255, 255, 255, 0.4);
+  }
+
+  .achievementModalClaimed {
+    color: rgba(255, 255, 255, 0.4);
   }
 
   /* Personal Bests Section */
