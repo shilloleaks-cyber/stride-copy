@@ -1,6 +1,53 @@
 import React, { useState, useEffect } from 'react';
 
 const COIN_PARTICLES = 12;
+const ARRIVAL_MS = 950;
+
+function triggerHaptic() {
+  try {
+    if (navigator.vibrate) navigator.vibrate(20);
+  } catch {}
+}
+
+function playCoinDing() {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+
+    o.type = "triangle";
+    o.frequency.setValueAtTime(1200, ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.08);
+
+    g.gain.setValueAtTime(0.0001, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.06, ctx.currentTime + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.12);
+
+    o.connect(g);
+    g.connect(ctx.destination);
+    o.start();
+    o.stop(ctx.currentTime + 0.13);
+
+    setTimeout(() => ctx.close?.(), 250);
+  } catch {}
+}
+
+function pulseCoinHud() {
+  const el = document.querySelector('[data-coin-hud="true"]');
+  if (!el) return;
+  el.classList.remove("coinHudPulse");
+  void el.offsetWidth;
+  el.classList.add("coinHudPulse");
+  setTimeout(() => el.classList.remove("coinHudPulse"), 450);
+}
+
+function triggerArrivalFeedback() {
+  pulseCoinHud();
+  triggerHaptic();
+  playCoinDing();
+}
 
 export default function AchievementRevealModal({ achievement, rewardCoins, onClose, isOpen }) {
   const [burstActive, setBurstActive] = useState(false);
@@ -50,6 +97,15 @@ export default function AchievementRevealModal({ achievement, rewardCoins, onClo
 
     return () => clearTimeout(timer);
   }, [isOpen]);
+
+  // Trigger arrival feedback when burst completes
+  useEffect(() => {
+    if (!burstActive) return;
+    const t = setTimeout(() => {
+      triggerArrivalFeedback();
+    }, ARRIVAL_MS);
+    return () => clearTimeout(t);
+  }, [burstActive]);
 
   if (!achievement) return null;
 
@@ -326,6 +382,24 @@ const styles = `
     opacity: 0;
     transform: translate3d(var(--tx), var(--ty), 0) scale(0.7) rotate(calc(var(--rot) * 1.2));
     filter: drop-shadow(0 0 4px rgba(191, 255, 0, 0.3)) blur(0.5px);
+  }
+}
+
+/* Coin HUD Pulse Feedback */
+.coinHudPulse {
+  animation: coinHudPulse 420ms ease-out !important;
+  transform-origin: center;
+}
+
+@keyframes coinHudPulse {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
   }
 }
 `;
