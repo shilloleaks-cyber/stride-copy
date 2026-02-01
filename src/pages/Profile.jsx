@@ -71,7 +71,7 @@ export default function Profile() {
   // Fetch achievements from entity with auto-seed
   const { data: rawAchievements = [], refetch: refetchAchievements } = useQuery({
     queryKey: ['achievements'],
-    queryFn: () => base44.entities.Achievement.list(),
+    queryFn: () => base44.entities.Achievement.list('display_order', 100),
   });
 
   // Auto-seed achievements if empty or incomplete

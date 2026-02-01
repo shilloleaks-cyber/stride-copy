@@ -12,7 +12,7 @@ export default function AchievementBadgesSection({ stats }) {
   // Fetch achievements with auto-seed and sorting
   const { data: rawAchievements = [], refetch: refetchAchievements } = useQuery({
     queryKey: ['achievements'],
-    queryFn: () => base44.entities.Achievement.list(),
+    queryFn: () => base44.entities.Achievement.list('display_order', 100),
   });
 
   // Auto-seed if not exactly 8 achievements
