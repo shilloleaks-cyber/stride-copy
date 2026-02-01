@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
         category: 'distance',
         requirement_type: 'total_runs',
         requirement_value: 1,
-        reward_coins: 10,
+        reward_coins: 15,
         rarity: 'common'
       },
       {
@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
         category: 'distance',
         requirement_type: 'total_distance',
         requirement_value: 10,
-        reward_coins: 50,
+        reward_coins: 25,
         rarity: 'common'
       },
       {
@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
         category: 'distance',
         requirement_type: 'total_distance',
         requirement_value: 42,
-        reward_coins: 100,
+        reward_coins: 40,
         rarity: 'rare'
       },
       {
@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
         category: 'distance',
         requirement_type: 'total_distance',
         requirement_value: 100,
-        reward_coins: 250,
+        reward_coins: 80,
         rarity: 'epic'
       },
       {
@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
         category: 'consistency',
         requirement_type: 'total_runs',
         requirement_value: 10,
-        reward_coins: 50,
+        reward_coins: 30,
         rarity: 'common'
       },
       {
@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
         category: 'consistency',
         requirement_type: 'total_runs',
         requirement_value: 50,
-        reward_coins: 200,
+        reward_coins: 60,
         rarity: 'rare'
       },
       {
