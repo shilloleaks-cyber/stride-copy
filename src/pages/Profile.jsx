@@ -68,6 +68,12 @@ export default function Profile() {
 
   const completedChallenges = myParticipations.filter(p => p.is_completed);
 
+  // Fetch achievements from entity
+  const { data: achievements = [] } = useQuery({
+    queryKey: ['achievements'],
+    queryFn: () => base44.entities.Achievement.list(),
+  });
+
   React.useEffect(() => {
     if (user?.bio) setBio(user.bio);
   }, [user?.bio]);
@@ -192,18 +198,32 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
   const lastRun = completedRuns[0];
   const lastRunCoins = lastRun ? Math.floor(lastRun.distance_km || 0) : 0;
 
-  // Achievements data
-  const achievements = [
-    { id: 'first_run', emoji: '🏃', name: 'First Run', unlocked: stats.totalRuns >= 1, rewardCoins: 50 },
-    { id: '10km', emoji: '🎯', name: '10km Club', unlocked: stats.totalDistance >= 10, rewardCoins: 100 },
-    { id: '50km', emoji: '⭐', name: '50km Star', unlocked: stats.totalDistance >= 50, rewardCoins: 200 },
-    { id: '100km', emoji: '🏆', name: '100km Legend', unlocked: stats.totalDistance >= 100, rewardCoins: 500 },
-    { id: '10_runs', emoji: '🔥', name: '10 Runs Streak', unlocked: stats.totalRuns >= 10, rewardCoins: 150 },
-    { id: '50_runs', emoji: '💎', name: '50 Runs Master', unlocked: stats.totalRuns >= 50, rewardCoins: 400 },
-    { id: '5k_calories', emoji: '💪', name: 'Calorie Burner', unlocked: stats.totalCalories >= 5000, rewardCoins: 100 },
-    { id: '20k_calories', emoji: '🔥', name: 'Inferno', unlocked: stats.totalCalories >= 20000, rewardCoins: 300 },
-  ];
-  const unlockedAchievements = achievements.filter(a => a.unlocked);
+  // Map achievements with unlock status
+  const achievementsWithStatus = achievements.map(achievement => {
+    let unlocked = false;
+    
+    // Check unlock based on requirement
+    if (achievement.requirement_type === 'total_runs') {
+      unlocked = stats.totalRuns >= achievement.requirement_value;
+    } else if (achievement.requirement_type === 'total_distance') {
+      // Handle both distance and calorie requirements
+      if (achievement.title === 'Calorie Burner' || achievement.title === 'Inferno') {
+        unlocked = stats.totalCalories >= achievement.requirement_value;
+      } else {
+        unlocked = stats.totalDistance >= achievement.requirement_value;
+      }
+    }
+    
+    return {
+      ...achievement,
+      unlocked,
+      emoji: achievement.badge_emoji,
+      name: achievement.title,
+      rewardCoins: achievement.reward_coins,
+    };
+  });
+  
+  const unlockedAchievements = achievementsWithStatus.filter(a => a.unlocked);
 
   return (
     <div className="profileRoot">
@@ -319,7 +339,7 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
         <div className="achievementsDivider" />
         
         <div className="achievementsGrid">
-          {achievements.map((achievement, index) => (
+          {achievementsWithStatus.map((achievement, index) => (
             <motion.div
               key={achievement.id}
               initial={{ scale: 0, opacity: 0 }}
@@ -519,7 +539,7 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
             </div>
 
             <div className="achievementsModalList">
-              {achievements.map((achievement) => (
+              {achievementsWithStatus.map((achievement) => (
                 <div
                   key={achievement.id}
                   className="achievementModalItem"

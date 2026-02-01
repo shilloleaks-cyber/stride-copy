@@ -10,9 +10,9 @@ Deno.serve(async (req) => {
     }
 
     const achievements = [
-      // Distance Achievements
+      // Core 8 Achievements - Balanced Economy
       {
-        title: 'First Steps',
+        title: 'First Run',
         description: 'Complete your first run',
         badge_emoji: '🏃',
         category: 'distance',
@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
         rarity: 'common'
       },
       {
-        title: '10K Club',
+        title: '10km Club',
         description: 'Run a total of 10 kilometers',
         badge_emoji: '🎯',
         category: 'distance',
@@ -32,39 +32,7 @@ Deno.serve(async (req) => {
         rarity: 'common'
       },
       {
-        title: 'Marathon Ready',
-        description: 'Run a total of 42 kilometers',
-        badge_emoji: '🏅',
-        category: 'distance',
-        requirement_type: 'total_distance',
-        requirement_value: 42,
-        reward_coins: 40,
-        rarity: 'rare'
-      },
-      {
-        title: 'Century Runner',
-        description: 'Run a total of 100 kilometers',
-        badge_emoji: '💯',
-        category: 'distance',
-        requirement_type: 'total_distance',
-        requirement_value: 100,
-        reward_coins: 80,
-        rarity: 'epic'
-      },
-      {
-        title: 'Ultra Legend',
-        description: 'Run a total of 500 kilometers',
-        badge_emoji: '👑',
-        category: 'distance',
-        requirement_type: 'total_distance',
-        requirement_value: 500,
-        reward_coins: 1000,
-        rarity: 'legendary'
-      },
-
-      // Consistency Achievements
-      {
-        title: 'Consistent Runner',
+        title: '10 Runs Streak',
         description: 'Complete 10 runs',
         badge_emoji: '🔥',
         category: 'consistency',
@@ -74,9 +42,39 @@ Deno.serve(async (req) => {
         rarity: 'common'
       },
       {
-        title: 'Dedicated Athlete',
-        description: 'Complete 50 runs',
+        title: 'Calorie Burner',
+        description: 'Burn 5,000 calories',
+        badge_emoji: '💪',
+        category: 'special',
+        requirement_type: 'total_distance',
+        requirement_value: 5000,
+        reward_coins: 30,
+        rarity: 'common'
+      },
+      {
+        title: '50km Star',
+        description: 'Run a total of 50 kilometers',
         badge_emoji: '⭐',
+        category: 'distance',
+        requirement_type: 'total_distance',
+        requirement_value: 50,
+        reward_coins: 40,
+        rarity: 'rare'
+      },
+      {
+        title: 'Inferno',
+        description: 'Burn 20,000 calories',
+        badge_emoji: '🔥',
+        category: 'special',
+        requirement_type: 'total_distance',
+        requirement_value: 20000,
+        reward_coins: 45,
+        rarity: 'rare'
+      },
+      {
+        title: '50 Runs Master',
+        description: 'Complete 50 runs',
+        badge_emoji: '💎',
         category: 'consistency',
         requirement_type: 'total_runs',
         requirement_value: 50,
@@ -84,68 +82,14 @@ Deno.serve(async (req) => {
         rarity: 'rare'
       },
       {
-        title: 'Running Machine',
-        description: 'Complete 100 runs',
-        badge_emoji: '🚀',
-        category: 'consistency',
-        requirement_type: 'total_runs',
-        requirement_value: 100,
-        reward_coins: 500,
-        rarity: 'epic'
-      },
-
-      // Quest Achievements
-      {
-        title: 'Quest Starter',
-        description: 'Complete 5 daily quests',
-        badge_emoji: '📋',
-        category: 'quest',
-        requirement_type: 'quest_streak',
-        requirement_value: 5,
-        reward_coins: 30,
-        rarity: 'common'
-      },
-      {
-        title: 'Quest Master',
-        description: 'Complete 20 daily quests',
-        badge_emoji: '🎖️',
-        category: 'quest',
-        requirement_type: 'quest_streak',
-        requirement_value: 20,
-        reward_coins: 100,
-        rarity: 'rare'
-      },
-      {
-        title: 'Quest Legend',
-        description: 'Complete 50 daily quests',
+        title: '100km Legend',
+        description: 'Run a total of 100 kilometers',
         badge_emoji: '🏆',
-        category: 'quest',
-        requirement_type: 'quest_streak',
-        requirement_value: 50,
-        reward_coins: 300,
+        category: 'distance',
+        requirement_type: 'total_distance',
+        requirement_value: 100,
+        reward_coins: 80,
         rarity: 'epic'
-      },
-
-      // Social Achievements
-      {
-        title: 'Social Runner',
-        description: 'Follow 5 runners',
-        badge_emoji: '👥',
-        category: 'social',
-        requirement_type: 'friend_count',
-        requirement_value: 5,
-        reward_coins: 25,
-        rarity: 'common'
-      },
-      {
-        title: 'Community Leader',
-        description: 'Follow 20 runners',
-        badge_emoji: '🌟',
-        category: 'social',
-        requirement_type: 'friend_count',
-        requirement_value: 20,
-        reward_coins: 100,
-        rarity: 'rare'
       }
     ];
 
