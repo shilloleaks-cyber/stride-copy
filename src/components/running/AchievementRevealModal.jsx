@@ -49,13 +49,28 @@ function triggerArrivalFeedback() {
   playCoinDing();
 }
 
-export default function AchievementRevealModal({ achievement, rewardCoins, onClose, isOpen }) {
+export default function AchievementRevealModal({ achievements, onClose, isOpen }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [burstActive, setBurstActive] = useState(false);
   const [particles, setParticles] = useState([]);
   const [hudTarget, setHudTarget] = useState({ x: 0, y: 0 });
+  const [showingSummary, setShowingSummary] = useState(false);
+
+  const achievementList = achievements || [];
+  const currentAchievement = achievementList[currentIndex];
+  const isCombo = achievementList.length > 1;
+  const totalCoins = achievementList.reduce((sum, a) => sum + (a.reward_coins || 0), 0);
+
+  // Reset on open
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentIndex(0);
+      setShowingSummary(false);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
-    if (!isOpen) {
+    if (!isOpen || !currentAchievement) {
       setBurstActive(false);
       return;
     }
@@ -96,7 +111,7 @@ export default function AchievementRevealModal({ achievement, rewardCoins, onClo
     const timer = setTimeout(() => setBurstActive(true), 200);
 
     return () => clearTimeout(timer);
-  }, [isOpen]);
+  }, [isOpen, currentAchievement]);
 
   // Trigger arrival feedback when burst completes
   useEffect(() => {
@@ -107,7 +122,23 @@ export default function AchievementRevealModal({ achievement, rewardCoins, onClo
     return () => clearTimeout(t);
   }, [burstActive]);
 
-  if (!achievement) return null;
+  const handleNext = () => {
+    if (currentIndex < achievementList.length - 1) {
+      setCurrentIndex(prev => prev + 1);
+    } else {
+      if (isCombo) {
+        setShowingSummary(true);
+      } else {
+        onClose();
+      }
+    }
+  };
+
+  const handleCloseSummary = () => {
+    onClose();
+  };
+
+  if (!currentAchievement && !showingSummary) return null;
 
   return (
     <>
@@ -137,28 +168,63 @@ export default function AchievementRevealModal({ achievement, rewardCoins, onClo
         )}
 
         <div className="achievementCard" onClick={e => e.stopPropagation()}>
-          {/* Achievement Icon */}
-          <div className="achievementIcon">
-            {achievement.badge_emoji || '🏆'}
-          </div>
-
-          {/* Title */}
-          <h2 className="achievementTitle">{achievement.title}</h2>
-
-          {/* Description */}
-          {achievement.description && (
-            <p className="achievementDesc">{achievement.description}</p>
+          {/* Combo Badge */}
+          {isCombo && !showingSummary && (
+            <div className="comboLabel">
+              COMBO x{achievementList.length}
+            </div>
           )}
 
-          {/* Coin Reward */}
-          <div className="coinReward">
-            +{rewardCoins} COINS
-          </div>
+          {/* Summary View */}
+          {showingSummary ? (
+            <>
+              <div className="achievementIcon">
+                🎉
+              </div>
+              <h2 className="achievementTitle">ACHIEVEMENT COMBO!</h2>
+              <p className="achievementDesc">
+                Unlocked {achievementList.length} achievements
+              </p>
+              <div className="coinReward">
+                +{totalCoins} COINS TOTAL
+              </div>
+              <button className="niceButton" onClick={handleCloseSummary}>
+                Awesome!
+              </button>
+            </>
+          ) : (
+            <>
+              {/* Achievement Icon */}
+              <div className="achievementIcon">
+                {currentAchievement.badge_emoji || '🏆'}
+              </div>
 
-          {/* Button */}
-          <button className="niceButton" onClick={onClose}>
-            Nice!
-          </button>
+              {/* Progress Indicator */}
+              {isCombo && (
+                <div className="progressIndicator">
+                  {currentIndex + 1} / {achievementList.length}
+                </div>
+              )}
+
+              {/* Title */}
+              <h2 className="achievementTitle">{currentAchievement.title}</h2>
+
+              {/* Description */}
+              {currentAchievement.description && (
+                <p className="achievementDesc">{currentAchievement.description}</p>
+              )}
+
+              {/* Coin Reward */}
+              <div className="coinReward">
+                +{currentAchievement.reward_coins || 0} COINS
+              </div>
+
+              {/* Button */}
+              <button className="niceButton" onClick={handleNext}>
+                {currentIndex < achievementList.length - 1 ? 'Next' : 'Nice!'}
+              </button>
+            </>
+          )}
         </div>
       </div>
     </>
@@ -401,5 +467,39 @@ const styles = `
   100% {
     transform: scale(1);
   }
+}
+
+/* Combo Label */
+.comboLabel {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #FF6B00, #FF0080);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  box-shadow: 0 0 20px rgba(255, 107, 0, 0.5);
+  animation: comboFloat 2s ease-in-out infinite;
+}
+
+@keyframes comboFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+/* Progress Indicator */
+.progressIndicator {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 8px;
+  font-weight: 600;
 }
 `;

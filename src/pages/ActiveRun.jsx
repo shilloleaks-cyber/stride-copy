@@ -435,10 +435,8 @@ export default function ActiveRun() {
         try {
           const achievementResponse = await base44.functions.invoke('checkAchievements', {});
           if (achievementResponse.data?.newlyUnlocked?.length > 0) {
-            const firstAchievement = achievementResponse.data.newlyUnlocked[0];
             setAchievementData({
-              achievement: firstAchievement,
-              rewardCoins: firstAchievement.reward_coins || 0
+              achievements: achievementResponse.data.newlyUnlocked
             });
             setShowAchievementModal(true);
           }
@@ -907,8 +905,7 @@ export default function ActiveRun() {
       {/* Achievement Reveal Modal */}
       {achievementData && (
         <AchievementRevealModal
-          achievement={achievementData.achievement}
-          rewardCoins={achievementData.rewardCoins}
+          achievements={achievementData.achievements}
           isOpen={showAchievementModal}
           onClose={() => setShowAchievementModal(false)}
         />
