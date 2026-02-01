@@ -419,8 +419,7 @@ export default function ActiveRun() {
         setLevelUpData({
           coinsEarned,
           newLevel,
-          leveledUp,
-          reducedRewards: false
+          leveledUp
         });
         setShowLevelModal(true);
         
@@ -885,9 +884,8 @@ export default function ActiveRun() {
         <LevelUpModal
           isOpen={showLevelModal}
           onClose={() => setShowLevelModal(false)}
+          prevLevel={levelUpData.newLevel - 1}
           newLevel={levelUpData.newLevel}
-          coinsEarned={levelUpData.coinsEarned}
-          leveledUp={levelUpData.leveledUp}
         />
       )}
 
