@@ -101,7 +101,7 @@ export default function RedeemDetail() {
     queryFn: () => base44.auth.me(),
   });
 
-  const coins = user?.total_coins || 0;
+  const coins = user?.coin_balance ?? user?.total_coins ?? 0;
   const itemUnlocked = isUnlocked(item.id);
   const itemEquipped = isEquipped(item.id);
   const canAfford = coins >= item.price;
@@ -123,7 +123,7 @@ export default function RedeemDetail() {
     mutationFn: async ({ item, currentCoins }) => {
       const newBalance = currentCoins - item.price;
       await base44.auth.updateMe({
-        total_coins: newBalance,
+        coin_balance: newBalance,
       });
 
       localStorage.setItem(`unlock:${item.id}`, "1");
