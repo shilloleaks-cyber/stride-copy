@@ -9,6 +9,8 @@ export default function AchievementBadgeDetailModal({ isOpen, onClose, badge, us
   const [walletLog, setWalletLog] = useState(null);
   const [multiplier, setMultiplier] = useState(1.0);
   const [loading, setLoading] = useState(true);
+  const [claiming, setClaiming] = useState(false);
+  const [hasClaimed, setHasClaimed] = useState(false);
 
   const isUnlocked = !!userAchievement;
 
@@ -24,27 +26,22 @@ export default function AchievementBadgeDetailModal({ isOpen, onClose, badge, us
         setMultiplier(rewardMultiplier);
 
         if (isUnlocked) {
-          // Try to get claimed amount from UserAchievement first
-          if (userAchievement.final_reward) {
-            setClaimedAmount(userAchievement.final_reward);
-            setClaimedAt(userAchievement.claimed_at || userAchievement.unlocked_date);
+          // Check if already claimed using WalletLog with achievement_id
+          const logs = await base44.entities.WalletLog.filter({
+            user: user.email,
+            source_type: 'achievement',
+            achievement_id: badge.id
+          });
+          
+          if (logs.length > 0) {
+            const sum = logs.reduce((acc, log) => acc + (log.amount || 0), 0);
+            setClaimedAmount(sum);
+            setClaimedAt(logs[0].created_date);
+            setWalletLog(logs[0]);
+            setHasClaimed(true);
           } else {
-            // Fallback: sum from WalletLog
-            const logs = await base44.entities.WalletLog.filter({
-              user: user.email,
-              type: 'bonus'
-            });
-            
-            const achievementLogs = logs.filter(log => 
-              log.note && log.note.includes(badge.title)
-            );
-            
-            if (achievementLogs.length > 0) {
-              const sum = achievementLogs.reduce((acc, log) => acc + (log.final_reward || log.amount), 0);
-              setClaimedAmount(sum);
-              setClaimedAt(achievementLogs[0].created_date);
-              setWalletLog(achievementLogs[0]);
-            }
+            setHasClaimed(false);
+            setClaimedAmount(0);
           }
         }
       } catch (error) {
@@ -56,6 +53,56 @@ export default function AchievementBadgeDetailModal({ isOpen, onClose, badge, us
 
     fetchDetails();
   }, [isOpen, badge, userAchievement, user, isUnlocked]);
+
+  const handleClaimReward = async () => {
+    if (!isUnlocked || hasClaimed || claiming) return;
+    
+    setClaiming(true);
+    try {
+      const baseReward = badge.reward_coins || 0;
+      const finalReward = baseReward * multiplier;
+
+      // Create wallet log entry
+      await base44.entities.WalletLog.create({
+        user: user.email,
+        amount: finalReward,
+        source_type: 'achievement',
+        achievement_id: badge.id,
+        note: `Achievement reward: ${badge.title}`,
+        base_reward: baseReward,
+        final_reward: finalReward,
+        multiplier_used: multiplier
+      });
+
+      // Update user coin balance
+      const currentCoins = user.coin_balance || 0;
+      await base44.auth.updateMe({ 
+        coin_balance: currentCoins + finalReward 
+      });
+
+      // Mark as claimed
+      await base44.entities.UserAchievement.update(userAchievement.id, {
+        claimed_at: new Date().toISOString(),
+        final_reward: finalReward
+      });
+
+      // Update state
+      setHasClaimed(true);
+      setClaimedAmount(finalReward);
+      setClaimedAt(new Date().toISOString());
+
+      // Close modal and refresh
+      setTimeout(() => {
+        onClose();
+        window.location.reload();
+      }, 1000);
+    } catch (error) {
+      console.error('Error claiming reward:', error);
+      alert('เกิดข้อผิดพลาดในการเคลมรางวัล');
+    } finally {
+      setClaiming(false);
+    }
+  };
 
   if (!badge) return null;
 
@@ -145,7 +192,7 @@ export default function AchievementBadgeDetailModal({ isOpen, onClose, badge, us
             <div className="modalSection">
               <div className="sectionLabel">
                 <Clock className="w-4 h-4" />
-                <span>CLAIMED</span>
+                <span>CLAIM STATUS</span>
               </div>
               
               {loading ? (
@@ -154,42 +201,56 @@ export default function AchievementBadgeDetailModal({ isOpen, onClose, badge, us
                 <>
                   {isUnlocked ? (
                     <>
-                      <div className="claimedAmount">
-                        {claimedAmount.toFixed(2)} <span className="coinUnit">coins claimed</span>
-                      </div>
-                      {claimedAt && (
-                        <div className="claimedDate">
-                          Claimed at: {new Date(claimedAt).toLocaleString()}
-                        </div>
-                      )}
-                      
-                      {/* Wallet Log Proof */}
-                      {walletLog && (
-                        <div className="logProof">
-                          <div className="logLabel">Transaction Log</div>
-                          <div className="logDetails">
-                            <div className="logRow">
-                              <span>Base:</span>
-                              <span>{walletLog.base_reward || baseReward} coins</span>
-                            </div>
-                            <div className="logRow">
-                              <span>Multiplier:</span>
-                              <span>×{walletLog.multiplier_used || multiplier}</span>
-                            </div>
-                            <div className="logRow">
-                              <span>Final:</span>
-                              <span className="logFinal">{walletLog.final_reward || walletLog.amount} coins</span>
-                            </div>
-                            <div className="logRow">
-                              <span>Date:</span>
-                              <span>{new Date(walletLog.created_date).toLocaleString()}</span>
-                            </div>
+                      {hasClaimed ? (
+                        <>
+                          <div className="claimedAmount">
+                            {claimedAmount.toFixed(2)} <span className="coinUnit">coins claimed</span>
                           </div>
-                        </div>
-                      )}
-                      
-                      {!walletLog && (
-                        <div className="noLog">No reward log found</div>
+                          {claimedAt && (
+                            <div className="claimedDate">
+                              Claimed at: {new Date(claimedAt).toLocaleString()}
+                            </div>
+                          )}
+                          
+                          {/* Wallet Log Proof */}
+                          {walletLog && (
+                            <div className="logProof">
+                              <div className="logLabel">Transaction Log</div>
+                              <div className="logDetails">
+                                <div className="logRow">
+                                  <span>Base:</span>
+                                  <span>{walletLog.base_reward || baseReward} coins</span>
+                                </div>
+                                <div className="logRow">
+                                  <span>Multiplier:</span>
+                                  <span>×{walletLog.multiplier_used || multiplier}</span>
+                                </div>
+                                <div className="logRow">
+                                  <span>Final:</span>
+                                  <span className="logFinal">{walletLog.final_reward || walletLog.amount} coins</span>
+                                </div>
+                                <div className="logRow">
+                                  <span>Date:</span>
+                                  <span>{new Date(walletLog.created_date).toLocaleString()}</span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <div className="unclaimedState">
+                            <div className="unclaimedIcon">🎁</div>
+                            <p className="unclaimedText">Reward ready to claim!</p>
+                            <button 
+                              className="claimButton" 
+                              onClick={handleClaimReward}
+                              disabled={claiming}
+                            >
+                              {claiming ? 'Claiming...' : `Claim ${finalReward.toFixed(2)} Coins`}
+                            </button>
+                          </div>
+                        </>
                       )}
                     </>
                   ) : (
@@ -496,6 +557,61 @@ const styles = `
   padding: 20px;
   color: rgba(255, 255, 255, 0.5);
   font-size: 14px;
+}
+
+.unclaimedState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  text-align: center;
+}
+
+.unclaimedIcon {
+  font-size: 48px;
+  margin-bottom: 12px;
+  animation: giftBounce 2s ease-in-out infinite;
+}
+
+@keyframes giftBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.unclaimedText {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 16px;
+}
+
+.claimButton {
+  width: 100%;
+  max-width: 280px;
+  height: 48px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #BFFF00, #8FD400);
+  color: #0A0A0A;
+  font-size: 16px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 0 25px rgba(191, 255, 0, 0.4);
+  transition: all 0.2s;
+}
+
+.claimButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 30px rgba(191, 255, 0, 0.6);
+}
+
+.claimButton:active {
+  transform: scale(0.98);
+}
+
+.claimButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 @media (max-width: 420px) {
