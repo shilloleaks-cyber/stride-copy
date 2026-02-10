@@ -114,21 +114,26 @@ export default function Profile() {
 
   const completedRuns = runs.filter(r => r.status === 'completed');
 
+  const validPaceRuns = completedRuns.filter((r) => {
+    const pace = Number(r?.pace_min_per_km);
+    return Number.isFinite(pace) && pace > 0;
+  });
+
   // Stats
   const stats = {
     totalDistance: completedRuns.reduce((sum, r) => sum + (r.distance_km || 0), 0),
     totalTime: completedRuns.reduce((sum, r) => sum + (r.duration_seconds || 0), 0),
     totalCalories: completedRuns.reduce((sum, r) => sum + (r.calories_burned || 0), 0),
     totalRuns: completedRuns.length,
-    avgPace: completedRuns.length > 0 
-      ? completedRuns.reduce((sum, r) => sum + (r.pace_min_per_km || 0), 0) / completedRuns.length 
+    avgPace: validPaceRuns.length > 0
+      ? validPaceRuns.reduce((sum, r) => sum + Number(r.pace_min_per_km), 0) / validPaceRuns.length
       : 0,
   };
 
   // Personal bests
   const longestRun = completedRuns.reduce((max, r) => (r.distance_km || 0) > (max?.distance_km || 0) ? r : max, null);
-  const fastestPace = completedRuns.filter(r => r.pace_min_per_km > 0).reduce((min, r) => 
-    (r.pace_min_per_km || Infinity) < (min?.pace_min_per_km || Infinity) ? r : min, null);
+  const fastestPace = validPaceRuns.reduce((min, r) =>
+    Number(r.pace_min_per_km) < Number(min?.pace_min_per_km ?? Infinity) ? r : min, null);
 
   const formatDuration = (seconds) => {
     if (!seconds) return '0 ชม.';
@@ -139,9 +144,13 @@ export default function Profile() {
   };
 
   const formatPace = (pace) => {
-    if (!pace || pace === 0) return '--:--';
-    const mins = Math.floor(pace);
-    const secs = Math.round((pace - mins) * 60);
+    const numericPace = Number(pace);
+    if (!Number.isFinite(numericPace) || numericPace <= 0) return '--:--';
+
+    const totalSeconds = Math.round(numericPace * 60);
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
