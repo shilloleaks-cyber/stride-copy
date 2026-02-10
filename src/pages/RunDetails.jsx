@@ -280,18 +280,17 @@ export default function RunDetails() {
       // Check if WalletLog already exists for this run (uniqueness guard)
       const existingLogs = await base44.entities.WalletLog.filter({
         user: currentUser.email,
-        source_type: 'run'
+        source_type: 'run',
+        run_id: runId
       });
       
-      const alreadyLogged = existingLogs.some(log => 
-        log.note && log.note.includes(`runId:${runId}`)
-      );
-      
-      if (alreadyLogged) {
-        // Mark run as claimed if not already
-        await base44.entities.Run.update(runId, {
-          reward_claimed: true
-        });
+      if (existingLogs.length > 0) {
+        // Ensure Run.reward_claimed is set to true
+        if (!freshRun.reward_claimed) {
+          await base44.entities.Run.update(runId, {
+            reward_claimed: true
+          });
+        }
         setIsClaimed(true);
         queryClient.invalidateQueries(['run', runId]);
         toast.info('Reward already claimed');
@@ -309,12 +308,13 @@ export default function RunDetails() {
         } catch {}
       }
 
-      // Create WalletLog entry first (with runId in note for uniqueness)
+      // Create WalletLog entry first (with run_id for uniqueness)
       await base44.entities.WalletLog.create({
         user: currentUser.email,
         amount: rewardAmount,
         source_type: 'run',
-        note: `Run reward: ${run.distance_km?.toFixed(2)}km (runId:${runId})`,
+        run_id: runId,
+        note: 'Run reward',
         base_reward: rewardAmount,
         final_reward: rewardAmount,
         multiplier_used: 1.0
