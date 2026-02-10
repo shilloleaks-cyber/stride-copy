@@ -114,24 +114,51 @@ export default function Home() {
   };
   const streakDays = calculateStreak();
 
+  // Pace calculation utility
+  const calcPaceMinPerKm = (run) => {
+    const dist = Number(run?.distance_km);
+    const secs = Number(run?.duration_seconds);
+
+    // Use duration_seconds + distance_km as primary source (most accurate)
+    if (Number.isFinite(dist) && dist > 0 && Number.isFinite(secs) && secs > 0) {
+      return (secs / 60) / dist;
+    }
+
+    // Fallback: use pace_min_per_km only if time/distance unavailable
+    const pace = Number(run?.pace_min_per_km);
+    if (Number.isFinite(pace) && pace > 0) return pace;
+
+    return null;
+  };
+
+  const formatPace = (paceMinPerKm) => {
+    const p = Number(paceMinPerKm);
+    if (!Number.isFinite(p) || p <= 0) return "--:--";
+
+    let mins = Math.floor(p);
+    let secs = Math.round((p - mins) * 60);
+
+    // Handle case where rounding gives secs = 60
+    if (secs === 60) { mins += 1; secs = 0; }
+
+    return `${mins}:${String(secs).padStart(2, "0")}`;
+  };
+
   // This week's pace
   const oneWeekAgo = new Date(today);
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
   const weekRuns = completedRuns.filter(r => new Date(r.start_time) >= oneWeekAgo);
-  const weekAvgPaceRaw = weekRuns.length > 0
-    ? weekRuns.reduce((sum, r) => sum + (r.pace_min_per_km || 0), 0) / weekRuns.length
+  
+  const weekRunsWithPace = weekRuns.map(r => calcPaceMinPerKm(r)).filter(p => p !== null && p > 0);
+  const weekAvgPaceRaw = weekRunsWithPace.length > 0
+    ? weekRunsWithPace.reduce((sum, p) => sum + p, 0) / weekRunsWithPace.length
     : 0;
-  const formatPace = (pace) => {
-    if (!pace || pace === 0) return "--:--";
-    const mins = Math.floor(pace);
-    const secs = Math.round((pace - mins) * 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
   const avgPaceWeek = formatPace(weekAvgPaceRaw);
 
   // Best pace
-  const bestPacePR = completedRuns.length > 0
-    ? formatPace(Math.min(...completedRuns.map(r => r.pace_min_per_km || 999).filter(p => p > 0)))
+  const allPaces = completedRuns.map(r => calcPaceMinPerKm(r)).filter(p => p !== null && p > 0);
+  const bestPacePR = allPaces.length > 0
+    ? formatPace(Math.min(...allPaces))
     : "--:--";
 
   // Weekly distance data
@@ -222,8 +249,9 @@ export default function Home() {
         return runDate >= day && runDate < nextDay;
       });
       
-      const avgPace = dayRuns.length > 0
-        ? dayRuns.reduce((sum, r) => sum + (r.pace_min_per_km || 0), 0) / dayRuns.length
+      const dayPaces = dayRuns.map(r => calcPaceMinPerKm(r)).filter(p => p !== null && p > 0);
+      const avgPace = dayPaces.length > 0
+        ? dayPaces.reduce((sum, p) => sum + p, 0) / dayPaces.length
         : 0;
       
       last7Days.push(avgPace || 8);
