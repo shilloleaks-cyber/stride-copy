@@ -347,9 +347,9 @@ export default function RunDetails() {
       // Show success animation
       setShowCoinToast(true);
       
-      // Auto-redirect
+      // Auto-redirect back to previous page
       claimTimeoutRef.current = setTimeout(() => {
-        navigate(createPageUrl('Home'));
+        navigate(-1);
       }, 1200);
       
     } catch (error) {
@@ -480,7 +480,7 @@ export default function RunDetails() {
       {/* Header */}
       <div className="px-5 pt-5 flex items-center justify-between">
         <button 
-          onClick={() => navigate(createPageUrl('History'))}
+          onClick={() => navigate(-1)}
           className="w-11 h-11 rounded-full backdrop-blur-sm flex items-center justify-center border transition-all"
           style={{ 
             backgroundColor: 'rgba(255,255,255,0.04)',
