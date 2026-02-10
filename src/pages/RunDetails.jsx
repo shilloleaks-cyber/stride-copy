@@ -245,10 +245,6 @@ export default function RunDetails() {
   // Handle claim reward
   const handleClaimReward = async () => {
     if (isClaiming) return;
-    if (isClaimed || run?.reward_claimed) {
-      toast.info('Reward already claimed');
-      return;
-    }
     if (!currentUser) {
       toast.error('Please log in to claim rewards');
       return;
@@ -259,36 +255,72 @@ export default function RunDetails() {
     }
     
     setIsClaiming(true);
-    let runMarkedAsClaimed = false;
     
     try {
-      // Get minimum reward
+      // Fetch fresh run data to check reward_claimed status
+      const freshRuns = await base44.entities.Run.filter({ id: runId });
+      const freshRun = freshRuns[0];
+      
+      if (!freshRun) {
+        toast.error('Run not found');
+        return;
+      }
+
+      // Check if already claimed via Run flag
+      if (freshRun.reward_claimed === true) {
+        setIsClaimed(true);
+        queryClient.setQueryData(['run', runId], (prev) => {
+          if (!prev) return prev;
+          return { ...prev, reward_claimed: true };
+        });
+        toast.info('Reward already claimed');
+        return;
+      }
+
+      // Check if WalletLog already exists for this run (uniqueness guard)
+      const existingLogs = await base44.entities.WalletLog.filter({
+        user: currentUser.email,
+        source_type: 'run'
+      });
+      
+      const alreadyLogged = existingLogs.some(log => 
+        log.note && log.note.includes(`runId:${runId}`)
+      );
+      
+      if (alreadyLogged) {
+        // Mark run as claimed if not already
+        await base44.entities.Run.update(runId, {
+          reward_claimed: true
+        });
+        setIsClaimed(true);
+        queryClient.invalidateQueries(['run', runId]);
+        toast.info('Reward already claimed');
+        return;
+      }
+
+      // Calculate reward
       const rewardAmount = Math.max(coinData.total, 0.25);
       setToastAmount(rewardAmount);
       
-      // Haptic feedback if available
+      // Haptic feedback
       if (typeof navigator !== 'undefined' && navigator.vibrate) {
         try {
           navigator.vibrate(50);
-        } catch {
-          // Ignore vibration errors
-        }
+        } catch {}
       }
-      
-      // Mark run as claimed first to avoid duplicate claims
-      await base44.entities.Run.update(runId, {
-        reward_claimed: true
-      });
-      runMarkedAsClaimed = true;
 
-      // Update run cache/state immediately
-      queryClient.setQueryData(['run', runId], (prev) => {
-        if (!prev) return prev;
-        return { ...prev, reward_claimed: true };
+      // Create WalletLog entry first (with runId in note for uniqueness)
+      await base44.entities.WalletLog.create({
+        user: currentUser.email,
+        amount: rewardAmount,
+        source_type: 'run',
+        note: `Run reward: ${run.distance_km?.toFixed(2)}km (runId:${runId})`,
+        base_reward: rewardAmount,
+        final_reward: rewardAmount,
+        multiplier_used: 1.0
       });
-      setIsClaimed(true);
 
-      // Update user RUN balance (single source of truth)
+      // Update user balance
       const currentBalance = currentUser.coin_balance || 0;
       const newBalance = parseFloat((currentBalance + rewardAmount).toFixed(2));
       
@@ -296,47 +328,33 @@ export default function RunDetails() {
         coin_balance: newBalance
       });
       
-      // Log transaction to WalletLog
-      await base44.entities.WalletLog.create({
-        user: currentUser.email,
-        amount: rewardAmount,
-        source_type: 'run',
-        note: `Run reward: ${run.distance_km?.toFixed(2)}km`,
-        base_reward: rewardAmount,
-        final_reward: rewardAmount,
-        multiplier_used: 1.0
+      // Mark run as claimed (idempotent - never rollback after this)
+      await base44.entities.Run.update(runId, {
+        reward_claimed: true
       });
+
+      // Update local state
+      queryClient.setQueryData(['run', runId], (prev) => {
+        if (!prev) return prev;
+        return { ...prev, reward_claimed: true };
+      });
+      setIsClaimed(true);
       
-      // Invalidate related queries to refresh state everywhere
+      // Invalidate queries
       queryClient.invalidateQueries(['currentUser']);
       queryClient.invalidateQueries(['run', runId]);
       
-      // Show coin toast animation
+      // Show success animation
       setShowCoinToast(true);
       
-      // Auto-redirect to Home after animation completes
+      // Auto-redirect
       claimTimeoutRef.current = setTimeout(() => {
         navigate(createPageUrl('Home'));
       }, 1200);
       
     } catch (error) {
-      if (runMarkedAsClaimed) {
-        // Best-effort rollback if any subsequent step fails
-        try {
-          await base44.entities.Run.update(runId, {
-            reward_claimed: false
-          });
-          queryClient.setQueryData(['run', runId], (prev) => {
-            if (!prev) return prev;
-            return { ...prev, reward_claimed: false };
-          });
-          setIsClaimed(false);
-        } catch (rollbackError) {
-          console.error('Rollback failed:', rollbackError);
-        }
-      }
       console.error('Error claiming reward:', error);
-      toast.error('Failed to claim reward');
+      toast.error('Failed to claim reward. Please try again.');
     } finally {
       setIsClaiming(false);
     }
