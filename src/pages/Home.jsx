@@ -169,10 +169,17 @@ export default function Home() {
   const avgPaceWeek = formatPace(weekAvgPace);
 
   // Best pace
-  const allPaces = completedRuns.map(r => calcPaceMinPerKm(r)).filter(p => p !== null && p > 0);
-  const bestPacePR = allPaces.length > 0
-    ? formatPace(Math.min(...allPaces))
-    : "--:--";
+  const bestPace = useMemo(() => {
+    const completed = completedRuns
+      ?.map(r => calcPaceMinPerKm(r))
+      .filter(p => Number.isFinite(p) && p > 0);
+
+    if (!completed?.length) return null;
+
+    return Math.min(...completed);
+  }, [completedRuns]);
+  
+  const bestPacePR = formatPace(bestPace);
 
   // Weekly distance data
   const weekly = useMemo(() => {
