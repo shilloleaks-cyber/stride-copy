@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { format } from 'date-fns';
+import RunCard from '@/components/running/RunCard';
 
 // ===== Coin Pop Animation =====
 function CoinPopLayer({ pops }) {
@@ -460,51 +460,8 @@ export default function Home() {
         </div>
 
         <div className="runList">
-          {completedRuns.slice(0, 2).map((run, idx) => (
-            <button key={run.id} className="runCard" onClick={() => navigate(createPageUrl(`RunDetails?id=${run.id}`))}>
-              <div className="runHeader">
-                <div>
-                  <div className="runDate">{format(new Date(run.start_time), 'EEEE, MMMM d')}</div>
-                  <div className="runTime">{format(new Date(run.start_time), 'h:mm a')}</div>
-                </div>
-                <div className="chev">›</div>
-              </div>
-
-              <div className="runStats">
-                <div className="miniStat">
-                  <span className="miniIcon green">📍</span>
-                  <div>
-                    <div className="miniVal">{(run.distance_km || 0).toFixed(2)}</div>
-                    <div className="miniLbl">km</div>
-                  </div>
-                </div>
-                <div className="miniStat">
-                  <span className="miniIcon blue">⏱</span>
-                  <div>
-                    <div className="miniVal">{(() => {
-                      const mins = Math.floor((run.duration_seconds || 0) / 60);
-                      const secs = (run.duration_seconds || 0) % 60;
-                      return `${mins}:${secs.toString().padStart(2, '0')}`;
-                    })()}</div>
-                    <div className="miniLbl">time</div>
-                  </div>
-                </div>
-                <div className="miniStat">
-                  <span className="miniIcon purple">⚡</span>
-                  <div>
-                    <div className="miniVal">{formatPace(calcPaceMinPerKm(run))}</div>
-                    <div className="miniLbl">/km</div>
-                  </div>
-                </div>
-                <div className="miniStat">
-                  <span className="miniIcon red">❤</span>
-                  <div>
-                    <div className="miniVal">{run.avg_heart_rate || 0}</div>
-                    <div className="miniLbl">bpm</div>
-                  </div>
-                </div>
-              </div>
-            </button>
+          {completedRuns.slice(0, 2).map((run) => (
+            <RunCard key={run.id} run={run} />
           ))}
         </div>
       </section>
@@ -864,34 +821,6 @@ const homeStyles = `
   font-weight: 900;
   cursor:pointer;
 }
-.runList{ display:flex; flex-direction:column; gap: 12px; margin-top: 10px; }
-.runCard{
-  background:var(--card);
-  border:1px solid var(--line);
-  border-radius: 18px;
-  padding: 14px;
-  text-align:left;
-  cursor:pointer;
-}
-.runHeader{ display:flex; align-items:flex-start; justify-content:space-between; }
-.runDate{ font-size: 18px; font-weight: 900; }
-.runTime{ font-size: 12px; color:var(--muted); margin-top: 2px; }
-.chev{ font-size: 22px; color:var(--muted); margin-top: 2px; }
-.runStats{ margin-top: 12px; display:grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-.miniStat{ display:flex; align-items:center; gap: 8px; }
-.miniIcon{
-  width: 26px; height: 26px; border-radius: 10px;
-  display:grid; place-items:center;
-  background: rgba(10,10,10,0.25);
-  border: 1px solid var(--line);
-  font-size: 12px;
-}
-.miniVal{ font-weight: 900; }
-.miniLbl{ font-size: 11px; color:var(--muted); margin-top: 2px; }
-.green{ color:var(--lime); }
-.purple{ color:var(--purple); }
-.red{ color: rgba(255,90,90,0.95); }
-.blue{ color: rgba(120,180,255,0.95); }
 .modalOverlay{
   position: fixed;
   inset: 0;
@@ -931,7 +860,6 @@ const homeStyles = `
 }
 @media (max-width: 460px){
   .title{ font-size: 36px; }
-  .runStats{ grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .heroBig{ font-size: 26px; }
 }
 `;

@@ -5,7 +5,7 @@ import { createPageUrl } from '@/utils';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { History, Filter, MapPin, Clock, Zap, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import RunListItem from '@/components/running/RunListItem';
+import RunCard from '@/components/running/RunCard';
 
 export default function RunningHistorySection({ runs }) {
   const navigate = useNavigate();
@@ -126,9 +126,9 @@ export default function RunningHistorySection({ runs }) {
       {/* Run List */}
       <AnimatePresence mode="wait">
         {displayRuns.length > 0 ? (
-          <div className="space-y-3">
-            {displayRuns.map((run, index) => (
-              <RunListItem key={run.id} run={run} index={index} />
+          <div className="runList">
+            {displayRuns.map((run) => (
+              <RunCard key={run.id} run={run} />
             ))}
           </div>
         ) : (

@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import RunListItem from '@/components/running/RunListItem';
+import RunCard from '@/components/running/RunCard';
 
 export default function History() {
   const navigate = useNavigate();
@@ -141,10 +141,10 @@ export default function History() {
             ))}
           </div>
         ) : filteredRuns.length > 0 ? (
-          <div className="space-y-4">
+          <div className="runList">
             <AnimatePresence>
-              {filteredRuns.map((run, index) => (
-                <RunListItem key={run.id} run={run} index={index} />
+              {filteredRuns.map((run) => (
+                <RunCard key={run.id} run={run} />
               ))}
             </AnimatePresence>
           </div>
