@@ -6,8 +6,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { format } from 'date-fns';
 import { 
-  ArrowLeft, Share2, Trash2, MapPin, Clock, Zap, Heart, 
-  Flame, TrendingUp, Award, Edit2, X, Save, Users 
+  ArrowLeft, Share2, Trash2, MapPin, Zap, Heart, 
+  Flame, Edit2, X, Save, Users 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -244,9 +244,22 @@ export default function RunDetails() {
   
   // Handle claim reward
   const handleClaimReward = async () => {
-    if (isClaiming || isClaimed || !currentUser) return;
+    if (isClaiming) return;
+    if (isClaimed || run?.reward_claimed) {
+      toast.info('Reward already claimed');
+      return;
+    }
+    if (!currentUser) {
+      toast.error('Please log in to claim rewards');
+      return;
+    }
+    if (!run) {
+      toast.error('Run data is not ready yet');
+      return;
+    }
     
     setIsClaiming(true);
+    let runMarkedAsClaimed = false;
     
     try {
       // Get minimum reward
@@ -257,11 +270,24 @@ export default function RunDetails() {
       if (typeof navigator !== 'undefined' && navigator.vibrate) {
         try {
           navigator.vibrate(50);
-        } catch (e) {
+        } catch {
           // Ignore vibration errors
         }
       }
       
+      // Mark run as claimed first to avoid duplicate claims
+      await base44.entities.Run.update(runId, {
+        reward_claimed: true
+      });
+      runMarkedAsClaimed = true;
+
+      // Update run cache/state immediately
+      queryClient.setQueryData(['run', runId], (prev) => {
+        if (!prev) return prev;
+        return { ...prev, reward_claimed: true };
+      });
+      setIsClaimed(true);
+
       // Update user RUN balance (single source of truth)
       const currentBalance = currentUser.coin_balance || 0;
       const newBalance = parseFloat((currentBalance + rewardAmount).toFixed(2));
@@ -278,16 +304,9 @@ export default function RunDetails() {
         note: `Run: ${run.distance_km?.toFixed(2)}km`
       });
       
-      // Mark run as claimed
-      await base44.entities.Run.update(runId, {
-        reward_claimed: true
-      });
-      
-      // Invalidate user query to refresh balance everywhere
+      // Invalidate related queries to refresh state everywhere
       queryClient.invalidateQueries(['currentUser']);
-      
-      // Update local state
-      setIsClaimed(true);
+      queryClient.invalidateQueries(['run', runId]);
       
       // Show coin toast animation
       setShowCoinToast(true);
@@ -298,8 +317,24 @@ export default function RunDetails() {
       }, 1200);
       
     } catch (error) {
+      if (runMarkedAsClaimed) {
+        // Best-effort rollback if any subsequent step fails
+        try {
+          await base44.entities.Run.update(runId, {
+            reward_claimed: false
+          });
+          queryClient.setQueryData(['run', runId], (prev) => {
+            if (!prev) return prev;
+            return { ...prev, reward_claimed: false };
+          });
+          setIsClaimed(false);
+        } catch (rollbackError) {
+          console.error('Rollback failed:', rollbackError);
+        }
+      }
       console.error('Error claiming reward:', error);
       toast.error('Failed to claim reward');
+    } finally {
       setIsClaiming(false);
     }
   };
@@ -328,7 +363,7 @@ export default function RunDetails() {
       await base44.entities.Run.delete(runId);
       setIsDeleteSheetOpen(false);
       navigate(createPageUrl('History'));
-    } catch (error) {
+    } catch {
       setIsDeleting(false);
     }
   };

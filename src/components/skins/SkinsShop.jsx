@@ -26,14 +26,16 @@ export default function SkinsShop({ user, skinType = 'route' }) {
     mutationFn: async (skinId) => {
       const skin = skins.find(s => s.id === skinId);
       
+      const currentBalance = user?.coin_balance ?? user?.total_coins ?? 0;
+
       // Check if user can afford
-      if (user.total_coins < skin.cost_coins) {
+      if (currentBalance < skin.cost_coins) {
         throw new Error('Not enough coins');
       }
 
       // Deduct coins
       await base44.auth.updateMe({
-        total_coins: user.total_coins - skin.cost_coins
+        coin_balance: currentBalance - skin.cost_coins
       });
 
       // Add to inventory
@@ -213,7 +215,7 @@ export default function SkinsShop({ user, skinType = 'route' }) {
           ) : (
             <button
               onClick={handlePurchase}
-              disabled={purchaseMutation.isPending || user.total_coins < selectedSkin.cost_coins}
+              disabled={purchaseMutation.isPending || (user?.coin_balance ?? user?.total_coins ?? 0) < selectedSkin.cost_coins}
               className="w-full py-3 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
             >
               <Coins className="w-5 h-5" />

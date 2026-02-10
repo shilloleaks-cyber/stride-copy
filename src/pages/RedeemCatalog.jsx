@@ -41,8 +41,9 @@ export default function RedeemCatalog() {
       });
 
       // Deduct coins from user
+      const currentBalance = user?.coin_balance ?? user?.total_coins ?? 0;
       await base44.auth.updateMe({
-        total_coins: user.total_coins - reward.coin_price,
+        coin_balance: currentBalance - reward.coin_price,
       });
 
       // Update stock if merch
@@ -66,7 +67,7 @@ export default function RedeemCatalog() {
     },
   });
 
-  const coinBalance = user?.total_coins || 0;
+  const coinBalance = user?.coin_balance ?? user?.total_coins ?? 0;
 
   const filters = [
     { id: 'all', label: 'All' },

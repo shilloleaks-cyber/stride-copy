@@ -32,7 +32,7 @@ export default function Redeem() {
     queryFn: () => base44.auth.me(),
   });
 
-  const coins = user?.total_coins || 0;
+  const coins = user?.coin_balance ?? user?.total_coins ?? 0;
 
   // --- Demo Catalog (Digital Items) ---
   const items = useMemo(
@@ -95,7 +95,7 @@ export default function Redeem() {
       // Update user coins
       const newBalance = currentCoins - item.price;
       await base44.auth.updateMe({
-        total_coins: newBalance,
+        coin_balance: newBalance,
       });
 
       // Save unlocked item in localStorage
