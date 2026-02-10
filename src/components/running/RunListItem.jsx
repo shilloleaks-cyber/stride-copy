@@ -31,7 +31,7 @@ export default function RunListItem({ run, index }) {
       transition={{ delay: index * 0.05 }}
     >
       <Link
-        to={createPageUrl(`RunDetails?id=${run.id}`)}
+        to={createPageUrl('RunDetails') + `?id=${run.id}`}
         className="block bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl p-5 transition-all duration-200 group"
       >
         <div className="flex items-center justify-between mb-4">

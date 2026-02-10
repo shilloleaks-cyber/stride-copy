@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
+import { format } from 'date-fns';
 
 // ===== Coin Pop Animation =====
 function CoinPopLayer({ pops }) {
@@ -194,22 +195,7 @@ export default function Home() {
     return data;
   }, [weekRuns]);
 
-  // Recent runs
-  const recentRuns = completedRuns.slice(0, 2).map(r => {
-    const date = new Date(r.start_time);
-    const formatDate = date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
-    const formatTime = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-    const durationMins = Math.floor((r.duration_seconds || 0) / 60);
-    const durationSecs = (r.duration_seconds || 0) % 60;
-    return {
-      date: formatDate,
-      time: formatTime,
-      km: (r.distance_km || 0).toFixed(2),
-      dur: `${durationMins}:${durationSecs.toString().padStart(2, '0')}`,
-      pace: formatPace(r.pace_min_per_km),
-      bpm: r.avg_heart_rate || 0,
-    };
-  });
+
 
   // Game stats - derived from coin_balance (single source of truth)
   const coinBalance = user?.coin_balance ?? 0;
@@ -474,12 +460,12 @@ export default function Home() {
         </div>
 
         <div className="runList">
-          {recentRuns.map((r, idx) => (
-            <button key={idx} className="runCard" onClick={() => navigate(createPageUrl('History'))}>
+          {completedRuns.slice(0, 2).map((run, idx) => (
+            <button key={run.id} className="runCard" onClick={() => navigate(createPageUrl(`RunDetails?id=${run.id}`))}>
               <div className="runHeader">
                 <div>
-                  <div className="runDate">{r.date}</div>
-                  <div className="runTime">{r.time}</div>
+                  <div className="runDate">{format(new Date(run.start_time), 'EEEE, MMMM d')}</div>
+                  <div className="runTime">{format(new Date(run.start_time), 'h:mm a')}</div>
                 </div>
                 <div className="chev">›</div>
               </div>
@@ -488,28 +474,32 @@ export default function Home() {
                 <div className="miniStat">
                   <span className="miniIcon green">📍</span>
                   <div>
-                    <div className="miniVal">{r.km}</div>
+                    <div className="miniVal">{(run.distance_km || 0).toFixed(2)}</div>
                     <div className="miniLbl">km</div>
                   </div>
                 </div>
                 <div className="miniStat">
                   <span className="miniIcon blue">⏱</span>
                   <div>
-                    <div className="miniVal">{r.dur}</div>
+                    <div className="miniVal">{(() => {
+                      const mins = Math.floor((run.duration_seconds || 0) / 60);
+                      const secs = (run.duration_seconds || 0) % 60;
+                      return `${mins}:${secs.toString().padStart(2, '0')}`;
+                    })()}</div>
                     <div className="miniLbl">time</div>
                   </div>
                 </div>
                 <div className="miniStat">
                   <span className="miniIcon purple">⚡</span>
                   <div>
-                    <div className="miniVal">{r.pace}</div>
+                    <div className="miniVal">{formatPace(calcPaceMinPerKm(run))}</div>
                     <div className="miniLbl">/km</div>
                   </div>
                 </div>
                 <div className="miniStat">
                   <span className="miniIcon red">❤</span>
                   <div>
-                    <div className="miniVal">{r.bpm}</div>
+                    <div className="miniVal">{run.avg_heart_rate || 0}</div>
                     <div className="miniLbl">bpm</div>
                   </div>
                 </div>
