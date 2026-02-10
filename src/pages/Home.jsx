@@ -149,11 +149,24 @@ export default function Home() {
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
   const weekRuns = completedRuns.filter(r => new Date(r.start_time) >= oneWeekAgo);
   
-  const weekRunsWithPace = weekRuns.map(r => calcPaceMinPerKm(r)).filter(p => p !== null && p > 0);
-  const weekAvgPaceRaw = weekRunsWithPace.length > 0
-    ? weekRunsWithPace.reduce((sum, p) => sum + p, 0) / weekRunsWithPace.length
-    : 0;
-  const avgPaceWeek = formatPace(weekAvgPaceRaw);
+  const weekAvgPace = useMemo(() => {
+    if (!weekRuns?.length) return null;
+
+    const completed = weekRuns.filter(r =>
+      Number(r?.distance_km) > 0 && Number(r?.duration_seconds) > 0
+    );
+
+    if (!completed.length) return null;
+
+    const totalDist = completed.reduce((s, r) => s + Number(r.distance_km), 0);
+    const totalSecs = completed.reduce((s, r) => s + Number(r.duration_seconds), 0);
+
+    if (totalDist <= 0 || totalSecs <= 0) return null;
+
+    return (totalSecs / 60) / totalDist; // min/km
+  }, [weekRuns]);
+  
+  const avgPaceWeek = formatPace(weekAvgPace);
 
   // Best pace
   const allPaces = completedRuns.map(r => calcPaceMinPerKm(r)).filter(p => p !== null && p > 0);
