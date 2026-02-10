@@ -300,8 +300,11 @@ export default function RunDetails() {
       await base44.entities.WalletLog.create({
         user: currentUser.email,
         amount: rewardAmount,
-        type: 'run',
-        note: `Run: ${run.distance_km?.toFixed(2)}km`
+        source_type: 'run',
+        note: `Run reward: ${run.distance_km?.toFixed(2)}km`,
+        base_reward: rewardAmount,
+        final_reward: rewardAmount,
+        multiplier_used: 1.0
       });
       
       // Invalidate related queries to refresh state everywhere
