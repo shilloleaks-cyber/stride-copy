@@ -101,10 +101,7 @@ css
   background: rgba(191, 255, 0, 0.7);
 }
 
-/* ================================================
-   RUN CARD GLOBAL STYLES
-   Theme: 60% #0A0A0A, 30% #BFFF00, 10% #8A2BE2
-   ================================================ */
+/* Run Card Global Styles - Theme: 60% #0A0A0A, 30% #BFFF00, 10% #8A2BE2 */
 
 :root {
   --rc-bg: #0A0A0A;
@@ -112,7 +109,6 @@ css
   --rc-purple: #8A2BE2;
 }
 
-/* Run List Container */
 .runList {
   display: flex;
   flex-direction: column;
@@ -120,7 +116,6 @@ css
   margin-top: 10px;
 }
 
-/* Run Card */
 .runCard {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.10);
@@ -139,7 +134,6 @@ css
   transform: translateY(-2px);
 }
 
-/* Run Card Header */
 .runHeader {
   display: flex;
   align-items: flex-start;
@@ -165,7 +159,6 @@ css
   opacity: 0.6;
 }
 
-/* Run Stats Grid */
 .runStats {
   margin-top: 12px;
   display: grid;
@@ -173,7 +166,6 @@ css
   gap: 10px;
 }
 
-/* Mini Stat Item */
 .miniStat {
   display: flex;
   align-items: center;
@@ -203,7 +195,6 @@ css
   margin-top: 2px;
 }
 
-/* Icon Colors */
 .green {
   color: var(--rc-lime);
 }
@@ -220,7 +211,6 @@ css
   color: rgba(120, 180, 255, 0.95);
 }
 
-/* Responsive: Stack to 2 columns on small screens */
 @media (max-width: 460px) {
   .runStats {
     grid-template-columns: repeat(2, 1fr);
