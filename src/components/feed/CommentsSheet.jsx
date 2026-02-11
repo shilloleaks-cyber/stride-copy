@@ -58,15 +58,7 @@ export default function CommentsSheet({ open, onClose, post, currentUser }) {
     },
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!newComment.trim()) {
-      console.log('Comment submission blocked: empty input');
-      return;
-    }
-    console.log('Submitting comment:', newComment.trim());
-    addCommentMutation.mutate(newComment.trim());
-  };
+
 
   const getInitials = (name) => {
     if (!name) return 'U';
@@ -135,29 +127,37 @@ export default function CommentsSheet({ open, onClose, post, currentUser }) {
         </div>
 
         {/* Input */}
-        <form onSubmit={handleSubmit} className="commentInputArea">
+        <form
+          className="commentInputArea"
+          onSubmit={(e) => {
+            e.preventDefault();
+
+            const text = newComment.trim();
+            console.log("submit", { textLen: text.length, isPending: addCommentMutation.isPending });
+
+            if (!text || addCommentMutation.isPending) return;
+
+            addCommentMutation.mutate(text);
+            setNewComment("");
+          }}
+        >
           <Input
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="Write a comment..."
             className="commentInput"
           />
-          <button 
-            type="submit" 
+
+          <button
+            type="submit"
             disabled={!newComment.trim() || addCommentMutation.isPending}
-            className={`commentSendBtn ${addCommentMutation.isPending ? 'sending' : ''}`}
+            className={`commentSendBtn ${addCommentMutation.isPending ? "sending" : ""}`}
             aria-label="Send comment"
-            onClick={(e) => {
-              console.log('Send button clicked', { 
-                hasText: !!newComment.trim(), 
-                isPending: addCommentMutation.isPending 
-              });
-            }}
           >
             {addCommentMutation.isPending ? (
               <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
             ) : (
-              <Send className="w-4 h-4" style={{ pointerEvents: 'none' }} />
+              <Send className="w-4 h-4" style={{ pointerEvents: "none" }} />
             )}
           </button>
         </form>
