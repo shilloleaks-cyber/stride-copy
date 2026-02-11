@@ -391,3 +391,8 @@
   cursor: not-allowed;
   pointer-events: none;
 }
+
+.commentSendBtn.sending {
+  background: rgba(191, 255, 0, 0.8);
+  cursor: wait;
+}

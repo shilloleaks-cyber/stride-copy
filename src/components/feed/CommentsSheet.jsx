@@ -60,7 +60,11 @@ export default function CommentsSheet({ open, onClose, post, currentUser }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!newComment.trim()) return;
+    if (!newComment.trim()) {
+      console.log('Comment submission blocked: empty input');
+      return;
+    }
+    console.log('Submitting comment:', newComment.trim());
     addCommentMutation.mutate(newComment.trim());
   };
 
@@ -141,10 +145,20 @@ export default function CommentsSheet({ open, onClose, post, currentUser }) {
           <button 
             type="submit" 
             disabled={!newComment.trim() || addCommentMutation.isPending}
-            className="commentSendBtn"
+            className={`commentSendBtn ${addCommentMutation.isPending ? 'sending' : ''}`}
             aria-label="Send comment"
+            onClick={(e) => {
+              console.log('Send button clicked', { 
+                hasText: !!newComment.trim(), 
+                isPending: addCommentMutation.isPending 
+              });
+            }}
           >
-            <Send className="w-4 h-4" style={{ pointerEvents: 'none' }} />
+            {addCommentMutation.isPending ? (
+              <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Send className="w-4 h-4" style={{ pointerEvents: 'none' }} />
+            )}
           </button>
         </form>
       </SheetContent>
