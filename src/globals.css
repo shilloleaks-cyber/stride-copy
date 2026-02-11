@@ -101,6 +101,13 @@ css
   background: rgba(191, 255, 0, 0.7);
 }
 
+/* Run Card Theme Variables (60/30/10 rule) */
+:root {
+  --rc-bg: #0A0A0A;
+  --rc-lime: #BFFF00;
+  --rc-purple: #8A2BE2;
+}
+
 /* Run Card Styles (Unified across app) */
 .runList { 
   display: flex; 
@@ -122,6 +129,7 @@ css
 
 .runCard:hover {
   background: rgba(255,255,255,0.08);
+  border-color: rgba(191,255,0,0.15);
   transform: translateY(-2px);
 }
 
@@ -145,8 +153,9 @@ css
 
 .chev { 
   font-size: 22px; 
-  color: rgba(255,255,255,0.60); 
+  color: var(--rc-lime);
   margin-top: 2px; 
+  opacity: 0.6;
 }
 
 .runStats { 
@@ -175,7 +184,7 @@ css
 
 .miniVal { 
   font-weight: 900; 
-  color: rgba(255,255,255,0.92); 
+  color: var(--rc-lime);
 }
 
 .miniLbl { 
@@ -184,8 +193,8 @@ css
   margin-top: 2px; 
 }
 
-.green { color: #BFFF00; }
-.purple { color: #8A2BE2; }
+.green { color: var(--rc-lime); }
+.purple { color: var(--rc-purple); }
 .red { color: rgba(255,90,90,0.95); }
 .blue { color: rgba(120,180,255,0.95); }
 

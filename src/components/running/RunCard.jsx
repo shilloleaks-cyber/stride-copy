@@ -3,15 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { format } from 'date-fns';
 
-export default function RunCard({ run, onOpen }) {
+export default function RunCard({ run }) {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    if (onOpen) {
-      onOpen(run);
-    } else {
-      navigate(createPageUrl(`RunDetails?id=${run.id}`));
-    }
+    navigate(createPageUrl(`RunDetails?id=${run.id}`));
   };
 
   // Helper: format duration
