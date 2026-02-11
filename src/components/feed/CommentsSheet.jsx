@@ -142,8 +142,9 @@ export default function CommentsSheet({ open, onClose, post, currentUser }) {
             type="submit" 
             disabled={!newComment.trim() || addCommentMutation.isPending}
             className="commentSendBtn"
+            aria-label="Send comment"
           >
-            <Send className="w-4 h-4" />
+            <Send className="w-4 h-4" style={{ pointerEvents: 'none' }} />
           </button>
         </form>
       </SheetContent>

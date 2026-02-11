@@ -367,6 +367,9 @@
     0 4px 12px rgba(0, 0, 0, 0.3);
   transition: all 0.2s ease;
   flex-shrink: 0;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .commentSendBtn:hover:not(:disabled) {
@@ -378,9 +381,13 @@
 
 .commentSendBtn:active:not(:disabled) {
   transform: translateY(0);
+  box-shadow: 
+    0 0 20px rgba(191, 255, 0, 0.35),
+    0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 .commentSendBtn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+  pointer-events: none;
 }
