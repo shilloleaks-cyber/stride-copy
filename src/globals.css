@@ -101,24 +101,29 @@ css
   background: rgba(191, 255, 0, 0.7);
 }
 
-/* Run Card Theme Variables (60/30/10 rule) */
+/* ================================================
+   RUN CARD GLOBAL STYLES
+   Theme: 60% #0A0A0A, 30% #BFFF00, 10% #8A2BE2
+   ================================================ */
+
 :root {
   --rc-bg: #0A0A0A;
   --rc-lime: #BFFF00;
   --rc-purple: #8A2BE2;
 }
 
-/* Run Card Styles (Unified across app) */
-.runList { 
-  display: flex; 
-  flex-direction: column; 
-  gap: 12px; 
-  margin-top: 10px; 
+/* Run List Container */
+.runList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 10px;
 }
 
+/* Run Card */
 .runCard {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: 18px;
   padding: 14px;
   text-align: left;
@@ -128,79 +133,97 @@ css
 }
 
 .runCard:hover {
-  background: rgba(255,255,255,0.08);
-  border-color: rgba(191,255,0,0.15);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(191, 255, 0, 0.15);
+  box-shadow: 0 0 20px rgba(138, 43, 226, 0.15);
   transform: translateY(-2px);
 }
 
-.runHeader { 
-  display: flex; 
-  align-items: flex-start; 
-  justify-content: space-between; 
+/* Run Card Header */
+.runHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
 }
 
-.runDate { 
-  font-size: 18px; 
-  font-weight: 900; 
-  color: rgba(255,255,255,0.92); 
+.runDate {
+  font-size: 18px;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.92);
 }
 
-.runTime { 
-  font-size: 12px; 
-  color: rgba(255,255,255,0.60); 
-  margin-top: 2px; 
+.runTime {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.60);
+  margin-top: 2px;
 }
 
-.chev { 
-  font-size: 22px; 
+.chev {
+  font-size: 22px;
   color: var(--rc-lime);
-  margin-top: 2px; 
+  margin-top: 2px;
   opacity: 0.6;
 }
 
-.runStats { 
-  margin-top: 12px; 
-  display: grid; 
-  grid-template-columns: repeat(4, 1fr); 
-  gap: 8px; 
+/* Run Stats Grid */
+.runStats {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
 }
 
-.miniStat { 
-  display: flex; 
-  align-items: center; 
-  gap: 8px; 
+/* Mini Stat Item */
+.miniStat {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .miniIcon {
-  width: 26px; 
-  height: 26px; 
+  width: 26px;
+  height: 26px;
   border-radius: 10px;
-  display: grid; 
+  display: grid;
   place-items: center;
-  background: rgba(10,10,10,0.25);
-  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(10, 10, 10, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.10);
   font-size: 12px;
 }
 
-.miniVal { 
-  font-weight: 900; 
+.miniVal {
+  font-weight: 900;
+  color: var(--rc-lime);
+  font-size: 15px;
+}
+
+.miniLbl {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.60);
+  margin-top: 2px;
+}
+
+/* Icon Colors */
+.green {
   color: var(--rc-lime);
 }
 
-.miniLbl { 
-  font-size: 11px; 
-  color: rgba(255,255,255,0.60); 
-  margin-top: 2px; 
+.purple {
+  color: var(--rc-purple);
 }
 
-.green { color: var(--rc-lime); }
-.purple { color: var(--rc-purple); }
-.red { color: rgba(255,90,90,0.95); }
-.blue { color: rgba(120,180,255,0.95); }
+.red {
+  color: rgba(255, 90, 90, 0.95);
+}
 
+.blue {
+  color: rgba(120, 180, 255, 0.95);
+}
+
+/* Responsive: Stack to 2 columns on small screens */
 @media (max-width: 460px) {
-  .runStats { 
-    grid-template-columns: repeat(2, 1fr); 
-    gap: 10px; 
+  .runStats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
   }
 }
