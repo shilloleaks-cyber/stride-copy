@@ -20,7 +20,12 @@ import CommentsSheet from '@/components/feed/CommentsSheet';
 export default function Feed() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState('following');
+  
+  // Read tab from URL query params
+  const urlParams = new URLSearchParams(window.location.search);
+  const tabParam = urlParams.get('tab');
+  
+  const [activeTab, setActiveTab] = useState(tabParam === 'groups' ? 'groups' : tabParam === 'challenges' ? 'challenges' : 'following');
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
   const [showComments, setShowComments] = useState(false);
@@ -165,15 +170,29 @@ export default function Feed() {
           {/* Quick Links */}
           <div className="flex gap-2 mb-3">
             <button
-              onClick={() => navigate(createPageUrl('Groups'))}
-              className="flex-1 px-3 py-2 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center gap-2 text-sm"
+              onClick={() => {
+                setActiveTab('groups');
+                navigate(createPageUrl('Feed?tab=groups'), { replace: true });
+              }}
+              className={`flex-1 px-3 py-2 rounded-xl flex items-center justify-center gap-2 text-sm ${
+                activeTab === 'groups' 
+                  ? 'bg-purple-500/20 border-2 border-purple-500/50' 
+                  : 'bg-purple-500/10 border border-purple-500/30'
+              }`}
             >
               <Users className="w-4 h-4 text-purple-400" />
               <span className="text-purple-400">Groups</span>
             </button>
             <button
-              onClick={() => navigate(createPageUrl('Challenges'))}
-              className="flex-1 px-3 py-2 rounded-xl bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center gap-2 text-sm"
+              onClick={() => {
+                setActiveTab('challenges');
+                navigate(createPageUrl('Feed?tab=challenges'), { replace: true });
+              }}
+              className={`flex-1 px-3 py-2 rounded-xl flex items-center justify-center gap-2 text-sm ${
+                activeTab === 'challenges' 
+                  ? 'bg-yellow-500/20 border-2 border-yellow-500/50' 
+                  : 'bg-yellow-500/10 border border-yellow-500/30'
+              }`}
             >
               <TrendingUp className="w-4 h-4 text-yellow-400" />
               <span className="text-yellow-400">Challenges</span>
@@ -181,7 +200,14 @@ export default function Feed() {
           </div>
 
           {/* Tabs */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <Tabs 
+            value={activeTab} 
+            onValueChange={(val) => {
+              setActiveTab(val);
+              navigate(createPageUrl(`Feed?tab=${val}`), { replace: true });
+            }} 
+            className="w-full"
+          >
             <TabsList className="w-full bg-white/5 p-1">
               <TabsTrigger 
                 value="following" 
@@ -207,9 +233,21 @@ export default function Feed() {
         </div>
       </div>
 
-      {/* Posts */}
+      {/* Content */}
       <div className="px-6 py-6 space-y-6">
-        {isLoading ? (
+        {activeTab === 'groups' ? (
+          <div className="text-center py-16">
+            <Users className="w-16 h-16 text-purple-400 mx-auto mb-4" />
+            <p className="text-gray-400 text-lg">Groups UI</p>
+            <p className="text-sm text-gray-600 mt-2">Groups content from the original Groups page will be displayed here</p>
+          </div>
+        ) : activeTab === 'challenges' ? (
+          <div className="text-center py-16">
+            <Target className="w-16 h-16 text-yellow-400 mx-auto mb-4" />
+            <p className="text-gray-400 text-lg">Challenges UI</p>
+            <p className="text-sm text-gray-600 mt-2">Challenges content will be displayed here</p>
+          </div>
+        ) : isLoading ? (
           <div className="space-y-6">
             {[1, 2, 3].map(i => (
               <div key={i} className="bg-white/5 rounded-2xl h-48 animate-pulse" />
