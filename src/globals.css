@@ -4,6 +4,12 @@
   --rc-bg: #0A0A0A;
   --rc-lime: #BFFF00;
   --rc-purple: #8A2BE2;
+  
+  --bg: #0A0A0A;
+  --green: #BFFF00;
+  --purple: #8A2BE2;
+  --text: #FFFFFF;
+  --muted: rgba(255,255,255,0.55);
 }
 
 .runList {
@@ -110,6 +116,111 @@
 
 @media (max-width: 460px) {
   .runStats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+}
+
+/* Feed Card Neon Glass Styles */
+.feedCard {
+  position: relative;
+  background: rgba(20, 20, 20, 0.65);
+  backdrop-filter: blur(12px);
+  border-radius: 20px;
+  border: 1px solid transparent;
+  background-image: 
+    linear-gradient(rgba(20, 20, 20, 0.65), rgba(20, 20, 20, 0.65)),
+    linear-gradient(135deg, rgba(138, 43, 226, 0.15) 0%, rgba(191, 255, 0, 0.15) 100%);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: 
+    0 0 30px rgba(138, 43, 226, 0.08),
+    0 0 50px rgba(191, 255, 0, 0.06),
+    0 20px 40px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.feedCard:hover {
+  box-shadow: 
+    0 0 35px rgba(138, 43, 226, 0.12),
+    0 0 60px rgba(191, 255, 0, 0.10),
+    0 24px 48px rgba(0, 0, 0, 0.5);
+  transform: translateY(-2px);
+}
+
+.feedCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(191, 255, 0, 0.3) 50%, 
+    transparent 100%);
+  opacity: 0.5;
+}
+
+.feedAvatarGlow {
+  position: relative;
+  border-radius: 50%;
+  padding: 2px;
+  background: linear-gradient(135deg, rgba(138, 43, 226, 0.4), rgba(191, 255, 0, 0.4));
+  box-shadow: 
+    0 0 16px rgba(138, 43, 226, 0.3),
+    0 0 24px rgba(191, 255, 0, 0.2);
+}
+
+.feedGlassPanel {
+  border: 1px solid rgba(191, 255, 0, 0.15);
+  box-shadow: 0 0 20px rgba(191, 255, 0, 0.08);
+}
+
+.eventGlassBox {
+  margin: 0 16px 16px 16px;
+  padding: 16px;
+  background: rgba(30, 30, 30, 0.5);
+  backdrop-filter: blur(8px);
+  border-radius: 16px;
+  border: 1px solid rgba(138, 43, 226, 0.20);
+  box-shadow: 
+    0 0 20px rgba(138, 43, 226, 0.10),
+    inset 0 1px 0 rgba(191, 255, 0, 0.08);
+}
+
+.eventGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  text-align: center;
+}
+
+.eventStat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.eventVal {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+  margin-top: 4px;
+  text-shadow: 0 0 10px rgba(191, 255, 0, 0.3);
+}
+
+.eventLbl {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+@media (max-width: 460px) {
+  .eventGrid {
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
   }

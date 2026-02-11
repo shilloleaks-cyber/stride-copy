@@ -39,10 +39,21 @@ export default function PostCard({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const formatPace = (pace) => {
-    if (!pace || pace === 0) return '--:--';
+  const formatPace = (pace, distance, duration) => {
+    // Prevent unrealistic pace values
+    if (!distance || distance <= 0 || !duration || duration <= 0) {
+      return '--:--';
+    }
+    
+    if (!pace || pace === 0 || !isFinite(pace)) return '--:--';
+    
     const mins = Math.floor(pace);
     const secs = Math.round((pace - mins) * 60);
+    
+    if (secs === 60) {
+      return `${mins + 1}:00`;
+    }
+    
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
@@ -50,22 +61,24 @@ export default function PostCard({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white/5 border border-emerald-500/20 rounded-2xl overflow-hidden hover:border-emerald-500/40 transition-colors"
+      className="feedCard"
     >
       {/* Header */}
       <div className="p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Avatar className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-emerald-600 neon-border">
-            {post.author_image ? (
-              <AvatarImage src={post.author_image} alt={post.author_name} className="object-cover" />
-            ) : null}
-            <AvatarFallback className="text-sm bg-gradient-to-br from-emerald-400 to-emerald-600 text-white">
-              {getInitials(post.author_name)}
-            </AvatarFallback>
-          </Avatar>
+          <div className="feedAvatarGlow">
+            <Avatar className="w-12 h-12">
+              {post.author_image ? (
+                <AvatarImage src={post.author_image} alt={post.author_name} className="object-cover" />
+              ) : null}
+              <AvatarFallback className="text-sm bg-gradient-to-br from-purple-500 to-purple-700 text-white font-bold">
+                {getInitials(post.author_name)}
+              </AvatarFallback>
+            </Avatar>
+          </div>
           <div>
-            <p className="font-medium text-white">{post.author_name}</p>
-            <p className="text-xs text-gray-500">
+            <p className="font-bold text-white">{post.author_name}</p>
+            <p className="text-xs" style={{ color: 'var(--muted)' }}>
               {formatDistanceToNow(new Date(post.created_date), { addSuffix: true, locale: th })}
             </p>
           </div>
@@ -93,44 +106,59 @@ export default function PostCard({
 
       {/* Content */}
       <div className="px-4 pb-3">
-        <p className="text-gray-200 whitespace-pre-wrap">{post.content}</p>
+        <p className="text-white whitespace-pre-wrap" style={{ lineHeight: '1.6' }}>{post.content}</p>
       </div>
 
       {/* Run Data Card */}
       {post.run_data && (
-        <div className="mx-4 mb-4 bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-500/30 rounded-xl p-4">
+        <div className="eventGlassBox">
           <div className="flex items-center gap-2 mb-3">
             <span className="text-lg">🏃‍♂️</span>
-            <span className="text-sm text-emerald-400 font-medium">กิจกรรมวิ่ง</span>
+            <span className="text-sm font-bold" style={{ color: 'var(--green)' }}>กิจกรรมวิ่ง</span>
           </div>
-          <div className="grid grid-cols-4 gap-3 text-center">
-            <div>
-              <div className="flex items-center justify-center gap-1 text-gray-400 mb-1">
+          <div className="eventGrid">
+            <div className="eventStat">
+              <div className="flex items-center justify-center gap-1 mb-1" style={{ color: 'var(--muted)' }}>
                 <MapPin className="w-3 h-3" />
               </div>
-              <p className="text-lg font-light text-white">{post.run_data.distance_km?.toFixed(2)}</p>
-              <p className="text-[10px] text-gray-500">กม.</p>
+              <p className="eventVal" style={{ color: 'var(--green)' }}>
+                {post.run_data.distance_km?.toFixed(2) || '0.00'}
+              </p>
+              <p className="eventLbl">กม.</p>
             </div>
-            <div>
-              <div className="flex items-center justify-center gap-1 text-gray-400 mb-1">
+            <div className="eventStat">
+              <div className="flex items-center justify-center gap-1 mb-1" style={{ color: 'var(--muted)' }}>
                 <Clock className="w-3 h-3" />
               </div>
-              <p className="text-lg font-light text-white">{formatDuration(post.run_data.duration_seconds)}</p>
-              <p className="text-[10px] text-gray-500">เวลา</p>
+              <p className="eventVal">
+                {formatDuration(post.run_data.duration_seconds)}
+              </p>
+              <p className="eventLbl">เวลา</p>
             </div>
-            <div>
-              <div className="flex items-center justify-center gap-1 text-gray-400 mb-1">
+            <div className="eventStat">
+              <div className="flex items-center justify-center gap-1 mb-1" style={{ color: 'var(--muted)' }}>
                 <Zap className="w-3 h-3" />
               </div>
-              <p className="text-lg font-light text-white">{formatPace(post.run_data.pace_min_per_km)}</p>
-              <p className="text-[10px] text-gray-500">/กม.</p>
+              <p 
+                className="eventVal" 
+                style={{ 
+                  color: !post.run_data.distance_km || post.run_data.distance_km <= 0 || !post.run_data.duration_seconds || post.run_data.duration_seconds <= 0 
+                    ? 'var(--muted)' 
+                    : 'var(--green)' 
+                }}
+              >
+                {formatPace(post.run_data.pace_min_per_km, post.run_data.distance_km, post.run_data.duration_seconds)}
+              </p>
+              <p className="eventLbl">/กม.</p>
             </div>
-            <div>
-              <div className="flex items-center justify-center gap-1 text-gray-400 mb-1">
+            <div className="eventStat">
+              <div className="flex items-center justify-center gap-1 mb-1" style={{ color: 'var(--muted)' }}>
                 <Flame className="w-3 h-3" />
               </div>
-              <p className="text-lg font-light text-white">{post.run_data.calories_burned || 0}</p>
-              <p className="text-[10px] text-gray-500">kcal</p>
+              <p className="eventVal">
+                {post.run_data.calories_burned || 0}
+              </p>
+              <p className="eventLbl">kcal</p>
             </div>
           </div>
         </div>
@@ -142,7 +170,7 @@ export default function PostCard({
           <img 
             src={post.image_url} 
             alt="Post image" 
-            className="w-full rounded-xl object-cover max-h-80 border border-emerald-500/20"
+            className="w-full rounded-xl object-cover max-h-80 feedGlassPanel"
           />
         </div>
       )}
@@ -153,30 +181,32 @@ export default function PostCard({
           <video 
             src={post.video_url} 
             controls
-            className="w-full rounded-xl object-cover max-h-80 border border-purple-500/20"
+            className="w-full rounded-xl object-cover max-h-80 feedGlassPanel"
           />
         </div>
       )}
 
       {/* Actions */}
-      <div className="px-4 py-3 border-t border-white/5 flex items-center gap-6">
+      <div className="px-4 py-3 border-t flex items-center gap-6" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
         <button 
           onClick={() => onLike(post.id, isLiked)}
           className="flex items-center gap-2 transition-colors"
         >
           <Heart 
-            className={`w-5 h-5 transition-colors ${isLiked ? 'text-red-500 fill-red-500' : 'text-gray-400 hover:text-red-400'}`} 
+            className={`w-5 h-5 transition-colors ${isLiked ? 'text-red-500 fill-red-500' : 'hover:text-red-400'}`}
+            style={{ color: isLiked ? undefined : 'var(--muted)' }}
           />
-          <span className={`text-sm ${isLiked ? 'text-red-500' : 'text-gray-400'}`}>
+          <span className={`text-sm ${isLiked ? 'text-red-500' : ''}`} style={{ color: isLiked ? undefined : 'var(--muted)' }}>
             {likesCount > 0 ? likesCount : ''}
           </span>
         </button>
         
         <button 
           onClick={() => onViewComments(post)}
-          className="flex items-center gap-2 text-gray-400 hover:text-blue-400 transition-colors"
+          className="flex items-center gap-2 transition-colors"
+          style={{ color: 'var(--muted)' }}
         >
-          <MessageCircle className="w-5 h-5" />
+          <MessageCircle className="w-5 h-5 hover:opacity-70" />
           <span className="text-sm">{post.comments_count > 0 ? post.comments_count : ''}</span>
         </button>
       </div>
