@@ -11,7 +11,7 @@ export default function Layout({ children }) {
     { name: 'หน้าหลัก', icon: Home, page: 'Home' },
     { name: 'เทรน', icon: BarChart2, page: 'Training' },
     { name: 'ฟีด', icon: Users, page: 'Feed' },
-    { name: 'กลุ่ม', icon: Users, page: 'Groups' },
+    { name: 'กลุ่ม', icon: Users, page: 'Feed', query: 'tab=groups' },
     { name: 'โปรไฟล์', icon: User, page: 'Profile' },
   ];
 
@@ -31,10 +31,11 @@ export default function Layout({ children }) {
           <div className="flex items-center justify-around max-w-md mx-auto">
             {navItems.map((item) => {
               const isActive = isActivePage(item.page);
+              const targetUrl = item.query ? `${item.page}?${item.query}` : item.page;
               return (
                 <Link
                   key={item.name}
-                  to={createPageUrl(item.page)}
+                  to={createPageUrl(targetUrl)}
                   className={`flex flex-col items-center gap-1 transition-colors ${
                     isActive ? 'neon-text' : 'text-gray-500'
                   }`}
