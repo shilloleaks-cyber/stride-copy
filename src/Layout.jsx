@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Home, Activity, BarChart2, User, Users, Wallet, Trophy } from 'lucide-react';
+import '../globals.css';
 
 export default function Layout({ children }) {
   const location = useLocation();
