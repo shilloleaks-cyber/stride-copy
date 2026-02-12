@@ -131,19 +131,37 @@ export default function CommentsSheet({ open, onClose, post, currentUser }) {
           className="commentInputArea"
           onSubmit={(e) => {
             e.preventDefault();
+            console.log("🔥 Form submitted");
 
             const text = newComment.trim();
-            console.log("submit", { textLen: text.length, isPending: addCommentMutation.isPending });
+            console.log("📝 Comment data:", { 
+              text, 
+              textLen: text.length, 
+              isPending: addCommentMutation.isPending,
+              disabled: !newComment.trim() || addCommentMutation.isPending
+            });
 
-            if (!text || addCommentMutation.isPending) return;
+            if (!text) {
+              console.log("❌ Empty text, aborting");
+              return;
+            }
+            
+            if (addCommentMutation.isPending) {
+              console.log("⏳ Already pending, aborting");
+              return;
+            }
 
+            console.log("✅ Sending comment...");
             addCommentMutation.mutate(text);
             setNewComment("");
           }}
         >
           <Input
             value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
+            onChange={(e) => {
+              console.log("📥 Input changed:", e.target.value);
+              setNewComment(e.target.value);
+            }}
             placeholder="Write a comment..."
             className="commentInput"
           />
@@ -153,6 +171,13 @@ export default function CommentsSheet({ open, onClose, post, currentUser }) {
             disabled={!newComment.trim() || addCommentMutation.isPending}
             className={`commentSendBtn ${addCommentMutation.isPending ? "sending" : ""}`}
             aria-label="Send comment"
+            onClick={(e) => {
+              console.log("🖱️ Button clicked", {
+                disabled: !newComment.trim() || addCommentMutation.isPending,
+                newComment: newComment,
+                type: e.type
+              });
+            }}
           >
             {addCommentMutation.isPending ? (
               <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
