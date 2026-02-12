@@ -18,45 +18,47 @@ import {
 export default function CommentsSheet({ open, onClose, post, currentUser }) {
   const [newComment, setNewComment] = useState('');
   const queryClient = useQueryClient();
+  const postId = post?.id;
 
   const { data: comments = [], isLoading } = useQuery({
-    queryKey: ['comments', post?.id],
-    queryFn: async () => {
-      console.log('🔍 Fetching comments for post:', post?.id);
-      console.log('🔍 Filter query:', { post_id: post?.id });
-      const result = await base44.entities.Comment.filter({ post_id: post?.id }, '-created_date');
+    queryKey: ['comments', postId],
+    queryFn: async ({ queryKey }) => {
+      const [, id] = queryKey;
+      console.log('🔍 Fetching comments for post:', id);
+      console.log('🔍 Filter query:', { post_id: id });
+      const result = await base44.entities.Comment.filter({ post_id: id }, '-created_date');
       console.log('📦 Comments fetched:', result);
       console.log('📦 Comments count:', result?.length);
       return result;
     },
-    enabled: true,
+    enabled: !!postId && open,
   });
 
   // Real-time comment updates via WebSocket
   useEffect(() => {
-    if (!open || !post?.id) return;
+    if (!open || !postId) return;
 
     const unsubscribe = base44.entities.Comment.subscribe((event) => {
       console.log('🔴 Real-time comment event:', event);
 
       // Only process comments for this post
-      if (event.data?.post_id !== post.id && event.type !== 'delete') return;
+      if (event.data?.post_id !== postId && event.type !== 'delete') return;
 
       if (event.type === 'create') {
         // Add new comment to cache
-        queryClient.setQueryData(['comments', post.id], (oldComments = []) => {
+        queryClient.setQueryData(['comments', postId], (oldComments = []) => {
           return [event.data, ...oldComments];
         });
         // Update post comment count
         queryClient.invalidateQueries({ queryKey: ['posts'] });
       } else if (event.type === 'update') {
         // Update existing comment
-        queryClient.setQueryData(['comments', post.id], (oldComments = []) => {
+        queryClient.setQueryData(['comments', postId], (oldComments = []) => {
           return oldComments.map(c => c.id === event.id ? event.data : c);
         });
       } else if (event.type === 'delete') {
         // Remove deleted comment
-        queryClient.setQueryData(['comments', post.id], (oldComments = []) => {
+        queryClient.setQueryData(['comments', postId], (oldComments = []) => {
           const filtered = oldComments.filter(c => c.id !== event.id);
           // Check if the deleted comment was for this post
           if (filtered.length !== oldComments.length) {
@@ -68,40 +70,44 @@ export default function CommentsSheet({ open, onClose, post, currentUser }) {
     });
 
     return unsubscribe;
-  }, [open, post?.id, queryClient]);
+  }, [open, postId, queryClient]);
 
   const addCommentMutation = useMutation({
     mutationFn: async (content) => {
-      await base44.entities.Comment.create({
-        post_id: post.id,
+      console.log('🚀 Creating comment for post:', postId);
+      const newCommentData = await base44.entities.Comment.create({
+        post_id: postId,
         content,
         author_name: currentUser?.full_name || 'Runner',
         author_email: currentUser?.email,
       });
+      console.log('✅ Comment created:', newCommentData);
       // Update comments count
-      await base44.entities.Post.update(post.id, {
+      await base44.entities.Post.update(postId, {
         comments_count: (post.comments_count || 0) + 1,
       });
+      return newCommentData;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['comments', post?.id] });
+      console.log('🎉 Comment mutation success, invalidating queries');
+      queryClient.invalidateQueries({ queryKey: ['comments', postId] });
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       setNewComment('');
     },
     onError: (err) => {
-      console.log('ADD COMMENT ERROR', err);
+      console.log('❌ ADD COMMENT ERROR', err);
     },
   });
 
   const deleteCommentMutation = useMutation({
     mutationFn: async (commentId) => {
       await base44.entities.Comment.delete(commentId);
-      await base44.entities.Post.update(post.id, {
+      await base44.entities.Post.update(postId, {
         comments_count: Math.max(0, (post.comments_count || 1) - 1),
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['comments', post?.id] });
+      queryClient.invalidateQueries({ queryKey: ['comments', postId] });
       queryClient.invalidateQueries({ queryKey: ['posts'] });
     },
   });
