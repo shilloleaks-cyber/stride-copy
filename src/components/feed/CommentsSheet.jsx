@@ -152,22 +152,25 @@ export default function CommentsSheet({ open, onClose, post, currentUser }) {
                   </Avatar>
                   <div className="flex-1">
                     <div className="commentBubble">
-                      <p className="text-sm font-bold text-white">{comment.author_name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-bold text-white">{comment.author_name}</p>
+                        <span className="text-xs" style={{ color: 'var(--muted)' }}>•</span>
+                        <span className="text-xs" style={{ color: 'var(--muted)' }}>
+                          {timeAgo(comment.created_date)}
+                        </span>
+                      </div>
                       <p className="text-sm text-white mt-1" style={{ lineHeight: '1.5' }}>{comment.content}</p>
                     </div>
-                    <div className="flex items-center gap-3 mt-1 px-2">
-                      <span className="text-xs" style={{ color: 'var(--muted)' }}>
-                        {timeAgo(comment.created_date)}
-                      </span>
-                      {comment.author_email === currentUser?.email && (
+                    {comment.author_email === currentUser?.email && (
+                      <div className="flex items-center gap-3 mt-1 px-2">
                         <button 
                           onClick={() => deleteCommentMutation.mutate(comment.id)}
                           className="text-xs text-red-400 hover:text-red-300 transition-colors"
                         >
                           ลบ
                         </button>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               ))}
