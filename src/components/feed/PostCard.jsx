@@ -79,7 +79,7 @@ export default function PostCard({
           <div>
             <p className="font-bold text-white">{post.author_name}</p>
             <p className="text-xs" style={{ color: 'var(--muted)' }}>
-              {formatDistanceToNow(new Date(post.created_date), { addSuffix: true, locale: th })}
+              {formatDistanceToNow(new Date(post.created_date + 'Z'), { addSuffix: true, locale: th })}
             </p>
           </div>
         </div>
