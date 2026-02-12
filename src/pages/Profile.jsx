@@ -617,7 +617,9 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
 const profileStyles = `
   .profileRoot {
     min-height: 100vh;
-    background: radial-gradient(circle at top, rgba(163,255,18,0.08), transparent 60%),
+    background: radial-gradient(circle at center, transparent 40%, rgba(0,0,0,0.75) 100%),
+                radial-gradient(circle at top center, rgba(163,255,18,0.10), transparent 55%),
+                radial-gradient(circle at bottom, rgba(163,255,18,0.06), transparent 60%),
                 #0B0B0B;
     color: rgba(255,255,255,0.95);
     padding: 28px 0 100px;
