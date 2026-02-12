@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { timeAgo } from '@/utils/timeUtils';
+import { timeAgo } from '@/components/utils/timeUtils';
 import { 
   Heart, MessageCircle, Share2, MoreHorizontal, 
   MapPin, Clock, Flame, Zap, Trash2 
