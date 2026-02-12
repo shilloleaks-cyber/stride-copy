@@ -27,6 +27,11 @@ export default function PostCard({
   const isLiked = post.likes?.includes(currentUserEmail);
   const likesCount = post.likes?.length || 0;
 
+  const safeDate = (ts) => {
+    if (!ts) return null;
+    return new Date(String(ts).replace(" ", "T") + "Z");
+  };
+
   const getInitials = (name) => {
     if (!name) return 'U';
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -79,8 +84,8 @@ export default function PostCard({
           <div>
             <p className="font-bold text-white">{post.author_name}</p>
             <p className="text-xs" style={{ color: 'var(--muted)' }}>
-              {post.created_date
-                ? formatDistanceToNow(new Date(post.created_date), { addSuffix: true, locale: th })
+              {safeDate(post.created_date)
+                ? formatDistanceToNow(safeDate(post.created_date), { addSuffix: true, locale: th })
                 : '-'}
             </p>
           </div>
