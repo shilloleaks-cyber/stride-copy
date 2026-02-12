@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { timeAgo } from '@/components/utils/timeUtils';
+import { shortTimeAgo } from '@/components/utils/timeUtils';
 import { X, Send, Trash2 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -164,7 +164,7 @@ export default function CommentsSheet({ open, onClose, post, currentUser }) {
                             textOverflow: 'ellipsis'
                           }}
                         >
-                          {timeAgo(comment.created_date)}
+                          {shortTimeAgo(comment.created_date, 'th')}
                         </span>
                       </div>
                       <p className="text-sm text-white mt-1" style={{ lineHeight: '1.5' }}>{comment.content}</p>
