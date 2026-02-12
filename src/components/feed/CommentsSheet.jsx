@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { formatDistanceToNow, format } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import { th } from 'date-fns/locale';
 import { X, Send, Trash2 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -157,8 +157,8 @@ export default function CommentsSheet({ open, onClose, post, currentUser }) {
                       <p className="text-sm text-white mt-1" style={{ lineHeight: '1.5' }}>{comment.content}</p>
                     </div>
                     <div className="flex items-center gap-3 mt-1 px-2">
-                      <span className="text-xs" style={{ color: 'var(--muted)' }} title={format(new Date(comment.created_date + 'Z'), 'PPpp', { locale: th })}>
-                        {formatDistanceToNow(new Date(comment.created_date + 'Z'), { addSuffix: true, locale: th })} • {format(new Date(comment.created_date + 'Z'), 'HH:mm', { locale: th })}
+                      <span className="text-xs" style={{ color: 'var(--muted)' }}>
+                        {formatDistanceToNow(new Date(comment.created_date + 'Z'), { addSuffix: true, locale: th })}
                       </span>
                       {comment.author_email === currentUser?.email && (
                         <button 
