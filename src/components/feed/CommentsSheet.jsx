@@ -39,9 +39,12 @@ export default function CommentsSheet({ open, onClose, post, currentUser }) {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['comments', post?.id]);
-      queryClient.invalidateQueries(['posts']);
+      queryClient.invalidateQueries({ queryKey: ['comments', post?.id] });
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
       setNewComment('');
+    },
+    onError: (err) => {
+      console.log('ADD COMMENT ERROR', err);
     },
   });
 
@@ -53,8 +56,8 @@ export default function CommentsSheet({ open, onClose, post, currentUser }) {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['comments', post?.id]);
-      queryClient.invalidateQueries(['posts']);
+      queryClient.invalidateQueries({ queryKey: ['comments', post?.id] });
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
     },
   });
 
