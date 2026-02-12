@@ -75,13 +75,13 @@ export default function Feed() {
   const likeMutation = useMutation({
     mutationFn: async ({ postId, isLiked }) => {
       const post = allPosts.find(p => p.id === postId);
-      const currentLikes = (post?.likes || []).filter(email => email != null);
+      const currentLikes = post?.likes || [];
       
       let newLikes;
       if (isLiked) {
         newLikes = currentLikes.filter(email => email !== currentUser?.email);
       } else {
-        newLikes = [...currentLikes, currentUser?.email].filter(email => email != null);
+        newLikes = [...currentLikes, currentUser?.email];
       }
       
       await base44.entities.Post.update(postId, { likes: newLikes });
