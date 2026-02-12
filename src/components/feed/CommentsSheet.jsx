@@ -153,9 +153,17 @@ export default function CommentsSheet({ open, onClose, post, currentUser }) {
                   <div className="flex-1">
                     <div className="commentBubble">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-bold text-white">{comment.author_name}</p>
+                        <p className="text-sm font-semibold text-white">{comment.author_name}</p>
                         <span className="text-xs" style={{ color: 'var(--muted)' }}>•</span>
-                        <span className="text-xs" style={{ color: '#BC13FE', textShadow: '0 0 8px rgba(188, 19, 254, 0.4)' }}>
+                        <span 
+                          className="text-[10px] whitespace-nowrap overflow-hidden" 
+                          style={{ 
+                            color: 'rgba(188, 19, 254, 0.6)', 
+                            textShadow: '0 0 6px rgba(188, 19, 254, 0.17)',
+                            maxWidth: '100px',
+                            textOverflow: 'ellipsis'
+                          }}
+                        >
                           {timeAgo(comment.created_date)}
                         </span>
                       </div>
