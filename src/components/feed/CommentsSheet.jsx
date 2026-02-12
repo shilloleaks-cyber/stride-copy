@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { formatDistanceToNow } from 'date-fns';
-import { th } from 'date-fns/locale';
+import { timeAgo } from '@/utils/timeUtils';
 import { X, Send, Trash2 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -19,12 +18,6 @@ export default function CommentsSheet({ open, onClose, post, currentUser }) {
   const [newComment, setNewComment] = useState('');
   const queryClient = useQueryClient();
   const postId = post?.id;
-
-  const safeDate = (ts) => {
-    if (!ts) return null;
-    const date = new Date(String(ts).replace(" ", "T") + "Z");
-    return isNaN(date.getTime()) ? null : date;
-  };
 
   const { data: comments = [], isLoading } = useQuery({
     queryKey: ['comments', postId],
@@ -164,9 +157,7 @@ export default function CommentsSheet({ open, onClose, post, currentUser }) {
                     </div>
                     <div className="flex items-center gap-3 mt-1 px-2">
                       <span className="text-xs" style={{ color: 'var(--muted)' }}>
-                        {safeDate(comment.created_date)
-                          ? formatDistanceToNow(safeDate(comment.created_date), { addSuffix: true, locale: th })
-                          : '-'}
+                        {timeAgo(comment.created_date)}
                       </span>
                       {comment.author_email === currentUser?.email && (
                         <button 

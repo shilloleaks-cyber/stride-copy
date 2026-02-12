@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { formatDistanceToNow } from 'date-fns';
-import { th } from 'date-fns/locale';
+import { timeAgo } from '@/utils/timeUtils';
 import { 
   Heart, MessageCircle, Share2, MoreHorizontal, 
   MapPin, Clock, Flame, Zap, Trash2 
@@ -26,12 +25,6 @@ export default function PostCard({
 }) {
   const isLiked = post.likes?.includes(currentUserEmail);
   const likesCount = post.likes?.length || 0;
-
-  const safeDate = (ts) => {
-    if (!ts) return null;
-    const date = new Date(String(ts).replace(" ", "T") + "Z");
-    return isNaN(date.getTime()) ? null : date;
-  };
 
   const getInitials = (name) => {
     if (!name) return 'U';
@@ -85,9 +78,7 @@ export default function PostCard({
           <div>
             <p className="font-bold text-white">{post.author_name}</p>
             <p className="text-xs" style={{ color: 'var(--muted)' }}>
-              {safeDate(post.created_date)
-                ? formatDistanceToNow(safeDate(post.created_date), { addSuffix: true, locale: th })
-                : '-'}
+              {timeAgo(post.created_date)}
             </p>
           </div>
         </div>
