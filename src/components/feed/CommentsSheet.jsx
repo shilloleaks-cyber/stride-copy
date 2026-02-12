@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { timeAgo } from '@/components/utils/timeUtils';
-import { ChevronDown, Send, Trash2 } from 'lucide-react';
+import { X, Send, Trash2 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +16,6 @@ import {
 
 export default function CommentsSheet({ open, onClose, post, currentUser }) {
   const [newComment, setNewComment] = useState('');
-  const [isOpen, setIsOpen] = useState(true);
   const queryClient = useQueryClient();
   const postId = post?.id;
 
@@ -124,21 +123,13 @@ export default function CommentsSheet({ open, onClose, post, currentUser }) {
   return (
     <Sheet open={open} onOpenChange={onClose}>
       <SheetContent side="bottom" className="commentsSheet">
-        <SheetHeader className="pb-4 border-b flex-row items-center justify-between" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-          <SheetTitle className="text-white font-bold tracking-wide" style={{ letterSpacing: '0.05em' }}>
+        <SheetHeader className="pb-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+          <SheetTitle className="text-white text-center font-bold tracking-wide" style={{ letterSpacing: '0.05em' }}>
             Comments
           </SheetTitle>
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="text-gray-400 hover:text-white transition-transform duration-300"
-            style={{ transform: isOpen ? 'rotate(0deg)' : 'rotate(180deg)' }}
-          >
-            <ChevronDown className="w-5 h-5" />
-          </button>
         </SheetHeader>
 
         {/* Comments List */}
-        {isOpen && (
         <div className="commentsListArea" style={{ position: 'relative', zIndex: 1 }}>
           {isLoading ? (
             <div className="flex justify-center py-8">
@@ -164,7 +155,7 @@ export default function CommentsSheet({ open, onClose, post, currentUser }) {
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-bold text-white">{comment.author_name}</p>
                         <span className="text-xs" style={{ color: 'var(--muted)' }}>•</span>
-                        <span className="text-xs" style={{ color: '#A3FF12', textShadow: '0 0 10px rgba(163, 255, 18, 0.5)' }}>
+                        <span className="text-xs" style={{ color: 'var(--muted)' }}>
                           {timeAgo(comment.created_date)}
                         </span>
                       </div>
@@ -192,7 +183,6 @@ export default function CommentsSheet({ open, onClose, post, currentUser }) {
             </div>
           )}
         </div>
-        )}
 
         {/* Input */}
         <form
