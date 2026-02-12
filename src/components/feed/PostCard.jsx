@@ -79,8 +79,8 @@ export default function PostCard({
           <div>
             <p className="font-bold text-white">{post.author_name}</p>
             <p className="text-xs" style={{ color: 'var(--muted)' }}>
-              {post.created_at
-                ? formatDistanceToNow(new Date(post.created_at), { addSuffix: true })
+              {post.created_date
+                ? formatDistanceToNow(new Date(post.created_date), { addSuffix: true, locale: th })
                 : '-'}
             </p>
           </div>

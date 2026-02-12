@@ -158,8 +158,8 @@ export default function CommentsSheet({ open, onClose, post, currentUser }) {
                     </div>
                     <div className="flex items-center gap-3 mt-1 px-2">
                       <span className="text-xs" style={{ color: 'var(--muted)' }}>
-                        {comment.created_at
-                          ? formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })
+                        {comment.created_date
+                          ? formatDistanceToNow(new Date(comment.created_date), { addSuffix: true, locale: th })
                           : '-'}
                       </span>
                       {comment.author_email === currentUser?.email && (
