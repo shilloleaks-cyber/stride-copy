@@ -35,3 +35,23 @@ export function timeAgo(ts, opts = {}) {
     ...opts.dateFns,
   });
 }
+
+// แสดงเวลาแบบสั้น (Xmins, Xhr, Xd)
+export function shortTimeAgo(ts, locale = 'en') {
+  const d = safeDate(ts);
+  if (!d) return "-";
+
+  const now = new Date();
+  const diffMs = now - d;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHrs = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffDays > 0) {
+    return locale === 'th' ? `${diffDays} วัน` : `${diffDays}d`;
+  } else if (diffHrs > 0) {
+    return locale === 'th' ? `${diffHrs} ชม.` : `${diffHrs}hr`;
+  } else {
+    return locale === 'th' ? `${diffMins} นาที` : `${diffMins}mins`;
+  }
+}
