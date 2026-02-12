@@ -630,6 +630,11 @@ const profileStyles = `
   .identityHeader {
     text-align: center;
     padding: 0 24px 32px;
+    background: radial-gradient(circle at center, transparent 40%, rgba(0,0,0,0.65) 100%),
+                radial-gradient(circle at top center, rgba(163,255,18,0.10), transparent 55%),
+                linear-gradient(180deg, #0B0B0B 0%, #050505 100%);
+    border-radius: 20px;
+    margin: 0 20px 28px;
   }
 
   .avatarContainer {
