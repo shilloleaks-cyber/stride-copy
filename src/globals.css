@@ -241,15 +241,21 @@
     0 0 40px rgba(138, 43, 226, 0.15),
     0 0 60px rgba(191, 255, 0, 0.10),
     0 -20px 50px rgba(0, 0, 0, 0.5) !important;
-  height: 70vh !important;
+  max-height: 100vh !important;
+  height: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
 }
 
 .commentsListArea {
   flex: 1;
   overflow-y: auto;
-  padding: 16px 0;
-  max-height: calc(70vh - 140px);
+  overflow-x: hidden;
+  padding: 16px 20px;
+  min-height: 0;
   mask-image: linear-gradient(to bottom, transparent 0%, black 20px, black calc(100% - 20px), transparent 100%);
+  -webkit-overflow-scrolling: touch;
 }
 
 .commentsListArea::-webkit-scrollbar {
@@ -319,9 +325,12 @@
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
-  /* ถ้าเป็นแถบล่างใน sheet */
   padding: 12px 14px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+  background: rgba(10, 10, 10, 0.95);
+  position: relative;
+  z-index: 10;
 }
 
 .commentInput {
