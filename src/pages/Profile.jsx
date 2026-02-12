@@ -617,10 +617,8 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
 const profileStyles = `
   .profileRoot {
     min-height: 100vh;
-    background: radial-gradient(circle at center, transparent 40%, rgba(0,0,0,0.75) 100%),
-                radial-gradient(circle at top center, rgba(163,255,18,0.10), transparent 55%),
-                radial-gradient(circle at bottom, rgba(163,255,18,0.06), transparent 60%),
-                #0B0B0B;
+    background: radial-gradient(1200px 800px at 50% 0%, rgba(123,77,255,0.12), transparent 65%),
+                #050508;
     color: rgba(255,255,255,0.95);
     padding: 28px 0 100px;
     font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
@@ -630,11 +628,6 @@ const profileStyles = `
   .identityHeader {
     text-align: center;
     padding: 0 24px 32px;
-    background: radial-gradient(circle at center, transparent 40%, rgba(0,0,0,0.65) 100%),
-                radial-gradient(circle at top center, rgba(163,255,18,0.10), transparent 55%),
-                linear-gradient(180deg, #0B0B0B 0%, #050505 100%);
-    border-radius: 20px;
-    margin: 0 20px 28px;
   }
 
   .avatarContainer {
