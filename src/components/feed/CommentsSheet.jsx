@@ -20,6 +20,11 @@ export default function CommentsSheet({ open, onClose, post, currentUser }) {
   const queryClient = useQueryClient();
   const postId = post?.id;
 
+  const safeDate = (ts) => {
+    if (!ts) return null;
+    return new Date(String(ts).replace(" ", "T") + "Z");
+  };
+
   const { data: comments = [], isLoading } = useQuery({
     queryKey: ['comments', postId],
     queryFn: async ({ queryKey }) => {
