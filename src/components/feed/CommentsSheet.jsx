@@ -116,7 +116,7 @@ export default function CommentsSheet({ open, onClose, post, currentUser }) {
         </SheetHeader>
 
         {/* Comments List */}
-        <div className="commentsListArea">
+        <div className="commentsListArea" style={{ position: 'relative', zIndex: 1 }}>
           {isLoading ? (
             <div className="flex justify-center py-8">
               <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--green)', borderTopColor: 'transparent' }} />
@@ -170,6 +170,12 @@ export default function CommentsSheet({ open, onClose, post, currentUser }) {
         {/* Input */}
         <form
           className="commentInputArea"
+          style={{ 
+            position: 'relative',
+            zIndex: 100,
+            pointerEvents: 'auto',
+            background: 'rgba(10, 10, 10, 0.95)',
+          }}
           onSubmit={(e) => {
             e.preventDefault();
             console.log("🔥 Form submitted");
@@ -205,6 +211,7 @@ export default function CommentsSheet({ open, onClose, post, currentUser }) {
             }}
             placeholder="Write a comment..."
             className="commentInput"
+            style={{ pointerEvents: 'auto' }}
           />
 
           <button
@@ -212,6 +219,12 @@ export default function CommentsSheet({ open, onClose, post, currentUser }) {
             disabled={!newComment.trim() || addCommentMutation.isPending}
             className={`commentSendBtn ${addCommentMutation.isPending ? "sending" : ""}`}
             aria-label="Send comment"
+            style={{ 
+              pointerEvents: 'auto',
+              position: 'relative',
+              zIndex: 10,
+              background: addCommentMutation.isPending ? 'rgba(191, 255, 0, 0.8)' : '#BFFF00',
+            }}
             onClick={(e) => {
               console.log("🖱️ Button clicked", {
                 disabled: !newComment.trim() || addCommentMutation.isPending,
