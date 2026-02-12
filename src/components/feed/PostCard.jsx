@@ -79,13 +79,10 @@ export default function PostCard({
           <div>
             <p className="font-bold text-white">{post.author_name}</p>
             <p className="text-xs" style={{ color: 'var(--muted)' }}>
-              {(() => {
-                if (!post.created_date) return 'เมื่อสักครู่';
-                console.log('🕐 Post created_date:', post.created_date);
-                console.log('🕐 Parsed Date:', new Date(post.created_date));
-                console.log('🕐 Current Date:', new Date());
-                return formatDistanceToNow(new Date(post.created_date), { addSuffix: true, locale: th });
-              })()}
+              {post.created_at 
+                ? formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: th })
+                : '-'
+              }
             </p>
           </div>
         </div>
