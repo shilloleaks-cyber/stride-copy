@@ -200,7 +200,6 @@ export default function CommentsSheet({ open, onClose, post, currentUser }) {
 
             console.log("✅ Sending comment...");
             addCommentMutation.mutate(text);
-            setNewComment("");
           }}
         >
           <Input
