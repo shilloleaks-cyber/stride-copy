@@ -21,8 +21,15 @@ export default function CommentsSheet({ open, onClose, post, currentUser }) {
 
   const { data: comments = [], isLoading } = useQuery({
     queryKey: ['comments', post?.id],
-    queryFn: () => base44.entities.Comment.filter({ post_id: post?.id }, '-created_date'),
-    enabled: open && !!post?.id,
+    queryFn: async () => {
+      console.log('🔍 Fetching comments for post:', post?.id);
+      console.log('🔍 Filter query:', { post_id: post?.id });
+      const result = await base44.entities.Comment.filter({ post_id: post?.id }, '-created_date');
+      console.log('📦 Comments fetched:', result);
+      console.log('📦 Comments count:', result?.length);
+      return result;
+    },
+    enabled: true,
   });
 
   // Real-time comment updates via WebSocket
