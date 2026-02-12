@@ -155,7 +155,7 @@ export default function CommentsSheet({ open, onClose, post, currentUser }) {
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-bold text-white">{comment.author_name}</p>
                         <span className="text-xs" style={{ color: 'var(--muted)' }}>•</span>
-                        <span className="text-xs" style={{ color: 'var(--muted)' }}>
+                        <span className="text-xs" style={{ color: '#BC13FE', textShadow: '0 0 8px rgba(188, 19, 254, 0.4)' }}>
                           {timeAgo(comment.created_date)}
                         </span>
                       </div>
