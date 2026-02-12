@@ -88,8 +88,10 @@ export default function CommentsSheet({ open, onClose, post, currentUser }) {
       });
       return newCommentData;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       console.log('🎉 Comment mutation success, invalidating queries');
+      console.log('📅 NEW COMMENT CREATED_DATE:', data?.created_date);
+      console.log('📦 FULL NEW COMMENT DATA:', data);
       queryClient.invalidateQueries({ queryKey: ['comments', postId] });
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       setNewComment('');
