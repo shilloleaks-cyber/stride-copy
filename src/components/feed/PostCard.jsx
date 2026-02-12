@@ -29,7 +29,8 @@ export default function PostCard({
 
   const safeDate = (ts) => {
     if (!ts) return null;
-    return new Date(String(ts).replace(" ", "T") + "Z");
+    const date = new Date(String(ts).replace(" ", "T") + "Z");
+    return isNaN(date.getTime()) ? null : date;
   };
 
   const getInitials = (name) => {
