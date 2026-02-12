@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -24,6 +24,44 @@ export default function CommentsSheet({ open, onClose, post, currentUser }) {
     queryFn: () => base44.entities.Comment.filter({ post_id: post?.id }, '-created_date'),
     enabled: open && !!post?.id,
   });
+
+  // Real-time comment updates via WebSocket
+  useEffect(() => {
+    if (!open || !post?.id) return;
+
+    const unsubscribe = base44.entities.Comment.subscribe((event) => {
+      console.log('🔴 Real-time comment event:', event);
+
+      // Only process comments for this post
+      if (event.data?.post_id !== post.id && event.type !== 'delete') return;
+
+      if (event.type === 'create') {
+        // Add new comment to cache
+        queryClient.setQueryData(['comments', post.id], (oldComments = []) => {
+          return [event.data, ...oldComments];
+        });
+        // Update post comment count
+        queryClient.invalidateQueries({ queryKey: ['posts'] });
+      } else if (event.type === 'update') {
+        // Update existing comment
+        queryClient.setQueryData(['comments', post.id], (oldComments = []) => {
+          return oldComments.map(c => c.id === event.id ? event.data : c);
+        });
+      } else if (event.type === 'delete') {
+        // Remove deleted comment
+        queryClient.setQueryData(['comments', post.id], (oldComments = []) => {
+          const filtered = oldComments.filter(c => c.id !== event.id);
+          // Check if the deleted comment was for this post
+          if (filtered.length !== oldComments.length) {
+            queryClient.invalidateQueries({ queryKey: ['posts'] });
+          }
+          return filtered;
+        });
+      }
+    });
+
+    return unsubscribe;
+  }, [open, post?.id, queryClient]);
 
   const addCommentMutation = useMutation({
     mutationFn: async (content) => {
