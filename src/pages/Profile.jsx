@@ -639,15 +639,15 @@ const profileStyles = `
     position: relative;
     padding: 6px;
     border-radius: 50%;
-    background: transparent;
-    border: 3px solid #B6FF00;
-    box-shadow: 0 0 28px rgba(182,255,0,0.5), 0 0 0 1px rgba(182,255,0,0.2) inset;
+    background: rgba(0,0,0,0.4);
+    border: 2px solid rgba(182,255,0,0.3);
+    box-shadow: 0 0 12px rgba(182,255,0,0.15), 0 0 0 1px rgba(0,0,0,0.6) inset;
     animation: avatarRingPulse 3s ease-in-out infinite;
   }
 
   @keyframes avatarRingPulse {
-    0%, 100% { box-shadow: 0 0 28px rgba(182,255,0,0.5), 0 0 0 1px rgba(182,255,0,0.2) inset; }
-    50% { box-shadow: 0 0 38px rgba(182,255,0,0.7), 0 0 0 1px rgba(182,255,0,0.3) inset; }
+    0%, 100% { box-shadow: 0 0 12px rgba(182,255,0,0.15), 0 0 0 1px rgba(0,0,0,0.6) inset; }
+    50% { box-shadow: 0 0 16px rgba(182,255,0,0.25), 0 0 0 1px rgba(0,0,0,0.5) inset; }
   }
 
   .userNameLarge {
