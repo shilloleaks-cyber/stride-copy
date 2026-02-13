@@ -639,10 +639,9 @@ const profileStyles = `
     position: relative;
     padding: 6px;
     border-radius: 50%;
-    background: rgba(0,0,0,0.4);
-    border: 2px solid rgba(182,255,0,0.3);
-    box-shadow: 0 0 12px rgba(182,255,0,0.15), 0 0 0 1px rgba(0,0,0,0.6) inset;
-    animation: avatarRingPulse 3s ease-in-out infinite;
+    background: #050508;
+    border: 1px solid rgba(182,255,0,0.18);
+    box-shadow: 0 0 10px rgba(182,255,0,0.10);
   }
 
   @keyframes avatarRingPulse {
