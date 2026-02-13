@@ -640,8 +640,8 @@ const profileStyles = `
     padding: 6px;
     border-radius: 50%;
     background: #050508;
-    border: 1px solid rgba(182,255,0,0.18);
-    box-shadow: 0 0 10px rgba(182,255,0,0.10);
+    border: 1px solid rgba(182,255,0,0.10);
+    box-shadow: 0 0 6px rgba(182,255,0,0.06);
   }
 
   @keyframes avatarRingPulse {
