@@ -62,12 +62,17 @@ export default function ProfileAvatar({
             whileTap={{ scale: 0.9 }}
             onClick={() => inputRef.current?.click()}
             disabled={isUploading}
-            className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-lg neon-glow"
+            className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full flex items-center justify-center shadow-lg"
+            style={{
+              background: 'linear-gradient(135deg, #B6FF00 0%, #8A2BE2 100%)',
+              border: 'none',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+            }}
           >
             {isUploading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-4 h-4 animate-spin text-black" />
             ) : (
-              <Camera className="w-4 h-4" />
+              <Camera className="w-4 h-4 text-black" />
             )}
           </motion.button>
         </>
