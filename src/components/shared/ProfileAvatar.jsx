@@ -39,11 +39,11 @@ export default function ProfileAvatar({
 
   return (
     <div className={`relative ${className}`}>
-      <Avatar className={`${sizeClasses[size]} neon-border bg-gradient-to-br from-emerald-400 to-emerald-600`}>
+      <Avatar className={`${sizeClasses[size]}`} style={{ background: '#050508', boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}>
         {user?.profile_image ? (
           <AvatarImage src={user.profile_image} alt={user.full_name} className="object-cover" />
         ) : null}
-        <AvatarFallback className="text-xl font-medium bg-gradient-to-br from-emerald-400 to-emerald-600 text-white neon-text">
+        <AvatarFallback className="text-xl font-medium text-white" style={{ background: '#050508' }}>
           {getInitials(user?.full_name)}
         </AvatarFallback>
       </Avatar>
