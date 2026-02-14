@@ -44,6 +44,7 @@ export default function Profile() {
   const [copied, setCopied] = useState(false);
   const [showSkins, setShowSkins] = useState(false);
   const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
+  const [activeFollowTab, setActiveFollowTab] = useState('following');
 
   const { data: user, refetch: refetchUser } = useQuery({
     queryKey: ['currentUser'],
