@@ -10,6 +10,8 @@ import {
   Award, Calendar, TrendingUp, Facebook, Copy, Check,
   Settings, LogOut, Trophy, Target, Users, Edit3, Palette, Wallet
 } from 'lucide-react';
+import UserCard from '@/components/feed/UserCard';
+import { useMutation } from '@tanstack/react-query';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
