@@ -45,6 +45,7 @@ export default function Profile() {
   const [showSkins, setShowSkins] = useState(false);
   const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
   const [activeFollowTab, setActiveFollowTab] = useState('following');
+  const [followSheetOpen, setFollowSheetOpen] = useState(false);
 
   const { data: user, refetch: refetchUser } = useQuery({
     queryKey: ['currentUser'],
@@ -343,7 +344,22 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
         </div>
 
         <h2 className="userNameLarge">{user?.full_name || 'Runner'}</h2>
-        
+
+        <div className="followPillsRow">
+          <button 
+            onClick={() => { setActiveFollowTab('following'); setFollowSheetOpen(true); }}
+            className="followPill"
+          >
+            กำลังติดตาม {followingUsers.length}
+          </button>
+          <button 
+            onClick={() => { setActiveFollowTab('followers'); setFollowSheetOpen(true); }}
+            className="followPill"
+          >
+            ผู้ติดตาม {followerUsers.length}
+          </button>
+        </div>
+
         <div className="levelBadge">
           <Trophy className="w-3.5 h-3.5" />
           <span>Lv.{currentLevel} Runner</span>
@@ -466,76 +482,6 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
 
       {/* Running History */}
       <RunningHistorySection runs={runs} />
-
-      {/* Following / Followers Section */}
-      <div className="followSection">
-        <div className="followTabsWrapper">
-          <button
-            onClick={() => setActiveFollowTab('following')}
-            className={`followTab ${activeFollowTab === 'following' ? 'active' : ''}`}
-          >
-            กำลังติดตาม ({followingUsers.length})
-          </button>
-          <button
-            onClick={() => setActiveFollowTab('followers')}
-            className={`followTab ${activeFollowTab === 'followers' ? 'active' : ''}`}
-          >
-            ผู้ติดตาม ({followerUsers.length})
-          </button>
-        </div>
-
-        <div className="followListArea">
-          {activeFollowTab === 'following' && (
-            <>
-              {followingUsers.length > 0 ? (
-                <div className="followList">
-                  {followingUsers.map((u) => (
-                    <UserCard
-                      key={u.id}
-                      user={u}
-                      isFollowing={true}
-                      onFollow={handleFollow}
-                      onUnfollow={handleUnfollow}
-                      stats={getUserStats(u.email)}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="emptyFollowState">
-                  <Users className="emptyIcon" />
-                  <p className="emptyTitle">คุณยังไม่ได้ติดตามใคร</p>
-                  <p className="emptySubtext">ค้นหานักวิ่งเพื่อเริ่มติดตาม</p>
-                </div>
-              )}
-            </>
-          )}
-
-          {activeFollowTab === 'followers' && (
-            <>
-              {followerUsers.length > 0 ? (
-                <div className="followList">
-                  {followerUsers.map((u) => (
-                    <UserCard
-                      key={u.id}
-                      user={u}
-                      isFollowing={followingEmails.includes(u.email)}
-                      onFollow={handleFollow}
-                      onUnfollow={handleUnfollow}
-                      stats={getUserStats(u.email)}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="emptyFollowState">
-                  <Users className="emptyIcon" />
-                  <p className="emptyTitle">ยังไม่มีผู้ติดตาม</p>
-                  <p className="emptySubtext">ค้นหานักวิ่งเพื่อเริ่มติดตาม</p>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      </div>
 
       {/* Edit Bio Dialog */}
       <Dialog open={editBioOpen} onOpenChange={setEditBioOpen}>
@@ -730,6 +676,94 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
                   </div>
                 </div>
               ))}
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+
+      {/* Follow Sheet Modal */}
+      {followSheetOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="achievementsModalOverlay"
+          onClick={() => setFollowSheetOpen(false)}
+        >
+          <motion.div
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+            className="achievementsModalSheet"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="achievementsModalHeader">
+              <div>
+                <h3 className="achievementsModalTitle">
+                  {activeFollowTab === 'following' ? 'กำลังติดตาม' : 'ผู้ติดตาม'}
+                </h3>
+                <p className="achievementsModalSubtitle">
+                  {activeFollowTab === 'following' 
+                    ? `${followingUsers.length} คน`
+                    : `${followerUsers.length} คน`
+                  }
+                </p>
+              </div>
+              <button 
+                onClick={() => setFollowSheetOpen(false)} 
+                className="achievementsModalClose"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="followModalList">
+              {activeFollowTab === 'following' && (
+                <>
+                  {followingUsers.length > 0 ? (
+                    followingUsers.map((u) => (
+                      <UserCard
+                        key={u.id}
+                        user={u}
+                        isFollowing={true}
+                        onFollow={handleFollow}
+                        onUnfollow={handleUnfollow}
+                        stats={getUserStats(u.email)}
+                      />
+                    ))
+                  ) : (
+                    <div className="emptyFollowState">
+                      <Users className="emptyIcon" />
+                      <p className="emptyTitle">ยังไม่ได้ติดตามใคร</p>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {activeFollowTab === 'followers' && (
+                <>
+                  {followerUsers.length > 0 ? (
+                    followerUsers.map((u) => (
+                      <UserCard
+                        key={u.id}
+                        user={u}
+                        isFollowing={followingEmails.includes(u.email)}
+                        onFollow={handleFollow}
+                        onUnfollow={handleUnfollow}
+                        stats={getUserStats(u.email)}
+                      />
+                    ))
+                  ) : (
+                    <div className="emptyFollowState">
+                      <Users className="emptyIcon" />
+                      <p className="emptyTitle">ยังไม่มีผู้ติดตาม</p>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </motion.div>
         </motion.div>
@@ -1250,51 +1284,46 @@ const profileStyles = `
     margin-bottom: 28px;
   }
 
-  /* Following / Followers Section */
-  .followSection {
-    margin: 0 20px 28px;
-    padding: 20px;
-    background: rgba(20,20,20,0.5);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 20px;
-  }
-
-  .followTabsWrapper {
+  /* Follow Pills Row */
+  .followPillsRow {
     display: flex;
-    gap: 8px;
-    margin-bottom: 20px;
-    background: rgba(10,10,10,0.6);
-    border-radius: 14px;
-    padding: 6px;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 16px;
   }
 
-  .followTab {
-    flex: 1;
-    padding: 10px 16px;
-    border-radius: 10px;
-    background: transparent;
-    border: none;
-    color: rgba(255,255,255,0.5);
-    font-size: 13px;
-    font-weight: 700;
+  .followPill {
+    padding: 6px 16px;
+    border-radius: 999px;
+    background: rgba(10,10,10,0.6);
+    border: 1px solid rgba(123,77,255,0.3);
+    color: rgba(255,255,255,0.75);
+    font-size: 12px;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
+    box-shadow: 0 0 0 rgba(123,77,255,0);
   }
 
-  .followTab.active {
-    background: linear-gradient(135deg, rgba(123,77,255,0.4) 0%, rgba(123,77,255,0.25) 100%);
-    color: #FFFFFF;
-    box-shadow: 0 0 20px rgba(123,77,255,0.25), 0 0 0 1px rgba(123,77,255,0.2) inset;
+  .followPill:hover {
+    background: rgba(123,77,255,0.15);
+    border-color: rgba(123,77,255,0.5);
+    box-shadow: 0 0 16px rgba(123,77,255,0.2);
   }
 
-  .followListArea {
-    min-height: 200px;
+  .followPill:active {
+    transform: scale(0.96);
+    box-shadow: 0 0 20px rgba(123,77,255,0.3);
   }
 
-  .followList {
+  /* Follow Modal List */
+  .followModalList {
+    padding: 16px 20px;
     display: flex;
     flex-direction: column;
     gap: 12px;
+    max-height: 60vh;
+    overflow-y: auto;
   }
 
   .emptyFollowState {
@@ -1317,12 +1346,6 @@ const profileStyles = `
     font-size: 16px;
     font-weight: 600;
     color: rgba(255,255,255,0.6);
-    margin-bottom: 6px;
-  }
-
-  .emptyFollowState .emptySubtext {
-    font-size: 13px;
-    color: rgba(255,255,255,0.35);
   }
 
   @media (max-width: 420px) {
