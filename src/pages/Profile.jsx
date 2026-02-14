@@ -413,6 +413,76 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
       {/* Running History */}
       <RunningHistorySection runs={runs} />
 
+      {/* Following / Followers Section */}
+      <div className="followSection">
+        <div className="followTabsWrapper">
+          <button
+            onClick={() => setActiveFollowTab('following')}
+            className={`followTab ${activeFollowTab === 'following' ? 'active' : ''}`}
+          >
+            กำลังติดตาม ({followingUsers.length})
+          </button>
+          <button
+            onClick={() => setActiveFollowTab('followers')}
+            className={`followTab ${activeFollowTab === 'followers' ? 'active' : ''}`}
+          >
+            ผู้ติดตาม ({followerUsers.length})
+          </button>
+        </div>
+
+        <div className="followListArea">
+          {activeFollowTab === 'following' && (
+            <>
+              {followingUsers.length > 0 ? (
+                <div className="followList">
+                  {followingUsers.map((u) => (
+                    <UserCard
+                      key={u.id}
+                      user={u}
+                      isFollowing={true}
+                      onFollow={handleFollow}
+                      onUnfollow={handleUnfollow}
+                      stats={getUserStats(u.email)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="emptyFollowState">
+                  <Users className="emptyIcon" />
+                  <p className="emptyTitle">คุณยังไม่ได้ติดตามใคร</p>
+                  <p className="emptySubtext">ค้นหานักวิ่งเพื่อเริ่มติดตาม</p>
+                </div>
+              )}
+            </>
+          )}
+
+          {activeFollowTab === 'followers' && (
+            <>
+              {followerUsers.length > 0 ? (
+                <div className="followList">
+                  {followerUsers.map((u) => (
+                    <UserCard
+                      key={u.id}
+                      user={u}
+                      isFollowing={followingEmails.includes(u.email)}
+                      onFollow={handleFollow}
+                      onUnfollow={handleUnfollow}
+                      stats={getUserStats(u.email)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="emptyFollowState">
+                  <Users className="emptyIcon" />
+                  <p className="emptyTitle">ยังไม่มีผู้ติดตาม</p>
+                  <p className="emptySubtext">ค้นหานักวิ่งเพื่อเริ่มติดตาม</p>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+
       {/* Edit Bio Dialog */}
       <Dialog open={editBioOpen} onOpenChange={setEditBioOpen}>
         <DialogContent className="bg-gray-900 border-gray-800 text-white max-w-md">
