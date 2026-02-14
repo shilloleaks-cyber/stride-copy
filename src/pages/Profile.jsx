@@ -63,6 +63,57 @@ export default function Profile() {
     enabled: !!user?.email,
   });
 
+  const { data: allUsers = [] } = useQuery({
+    queryKey: ['allUsers'],
+    queryFn: () => base44.entities.User.list(),
+  });
+
+  const followingEmails = follows.map(f => f.following_email);
+  const followerEmails = followers.map(f => f.follower_email);
+
+  const followingUsers = allUsers.filter(u => followingEmails.includes(u.email));
+  const followerUsers = allUsers.filter(u => followerEmails.includes(u.email));
+
+  const getUserStats = (email) => {
+    const userRuns = runs.filter(r => r.created_by === email && r.status === 'completed');
+    return {
+      totalDistance: userRuns.reduce((sum, r) => sum + (r.distance_km || 0), 0),
+      totalRuns: userRuns.length,
+    };
+  };
+
+  const followMutation = useMutation({
+    mutationFn: async (targetEmail) => {
+      await base44.entities.Follow.create({
+        follower_email: user?.email,
+        following_email: targetEmail,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['follows']);
+    },
+  });
+
+  const unfollowMutation = useMutation({
+    mutationFn: async (targetEmail) => {
+      const follow = follows.find(f => f.following_email === targetEmail);
+      if (follow) {
+        await base44.entities.Follow.delete(follow.id);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['follows']);
+    },
+  });
+
+  const handleFollow = (email) => {
+    followMutation.mutate(email);
+  };
+
+  const handleUnfollow = (email) => {
+    unfollowMutation.mutate(email);
+  };
+
   const { data: myParticipations = [] } = useQuery({
     queryKey: ['myParticipations', user?.email],
     queryFn: () => base44.entities.ChallengeParticipant.filter({ user_email: user?.email }),
