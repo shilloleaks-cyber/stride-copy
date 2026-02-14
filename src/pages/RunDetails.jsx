@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { AnimatePresence } from 'framer-motion';
 
 import { format } from 'date-fns';
 import { 
@@ -21,6 +22,7 @@ import SpeedChart from '@/components/running/SpeedChart';
 import PaceConsistencyScore from '@/components/running/PaceConsistencyScore';
 import PerKilometerBreakdown from '@/components/running/PerKilometerBreakdown';
 import AIFormInsights from '@/components/running/AIFormInsights';
+import GuestLoginPrompt from '@/components/auth/GuestLoginPrompt';
 
 const COMMON_QUOTES = [
   "No excuses. Just progress.",
@@ -72,9 +74,20 @@ export default function RunDetails() {
   const [toastAmount, setToastAmount] = useState(0);
   const claimTimeoutRef = useRef(null);
 
-  const { data: currentUser } = useQuery({
+  // Guest login prompt state
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [loginPromptReason, setLoginPromptReason] = useState(null);
+  const hasCheckedPromptRef = useRef(false);
+
+  const { data: currentUser, refetch: refetchUser } = useQuery({
     queryKey: ['currentUser'],
-    queryFn: () => base44.auth.me(),
+    queryFn: async () => {
+      try {
+        return await base44.auth.me();
+      } catch (error) {
+        return null; // Guest user
+      }
+    },
   });
   
   // Fetch user's recent runs for streak calculation
@@ -241,6 +254,83 @@ export default function RunDetails() {
       setIsClaimed(true);
     }
   }, [run]);
+
+  // Check login prompt conditions after component mounts
+  useEffect(() => {
+    const checkLoginPrompt = async () => {
+      if (hasCheckedPromptRef.current) return;
+      if (!run) return;
+      
+      hasCheckedPromptRef.current = true;
+
+      // Only for guests (no currentUser)
+      if (currentUser) return;
+
+      const now = new Date();
+      const storedUser = localStorage.getItem('guestUserData');
+      let guestData = storedUser ? JSON.parse(storedUser) : {};
+
+      // Check snooze
+      if (guestData.loginPromptSnoozedUntil) {
+        const snoozedUntil = new Date(guestData.loginPromptSnoozedUntil);
+        if (now < snoozedUntil) return;
+      }
+
+      // Get total distance from localStorage
+      const totalDistance = guestData.total_distance_km || 0;
+
+      // Check 10K milestone
+      if (
+        totalDistance >= 10.0 &&
+        !guestData.loginPrompt10kShownAt
+      ) {
+        setLoginPromptReason('10K');
+        setShowLoginPrompt(true);
+        guestData.loginPrompt10kShownAt = now.toISOString();
+        localStorage.setItem('guestUserData', JSON.stringify(guestData));
+        return;
+      }
+
+      // Check Level 2 milestone
+      const coins = guestData.coin_balance || 0;
+      const currentLevel = Math.floor(coins / 100) + 1;
+      const previousLevel = guestData.current_level || 0;
+      
+      if (
+        previousLevel < 2 &&
+        currentLevel >= 2 &&
+        !guestData.loginPromptLevel2ShownAt
+      ) {
+        setLoginPromptReason('LEVEL2');
+        setShowLoginPrompt(true);
+        guestData.loginPromptLevel2ShownAt = now.toISOString();
+        guestData.current_level = currentLevel;
+        localStorage.setItem('guestUserData', JSON.stringify(guestData));
+        return;
+      }
+
+      // Update level tracking
+      if (currentLevel !== previousLevel) {
+        guestData.current_level = currentLevel;
+        localStorage.setItem('guestUserData', JSON.stringify(guestData));
+      }
+    };
+
+    checkLoginPrompt();
+  }, [run, currentUser]);
+
+  const handleCloseLoginPrompt = () => {
+    setShowLoginPrompt(false);
+    
+    // Snooze for 48 hours
+    const snoozedUntil = new Date();
+    snoozedUntil.setHours(snoozedUntil.getHours() + 48);
+    
+    const storedUser = localStorage.getItem('guestUserData');
+    const guestData = storedUser ? JSON.parse(storedUser) : {};
+    guestData.loginPromptSnoozedUntil = snoozedUntil.toISOString();
+    localStorage.setItem('guestUserData', JSON.stringify(guestData));
+  };
   
   // Handle claim reward
   const handleClaimReward = async () => {
@@ -351,6 +441,15 @@ export default function RunDetails() {
       claimTimeoutRef.current = setTimeout(() => {
         navigate(-1);
       }, 1200);
+
+      // Update guest total_distance_km if not logged in
+      if (!currentUser) {
+        const storedUser = localStorage.getItem('guestUserData');
+        const guestData = storedUser ? JSON.parse(storedUser) : {};
+        guestData.total_distance_km = (guestData.total_distance_km || 0) + (run.distance_km || 0);
+        guestData.coin_balance = (guestData.coin_balance || 0) + rewardAmount;
+        localStorage.setItem('guestUserData', JSON.stringify(guestData));
+      }
       
     } catch (error) {
       console.error('Error claiming reward:', error);
@@ -964,6 +1063,16 @@ export default function RunDetails() {
           ))}
         </>
       )}
+
+      {/* Guest Login Prompt */}
+      <AnimatePresence>
+        {showLoginPrompt && loginPromptReason && (
+          <GuestLoginPrompt 
+            reason={loginPromptReason}
+            onClose={handleCloseLoginPrompt}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Delete Modal */}
       {isDeleteSheetOpen && (
