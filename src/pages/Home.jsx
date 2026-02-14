@@ -39,12 +39,44 @@ function CoinPopLayer({ pops }) {
   );
 }
 
+// Daily Quote Generator
+function getDailyQuote() {
+  const quotes = [
+    "วิ่งวันนี้ พรุ่งนี้แข็งแรงขึ้น 💪",
+    "ก้าวเล็กๆ นำไปสู่ชัยชนะใหญ่ 🏆",
+    "วิ่งไป ชีวิตก็ดีขึ้น ✨",
+    "ทุกก้าวคือความภาคภูมิใจ 🎯",
+    "อย่าหยุดเมื่อเหนื่อย หยุดเมื่อสำเร็จ 🔥",
+    "วิ่งเพื่อสุขภาพ วิ่งเพื่อชีวิตที่ดีขึ้น 🌟",
+    "ความสำเร็จเริ่มจากก้าวแรก 🚀",
+  ];
+
+  const today = new Date().toDateString();
+  const cachedDate = localStorage.getItem('daily_quote_date');
+  const cachedQuote = localStorage.getItem('daily_quote_text');
+
+  if (cachedDate === today && cachedQuote) {
+    return cachedQuote;
+  }
+
+  const dayIndex = new Date().getDate() % quotes.length;
+  const newQuote = quotes[dayIndex];
+  
+  localStorage.setItem('daily_quote_date', today);
+  localStorage.setItem('daily_quote_text', newQuote);
+  
+  return newQuote;
+}
+
 export default function Home() {
   const navigate = useNavigate();
   
   // Coin pop animation state
   const [coinPops, setCoinPops] = useState([]);
   const popId = useRef(0);
+
+  // Daily quote
+  const dailyQuote = getDailyQuote();
 
   const triggerCoinPop = (amount = 10, opts = {}) => {
     const x = opts.x ?? "90%";
@@ -286,6 +318,7 @@ export default function Home() {
       <header className="topHeader">
         <div className="welcome">WELCOME BACK</div>
         <div className="title">Your Running</div>
+        <div className="dailyMotivation">{dailyQuote}</div>
       </header>
 
       {/* HERO / START */}
@@ -600,6 +633,7 @@ const homeStyles = `
 .topHeader{ margin: 6px 2px 14px; }
 .welcome{ letter-spacing: .18em; font-size: 12px; color:var(--muted2); }
 .title{ font-size: 40px; font-weight: 700; margin-top: 4px; }
+.dailyMotivation{ font-size: 13px; color: var(--muted); opacity: 0.7; margin-top: 6px; }
 .coinHud{
   position: fixed;
   top: 14px; right: 14px;
