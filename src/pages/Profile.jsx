@@ -1295,25 +1295,23 @@ const profileStyles = `
   .followPill {
     padding: 6px 16px;
     border-radius: 999px;
-    background: rgba(10,10,10,0.6);
-    border: 1px solid rgba(123,77,255,0.3);
-    color: rgba(255,255,255,0.75);
+    background: linear-gradient(135deg, rgba(123,77,255,0.22), rgba(123,77,255,0.04));
+    border: 1px solid rgba(123,77,255,0.45);
+    color: rgba(255,255,255,0.95);
     font-size: 12px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: 0 0 0 rgba(123,77,255,0);
+    box-shadow: 0 0 22px rgba(123,77,255,0.22);
   }
 
   .followPill:hover {
-    background: rgba(123,77,255,0.15);
-    border-color: rgba(123,77,255,0.5);
-    box-shadow: 0 0 16px rgba(123,77,255,0.2);
+    box-shadow: 0 0 28px rgba(123,77,255,0.28);
   }
 
   .followPill:active {
     transform: scale(0.96);
-    box-shadow: 0 0 20px rgba(123,77,255,0.3);
+    box-shadow: 0 0 28px rgba(123,77,255,0.28);
   }
 
   /* Follow Modal List */
