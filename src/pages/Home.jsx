@@ -318,7 +318,7 @@ export default function Home() {
       <header className="topHeader">
         <div className="welcome">WELCOME BACK</div>
         <div className="title">Your Running</div>
-        <div className="dailyMotivation">{dailyQuote}</div>
+        <div className="dailyMotivation neonPurpleText">"{dailyQuote}"</div>
       </header>
 
       {/* HERO / START */}
@@ -634,6 +634,12 @@ const homeStyles = `
 .welcome{ letter-spacing: .18em; font-size: 12px; color:var(--muted2); }
 .title{ font-size: 40px; font-weight: 700; margin-top: 4px; }
 .dailyMotivation{ font-size: 13px; color: var(--muted); opacity: 0.7; margin-top: 6px; }
+.neonPurpleText {
+  color: #BC13FE;
+  text-shadow:
+    0 0 6px rgba(188, 19, 254, 0.45),
+    0 0 14px rgba(188, 19, 254, 0.25);
+}
 .coinHud{
   position: fixed;
   top: 14px; right: 14px;
