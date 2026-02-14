@@ -1250,6 +1250,81 @@ const profileStyles = `
     margin-bottom: 28px;
   }
 
+  /* Following / Followers Section */
+  .followSection {
+    margin: 0 20px 28px;
+    padding: 20px;
+    background: rgba(20,20,20,0.5);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+  }
+
+  .followTabsWrapper {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    background: rgba(10,10,10,0.6);
+    border-radius: 14px;
+    padding: 6px;
+  }
+
+  .followTab {
+    flex: 1;
+    padding: 10px 16px;
+    border-radius: 10px;
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,0.5);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .followTab.active {
+    background: linear-gradient(135deg, rgba(123,77,255,0.4) 0%, rgba(123,77,255,0.25) 100%);
+    color: #FFFFFF;
+    box-shadow: 0 0 20px rgba(123,77,255,0.25), 0 0 0 1px rgba(123,77,255,0.2) inset;
+  }
+
+  .followListArea {
+    min-height: 200px;
+  }
+
+  .followList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .emptyFollowState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+  }
+
+  .emptyFollowState .emptyIcon {
+    width: 48px;
+    height: 48px;
+    color: rgba(255,255,255,0.2);
+    margin-bottom: 16px;
+  }
+
+  .emptyFollowState .emptyTitle {
+    font-size: 16px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 6px;
+  }
+
+  .emptyFollowState .emptySubtext {
+    font-size: 13px;
+    color: rgba(255,255,255,0.35);
+  }
+
   @media (max-width: 420px) {
     .quickStatsRow { gap: 8px; padding: 0 16px 24px; }
     .quickStatCard { padding: 12px 6px; }
