@@ -263,6 +263,11 @@ export default function RunDetails() {
       
       hasCheckedPromptRef.current = true;
 
+      // DEBUG MODE: Force open prompt
+      setLoginPromptReason('10K');
+      setShowLoginPrompt(true);
+      return;
+
       // Only for guests (no currentUser)
       if (currentUser) return;
 
