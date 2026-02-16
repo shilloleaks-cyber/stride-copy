@@ -1,6 +1,5 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { X } from 'lucide-react';
 
 export default function GuestLoginPrompt({ reason, onClose }) {
   const content = {
@@ -17,114 +16,167 @@ export default function GuestLoginPrompt({ reason, onClose }) {
   const { title, message } = content[reason] || content["10K"];
 
   const handleGoogleLogin = () => {
-    // Redirect to Google OAuth login
     window.location.href = '/api/auth/google';
   };
 
   const handleEmailLogin = () => {
-    // Redirect to email login page
     window.location.href = '/login';
   };
 
   return (
-    <>
-      {/* Backdrop */}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        width: '100vw',
+        height: '100dvh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'rgba(10, 10, 10, 0.55)',
+        backdropFilter: 'blur(10px)',
+        zIndex: 9999,
+        paddingTop: 'calc(16px + env(safe-area-inset-top))',
+        paddingBottom: 'calc(16px + env(safe-area-inset-bottom))',
+        paddingLeft: 'calc(16px + env(safe-area-inset-left))',
+        paddingRight: 'calc(16px + env(safe-area-inset-right))',
+        boxSizing: 'border-box'
+      }}
+    >
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/45 z-[99998]"
-        onClick={onClose}
-      />
-
-      {/* Modal */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9 }}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[99999] w-[90%] max-w-[380px]"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: 'min(420px, calc(100vw - 32px))',
+          maxWidth: 'calc(100vw - 32px)',
+          maxHeight: 'calc(100dvh - 32px)',
+          borderRadius: '20px',
+          overflow: 'hidden',
+          boxSizing: 'border-box',
+          background: 'linear-gradient(180deg, rgba(20, 20, 20, 0.95), rgba(10, 10, 10, 0.98))',
+          border: '2px solid',
+          borderImage: 'linear-gradient(135deg, rgba(138, 43, 226, 0.5), rgba(191, 255, 0, 0.3)) 1',
+          boxShadow: '0 0 50px rgba(138, 43, 226, 0.4), 0 0 30px rgba(191, 255, 0, 0.2), 0 20px 60px rgba(0, 0, 0, 0.6)',
+          position: 'relative'
+        }}
       >
+        {/* Decorative glow */}
         <div 
-          className="rounded-3xl backdrop-blur-xl border p-6 relative overflow-hidden"
           style={{
-            background: 'linear-gradient(180deg, rgba(20, 20, 20, 0.95), rgba(10, 10, 10, 0.98))',
-            borderImage: 'linear-gradient(135deg, rgba(138, 43, 226, 0.5), rgba(191, 255, 0, 0.3)) 1',
-            boxShadow: '0 0 50px rgba(138, 43, 226, 0.4), 0 0 30px rgba(191, 255, 0, 0.2), 0 20px 60px rgba(0, 0, 0, 0.6)'
+            position: 'absolute',
+            inset: 0,
+            background: 'radial-gradient(circle at 50% 0%, rgba(138, 43, 226, 0.15), transparent 70%)',
+            pointerEvents: 'none'
+          }}
+        />
+
+        {/* Scrollable content */}
+        <div 
+          style={{
+            position: 'relative',
+            zIndex: 10,
+            padding: '24px',
+            maxHeight: 'calc(100dvh - 32px)',
+            overflowY: 'auto',
+            boxSizing: 'border-box'
           }}
         >
-          {/* Decorative glow */}
-          <div 
-            className="absolute inset-0 pointer-events-none"
+          {/* Title */}
+          <h3 
             style={{
-              background: 'radial-gradient(circle at 50% 0%, rgba(138, 43, 226, 0.15), transparent 70%)'
+              fontSize: '24px',
+              fontWeight: 700,
+              textAlign: 'center',
+              marginBottom: '12px',
+              color: '#FFFFFF',
+              textShadow: '0 0 20px rgba(191, 255, 0, 0.3)'
             }}
-          />
+          >
+            {title}
+          </h3>
 
-          {/* Content */}
-          <div className="relative z-10">
-            {/* Title */}
-            <h3 
-              className="text-2xl font-bold text-center mb-3"
+          {/* Message */}
+          <p 
+            style={{
+              textAlign: 'center',
+              marginBottom: '24px',
+              whiteSpace: 'pre-line',
+              lineHeight: 1.6,
+              color: 'rgba(255, 255, 255, 0.75)'
+            }}
+          >
+            {message}
+          </p>
+
+          {/* Buttons */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {/* Primary - Google */}
+            <button
+              onClick={handleGoogleLogin}
               style={{
-                color: '#FFFFFF',
-                textShadow: '0 0 20px rgba(191, 255, 0, 0.3)'
+                width: '100%',
+                height: '48px',
+                borderRadius: '999px',
+                fontWeight: 700,
+                fontSize: '14px',
+                border: 'none',
+                cursor: 'pointer',
+                background: 'linear-gradient(135deg, #BFFF00 0%, #8FD400 100%)',
+                color: '#0A0A0A',
+                boxShadow: '0 0 25px rgba(191, 255, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3)',
+                transition: 'all 0.2s'
               }}
             >
-              {title}
-            </h3>
+              Continue with Google
+            </button>
 
-            {/* Message */}
-            <p 
-              className="text-center mb-6 whitespace-pre-line leading-relaxed"
-              style={{ color: 'rgba(255, 255, 255, 0.75)' }}
+            {/* Secondary - Email */}
+            <button
+              onClick={handleEmailLogin}
+              style={{
+                width: '100%',
+                height: '48px',
+                borderRadius: '999px',
+                fontWeight: 700,
+                fontSize: '14px',
+                cursor: 'pointer',
+                backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                color: '#FFFFFF',
+                boxShadow: '0 0 0 1px rgba(138, 43, 226, 0.3) inset',
+                transition: 'all 0.2s'
+              }}
             >
-              {message}
-            </p>
+              Login with Email
+            </button>
 
-            {/* Buttons */}
-            <div className="space-y-3">
-              {/* Primary - Google */}
-              <button
-                onClick={handleGoogleLogin}
-                className="w-full h-12 rounded-full font-bold text-sm transition-all"
-                style={{
-                  background: 'linear-gradient(135deg, #BFFF00 0%, #8FD400 100%)',
-                  color: '#0A0A0A',
-                  boxShadow: '0 0 25px rgba(191, 255, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3)'
-                }}
-              >
-                Continue with Google
-              </button>
-
-              {/* Secondary - Email */}
-              <button
-                onClick={handleEmailLogin}
-                className="w-full h-12 rounded-full font-bold text-sm border transition-all"
-                style={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                  borderColor: 'rgba(255, 255, 255, 0.2)',
-                  color: '#FFFFFF',
-                  boxShadow: '0 0 0 1px rgba(138, 43, 226, 0.3) inset'
-                }}
-              >
-                Login with Email
-              </button>
-
-              {/* Tertiary - Not now */}
-              <button
-                onClick={onClose}
-                className="w-full h-10 font-medium text-sm transition-all"
-                style={{
-                  color: 'rgba(255, 255, 255, 0.5)'
-                }}
-              >
-                Not now
-              </button>
-            </div>
+            {/* Tertiary - Not now */}
+            <button
+              onClick={onClose}
+              style={{
+                width: '100%',
+                height: '40px',
+                fontWeight: 500,
+                fontSize: '14px',
+                border: 'none',
+                background: 'transparent',
+                cursor: 'pointer',
+                color: 'rgba(255, 255, 255, 0.5)',
+                transition: 'all 0.2s'
+              }}
+            >
+              Not now
+            </button>
           </div>
         </div>
       </motion.div>
-    </>
+    </motion.div>
   );
 }
