@@ -137,8 +137,8 @@ export default function RewardBreakdownModal({ open, onClose, log }) {
           padding: '20px',
           boxSizing: 'border-box'
         }}>
-          {/* Components Breakdown */}
-          {breakdown && (
+          {/* Components Breakdown - Detail Section */}
+          {breakdown ? (
             <div style={{ marginBottom: '20px' }}>
               <div style={{
                 fontSize: '11px',
@@ -148,7 +148,7 @@ export default function RewardBreakdownModal({ open, onClose, log }) {
                 marginBottom: '12px',
                 fontWeight: 700
               }}>
-                Reward Components
+                Detail
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {breakdown.distance > 0 && (
@@ -164,13 +164,13 @@ export default function RewardBreakdownModal({ open, onClose, log }) {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <TrendingUp className="w-4 h-4" style={{ color: 'rgba(123, 77, 255, 0.8)' }} />
                       <span style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.8)' }}>
-                        Distance reward
+                        Distance
                         {breakdown.distance_km && <span style={{ color: 'rgba(255, 255, 255, 0.4)', marginLeft: '6px' }}>
                           ({breakdown.distance_km.toFixed(2)} km)
                         </span>}
                       </span>
                     </div>
-                    <span style={{ fontSize: '14px', fontWeight: 700, color: '#FFFFFF' }}>
+                    <span style={{ fontSize: '14px', fontWeight: 700, color: 'rgba(123, 77, 255, 0.9)' }}>
                       +{breakdown.distance.toFixed(2)}
                     </span>
                   </div>
@@ -187,9 +187,9 @@ export default function RewardBreakdownModal({ open, onClose, log }) {
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <Flame className="w-4 h-4" style={{ color: 'rgba(255, 123, 77, 0.8)' }} />
-                      <span style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.8)' }}>Streak bonus</span>
+                      <span style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.8)' }}>Streak</span>
                     </div>
-                    <span style={{ fontSize: '14px', fontWeight: 700, color: '#FFFFFF' }}>
+                    <span style={{ fontSize: '14px', fontWeight: 700, color: 'rgba(123, 77, 255, 0.9)' }}>
                       +{breakdown.streak.toFixed(2)}
                     </span>
                   </div>
@@ -206,9 +206,9 @@ export default function RewardBreakdownModal({ open, onClose, log }) {
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <Calendar className="w-4 h-4" style={{ color: 'rgba(123, 200, 255, 0.8)' }} />
-                      <span style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.8)' }}>Daily bonus</span>
+                      <span style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.8)' }}>Daily</span>
                     </div>
-                    <span style={{ fontSize: '14px', fontWeight: 700, color: '#FFFFFF' }}>
+                    <span style={{ fontSize: '14px', fontWeight: 700, color: 'rgba(123, 77, 255, 0.9)' }}>
                       +{breakdown.daily.toFixed(2)}
                     </span>
                   </div>
@@ -225,14 +225,26 @@ export default function RewardBreakdownModal({ open, onClose, log }) {
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <Gift className="w-4 h-4" style={{ color: 'rgba(255, 200, 77, 0.8)' }} />
-                      <span style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.8)' }}>Other bonus</span>
+                      <span style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.8)' }}>Bonus</span>
                     </div>
-                    <span style={{ fontSize: '14px', fontWeight: 700, color: '#FFFFFF' }}>
+                    <span style={{ fontSize: '14px', fontWeight: 700, color: 'rgba(123, 77, 255, 0.9)' }}>
                       +{breakdown.bonus.toFixed(2)}
                     </span>
                   </div>
                 )}
               </div>
+            </div>
+          ) : (
+            <div style={{
+              padding: '16px',
+              background: 'rgba(255, 255, 255, 0.03)',
+              borderRadius: '12px',
+              marginBottom: '20px',
+              textAlign: 'center'
+            }}>
+              <p style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.5)', fontStyle: 'italic' }}>
+                No breakdown saved for this activity (old record).
+              </p>
             </div>
           )}
 
