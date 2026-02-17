@@ -1,106 +1,156 @@
-import { base44 } from './base44Client.js';
-import { format } from 'date-fns';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { format } from 'npm:date-fns';
 
-export default async function finishRun({ distance_km, duration_sec, avg_pace, calories_est, run_id }) {
-  // Get current user
-  const user = await base44.auth.me();
-  const today = format(new Date(), 'yyyy-MM-dd');
-  
-  // Base reward: 10 coins per km
-  const distanceComponent = Math.round(distance_km * 10 * 100) / 100;
-  
-  // Streak bonus: 10% per consecutive day (up to 7 days = 70%)
-  const lastRunDate = user.last_run_date;
-  const yesterday = format(new Date(Date.now() - 86400000), 'yyyy-MM-dd');
-  let streakDays = user.current_streak || 0;
-  
-  if (lastRunDate === yesterday) {
-    streakDays += 1;
-  } else if (lastRunDate === today) {
-    // Same day run
-  } else {
-    streakDays = 1;
-  }
-  
-  const streakBonus = Math.min(streakDays - 1, 7) * 0.1;
-  const streakComponent = Math.round(distanceComponent * streakBonus * 100) / 100;
-  
-  // Daily bonus: First run of the day gets 25% extra
-  const isFirstRunToday = lastRunDate !== today;
-  const dailyComponent = isFirstRunToday ? Math.round(distanceComponent * 0.25 * 100) / 100 : 0;
-  
-  // Calculate totals
-  const baseReward = Math.round((distanceComponent + streakComponent + dailyComponent) * 100) / 100;
-  const multiplier = 1.0; // Future: can be from TokenConfig or user level
-  const finalReward = Math.round(baseReward * multiplier * 100) / 100;
-  const creditedAmount = finalReward;
-  
-  // Create Runs record
-  await base44.entities.Runs.create({
-    user: user.email,
-    distance_km,
-    duration_sec,
-    avg_pace,
-    calories_est,
-    tokens_earned: creditedAmount,
-  });
-  
-  // Update User
-  const newTokenBalance = Math.round((user.token_balance || 0) + creditedAmount) * 100) / 100;
-  const newTotalDistance = Math.round((user.total_distance_km || 0) + distance_km) * 100) / 100;
-  const newTotalRuns = (user.total_runs || 0) + 1;
-  const newTotalTokensEarned = Math.round(((user.total_tokens_earned || 0) + creditedAmount) * 100) / 100;
-  
-  await base44.auth.updateMe({
-    token_balance: newTokenBalance,
-    coin_balance: newTokenBalance, // Sync both fields
-    total_distance_km: newTotalDistance,
-    total_runs: newTotalRuns,
-    total_tokens_earned: newTotalTokensEarned,
-    last_run_date: today,
-    current_streak: streakDays,
-  });
-  
-  // Create WalletLog with detailed breakdown
-  if (creditedAmount > 0) {
-    const breakdown = {
-      distance: distanceComponent,
-      streak: streakComponent,
-      daily: dailyComponent,
-      bonus: 0,
-      distance_km,
-      rate: 10,
-      formula_version: 'v2'
-    };
-    
-    await base44.entities.WalletLog.create({
-      user: user.email,
-      source_type: 'run',
-      run_id: run_id || null,
-      amount: creditedAmount,
-      base_reward: baseReward,
-      multiplier_used: multiplier,
-      final_reward: finalReward,
-      note: JSON.stringify(breakdown),
-    });
-  }
-  
-  // Update TokenConfig distributed amount
+// Helpers
+const round2 = (n) => Math.round(n * 100) / 100;
+
+async function getConfig(base44) {
   const configs = await base44.entities.TokenConfig.list();
-  if (configs.length > 0) {
-    const config = configs[0];
-    await base44.entities.TokenConfig.update(config.id, {
-      distributed: Math.round((config.distributed || 0) + creditedAmount) * 100) / 100,
-      remaining: Math.round((config.remaining || 29000000) - creditedAmount) * 100) / 100,
-    });
-  }
-  
-  // Return result
+  return configs[0]; // assume single row
+}
+
+function calcReward({ distance_km, streakDays, isFirstRunToday, config }) {
+  const base = round2(distance_km * (config.base_rate_per_km || 10));
+
+  const streakFactor = Math.min(streakDays, config.streak_max_days || 7) / (config.streak_max_days || 7);
+  const streakRate = (config.streak_max_bonus || 0.7) * Math.sqrt(streakFactor);
+  const streakCoin = round2(base * streakRate);
+
+  const dailyCoin = isFirstRunToday ? round2(base * (config.daily_first_bonus || 0.25)) : 0;
+
+  const remainingRatio = ((config.remaining ?? (config.total_supply - config.distributed)) / config.total_supply);
+  const emission = Math.max(
+    config.emission_floor || 0.1, 
+    Math.pow(remainingRatio, config.emission_k || 2)
+  );
+
+  const raw = round2(base + streakCoin + dailyCoin);
+  let final = round2(raw * emission);
+  final = Math.min(final, config.max_reward_per_run || 200);
+
   return {
-    distance_km,
-    duration_sec,
-    tokens_earned: creditedAmount,
-    token_balance: newTokenBalance,
-    breakdown,
+    base, streakCoin, dailyCoin,
+    streakRate: round2(streakRate),
+    emission: round2(emission),
+    raw, final,
   };
 }
+
+Deno.serve(async (req) => {
+  try {
+    const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
+
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const payload = await req.json();
+    const { run_id, distance_km, duration_sec, avg_pace, calories_est } = payload;
+
+    // 1) Get config
+    const config = await getConfig(base44);
+    const remaining = config.remaining ?? (config.total_supply - (config.distributed || 0));
+    
+    if (remaining <= 0) {
+      return Response.json({ 
+        tokens_earned: 0, 
+        reason: "supply_exhausted" 
+      });
+    }
+
+    // 2) Calculate streak
+    const today = format(new Date(), "yyyy-MM-dd");
+    const lastRunDate = user.last_run_date;
+    const yesterday = format(new Date(Date.now() - 86400000), 'yyyy-MM-dd');
+    
+    let streakDays = user.current_streak || 0;
+    
+    if (lastRunDate === yesterday) {
+      streakDays += 1;
+    } else if (lastRunDate === today) {
+      // Same day run
+    } else {
+      streakDays = 1;
+    }
+
+    const isFirstRunToday = lastRunDate !== today;
+
+    // 3) Calculate reward
+    let reward = calcReward({ distance_km, streakDays, isFirstRunToday, config });
+
+    // 4) Clamp to remaining supply
+    reward.final = Math.min(reward.final, remaining);
+
+    // 5) Create WalletLog with detailed breakdown
+    const breakdown = {
+      formula_version: config.formula_version || 'v3',
+      distance_km,
+      distance: reward.base,
+      streak: reward.streakCoin,
+      daily: reward.dailyCoin,
+      bonus: 0,
+      streak_rate: reward.streakRate,
+      emission: reward.emission,
+      raw: reward.raw,
+      final: reward.final,
+      caps: { per_run: config.max_reward_per_run || 200 },
+    };
+
+    await base44.entities.WalletLog.create({
+      user: user.email,
+      source_type: "run",
+      run_id: run_id || null,
+      amount: reward.final,
+      base_reward: reward.raw,
+      multiplier_used: reward.emission,
+      final_reward: reward.final,
+      note: JSON.stringify(breakdown),
+    });
+
+    // 6) Update user balance
+    const newBalance = round2((user.coin_balance || 0) + reward.final);
+    const newTotalDistance = round2((user.total_distance_km || 0) + distance_km);
+    const newTotalRuns = (user.total_runs || 0) + 1;
+
+    await base44.auth.updateMe({
+      coin_balance: newBalance,
+      token_balance: newBalance,
+      total_distance_km: newTotalDistance,
+      total_runs: newTotalRuns,
+      total_tokens_earned: round2((user.total_tokens_earned || 0) + reward.final),
+      last_run_date: today,
+      current_streak: streakDays,
+    });
+
+    // 7) Update TokenConfig supply
+    const newDistributed = round2((config.distributed || 0) + reward.final);
+    const newRemaining = round2(config.total_supply - newDistributed);
+
+    await base44.entities.TokenConfig.update(config.id, {
+      distributed: newDistributed,
+      remaining: newRemaining,
+    });
+
+    // 8) Optional: Create Runs record if needed
+    if (duration_sec && avg_pace) {
+      await base44.entities.Runs.create({
+        user: user.email,
+        distance_km,
+        duration_sec,
+        avg_pace,
+        calories_est: calories_est || 0,
+        tokens_earned: reward.final,
+      });
+    }
+
+    return Response.json({
+      tokens_earned: reward.final,
+      token_balance: newBalance,
+      breakdown,
+    });
+
+  } catch (error) {
+    return Response.json({ error: error.message }, { status: 500 });
+  }
+});
