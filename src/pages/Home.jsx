@@ -439,18 +439,6 @@ export default function Home() {
             <div className="subNote">Run → Earn → Redeem</div>
           </div>
         </div>
-
-        {/* Daily Quest */}
-        <div className="questCard">
-          <div className="questTop">
-            <div>
-              <div className="sectionLabel small">DAILY QUEST</div>
-              <div className="questTitle">Run 1 km today</div>
-              <div className="subNote">Reward: +10 coins</div>
-            </div>
-            <button className="questBtn" onClick={handleStartRun}>Start</button>
-          </div>
-        </div>
       </section>
 
       {/* DAILY */}
