@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
     }
 
     const payload = await req.json();
-    const { run_id, distance_km, debug_overrides } = payload;
+    const { run_id, distance_km } = payload;
 
     // 1) config
     const config = await getConfig(base44);
@@ -55,22 +55,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 2) streakDays + isFirstRunToday (with DEBUG overrides)
+    // 2) streakDays + isFirstRunToday
     const today = format(new Date(), "yyyy-MM-dd");
-    const isDebugMode = Deno.env.get("DEBUG") === "true";
-    
-    let streakDays = user.current_streak || 1;
-    let isFirstRunToday = user.last_run_date !== today;
-
-    // Apply debug overrides if in debug mode
-    if (isDebugMode && debug_overrides) {
-      if (debug_overrides.streakDays !== undefined) {
-        streakDays = debug_overrides.streakDays;
-      }
-      if (debug_overrides.isFirstRunToday !== undefined) {
-        isFirstRunToday = debug_overrides.isFirstRunToday;
-      }
-    }
+    const streakDays = user.current_streak || 1;
+    const isFirstRunToday = user.last_run_date !== today;
 
     // 3) calc
     let reward = calcReward({ distance_km, streakDays, isFirstRunToday, config });
