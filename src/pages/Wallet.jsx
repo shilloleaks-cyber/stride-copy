@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
@@ -11,9 +11,12 @@ import {
   Coins, MapPin, Award, ChevronRight, Sparkles
 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import RewardBreakdownModal from '@/components/rewards/RewardBreakdownModal';
 
 export default function Wallet() {
   const navigate = useNavigate();
+  const [selectedLog, setSelectedLog] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -44,6 +47,8 @@ export default function Wallet() {
       case 'bonus': return 'โบนัส';
       case 'spend': return 'ใช้จ่าย';
       case 'transfer': return 'โอน';
+      case 'achievement': return 'ความสำเร็จ';
+      case 'manual': return 'ปรับปรุง';
       default: return type;
     }
   };
@@ -54,11 +59,12 @@ export default function Wallet() {
       case 'bonus': return 'text-yellow-400';
       case 'spend': return 'text-red-400';
       case 'transfer': return 'text-blue-400';
+      case 'achievement': return 'text-purple-400';
       default: return 'text-gray-400';
     }
   };
 
-  const lastRunLog = walletLogs.find(log => log.type === 'run');
+  const lastRunLog = walletLogs.find(log => log.source_type === 'run');
   const lastRunAmount = lastRunLog ? lastRunLog.amount : 0;
 
   return (
@@ -143,18 +149,24 @@ export default function Wallet() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.03 }}
                 className="activityItem"
+                onClick={() => {
+                  setSelectedLog(log);
+                  setModalOpen(true);
+                }}
               >
                 <div className="activityIconWrap">
-                  {log.type === 'run' ? (
+                  {log.source_type === 'run' ? (
                     <MapPin className="w-4 h-4 activityIcon" />
-                  ) : log.type === 'bonus' ? (
+                  ) : log.source_type === 'bonus' ? (
                     <Sparkles className="w-4 h-4 activityIcon" />
+                  ) : log.source_type === 'achievement' ? (
+                    <Award className="w-4 h-4 activityIcon" />
                   ) : (
                     <Coins className="w-4 h-4 activityIcon" />
                   )}
                 </div>
                 <div className="activityContent">
-                  <div className="activityTitle">{log.note || getTypeLabel(log.type)}</div>
+                  <div className="activityTitle">{log.note || getTypeLabel(log.source_type)}</div>
                   <div className="activityTime">
                     {format(new Date(log.created_date), 'd MMM yyyy, HH:mm', { locale: th })}
                   </div>
@@ -173,6 +185,13 @@ export default function Wallet() {
           </div>
         )}
       </motion.div>
+
+      {/* Reward Breakdown Modal */}
+      <RewardBreakdownModal 
+        open={modalOpen} 
+        onClose={() => setModalOpen(false)} 
+        log={selectedLog} 
+      />
     </div>
   );
 }
@@ -362,10 +381,17 @@ const walletStyles = `
     border: 1px solid rgba(255,255,255,0.08);
     border-radius: 16px;
     transition: all 0.2s;
+    cursor: pointer;
   }
 
   .activityItem:hover {
-    border-color: rgba(182,255,0,0.2);
+    border-color: rgba(123,77,255,0.4);
+    box-shadow: 0 0 20px rgba(123,77,255,0.15);
+  }
+
+  .activityItem:active {
+    transform: scale(0.98);
+    border-color: rgba(123,77,255,0.5);
   }
 
   .activityIconWrap {
