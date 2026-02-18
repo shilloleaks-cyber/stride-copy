@@ -21,7 +21,7 @@ import ProfileAvatar from '@/components/shared/ProfileAvatar';
 import SkinsShop from '@/components/skins/SkinsShop';
 import PersonalBestsSection from '@/components/profile/PersonalBestsSection';
 import AchievementBadgesSection from '@/components/profile/AchievementBadgesSection';
-import RunningHistorySection from '@/components/profile/RunningHistorySection';
+// RunningHistorySection removed
 import {
   Dialog,
   DialogContent,
