@@ -14,14 +14,15 @@ export default function RunCard({ run }) {
   const formatDuration = (seconds) => {
     if (!seconds) return '0:00';
     const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
+    const secs = Math.round(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   // Helper: calculate pace from duration + distance
   const calcPaceMinPerKm = (run) => {
     const dist = Number(run?.distance_km);
-    const secs = Number(run?.duration_seconds);
+    // Support both duration_seconds and duration_sec field names
+    const secs = Number(run?.duration_seconds ?? run?.duration_sec);
 
     if (Number.isFinite(dist) && dist > 0 && Number.isFinite(secs) && secs > 0) {
       return (secs / 60) / dist;
@@ -52,8 +53,8 @@ export default function RunCard({ run }) {
     <button className="runCard" onClick={handleClick}>
       <div className="runHeader">
         <div>
-          <div className="runDate">{format(new Date(run.start_time), 'EEEE, MMMM d')}</div>
-          <div className="runTime">{format(new Date(run.start_time), 'h:mm a')}</div>
+          <div className="runDate">{run.start_time ? format(new Date(run.start_time), 'EEEE, MMMM d') : format(new Date(run.created_date), 'EEEE, MMMM d')}</div>
+          <div className="runTime">{run.start_time ? format(new Date(run.start_time), 'h:mm a') : format(new Date(run.created_date), 'h:mm a')}</div>
         </div>
         <div className="chev">›</div>
       </div>
@@ -69,7 +70,7 @@ export default function RunCard({ run }) {
         <div className="miniStat">
           <span className="miniIcon blue">⏱</span>
           <div>
-            <div className="miniVal">{formatDuration(run.duration_seconds)}</div>
+            <div className="miniVal">{formatDuration(run.duration_seconds ?? run.duration_sec)}</div>
             <div className="miniLbl">time</div>
           </div>
         </div>
