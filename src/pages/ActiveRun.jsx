@@ -78,7 +78,7 @@ export default function ActiveRun() {
         // Ghost run unlocked at level 3
         if (userLevel < 3) return;
         
-        const allRuns = await base44.entities.Run.filter({ 
+        const allRuns = await base44.entities.Runs.filter({ 
           created_by: userData.email,
           status: 'completed'
         });
@@ -342,10 +342,13 @@ export default function ActiveRun() {
     // Start RUNNING GPS tracking
     startRunningGPSTracking();
 
-    // Create run record
-    const run = await base44.entities.Run.create({
+    // Create run record in Runs (single source of truth)
+    const run = await base44.entities.Runs.create({
+      user: (await base44.auth.me()).email,
       start_time: startTimeRef.current,
       status: 'active',
+      distance_km: 0,
+      duration_sec: 0,
     });
     setRunId(run.id);
   };
@@ -377,16 +380,19 @@ export default function ActiveRun() {
     const endPoint = routePoints.length > 0 ? routePoints[routePoints.length - 1] : null;
 
     if (runId) {
-      await base44.entities.Run.update(runId, {
+      await base44.entities.Runs.update(runId, {
         end_time: new Date().toISOString(),
+        duration_sec: seconds,
         duration_seconds: seconds,
         distance_km: parseFloat(distance.toFixed(3)),
         avg_speed_kmh: parseFloat(avgSpeed.toFixed(2)),
         max_speed_kmh: parseFloat(maxSpeed.toFixed(2)),
         calories_burned: calories,
+        calories_est: calories,
         avg_heart_rate: avgHR,
         max_heart_rate: maxHeartRate,
         pace_min_per_km: parseFloat(pace.toFixed(2)),
+        avg_pace: `${Math.floor(pace)}:${Math.round((pace % 1) * 60).toString().padStart(2, '0')}`,
         status: 'completed',
         route_points: routePoints,
         start_lat: startPoint?.lat,
@@ -427,9 +433,15 @@ export default function ActiveRun() {
         await base44.entities.WalletLog.create({
           user: user.email,
           amount: coinsEarned,
-          type: 'run',
+          source_type: 'run',
+          run_id: runId,
           note: `Run: ${distance.toFixed(2)}km`
         });
+
+        // Store tokens_earned on Runs record
+        if (runId) {
+          await base44.entities.Runs.update(runId, { tokens_earned: coinsEarned });
+        }
         
         // Check for achievements
         try {
