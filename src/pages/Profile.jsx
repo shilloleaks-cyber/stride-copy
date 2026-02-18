@@ -75,13 +75,7 @@ export default function Profile() {
   const followingUsers = allUsers.filter(u => followingEmails.includes(u.email));
   const followerUsers = allUsers.filter(u => followerEmails.includes(u.email));
 
-  const getUserStats = (email) => {
-    const userRuns = runs.filter(r => r.created_by === email && r.status === 'completed');
-    return {
-      totalDistance: userRuns.reduce((sum, r) => sum + (r.distance_km || 0), 0),
-      totalRuns: userRuns.length,
-    };
-  };
+  const getUserStats = () => ({ totalDistance: 0, totalRuns: 0 });
 
   const followMutation = useMutation({
     mutationFn: async (targetEmail) => {
