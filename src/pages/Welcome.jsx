@@ -45,8 +45,10 @@ export default function Welcome() {
   }, []);
 
   const handleGoRun = async () => {
+    if (loading) return;
+    setLoading(true);
     await base44.auth.updateMe({ has_seen_welcome: true });
-    navigate(createPageUrl('ActiveRun'));
+    navigate(createPageUrl('ActiveRun'), { replace: true });
   };
 
   return (
