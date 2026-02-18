@@ -226,34 +226,7 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  // Calculate streak
-  const calculateStreak = () => {
-    if (completedRuns.length === 0) return 0;
-    const sortedRuns = [...completedRuns].sort((a, b) => new Date(b.start_time) - new Date(a.start_time));
-    const uniqueDays = new Set();
-    sortedRuns.forEach(run => {
-      const date = new Date(run.start_time);
-      date.setHours(0, 0, 0, 0);
-      uniqueDays.add(date.getTime());
-    });
-    const sortedDays = Array.from(uniqueDays).sort((a, b) => b - a);
-    let streak = 0;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const oneDayMs = 24 * 60 * 60 * 1000;
-    for (let i = 0; i < sortedDays.length; i++) {
-      const currentDay = sortedDays[i];
-      const expectedDay = today.getTime() - (i * oneDayMs);
-      if (Math.abs(currentDay - expectedDay) < oneDayMs / 2) {
-        streak++;
-      } else {
-        break;
-      }
-    }
-    return streak;
-  };
-
-  const currentStreak = calculateStreak();
+  const currentStreak = 0;
   const currentCoins = user?.coin_balance ?? 0;
   const currentLevel = Math.floor(currentCoins / 100) + 1;
   const progress = currentCoins % 100;
