@@ -99,7 +99,10 @@ export default function History() {
         {/* CTA Button */}
         <button
           style={styles.btn}
-          onClick={() => navigate(createPageUrl('ActiveRun'))}
+          onClick={async () => {
+            await base44.auth.updateMe({ has_seen_welcome: true });
+            navigate(createPageUrl('ActiveRun'));
+          }}
           onMouseEnter={e => {
             e.currentTarget.style.boxShadow = styles.btnHoverShadow;
             e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
