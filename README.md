@@ -1,5 +1,9 @@
 **Welcome to your Base44 project** 
 
+## Release Marker
+
+This snapshot is marked as **V.1 Before Hard Reset**.
+
 **About**
 
 View and Edit  your app on [Base44.com](http://Base44.com) 
