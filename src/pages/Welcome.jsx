@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
@@ -6,6 +6,7 @@ import { base44 } from '@/api/base44Client';
 export default function Welcome() {
   const navigate = useNavigate();
   const canvasRef = useRef(null);
+  const [loading, setLoading] = useState(false);
 
   // Animated grain canvas
   useEffect(() => {
