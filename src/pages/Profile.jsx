@@ -480,9 +480,6 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
         <PersonalBestsSection runs={runs} />
       </div>
 
-      {/* Running History */}
-      <RunningHistorySection runs={runs} />
-
       {/* Edit Bio Dialog */}
       <Dialog open={editBioOpen} onOpenChange={setEditBioOpen}>
         <DialogContent className="bg-gray-900 border-gray-800 text-white max-w-md">
