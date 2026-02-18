@@ -425,10 +425,7 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
         </div>
       </div>
 
-      {/* Personal Bests */}
-      <div className="personalBestsSection">
-        <PersonalBestsSection runs={runs} />
-      </div>
+
 
       {/* Edit Bio Dialog */}
       <Dialog open={editBioOpen} onOpenChange={setEditBioOpen}>
