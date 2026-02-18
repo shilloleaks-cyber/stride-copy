@@ -106,7 +106,8 @@ export default function Home() {
 
   const { data: runs = [] } = useQuery({
     queryKey: ['runs'],
-    queryFn: () => base44.entities.Run.list('-start_time', 100),
+    // Data source: Runs entity (single source of truth)
+    queryFn: () => base44.entities.Runs.list('-created_date', 100),
   });
 
   const completedRuns = runs.filter(r => r.status === 'completed');

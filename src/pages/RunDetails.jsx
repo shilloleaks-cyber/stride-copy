@@ -95,7 +95,7 @@ export default function RunDetails() {
     queryKey: ['recentRuns', currentUser?.email],
     queryFn: async () => {
       if (!currentUser) return [];
-      const runs = await base44.entities.Run.filter({ 
+      const runs = await base44.entities.Runs.filter({ 
         created_by: currentUser.email,
         status: 'completed'
       });
@@ -107,7 +107,7 @@ export default function RunDetails() {
   const { data: run, isLoading } = useQuery({
     queryKey: ['run', runId],
     queryFn: async () => {
-      const runs = await base44.entities.Run.filter({ id: runId });
+      const runs = await base44.entities.Runs.filter({ id: runId });
       return runs[0];
     },
     enabled: !!runId,
@@ -136,7 +136,7 @@ export default function RunDetails() {
       
       // Save to run record
       try {
-        await base44.entities.Run.update(runId, {
+        await base44.entities.Runs.update(runId, {
           quote_text: selectedQuote,
           quote_rarity: isRare ? 'rare' : 'common',
           quote_tag: tag
@@ -353,7 +353,7 @@ export default function RunDetails() {
     
     try {
       // Fetch fresh run data to check reward_claimed status
-      const freshRuns = await base44.entities.Run.filter({ id: runId });
+      const freshRuns = await base44.entities.Runs.filter({ id: runId });
       const freshRun = freshRuns[0];
       
       if (!freshRun) {
@@ -380,9 +380,9 @@ export default function RunDetails() {
       });
       
       if (existingLogs.length > 0) {
-        // Ensure Run.reward_claimed is set to true
+        // Ensure Runs.reward_claimed is set to true
         if (!freshRun.reward_claimed) {
-          await base44.entities.Run.update(runId, {
+          await base44.entities.Runs.update(runId, {
             reward_claimed: true
           });
         }
@@ -424,7 +424,7 @@ export default function RunDetails() {
       });
       
       // Mark run as claimed (idempotent - never rollback after this)
-      await base44.entities.Run.update(runId, {
+      await base44.entities.Runs.update(runId, {
         reward_claimed: true
       });
 
@@ -474,7 +474,7 @@ export default function RunDetails() {
   }, []);
 
   const updateMutation = useMutation({
-    mutationFn: (data) => base44.entities.Run.update(runId, data),
+    mutationFn: (data) => base44.entities.Runs.update(runId, data),
     onSuccess: () => {
       queryClient.invalidateQueries(['run', runId]);
       setEditingNotes(false);
@@ -485,7 +485,7 @@ export default function RunDetails() {
     if (isDeleting) return;
     setIsDeleting(true);
     try {
-      await base44.entities.Run.delete(runId);
+      await base44.entities.Runs.delete(runId);
       setIsDeleteSheetOpen(false);
       navigate(createPageUrl('History'));
     } catch {
