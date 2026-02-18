@@ -232,9 +232,7 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
   const progress = currentCoins % 100;
   const levelProgressPercent = Math.round((progress / 100) * 100);
 
-  // Recent run coins earned
-  const lastRun = completedRuns[0];
-  const lastRunCoins = lastRun ? Math.floor(lastRun.distance_km || 0) : 0;
+  const lastRunCoins = 0;
 
   // Fetch user achievements to track unlocked status
   const { data: userAchievements = [] } = useQuery({
