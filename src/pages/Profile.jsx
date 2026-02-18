@@ -162,33 +162,18 @@ export default function Profile() {
     toast.success('บันทึกสำเร็จ!');
   };
 
-  const { data: runs = [] } = useQuery({
-    queryKey: ['runs'],
-    queryFn: () => base44.entities.Runs.filter({ status: 'completed' }),
-  });
-
-  const completedRuns = runs.filter(r => r.status === 'completed');
-
-  const validPaceRuns = completedRuns.filter((r) => {
-    const pace = Number(r?.pace_min_per_km);
-    return Number.isFinite(pace) && pace > 0;
-  });
-
-  // Stats
+  // Stats derived from user object only (no runs queries)
   const stats = {
-    totalDistance: completedRuns.reduce((sum, r) => sum + (r.distance_km || 0), 0),
-    totalTime: completedRuns.reduce((sum, r) => sum + (r.duration_seconds || 0), 0),
-    totalCalories: completedRuns.reduce((sum, r) => sum + (r.calories_burned || 0), 0),
-    totalRuns: completedRuns.length,
-    avgPace: validPaceRuns.length > 0
-      ? validPaceRuns.reduce((sum, r) => sum + Number(r.pace_min_per_km), 0) / validPaceRuns.length
-      : 0,
+    totalDistance: 0,
+    totalTime: 0,
+    totalCalories: 0,
+    totalRuns: 0,
+    avgPace: 0,
   };
-
-  // Personal bests
-  const longestRun = completedRuns.reduce((max, r) => (r.distance_km || 0) > (max?.distance_km || 0) ? r : max, null);
-  const fastestPace = validPaceRuns.reduce((min, r) =>
-    Number(r.pace_min_per_km) < Number(min?.pace_min_per_km ?? Infinity) ? r : min, null);
+  const runs = [];
+  const completedRuns = [];
+  const longestRun = null;
+  const fastestPace = null;
 
   const formatDuration = (seconds) => {
     if (!seconds) return '0 ชม.';
