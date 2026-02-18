@@ -14,7 +14,7 @@ export default function History() {
   });
 
   useEffect(() => {
-    if (!isLoading && user && !user.has_seen_welcome) {
+    if (!isLoading && user && user.has_seen_welcome !== true) {
       navigate(createPageUrl('Welcome'), { replace: true });
     }
   }, [user, isLoading]);
