@@ -1,10 +1,23 @@
 import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import { base44 } from '@/api/base44Client';
+import { useQuery } from '@tanstack/react-query';
 
 export default function History() {
   const navigate = useNavigate();
   const canvasRef = useRef(null);
+
+  const { data: user, isLoading } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: () => base44.auth.me(),
+  });
+
+  useEffect(() => {
+    if (!isLoading && user && !user.has_seen_welcome) {
+      navigate(createPageUrl('Welcome'), { replace: true });
+    }
+  }, [user, isLoading]);
 
   // Animated grain canvas
   useEffect(() => {
