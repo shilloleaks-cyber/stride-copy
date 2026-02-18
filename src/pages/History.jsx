@@ -96,8 +96,7 @@ export default function History() {
             e.currentTarget.style.transform = 'translateY(0) scale(1)';
           }}
         >
-          <span style={styles.btnArrow}>▶</span>
-          START RUN
+          GO RUN
         </button>
 
         {/* Bottom stat strip */}
