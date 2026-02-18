@@ -47,6 +47,9 @@ Deno.serve(async (req) => {
 
     // 1) config
     const config = await getConfig(base44);
+    if (!config) {
+      return Response.json({ error: 'TokenConfig not found. Please seed it first.' }, { status: 500 });
+    }
     const remaining = config.remaining ?? (config.total_supply - (config.distributed || 0));
     if (remaining <= 0) {
       return Response.json({ 
