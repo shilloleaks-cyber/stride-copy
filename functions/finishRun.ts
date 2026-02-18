@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
     }
 
     const payload = await req.json();
-    const { run_id, distance_km } = payload;
+    const { run_id, distance_km, duration_sec } = payload;
 
     // 1) config
     const config = await getConfig(base44);
@@ -80,6 +80,17 @@ Deno.serve(async (req) => {
       final: reward.final,
       caps: { per_run: config.max_reward_per_run },
     };
+
+    // Update Runs record with tokens_earned if run_id is provided
+    if (run_id) {
+      await base44.entities.Runs.update(run_id, {
+        tokens_earned: reward.final,
+        status: 'completed',
+        distance_km: distance_km,
+        duration_sec: duration_sec || 0,
+        duration_seconds: duration_sec || 0,
+      });
+    }
 
     await base44.entities.WalletLog.create({
       user: user.email,
