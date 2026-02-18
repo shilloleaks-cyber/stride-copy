@@ -96,6 +96,7 @@ export default function Welcome() {
         <button
           style={styles.btn}
           onClick={handleGoRun}
+          disabled={loading}
           onMouseEnter={e => {
             e.currentTarget.style.boxShadow = btnHoverShadow;
             e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
