@@ -164,7 +164,7 @@ export default function Profile() {
 
   const { data: runs = [] } = useQuery({
     queryKey: ['runs'],
-    queryFn: () => base44.entities.Run.list('-start_time', 500),
+    queryFn: () => base44.entities.Runs.filter({ status: 'completed' }),
   });
 
   const completedRuns = runs.filter(r => r.status === 'completed');
