@@ -76,8 +76,17 @@ Deno.serve(async (req) => {
     // 3) calc
     let reward = calcReward({ distance_km, streakDays, isFirstRunToday, config });
 
-    // 4) clamp to remaining
+    // 4a) clamp to remaining supply
     reward.final = Math.min(reward.final, remaining);
+
+    // 4b) clamp to daily_user_cap
+    const daily_user_cap = config.daily_user_cap ?? 60;
+    const todayLogs = await base44.entities.WalletLog.filter({ user: user.email });
+    const earnedToday = todayLogs
+      .filter(l => l.source_type === 'run' && l.created_date && l.created_date.startsWith(today))
+      .reduce((sum, l) => sum + (l.amount || 0), 0);
+    const remainingDailyCap = Math.max(0, daily_user_cap - earnedToday);
+    reward.final = round2(Math.min(reward.final, remainingDailyCap));
 
     // 5) write WalletLog (breakdown for modal display)
     const breakdown = {
