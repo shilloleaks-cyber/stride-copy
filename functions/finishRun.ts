@@ -10,14 +10,13 @@ async function getConfig(base44) {
 }
 
 function calcReward({ distance_km, streakDays, isFirstRunToday, config }) {
-  // Fallback defaults for fields that may not be in TokenConfig schema
-  const base_rate_per_km = config.base_rate_per_km ?? 10;
+  const base_rate_per_km = config.base_rate_per_km ?? 1;
   const streak_max_days = config.streak_max_days ?? 30;
-  const streak_max_bonus = config.streak_max_bonus ?? 0.5;
-  const daily_first_bonus = config.daily_first_bonus ?? 0.1;
-  const emission_floor = config.emission_floor ?? 0.1;
-  const emission_k = config.emission_k ?? 2;
-  const max_reward_per_run = config.max_reward_per_run ?? 500;
+  const streak_max_bonus = config.streak_max_bonus ?? 0.20;
+  const daily_first_bonus = config.daily_first_bonus ?? 0.10;
+  const emission_floor = config.emission_floor ?? 0.35;
+  const emission_k = config.emission_k ?? 2.2;
+  const max_reward_per_run = config.max_reward_per_run ?? 50;
 
   const base = round2(distance_km * base_rate_per_km);
 
@@ -30,16 +29,16 @@ function calcReward({ distance_km, streakDays, isFirstRunToday, config }) {
   const totalSupply = config.total_supply || 29000000;
   const remaining = config.remaining ?? (totalSupply - (config.distributed || 0));
   const remainingRatio = remaining / totalSupply;
-  const emission = Math.max(emission_floor, Math.pow(remainingRatio, emission_k));
+  const emissionMultiplier = Math.max(emission_floor, Math.pow(remainingRatio, emission_k));
 
   const raw = round2(base + streakCoin + dailyCoin);
-  let final = round2(raw * emission);
+  let final = round2(raw * emissionMultiplier);
   final = Math.min(final, max_reward_per_run);
 
   return {
     base, streakCoin, dailyCoin,
     streakRate: round2(streakRate),
-    emission: round2(emission),
+    emission: round2(emissionMultiplier),
     raw, final,
   };
 }
