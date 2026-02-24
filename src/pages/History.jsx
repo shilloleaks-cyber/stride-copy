@@ -35,6 +35,7 @@ export default function History() {
 
     const drawGrain = () => {
       const { width, height } = canvas;
+      if (!width || !height) { animId = requestAnimationFrame(drawGrain); return; }
       const imageData = ctx.createImageData(width, height);
       const data = imageData.data;
       for (let i = 0; i < data.length; i += 4) {
