@@ -209,6 +209,12 @@ export default function RunSummary() {
             {claimError && <div style={s.errorText}>{claimError}</div>}
           </div>
 
+          {/* Route map */}
+          <div>
+            <div style={s.sectionLabel}>ROUTE</div>
+            <RouteMap routePoints={run.route_points} />
+          </div>
+
           {/* Run stats */}
           <div style={s.statsGrid}>
             {[
