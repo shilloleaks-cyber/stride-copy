@@ -7,7 +7,7 @@ export default function RunCard({ run }) {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    // RunDetails disabled — no navigation
+    navigate(createPageUrl(`RunSummary?id=${run.id}`));
   };
 
   // Helper: format duration
