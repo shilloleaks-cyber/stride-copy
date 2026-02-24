@@ -377,6 +377,11 @@ const s = {
     fontSize: 10, fontWeight: 600, letterSpacing: '0.15em',
     color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase',
   },
+  sectionLabel: {
+    fontSize: 11, fontWeight: 700, letterSpacing: '0.25em',
+    color: 'rgba(255,255,255,0.30)', textTransform: 'uppercase',
+    marginBottom: 10,
+  },
   tagline: {
     textAlign: 'center', fontSize: 10, fontWeight: 700,
     letterSpacing: '0.35em', color: 'rgba(255,255,255,0.12)',
