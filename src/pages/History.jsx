@@ -368,11 +368,12 @@ const styles = {
   },
   listRoot: {
     position: 'relative',
-    zIndex: 10,
+    zIndex: 1,
     width: '100%',
     maxWidth: 480,
     margin: '0 auto',
     paddingTop: 56,
+    paddingBottom: 96,
   },
   listHeader: {
     display: 'flex',
