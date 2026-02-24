@@ -65,6 +65,9 @@ export default function History() {
     };
   }, []);
 
+  const totalKm = runs.reduce((sum, r) => sum + (r.distance_km || 0), 0);
+  const totalCoins = runs.reduce((sum, r) => sum + (r.tokens_earned || 0), 0);
+
   return (
     <div style={styles.root}>
       {/* Grain overlay */}
@@ -78,64 +81,77 @@ export default function History() {
       {/* Scanlines */}
       <div style={styles.scanlines} />
 
-      {/* Content */}
-      <div style={styles.content}>
-
-        {/* Top label */}
-        <div style={styles.topLabel}>
-          <span style={styles.topDot} />
-          RUN HISTORY
+      {hasRuns ? (
+        /* ── Runs List View ── */
+        <div style={styles.listRoot}>
+          <div style={styles.listHeader}>
+            <span style={styles.topDot} />
+            <span style={styles.topLabel2}>RUN HISTORY</span>
+          </div>
+          <div style={styles.statStrip}>
+            {[`${runs.length} RUNS`, `${totalKm.toFixed(1)} KM`, `${totalCoins.toFixed(1)} BX`].map((stat, i) => (
+              <React.Fragment key={stat}>
+                <span style={styles.stat}>{stat}</span>
+                {i < 2 && <span style={styles.statDivider}>·</span>}
+              </React.Fragment>
+            ))}
+          </div>
+          <div className="runList" style={{ padding: '0 16px 100px' }}>
+            {runs.map(run => <RunCard key={run.id} run={run} />)}
+          </div>
         </div>
+      ) : (
+        /* ── Empty State ── */
+        <div style={styles.content}>
+          <div style={styles.topLabel}>
+            <span style={styles.topDot} />
+            RUN HISTORY
+          </div>
 
-        {/* Main headline */}
-        <div style={styles.headlineWrap}>
-          <h1 style={styles.headlineLine1}>ZERO KM.</h1>
-          <h1 style={styles.headlineLine2}>ZERO<br />EXCUSES.</h1>
+          <div style={styles.headlineWrap}>
+            <h1 style={styles.headlineLine1}>ZERO KM.</h1>
+            <h1 style={styles.headlineLine2}>ZERO<br />EXCUSES.</h1>
+          </div>
+
+          <div style={styles.divider}>
+            <div style={styles.dividerLine} />
+            <span style={styles.dividerIcon}>⚡</span>
+            <div style={styles.dividerLine} />
+          </div>
+
+          <p style={styles.subtext}>
+            Every kilometer creates value.<br />
+            <span style={styles.subtextAccent}>Start moving.</span>
+          </p>
+
+          <button
+            style={styles.btn}
+            onClick={async () => {
+              await base44.auth.updateMe({ has_seen_welcome: true });
+              navigate(createPageUrl('ActiveRun'));
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.boxShadow = styles.btnHoverShadow;
+              e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.boxShadow = styles.btnShadow;
+              e.currentTarget.style.transform = 'translateY(0) scale(1)';
+            }}
+          >
+            GO RUN
+          </button>
+
+          <div style={styles.statStrip}>
+            {['0 RUNS', '0 KM', '0 BX'].map((stat, i) => (
+              <React.Fragment key={stat}>
+                <span style={styles.stat}>{stat}</span>
+                {i < 2 && <span style={styles.statDivider}>·</span>}
+              </React.Fragment>
+            ))}
+          </div>
         </div>
-
-        {/* Divider line */}
-        <div style={styles.divider}>
-          <div style={styles.dividerLine} />
-          <span style={styles.dividerIcon}>⚡</span>
-          <div style={styles.dividerLine} />
-        </div>
-
-        {/* Subtext */}
-        <p style={styles.subtext}>
-          Every kilometer creates value.<br />
-          <span style={styles.subtextAccent}>Start moving.</span>
-        </p>
-
-        {/* CTA Button */}
-        <button
-          style={styles.btn}
-          onClick={async () => {
-            await base44.auth.updateMe({ has_seen_welcome: true });
-            navigate(createPageUrl('ActiveRun'));
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.boxShadow = styles.btnHoverShadow;
-            e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.boxShadow = styles.btnShadow;
-            e.currentTarget.style.transform = 'translateY(0) scale(1)';
-          }}
-        >
-          GO RUN
-        </button>
-
-        {/* Bottom stat strip */}
-        <div style={styles.statStrip}>
-          {['0 RUNS', '0 KM', '0 COINS'].map((s, i) => (
-            <React.Fragment key={s}>
-              <span style={styles.stat}>{s}</span>
-              {i < 2 && <span style={styles.statDivider}>·</span>}
-            </React.Fragment>
-          ))}
-        </div>
-
-      </div>
+      )}
 
       {/* Bottom tagline */}
       <div style={styles.bottomBar}>
