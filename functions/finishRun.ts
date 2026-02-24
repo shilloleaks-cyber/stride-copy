@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
 
     // 4b) clamp to daily_user_cap
     const daily_user_cap = config.daily_user_cap ?? 60;
-    const todayLogs = await base44.entities.WalletLog.filter({ user: user.email });
+    const todayLogs = await base44.entities.WalletLog.filter({ user: user.email, source_type: "run" });
     const earnedToday = todayLogs
       .filter(l => l.source_type === 'run' && l.created_date && l.created_date.startsWith(today))
       .reduce((sum, l) => sum + (l.amount || 0), 0);
