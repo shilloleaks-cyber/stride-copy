@@ -362,4 +362,25 @@ const styles = {
     color: 'rgba(255,255,255,0.18)',
     textTransform: 'uppercase',
   },
+  listRoot: {
+    position: 'relative',
+    zIndex: 10,
+    width: '100%',
+    maxWidth: 480,
+    margin: '0 auto',
+    paddingTop: 56,
+  },
+  listHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    padding: '0 16px 8px',
+  },
+  topLabel2: {
+    fontSize: 11,
+    fontWeight: 700,
+    letterSpacing: '0.28em',
+    color: 'rgba(255,255,255,0.35)',
+    textTransform: 'uppercase',
+  },
 };
