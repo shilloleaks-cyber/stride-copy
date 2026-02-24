@@ -5,6 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { ArrowLeft } from 'lucide-react';
+import RouteMap from '../components/running/RouteMap';
 
 const fmt2 = (n) => Number(n || 0).toFixed(2);
 

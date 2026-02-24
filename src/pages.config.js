@@ -66,11 +66,11 @@ import Redeem from './pages/Redeem';
 import RedeemCatalog from './pages/RedeemCatalog';
 import RedeemDetail from './pages/RedeemDetail';
 import RunDetails from './pages/RunDetails';
+import RunSummary from './pages/RunSummary';
 import Stats from './pages/Stats';
 import Training from './pages/Training';
 import Wallet from './pages/Wallet';
 import Welcome from './pages/Welcome';
-import RunSummary from './pages/RunSummary';
 import __Layout from './Layout.jsx';
 
 
@@ -94,11 +94,11 @@ export const PAGES = {
     "RedeemCatalog": RedeemCatalog,
     "RedeemDetail": RedeemDetail,
     "RunDetails": RunDetails,
+    "RunSummary": RunSummary,
     "Stats": Stats,
     "Training": Training,
     "Wallet": Wallet,
     "Welcome": Welcome,
-    "RunSummary": RunSummary,
 }
 
 export const pagesConfig = {
