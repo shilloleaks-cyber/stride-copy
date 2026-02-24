@@ -70,8 +70,16 @@ Deno.serve(async (req) => {
 
     // 2) streakDays + isFirstRunToday
     const today = format(new Date(), "yyyy-MM-dd");
-    const streakDays = user.current_streak || 1;
+    const yesterday = format(new Date(Date.now() - 24 * 60 * 60 * 1000), "yyyy-MM-dd");
     const isFirstRunToday = user.last_run_date !== today;
+    let streakDays;
+    if (user.last_run_date === today) {
+      streakDays = user.current_streak || 1; // same day, no increase
+    } else if (user.last_run_date === yesterday) {
+      streakDays = (user.current_streak || 1) + 1; // consecutive day
+    } else {
+      streakDays = 1; // streak broken
+    }
 
     // 3) calc
     let reward = calcReward({ distance_km, streakDays, isFirstRunToday, config });
