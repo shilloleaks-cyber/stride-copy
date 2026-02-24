@@ -70,17 +70,17 @@ export default function History() {
 
   return (
     <div style={styles.root}>
-      {/* Grain overlay */}
-      <canvas ref={canvasRef} style={styles.grain} />
 
-      {/* Background glows */}
-      <div style={styles.glowPurple} />
-      <div style={styles.glowLime} />
-      <div style={styles.glowBottom} />
+      {/* ── Single background layer (pointer-events: none on entire block) ── */}
+      <div style={styles.bg}>
+        <canvas ref={canvasRef} style={styles.grain} />
+        <div style={styles.glowPurple} />
+        <div style={styles.glowLime} />
+        <div style={styles.glowBottom} />
+        <div style={styles.scanlines} />
+      </div>
 
-      {/* Scanlines */}
-      <div style={styles.scanlines} />
-
+      {/* ── Foreground content (z-index: 1, above bg) ── */}
       {hasRuns ? (
         /* ── Runs List View ── */
         <div style={styles.listRoot}>
