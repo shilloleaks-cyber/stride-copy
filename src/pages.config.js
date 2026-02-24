@@ -70,6 +70,7 @@ import Stats from './pages/Stats';
 import Training from './pages/Training';
 import Wallet from './pages/Wallet';
 import Welcome from './pages/Welcome';
+import RunSummary from './pages/RunSummary';
 import __Layout from './Layout.jsx';
 
 
@@ -97,6 +98,7 @@ export const PAGES = {
     "Training": Training,
     "Wallet": Wallet,
     "Welcome": Welcome,
+    "RunSummary": RunSummary,
 }
 
 export const pagesConfig = {
