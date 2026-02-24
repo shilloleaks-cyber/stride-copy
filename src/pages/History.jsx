@@ -14,6 +14,14 @@ export default function History() {
     queryFn: () => base44.auth.me(),
   });
 
+  const { data: runs = [], isLoading: runsLoading } = useQuery({
+    queryKey: ['historyRuns'],
+    queryFn: () => base44.entities.Runs.filter({ status: 'completed' }, '-start_time', 50),
+    enabled: !isLoading && !!user,
+  });
+
+  const hasRuns = runs.length > 0;
+
   useEffect(() => {
     if (!isLoading && user && user.has_seen_welcome !== true) {
       navigate(createPageUrl('Welcome'), { replace: true });
