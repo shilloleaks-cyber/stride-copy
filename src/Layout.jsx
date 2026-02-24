@@ -27,7 +27,7 @@ export default function Layout({ children }) {
       {children}
       
       {!hideNav && (
-        <nav className="fixed bottom-0 left-0 right-0 backdrop-blur-lg border-t border-white/5 px-6 py-4 safe-area-bottom" style={{ backgroundColor: 'rgba(10, 10, 10, 0.95)' }}>
+        <nav className="fixed bottom-0 left-0 right-0 backdrop-blur-lg border-t border-white/5 px-6 py-4 safe-area-bottom" style={{ backgroundColor: 'rgba(10, 10, 10, 0.95)', zIndex: 9999, pointerEvents: 'auto' }}>
           <div className="flex items-center justify-around max-w-md mx-auto">
             {navItems.map((item) => {
               const isActive = isActivePage(item.page);
