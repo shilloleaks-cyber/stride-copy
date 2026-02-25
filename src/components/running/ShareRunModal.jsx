@@ -43,158 +43,352 @@ const parseRoutePoints = (pts) => {
 function generateRunImage(run, variant) {
   return new Promise((resolve) => {
     const W = 1080, H = 1920;
-    const PH = 80;
     const canvas = document.createElement('canvas');
     canvas.width = W; canvas.height = H;
     const ctx = canvas.getContext('2d', { alpha: true });
 
     const isCard = variant === 'card';
 
-    // ── Background ──────────────────────────────────────────────────────────
-    if (isCard) {
-      // BX Card: neon textured background
-      ctx.fillStyle = '#07070A';
-      ctx.fillRect(0, 0, W, H);
-      // texture
-      for (let i = 0; i < 40000; i++) {
-        ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.05})`;
-        ctx.fillRect(Math.random() * W, Math.random() * H, 1, 1);
-      }
-      // purple glow
-      const gp = ctx.createRadialGradient(0, 0, 0, 0, 0, 750);
-      gp.addColorStop(0, 'rgba(138,43,226,0.22)'); gp.addColorStop(1, 'transparent');
-      ctx.fillStyle = gp; ctx.fillRect(0, 0, W, H);
-      // lime glow
-      const gl = ctx.createRadialGradient(W, H, 0, W, H, 620);
-      gl.addColorStop(0, 'rgba(191,255,0,0.14)'); gl.addColorStop(1, 'transparent');
-      ctx.fillStyle = gl; ctx.fillRect(0, 0, W, H);
-    } else {
-      // Vibe: transparent background
+    if (!isCard) {
+      // ── VIBE: transparent, minimal ────────────────────────────────────────
       ctx.clearRect(0, 0, W, H);
+      _drawVibeVariant(ctx, run, W, H);
+      return resolve(canvas.toDataURL('image/png'));
     }
 
-    const cText  = isCard ? '#FFFFFF' : '#111111';
-    const cMuted = isCard ? 'rgba(255,255,255,0.36)' : 'rgba(0,0,0,0.50)';
-    const cDiv   = isCard ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.12)';
-    const routeColor = isCard ? '#BFFF00' : '#00C853';
+    // ── BX CARD: dark space + neon ────────────────────────────────────────────
+    // Base dark
+    ctx.fillStyle = '#0A0A0C';
+    ctx.fillRect(0, 0, W, H);
 
-    // ── Brand name ──────────────────────────────────────────────────────────
+    // Grain texture
+    for (let i = 0; i < 60000; i++) {
+      const alpha = Math.random() * 0.06;
+      ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+      ctx.fillRect(Math.random() * W, Math.random() * H, 1, 1);
+    }
+
+    // Purple nebula top-left
+    const gPurple = ctx.createRadialGradient(W * 0.1, H * 0.08, 0, W * 0.1, H * 0.08, 520);
+    gPurple.addColorStop(0, 'rgba(138,43,226,0.35)');
+    gPurple.addColorStop(0.5, 'rgba(100,0,180,0.15)');
+    gPurple.addColorStop(1, 'transparent');
+    ctx.fillStyle = gPurple; ctx.fillRect(0, 0, W, H);
+
+    // Lime glow bottom-right
+    const gLime = ctx.createRadialGradient(W * 0.85, H * 0.78, 0, W * 0.85, H * 0.78, 480);
+    gLime.addColorStop(0, 'rgba(191,255,0,0.20)');
+    gLime.addColorStop(0.5, 'rgba(150,220,0,0.08)');
+    gLime.addColorStop(1, 'transparent');
+    ctx.fillStyle = gLime; ctx.fillRect(0, 0, W, H);
+
+    // Diagonal light streak (top-left to mid)
     ctx.save();
-    ctx.font = '900 140px Helvetica Neue, Arial, sans-serif';
-    ctx.fillStyle = isCard ? '#BFFF00' : '#111111';
+    ctx.translate(W * 0.05, H * 0.05);
+    ctx.rotate(Math.PI / 5);
+    const streak1 = ctx.createLinearGradient(0, 0, 400, 0);
+    streak1.addColorStop(0, 'transparent');
+    streak1.addColorStop(0.4, 'rgba(180,60,255,0.18)');
+    streak1.addColorStop(0.6, 'rgba(200,100,255,0.12)');
+    streak1.addColorStop(1, 'transparent');
+    ctx.fillStyle = streak1;
+    ctx.fillRect(0, -6, 420, 12);
+    ctx.restore();
+
+    // Diagonal lime streak (bottom-right)
+    ctx.save();
+    ctx.translate(W * 0.62, H * 0.68);
+    ctx.rotate(-Math.PI / 6);
+    const streak2 = ctx.createLinearGradient(0, 0, 500, 0);
+    streak2.addColorStop(0, 'transparent');
+    streak2.addColorStop(0.3, 'rgba(191,255,0,0.22)');
+    streak2.addColorStop(0.6, 'rgba(180,255,0,0.14)');
+    streak2.addColorStop(1, 'transparent');
+    ctx.fillStyle = streak2;
+    ctx.fillRect(0, -5, 520, 10);
+    ctx.restore();
+
+    // ── "COMPLETED RUN" label ──────────────────────────────────────────────
+    ctx.save();
+    ctx.font = '600 32px Helvetica Neue, Arial, sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.38)';
     ctx.textAlign = 'center';
-    if (isCard) { ctx.shadowColor = 'rgba(191,255,0,0.45)'; ctx.shadowBlur = 48; }
-    ctx.fillText('BoomX', W / 2, 280);
+    ctx.letterSpacing = '12px';
+    ctx.fillText('COMPLETED RUN', W / 2, 160);
+    ctx.restore();
+
+    // ── BoomX title ────────────────────────────────────────────────────────
+    ctx.save();
+    ctx.font = '900 160px Helvetica Neue, Arial, sans-serif';
+    ctx.fillStyle = '#BFFF00';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = 'rgba(191,255,0,0.7)';
+    ctx.shadowBlur = 60;
+    ctx.fillText('BoomX', W / 2, 320);
     ctx.shadowBlur = 0;
     ctx.restore();
 
-    // ── Divider (card only) ─────────────────────────────────────────────────
-    if (isCard) {
-      const DIV1_Y = 340;
-      ctx.save();
-      ctx.strokeStyle = cDiv; ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.moveTo(PH, DIV1_Y); ctx.lineTo(W - PH, DIV1_Y); ctx.stroke();
-      ctx.restore();
-    }
+    // ── Map frame ─────────────────────────────────────────────────────────
+    const MX = 80, MY = 380, MW = W - 160, MH = 780;
+    const R = 36;
 
-    // ── Route polyline ──────────────────────────────────────────────────────
-    const MAP_Y = isCard ? 380 : 360;
-    const MAP_H = 760;
+    // Map bg — subtle dark glass
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(MX, MY, MW, MH, R);
+    ctx.fillStyle = 'rgba(255,255,255,0.03)';
+    ctx.fill();
+    ctx.restore();
+
+    // Neon border glow
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(MX, MY, MW, MH, R);
+    ctx.strokeStyle = 'rgba(191,255,0,0.30)';
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = 'rgba(191,255,0,0.45)';
+    ctx.shadowBlur = 20;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.restore();
+
+    // ── Route polyline inside map ──────────────────────────────────────────
     const points = parseRoutePoints(run?.route_points);
-
     if (points.length >= 2) {
       const lats = points.map(p => p.lat), lngs = points.map(p => p.lng);
       const minLat = Math.min(...lats), maxLat = Math.max(...lats);
       const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
-      const ip = 80;
-      const iW = W - PH * 2 - ip * 2, iH = MAP_H - ip * 2;
+      const ip = 100;
+      const iW = MW - ip * 2, iH = MH - ip * 2;
       const scX = iW / (maxLng - minLng || 0.0001);
       const scY = iH / (maxLat - minLat || 0.0001);
       const sc = Math.min(scX, scY);
       const ofX = (iW - (maxLng - minLng) * sc) / 2;
       const ofY = (iH - (maxLat - minLat) * sc) / 2;
-      const toX = (lng) => PH + ip + ofX + (lng - minLng) * sc;
-      const toY = (lat) => MAP_Y + ip + ofY + (maxLat - lat) * sc;
+      const toX = (lng) => MX + ip + ofX + (lng - minLng) * sc;
+      const toY = (lat) => MY + ip + ofY + (maxLat - lat) * sc;
 
+      // Outer glow pass
       ctx.save();
       ctx.beginPath();
       ctx.moveTo(toX(points[0].lng), toY(points[0].lat));
       for (let i = 1; i < points.length; i++) ctx.lineTo(toX(points[i].lng), toY(points[i].lat));
-      ctx.strokeStyle = routeColor;
-      ctx.lineWidth = 9;
+      ctx.strokeStyle = 'rgba(191,255,0,0.25)';
+      ctx.lineWidth = 26;
       ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-      ctx.shadowColor = routeColor; ctx.shadowBlur = 18;
+      ctx.shadowColor = '#BFFF00'; ctx.shadowBlur = 40;
       ctx.stroke(); ctx.restore();
 
-      // start dot
+      // Inner bright line
       ctx.save();
       ctx.beginPath();
-      ctx.arc(toX(points[0].lng), toY(points[0].lat), 16, 0, Math.PI * 2);
-      ctx.fillStyle = routeColor; ctx.fill(); ctx.restore();
+      ctx.moveTo(toX(points[0].lng), toY(points[0].lat));
+      for (let i = 1; i < points.length; i++) ctx.lineTo(toX(points[i].lng), toY(points[i].lat));
+      ctx.strokeStyle = '#BFFF00';
+      ctx.lineWidth = 8;
+      ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      ctx.shadowColor = '#BFFF00'; ctx.shadowBlur = 24;
+      ctx.stroke(); ctx.restore();
 
-      // end dot
-      const last = points[points.length - 1];
+      // Core white-hot line
       ctx.save();
       ctx.beginPath();
-      ctx.arc(toX(last.lng), toY(last.lat), 16, 0, Math.PI * 2);
-      ctx.fillStyle = '#FF5252'; ctx.fill(); ctx.restore();
+      ctx.moveTo(toX(points[0].lng), toY(points[0].lat));
+      for (let i = 1; i < points.length; i++) ctx.lineTo(toX(points[i].lng), toY(points[i].lat));
+      ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+      ctx.lineWidth = 3;
+      ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      ctx.stroke(); ctx.restore();
+
+      // Start dot (lime)
+      const sx = toX(points[0].lng), sy = toY(points[0].lat);
+      ctx.save();
+      ctx.beginPath(); ctx.arc(sx, sy, 22, 0, Math.PI * 2);
+      ctx.fillStyle = '#BFFF00'; ctx.shadowColor = '#BFFF00'; ctx.shadowBlur = 30;
+      ctx.fill(); ctx.restore();
+      ctx.save();
+      ctx.beginPath(); ctx.arc(sx, sy, 10, 0, Math.PI * 2);
+      ctx.fillStyle = '#FFFFFF'; ctx.fill(); ctx.restore();
+
+      // End dot (red/pink)
+      const last = points[points.length - 1];
+      const ex = toX(last.lng), ey = toY(last.lat);
+      ctx.save();
+      ctx.beginPath(); ctx.arc(ex, ey, 18, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,80,120,0.25)'; ctx.shadowColor = 'rgba(255,80,120,0.8)'; ctx.shadowBlur = 25;
+      ctx.fill(); ctx.restore();
+      ctx.save();
+      ctx.beginPath(); ctx.arc(ex, ey, 9, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255,120,140,0.9)'; ctx.lineWidth = 3; ctx.stroke(); ctx.restore();
     }
 
-    // ── Stats — 3 vertical blocks ────────────────────────────────────────────
-    const pace    = getPace(run);
-    const durSec  = run?.duration_sec ?? run?.duration_seconds ?? 0;
-    const distStr = `${Number(run?.distance_km || 0).toFixed(2)} km`;
-    const paceStr = `${fmtPace(pace)} /km`;
-    const timeStr = fmtDur(durSec);
+    // ── Stats bar below map ────────────────────────────────────────────────
+    const SY = MY + MH + 30;
+    const pace   = getPace(run);
+    const durSec = run?.duration_sec ?? run?.duration_seconds ?? 0;
 
-    const statBlocks = [
-      { value: distStr, label: 'DISTANCE' },
-      { value: paceStr, label: 'PACE' },
-      { value: timeStr, label: 'TIME' },
+    // Stat box background
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(MX, SY, MW, 240, 24);
+    ctx.fillStyle = 'rgba(255,255,255,0.04)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 1.5;
+    ctx.fill(); ctx.stroke();
+    ctx.restore();
+
+    const stats = [
+      { label: 'DISTANCE', value: `${Number(run?.distance_km || 0).toFixed(2)}`, unit: 'km' },
+      { label: 'PACE',     value: fmtPace(pace),                                  unit: '/km' },
+      { label: 'TIME',     value: fmtDur(durSec),                                 unit: '' },
     ];
 
-    const STATS_TOP  = MAP_Y + MAP_H + 72;
-    const VAL_SIZE   = 84;
-    const LBL_SIZE   = 28;
-    const VAL_LEAD   = VAL_SIZE * 1.0;
-    const LBL_GAP    = 14;
-    const LBL_LEAD   = LBL_SIZE * 1.0;
-    const BLOCK_H    = VAL_LEAD + LBL_GAP + LBL_LEAD;
-    const BETWEEN    = 44;
-    const SLOT       = BLOCK_H + BETWEEN;
+    const colW = MW / 3;
+    stats.forEach((st, i) => {
+      const cx = MX + colW * i + colW / 2;
 
-    statBlocks.forEach((st, i) => {
-      const baseY = STATS_TOP + i * SLOT;
-
-      // value
-      ctx.save();
-      ctx.font = `800 ${VAL_SIZE}px Helvetica Neue, Arial, sans-serif`;
-      ctx.fillStyle = cText;
-      ctx.textAlign = 'center';
-      ctx.fillText(st.value, W / 2, baseY + VAL_LEAD);
-      ctx.restore();
-
-      // label
-      ctx.save();
-      ctx.font = `600 ${LBL_SIZE}px Helvetica Neue, Arial, sans-serif`;
-      ctx.fillStyle = cMuted;
-      ctx.textAlign = 'center';
-      ctx.letterSpacing = '8px';
-      ctx.fillText(st.label, W / 2, baseY + VAL_LEAD + LBL_GAP + LBL_LEAD);
-      ctx.restore();
-
-      // divider below (not after last, and only for card)
-      if (isCard && i < statBlocks.length - 1) {
-        const divY = baseY + BLOCK_H + BETWEEN / 2;
+      // Vertical divider
+      if (i > 0) {
         ctx.save();
-        ctx.strokeStyle = cDiv; ctx.lineWidth = 1.5;
+        ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+        ctx.lineWidth = 1.5;
         ctx.beginPath();
-        ctx.moveTo(PH + 120, divY); ctx.lineTo(W - PH - 120, divY);
+        ctx.moveTo(MX + colW * i, SY + 24);
+        ctx.lineTo(MX + colW * i, SY + 216);
         ctx.stroke(); ctx.restore();
+      }
+
+      // Label
+      ctx.save();
+      ctx.font = '600 26px Helvetica Neue, Arial, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.40)';
+      ctx.textAlign = 'center';
+      ctx.letterSpacing = '4px';
+      ctx.fillText(st.label, cx, SY + 64);
+      ctx.restore();
+
+      // Value
+      ctx.save();
+      ctx.font = `800 ${i === 2 ? 62 : 72}px Helvetica Neue, Arial, sans-serif`;
+      ctx.fillStyle = '#FFFFFF';
+      ctx.textAlign = 'center';
+      ctx.shadowColor = 'rgba(191,255,0,0.15)';
+      ctx.shadowBlur = 10;
+      ctx.fillText(st.value, cx - (st.unit ? 20 : 0), SY + 158);
+      ctx.shadowBlur = 0;
+      ctx.restore();
+
+      // Unit
+      if (st.unit) {
+        ctx.save();
+        ctx.font = '500 32px Helvetica Neue, Arial, sans-serif';
+        ctx.fillStyle = 'rgba(255,255,255,0.45)';
+        ctx.textAlign = 'left';
+        const vm = ctx.measureText(st.value);
+        ctx.fillText(st.unit, cx - (st.unit ? 20 : 0) + vm.width / 2 + 6, SY + 158);
+        ctx.restore();
       }
     });
 
+    // ── RUN · EARN · EVOLVE ────────────────────────────────────────────────
+    ctx.save();
+    ctx.font = '600 28px Helvetica Neue, Arial, sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.28)';
+    ctx.textAlign = 'center';
+    ctx.letterSpacing = '8px';
+    ctx.fillText('RUN · EARN · EVOLVE', W / 2, SY + 300);
+    ctx.restore();
+
+    // ── BX logo bottom ──────────────────────────────────────────────────────
+    ctx.save();
+    ctx.font = '900 160px Helvetica Neue, Arial, sans-serif';
+    ctx.fillStyle = '#BFFF00';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = 'rgba(191,255,0,0.6)';
+    ctx.shadowBlur = 50;
+    ctx.fillText('BX', W / 2, H - 220);
+    ctx.shadowBlur = 0;
+    ctx.restore();
+
     resolve(canvas.toDataURL('image/png'));
+  });
+}
+
+function _drawVibeVariant(ctx, run, W, H) {
+  const PH = 80;
+  ctx.clearRect(0, 0, W, H);
+
+  const cText  = '#111111';
+  const cMuted = 'rgba(0,0,0,0.50)';
+  const routeColor = '#00C853';
+
+  // BoomX title
+  ctx.save();
+  ctx.font = '900 140px Helvetica Neue, Arial, sans-serif';
+  ctx.fillStyle = '#111111';
+  ctx.textAlign = 'center';
+  ctx.fillText('BoomX', W / 2, 280);
+  ctx.restore();
+
+  const MAP_Y = 360, MAP_H = 760;
+  const points = parseRoutePoints(run?.route_points);
+
+  if (points.length >= 2) {
+    const lats = points.map(p => p.lat), lngs = points.map(p => p.lng);
+    const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+    const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
+    const ip = 80;
+    const iW = W - PH * 2 - ip * 2, iH = MAP_H - ip * 2;
+    const scX = iW / (maxLng - minLng || 0.0001);
+    const scY = iH / (maxLat - minLat || 0.0001);
+    const sc = Math.min(scX, scY);
+    const ofX = (iW - (maxLng - minLng) * sc) / 2;
+    const ofY = (iH - (maxLat - minLat) * sc) / 2;
+    const toX = (lng) => PH + ip + ofX + (lng - minLng) * sc;
+    const toY = (lat) => MAP_Y + ip + ofY + (maxLat - lat) * sc;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(toX(points[0].lng), toY(points[0].lat));
+    for (let i = 1; i < points.length; i++) ctx.lineTo(toX(points[i].lng), toY(points[i].lat));
+    ctx.strokeStyle = routeColor;
+    ctx.lineWidth = 9;
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    ctx.shadowColor = routeColor; ctx.shadowBlur = 14;
+    ctx.stroke(); ctx.restore();
+
+    ctx.save();
+    ctx.beginPath(); ctx.arc(toX(points[0].lng), toY(points[0].lat), 16, 0, Math.PI * 2);
+    ctx.fillStyle = routeColor; ctx.fill(); ctx.restore();
+
+    const last = points[points.length - 1];
+    ctx.save();
+    ctx.beginPath(); ctx.arc(toX(last.lng), toY(last.lat), 16, 0, Math.PI * 2);
+    ctx.fillStyle = '#FF5252'; ctx.fill(); ctx.restore();
+  }
+
+  const pace    = getPace(run);
+  const durSec  = run?.duration_sec ?? run?.duration_seconds ?? 0;
+  const statBlocks = [
+    { value: `${Number(run?.distance_km || 0).toFixed(2)} km`, label: 'DISTANCE' },
+    { value: `${fmtPace(pace)} /km`, label: 'PACE' },
+    { value: fmtDur(durSec), label: 'TIME' },
+  ];
+
+  const STATS_TOP = MAP_Y + MAP_H + 72;
+  const SLOT = 170;
+  statBlocks.forEach((st, i) => {
+    const baseY = STATS_TOP + i * SLOT;
+    ctx.save();
+    ctx.font = `800 84px Helvetica Neue, Arial, sans-serif`;
+    ctx.fillStyle = cText; ctx.textAlign = 'center';
+    ctx.fillText(st.value, W / 2, baseY + 84);
+    ctx.restore();
+    ctx.save();
+    ctx.font = `600 28px Helvetica Neue, Arial, sans-serif`;
+    ctx.fillStyle = cMuted; ctx.textAlign = 'center';
+    ctx.fillText(st.label, W / 2, baseY + 84 + 14 + 28);
+    ctx.restore();
   });
 }
 
