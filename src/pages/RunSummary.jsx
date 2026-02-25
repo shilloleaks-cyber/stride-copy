@@ -244,6 +244,14 @@ export default function RunSummary() {
           <div style={s.tagline}>RUN · EARN · EVOLVE</div>
         </div>
       )}
+
+      {showShare && run && (
+        <ShareRunModal
+          run={run}
+          user={currentUser}
+          onClose={() => setShowShare(false)}
+        />
+      )}
     </div>
   );
 }
