@@ -36,6 +36,7 @@ function avgPaceStr(runs) {
 export default function History() {
   const navigate = useNavigate();
   const canvasRef = useRef(null);
+  const scrollRef = useRef(null);
   const [filter, setFilter] = useState('all');
 
   const { data: user, isLoading } = useQuery({
