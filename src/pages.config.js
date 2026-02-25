@@ -71,7 +71,6 @@ import Stats from './pages/Stats';
 import Training from './pages/Training';
 import Wallet from './pages/Wallet';
 import Welcome from './pages/Welcome';
-import ShareRun from './pages/ShareRun';
 import __Layout from './Layout.jsx';
 
 
@@ -100,7 +99,6 @@ export const PAGES = {
     "Training": Training,
     "Wallet": Wallet,
     "Welcome": Welcome,
-    "ShareRun": ShareRun,
 }
 
 export const pagesConfig = {
