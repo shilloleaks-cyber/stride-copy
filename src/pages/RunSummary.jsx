@@ -420,4 +420,14 @@ const s = {
     width: 12, height: 12, borderRadius: '50%',
     backgroundColor: '#BFFF00', boxShadow: '0 0 16px rgba(191,255,0,0.8)',
   },
+  shareBtn: {
+    background: 'rgba(191,255,0,0.10)',
+    border: '1px solid rgba(191,255,0,0.35)',
+    color: '#BFFF00',
+    borderRadius: 999, padding: '8px 18px',
+    fontSize: 13, fontWeight: 800, cursor: 'pointer',
+    letterSpacing: '0.06em',
+    boxShadow: '0 0 12px rgba(191,255,0,0.15)',
+    flexShrink: 0,
+  },
 };
