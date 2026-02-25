@@ -243,7 +243,16 @@ function generateRunImage(run, variant) {
       { label: 'TIME',     value: fmtDur(durSec),                                 unit: '' },
     ];
 
+    // Fixed row anchors (canvas fillText y = baseline)
+    // Box height = 240, centered content block ~140px tall
+    // Label top:  SY + 50  → baseline SY + 76
+    // Number:               → baseline SY + 160
+    // Unit:                 → baseline SY + 202
+    const LABEL_Y  = SY + 76;
+    const NUMBER_Y = SY + 160;
+    const UNIT_Y   = SY + 202;
     const colW = MW / 3;
+
     stats.forEach((st, i) => {
       const cx = MX + colW * i + colW / 2;
 
@@ -253,39 +262,38 @@ function generateRunImage(run, variant) {
         ctx.strokeStyle = 'rgba(255,255,255,0.10)';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
-        ctx.moveTo(MX + colW * i, SY + 24);
-        ctx.lineTo(MX + colW * i, SY + 216);
+        ctx.moveTo(MX + colW * i, SY + 20);
+        ctx.lineTo(MX + colW * i, SY + 220);
         ctx.stroke(); ctx.restore();
       }
 
-      // Label
+      // Label (small caps, muted)
       ctx.save();
       ctx.font = '600 26px Helvetica Neue, Arial, sans-serif';
       ctx.fillStyle = 'rgba(255,255,255,0.40)';
       ctx.textAlign = 'center';
-      ctx.letterSpacing = '4px';
-      ctx.fillText(st.label, cx, SY + 64);
+      ctx.fillText(st.label, cx, LABEL_Y);
       ctx.restore();
 
-      // Value
+      // Number (large, no unit mixed in)
+      const numSize = i === 2 ? 64 : 68;
       ctx.save();
-      ctx.font = `800 ${i === 2 ? 62 : 72}px Helvetica Neue, Arial, sans-serif`;
+      ctx.font = `800 ${numSize}px Helvetica Neue, Arial, sans-serif`;
       ctx.fillStyle = '#FFFFFF';
       ctx.textAlign = 'center';
       ctx.shadowColor = 'rgba(191,255,0,0.15)';
       ctx.shadowBlur = 10;
-      ctx.fillText(st.value, cx - (st.unit ? 20 : 0), SY + 158);
+      ctx.fillText(st.value, cx, NUMBER_Y);
       ctx.shadowBlur = 0;
       ctx.restore();
 
-      // Unit
+      // Unit on its own line below the number
       if (st.unit) {
         ctx.save();
-        ctx.font = '500 32px Helvetica Neue, Arial, sans-serif';
+        ctx.font = '500 30px Helvetica Neue, Arial, sans-serif';
         ctx.fillStyle = 'rgba(255,255,255,0.45)';
-        ctx.textAlign = 'left';
-        const vm = ctx.measureText(st.value);
-        ctx.fillText(st.unit, cx - (st.unit ? 20 : 0) + vm.width / 2 + 6, SY + 158);
+        ctx.textAlign = 'center';
+        ctx.fillText(st.unit, cx, UNIT_Y);
         ctx.restore();
       }
     });
