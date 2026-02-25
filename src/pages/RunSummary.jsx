@@ -148,7 +148,10 @@ export default function RunSummary() {
           {dateStr && <div style={s.headerDate}>{dateStr}</div>}
           {timeStr && <div style={s.headerTime}>{timeStr}</div>}
         </div>
-        <div style={{ width: 40 }} />
+        {run && (
+          <button style={s.shareBtn} onClick={() => setShowShare(true)}>Share</button>
+        )}
+        {!run && <div style={{ width: 40 }} />}
       </div>
 
       {isLoading && (
