@@ -131,7 +131,7 @@ export default function History() {
       </div>
 
       {/* ── Foreground content ── */}
-      <div style={S.page}>
+      <div ref={scrollRef} style={S.page}>
 
         {/* Header */}
         <div style={S.header}>
