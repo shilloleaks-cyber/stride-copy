@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { toPng } from 'html-to-image';
 import { base44 } from '@/api/base44Client';
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
