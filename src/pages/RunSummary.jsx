@@ -47,6 +47,11 @@ export default function RunSummary() {
   const [localClaimed, setLocalClaimed] = useState(null); // override after claim
   const [showShare, setShowShare] = useState(false);
 
+  const { data: currentUser } = useQuery({
+    queryKey: ['me'],
+    queryFn: () => base44.auth.me(),
+  });
+
   const { data: runs, isLoading } = useQuery({
     queryKey: ['run', runId],
     queryFn: () => base44.entities.Runs.filter({ id: runId }),
