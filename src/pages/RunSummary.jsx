@@ -6,6 +6,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { ArrowLeft } from 'lucide-react';
 import RouteMap from '../components/running/RouteMap';
+import ShareRunModal from '../components/running/ShareRunModal';
 
 const fmt2 = (n) => Number(n || 0).toFixed(2);
 
