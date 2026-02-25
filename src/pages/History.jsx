@@ -50,6 +50,14 @@ export default function History() {
     enabled: !isLoading && !!user,
   });
 
+  // Scroll to top on every mount/route enter
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      window.scrollTo(0, 0);
+      scrollRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+    });
+  }, []);
+
   // Redirect to welcome if not seen
   useEffect(() => {
     if (!isLoading && user && user.has_seen_welcome !== true) {
