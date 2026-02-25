@@ -47,276 +47,441 @@ function generateRunImage(run, variant) {
     canvas.width = W; canvas.height = H;
     const ctx = canvas.getContext('2d', { alpha: true });
 
-    const isCard = variant === 'card';
-
-    if (!isCard) {
-      // ── VIBE: transparent, minimal ────────────────────────────────────────
+    if (variant !== 'card') {
       ctx.clearRect(0, 0, W, H);
       _drawVibeVariant(ctx, run, W, H);
       return resolve(canvas.toDataURL('image/png'));
     }
 
-    // ── BX CARD: dark space + neon ────────────────────────────────────────────
-    // Base dark
-    ctx.fillStyle = '#0A0A0C';
+    // ════════════════════════════════════════════════════════
+    // LAYOUT CONSTANTS — 3 locked blocks, no overlap
+    // ════════════════════════════════════════════════════════
+    const PAD   = 72;          // horizontal padding
+    const CW    = W - PAD * 2; // content width = 936
+
+    // Block A: Header  top=60 .. bottom=380
+    const HDR_TOP = 60;
+    const HDR_H   = 320;
+
+    // Block B: Route panel  top=400 .. bottom=1220
+    const MAP_X = PAD, MAP_Y = 400, MAP_W = CW, MAP_H = 820;
+    const MAP_R = 32; // corner radius
+
+    // Block C: Stats panel  top=1244 .. bottom=1484 (240px)
+    const SBX_X = PAD, SBX_Y = 1244, SBX_W = CW, SBX_H = 240;
+
+    // Tagline: ~1520
+    // BX logo: ~1700
+
+    // ════════════════════════════════════════════════════════
+    // 1. BACKGROUND — aggressive dark space/grunge
+    // ════════════════════════════════════════════════════════
+    ctx.fillStyle = '#080810';
     ctx.fillRect(0, 0, W, H);
 
-    // Grain texture
-    for (let i = 0; i < 60000; i++) {
-      const alpha = Math.random() * 0.06;
-      ctx.fillStyle = `rgba(255,255,255,${alpha})`;
-      ctx.fillRect(Math.random() * W, Math.random() * H, 1, 1);
+    // Heavy grain — two passes: dust + film noise
+    for (let i = 0; i < 80000; i++) {
+      const x = Math.random() * W, y = Math.random() * H;
+      const a = Math.random() * 0.07;
+      ctx.fillStyle = `rgba(255,255,255,${a})`;
+      ctx.fillRect(x, y, 1, 1);
+    }
+    // Dark dust patches
+    for (let i = 0; i < 20000; i++) {
+      const x = Math.random() * W, y = Math.random() * H;
+      ctx.fillStyle = `rgba(0,0,0,${Math.random() * 0.12})`;
+      ctx.fillRect(x, y, Math.random() * 3, Math.random() * 3);
+    }
+    // Star specks
+    for (let i = 0; i < 300; i++) {
+      const x = Math.random() * W, y = Math.random() * H;
+      const r = Math.random() * 1.5;
+      const a = Math.random() * 0.6 + 0.2;
+      ctx.save();
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,255,255,${a})`; ctx.fill();
+      ctx.restore();
     }
 
-    // Purple nebula top-left
-    const gPurple = ctx.createRadialGradient(W * 0.1, H * 0.08, 0, W * 0.1, H * 0.08, 520);
-    gPurple.addColorStop(0, 'rgba(138,43,226,0.35)');
-    gPurple.addColorStop(0.5, 'rgba(100,0,180,0.15)');
-    gPurple.addColorStop(1, 'transparent');
-    ctx.fillStyle = gPurple; ctx.fillRect(0, 0, W, H);
+    // Purple nebula — top-left large
+    const nb1 = ctx.createRadialGradient(W * 0.05, H * 0.06, 0, W * 0.15, H * 0.10, 600);
+    nb1.addColorStop(0, 'rgba(120,20,220,0.50)');
+    nb1.addColorStop(0.4, 'rgba(80,0,160,0.22)');
+    nb1.addColorStop(1, 'transparent');
+    ctx.fillStyle = nb1; ctx.fillRect(0, 0, W, H);
 
-    // Lime glow bottom-right
-    const gLime = ctx.createRadialGradient(W * 0.85, H * 0.78, 0, W * 0.85, H * 0.78, 480);
-    gLime.addColorStop(0, 'rgba(191,255,0,0.20)');
-    gLime.addColorStop(0.5, 'rgba(150,220,0,0.08)');
-    gLime.addColorStop(1, 'transparent');
-    ctx.fillStyle = gLime; ctx.fillRect(0, 0, W, H);
+    // Secondary purple smear mid-left
+    const nb2 = ctx.createRadialGradient(W * 0.0, H * 0.40, 0, W * 0.05, H * 0.40, 320);
+    nb2.addColorStop(0, 'rgba(90,0,180,0.28)');
+    nb2.addColorStop(1, 'transparent');
+    ctx.fillStyle = nb2; ctx.fillRect(0, 0, W, H);
 
-    // Diagonal light streak (top-left to mid)
+    // Lime haze bottom-right
+    const nb3 = ctx.createRadialGradient(W * 0.88, H * 0.80, 0, W * 0.88, H * 0.80, 500);
+    nb3.addColorStop(0, 'rgba(191,255,0,0.18)');
+    nb3.addColorStop(0.5, 'rgba(140,220,0,0.07)');
+    nb3.addColorStop(1, 'transparent');
+    ctx.fillStyle = nb3; ctx.fillRect(0, 0, W, H);
+
+    // Diagonal purple streak — top-left
     ctx.save();
-    ctx.translate(W * 0.05, H * 0.05);
-    ctx.rotate(Math.PI / 5);
-    const streak1 = ctx.createLinearGradient(0, 0, 400, 0);
-    streak1.addColorStop(0, 'transparent');
-    streak1.addColorStop(0.4, 'rgba(180,60,255,0.18)');
-    streak1.addColorStop(0.6, 'rgba(200,100,255,0.12)');
-    streak1.addColorStop(1, 'transparent');
-    ctx.fillStyle = streak1;
-    ctx.fillRect(0, -6, 420, 12);
+    ctx.translate(W * 0.02, H * 0.03); ctx.rotate(0.56);
+    const ds1 = ctx.createLinearGradient(0, 0, 600, 0);
+    ds1.addColorStop(0, 'transparent');
+    ds1.addColorStop(0.35, 'rgba(160,40,255,0.22)');
+    ds1.addColorStop(0.65, 'rgba(180,80,255,0.14)');
+    ds1.addColorStop(1, 'transparent');
+    ctx.fillStyle = ds1; ctx.fillRect(0, -7, 640, 14);
     ctx.restore();
 
-    // Diagonal lime streak (bottom-right)
+    // Diagonal lime streak — bottom-right
     ctx.save();
-    ctx.translate(W * 0.62, H * 0.68);
-    ctx.rotate(-Math.PI / 6);
-    const streak2 = ctx.createLinearGradient(0, 0, 500, 0);
-    streak2.addColorStop(0, 'transparent');
-    streak2.addColorStop(0.3, 'rgba(191,255,0,0.22)');
-    streak2.addColorStop(0.6, 'rgba(180,255,0,0.14)');
-    streak2.addColorStop(1, 'transparent');
-    ctx.fillStyle = streak2;
-    ctx.fillRect(0, -5, 520, 10);
+    ctx.translate(W * 0.55, H * 0.70); ctx.rotate(-0.48);
+    const ds2 = ctx.createLinearGradient(0, 0, 580, 0);
+    ds2.addColorStop(0, 'transparent');
+    ds2.addColorStop(0.3, 'rgba(191,255,0,0.20)');
+    ds2.addColorStop(0.65, 'rgba(170,240,0,0.12)');
+    ds2.addColorStop(1, 'transparent');
+    ctx.fillStyle = ds2; ctx.fillRect(0, -6, 580, 12);
     ctx.restore();
 
-    // ── "COMPLETED RUN" label ──────────────────────────────────────────────
+    // Faint scanlines
+    for (let y = 0; y < H; y += 4) {
+      ctx.fillStyle = 'rgba(0,0,0,0.06)';
+      ctx.fillRect(0, y, W, 2);
+    }
+
+    // Vignette — strong edges
+    const vig = ctx.createRadialGradient(W / 2, H / 2, H * 0.28, W / 2, H / 2, H * 0.80);
+    vig.addColorStop(0, 'transparent');
+    vig.addColorStop(0.6, 'rgba(0,0,0,0.35)');
+    vig.addColorStop(1, 'rgba(0,0,0,0.75)');
+    ctx.fillStyle = vig; ctx.fillRect(0, 0, W, H);
+
+    // ════════════════════════════════════════════════════════
+    // 2. SCI-FI HUD FRAME — outer card border
+    // ════════════════════════════════════════════════════════
+    const FP = 28; // frame inset from edge
+    const FR = 18; // frame corner radius
+    const FX = FP, FY = FP, FW = W - FP * 2, FH = H - FP * 2;
+
+    // Outer neon-lime stroke
     ctx.save();
-    ctx.font = '600 32px Helvetica Neue, Arial, sans-serif';
-    ctx.fillStyle = 'rgba(255,255,255,0.38)';
+    ctx.beginPath(); ctx.roundRect(FX, FY, FW, FH, FR);
+    ctx.strokeStyle = 'rgba(191,255,0,0.28)';
+    ctx.lineWidth = 2;
+    ctx.shadowColor = 'rgba(191,255,0,0.50)'; ctx.shadowBlur = 18;
+    ctx.stroke(); ctx.shadowBlur = 0;
+    ctx.restore();
+
+    // Inner darker stroke
+    ctx.save();
+    ctx.beginPath(); ctx.roundRect(FX + 5, FY + 5, FW - 10, FH - 10, FR - 2);
+    ctx.strokeStyle = 'rgba(191,255,0,0.08)';
+    ctx.lineWidth = 1; ctx.stroke();
+    ctx.restore();
+
+    // Corner accent ticks — 4 corners
+    const tickLen = 40, tickW = 3;
+    const corners = [
+      { x: FX, y: FY, dx: 1, dy: 1 },
+      { x: FX + FW, y: FY, dx: -1, dy: 1 },
+      { x: FX, y: FY + FH, dx: 1, dy: -1 },
+      { x: FX + FW, y: FY + FH, dx: -1, dy: -1 },
+    ];
+    corners.forEach(({ x, y, dx, dy }) => {
+      ctx.save();
+      ctx.strokeStyle = '#BFFF00';
+      ctx.lineWidth = tickW;
+      ctx.shadowColor = 'rgba(191,255,0,0.7)'; ctx.shadowBlur = 12;
+      ctx.beginPath(); ctx.moveTo(x + dx * 2, y); ctx.lineTo(x + dx * tickLen, y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x, y + dy * 2); ctx.lineTo(x, y + dy * tickLen); ctx.stroke();
+      ctx.shadowBlur = 0; ctx.restore();
+    });
+
+    // Micro tick marks along top edge
+    for (let tx = FX + 80; tx < FX + FW - 80; tx += 48) {
+      const isLong = (tx - FX - 80) % (48 * 4) === 0;
+      ctx.save();
+      ctx.strokeStyle = `rgba(191,255,0,${isLong ? 0.5 : 0.2})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(tx, FY); ctx.lineTo(tx, FY + (isLong ? 14 : 7));
+      ctx.stroke(); ctx.restore();
+    }
+
+    // ════════════════════════════════════════════════════════
+    // 3. BLOCK A — HEADER
+    // ════════════════════════════════════════════════════════
+    // "COMPLETED RUN" label
+    ctx.save();
+    ctx.font = '500 30px Helvetica Neue, Arial, sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
     ctx.textAlign = 'center';
-    ctx.letterSpacing = '12px';
-    ctx.fillText('COMPLETED RUN', W / 2, 160);
+    ctx.letterSpacing = '14px';
+    ctx.fillText('COMPLETED RUN', W / 2, HDR_TOP + 90);
     ctx.restore();
 
-    // ── BoomX title ────────────────────────────────────────────────────────
+    // "BoomX" — neon-lime, punchy glow
     ctx.save();
-    ctx.font = '900 160px Helvetica Neue, Arial, sans-serif';
+    ctx.font = '900 170px Helvetica Neue, Arial, sans-serif';
     ctx.fillStyle = '#BFFF00';
     ctx.textAlign = 'center';
-    ctx.shadowColor = 'rgba(191,255,0,0.7)';
-    ctx.shadowBlur = 60;
-    ctx.fillText('BoomX', W / 2, 320);
+    ctx.shadowColor = 'rgba(191,255,0,0.80)'; ctx.shadowBlur = 70;
+    ctx.fillText('BoomX', W / 2, HDR_TOP + 260);
+    ctx.shadowBlur = 35;
+    ctx.fillText('BoomX', W / 2, HDR_TOP + 260); // double for punch
     ctx.shadowBlur = 0;
     ctx.restore();
 
-    // ── Map frame ─────────────────────────────────────────────────────────
-    const MX = 80, MY = 380, MW = W - 160, MH = 780;
-    const R = 36;
-
-    // Map bg — subtle dark glass
+    // Thin lime divider below header
     ctx.save();
+    ctx.strokeStyle = 'rgba(191,255,0,0.20)';
+    ctx.lineWidth = 1;
+    ctx.shadowColor = 'rgba(191,255,0,0.40)'; ctx.shadowBlur = 8;
     ctx.beginPath();
-    ctx.roundRect(MX, MY, MW, MH, R);
-    ctx.fillStyle = 'rgba(255,255,255,0.03)';
-    ctx.fill();
+    ctx.moveTo(PAD + 60, HDR_TOP + HDR_H);
+    ctx.lineTo(W - PAD - 60, HDR_TOP + HDR_H);
+    ctx.stroke(); ctx.shadowBlur = 0;
     ctx.restore();
 
-    // Neon border glow
-    ctx.save();
-    ctx.beginPath();
-    ctx.roundRect(MX, MY, MW, MH, R);
-    ctx.strokeStyle = 'rgba(191,255,0,0.30)';
-    ctx.lineWidth = 2.5;
-    ctx.shadowColor = 'rgba(191,255,0,0.45)';
-    ctx.shadowBlur = 20;
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-    ctx.restore();
+    // ════════════════════════════════════════════════════════
+    // 4. BLOCK B — ROUTE PANEL
+    // ════════════════════════════════════════════════════════
 
-    // ── Route polyline inside map ──────────────────────────────────────────
+    // Clip to panel — route NEVER escapes
+    ctx.save();
+    ctx.beginPath(); ctx.roundRect(MAP_X, MAP_Y, MAP_W, MAP_H, MAP_R);
+    ctx.clip();
+
+    // Panel bg: very dark glass
+    ctx.fillStyle = 'rgba(6,6,16,0.72)';
+    ctx.fillRect(MAP_X, MAP_Y, MAP_W, MAP_H);
+
+    // Inner grain for panel
+    for (let i = 0; i < 18000; i++) {
+      ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.04})`;
+      ctx.fillRect(MAP_X + Math.random() * MAP_W, MAP_Y + Math.random() * MAP_H, 1, 1);
+    }
+
+    // Subtle purple haze inside panel top
+    const ph = ctx.createRadialGradient(MAP_X + MAP_W * 0.3, MAP_Y + MAP_H * 0.1, 0, MAP_X + MAP_W * 0.3, MAP_Y + MAP_H * 0.1, 350);
+    ph.addColorStop(0, 'rgba(100,0,180,0.16)'); ph.addColorStop(1, 'transparent');
+    ctx.fillStyle = ph; ctx.fillRect(MAP_X, MAP_Y, MAP_W, MAP_H);
+
+    // Route line
     const points = parseRoutePoints(run?.route_points);
     if (points.length >= 2) {
       const lats = points.map(p => p.lat), lngs = points.map(p => p.lng);
       const minLat = Math.min(...lats), maxLat = Math.max(...lats);
       const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
-      const ip = 100;
-      const iW = MW - ip * 2, iH = MH - ip * 2;
+      const ip = 110;
+      const iW = MAP_W - ip * 2, iH = MAP_H - ip * 2;
       const scX = iW / (maxLng - minLng || 0.0001);
       const scY = iH / (maxLat - minLat || 0.0001);
       const sc = Math.min(scX, scY);
       const ofX = (iW - (maxLng - minLng) * sc) / 2;
       const ofY = (iH - (maxLat - minLat) * sc) / 2;
-      const toX = (lng) => MX + ip + ofX + (lng - minLng) * sc;
-      const toY = (lat) => MY + ip + ofY + (maxLat - lat) * sc;
+      const toX = (lng) => MAP_X + ip + ofX + (lng - minLng) * sc;
+      const toY = (lat) => MAP_Y + ip + ofY + (maxLat - lat) * sc;
 
-      // Outer glow pass
-      ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(toX(points[0].lng), toY(points[0].lat));
-      for (let i = 1; i < points.length; i++) ctx.lineTo(toX(points[i].lng), toY(points[i].lat));
-      ctx.strokeStyle = 'rgba(191,255,0,0.25)';
-      ctx.lineWidth = 26;
+      const pathFn = () => {
+        ctx.beginPath();
+        ctx.moveTo(toX(points[0].lng), toY(points[0].lat));
+        for (let i = 1; i < points.length; i++) ctx.lineTo(toX(points[i].lng), toY(points[i].lat));
+      };
+
+      // Pass 1: wide outer glow
+      ctx.save(); pathFn();
+      ctx.strokeStyle = 'rgba(191,255,0,0.18)'; ctx.lineWidth = 36;
       ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-      ctx.shadowColor = '#BFFF00'; ctx.shadowBlur = 40;
-      ctx.stroke(); ctx.restore();
+      ctx.shadowColor = '#BFFF00'; ctx.shadowBlur = 55;
+      ctx.stroke(); ctx.shadowBlur = 0; ctx.restore();
 
-      // Inner bright line
-      ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(toX(points[0].lng), toY(points[0].lat));
-      for (let i = 1; i < points.length; i++) ctx.lineTo(toX(points[i].lng), toY(points[i].lat));
-      ctx.strokeStyle = '#BFFF00';
-      ctx.lineWidth = 8;
+      // Pass 2: bright neon core
+      ctx.save(); pathFn();
+      ctx.strokeStyle = '#BFFF00'; ctx.lineWidth = 9;
       ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-      ctx.shadowColor = '#BFFF00'; ctx.shadowBlur = 24;
-      ctx.stroke(); ctx.restore();
+      ctx.shadowColor = '#BFFF00'; ctx.shadowBlur = 28;
+      ctx.stroke(); ctx.shadowBlur = 0; ctx.restore();
 
-      // Core white-hot line
-      ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(toX(points[0].lng), toY(points[0].lat));
-      for (let i = 1; i < points.length; i++) ctx.lineTo(toX(points[i].lng), toY(points[i].lat));
-      ctx.strokeStyle = 'rgba(255,255,255,0.85)';
-      ctx.lineWidth = 3;
+      // Pass 3: white-hot center
+      ctx.save(); pathFn();
+      ctx.strokeStyle = 'rgba(240,255,180,0.92)'; ctx.lineWidth = 3;
       ctx.lineJoin = 'round'; ctx.lineCap = 'round';
       ctx.stroke(); ctx.restore();
 
-      // Start dot (lime)
+      // Start dot — lime with halo ring
       const sx = toX(points[0].lng), sy = toY(points[0].lat);
       ctx.save();
-      ctx.beginPath(); ctx.arc(sx, sy, 22, 0, Math.PI * 2);
-      ctx.fillStyle = '#BFFF00'; ctx.shadowColor = '#BFFF00'; ctx.shadowBlur = 30;
+      ctx.beginPath(); ctx.arc(sx, sy, 32, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(191,255,0,0.12)'; ctx.fill(); ctx.restore();
+      ctx.save();
+      ctx.beginPath(); ctx.arc(sx, sy, 20, 0, Math.PI * 2);
+      ctx.fillStyle = '#BFFF00'; ctx.shadowColor = '#BFFF00'; ctx.shadowBlur = 35;
       ctx.fill(); ctx.restore();
       ctx.save();
-      ctx.beginPath(); ctx.arc(sx, sy, 10, 0, Math.PI * 2);
+      ctx.beginPath(); ctx.arc(sx, sy, 9, 0, Math.PI * 2);
       ctx.fillStyle = '#FFFFFF'; ctx.fill(); ctx.restore();
 
-      // End dot (red/pink)
+      // End dot — pink/red with halo
       const last = points[points.length - 1];
       const ex = toX(last.lng), ey = toY(last.lat);
       ctx.save();
-      ctx.beginPath(); ctx.arc(ex, ey, 18, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255,80,120,0.25)'; ctx.shadowColor = 'rgba(255,80,120,0.8)'; ctx.shadowBlur = 25;
-      ctx.fill(); ctx.restore();
+      ctx.beginPath(); ctx.arc(ex, ey, 30, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,80,130,0.14)'; ctx.fill(); ctx.restore();
       ctx.save();
-      ctx.beginPath(); ctx.arc(ex, ey, 9, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(255,120,140,0.9)'; ctx.lineWidth = 3; ctx.stroke(); ctx.restore();
+      ctx.beginPath(); ctx.arc(ex, ey, 16, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255,100,140,0.85)'; ctx.lineWidth = 3;
+      ctx.shadowColor = 'rgba(255,80,130,0.9)'; ctx.shadowBlur = 24;
+      ctx.stroke(); ctx.shadowBlur = 0; ctx.restore();
+      ctx.save();
+      ctx.beginPath(); ctx.arc(ex, ey, 7, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,130,160,0.9)'; ctx.fill(); ctx.restore();
+    } else {
+      ctx.font = '500 38px Helvetica Neue, Arial, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.textAlign = 'center';
+      ctx.fillText('No route recorded', W / 2, MAP_Y + MAP_H / 2);
     }
 
-    // ── Stats bar below map ────────────────────────────────────────────────
-    const SY = MY + MH + 30;
+    ctx.restore(); // end clip
+
+    // Panel border (drawn after clip restore so it's on top)
+    ctx.save();
+    ctx.beginPath(); ctx.roundRect(MAP_X, MAP_Y, MAP_W, MAP_H, MAP_R);
+    ctx.strokeStyle = 'rgba(191,255,0,0.35)'; ctx.lineWidth = 2;
+    ctx.shadowColor = 'rgba(191,255,0,0.50)'; ctx.shadowBlur = 16;
+    ctx.stroke(); ctx.shadowBlur = 0; ctx.restore();
+
+    // Inner darker border
+    ctx.save();
+    ctx.beginPath(); ctx.roundRect(MAP_X + 4, MAP_Y + 4, MAP_W - 8, MAP_H - 8, MAP_R - 2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.restore();
+
+    // ════════════════════════════════════════════════════════
+    // 5. BLOCK C — STATS PANEL
+    // ════════════════════════════════════════════════════════
     const pace   = getPace(run);
     const durSec = run?.duration_sec ?? run?.duration_seconds ?? 0;
 
-    // Stat box background
+    // Stats panel background — glassy dark
     ctx.save();
-    ctx.beginPath();
-    ctx.roundRect(MX, SY, MW, 240, 24);
-    ctx.fillStyle = 'rgba(255,255,255,0.04)';
-    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-    ctx.lineWidth = 1.5;
-    ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.roundRect(SBX_X, SBX_Y, SBX_W, SBX_H, 22);
+    const sglass = ctx.createLinearGradient(SBX_X, SBX_Y, SBX_X, SBX_Y + SBX_H);
+    sglass.addColorStop(0, 'rgba(255,255,255,0.07)');
+    sglass.addColorStop(1, 'rgba(255,255,255,0.02)');
+    ctx.fillStyle = sglass; ctx.fill();
     ctx.restore();
+
+    // Panel border + inner shadow line
+    ctx.save();
+    ctx.beginPath(); ctx.roundRect(SBX_X, SBX_Y, SBX_W, SBX_H, 22);
+    ctx.strokeStyle = 'rgba(191,255,0,0.22)'; ctx.lineWidth = 1.5;
+    ctx.shadowColor = 'rgba(191,255,0,0.30)'; ctx.shadowBlur = 10;
+    ctx.stroke(); ctx.shadowBlur = 0; ctx.restore();
+
+    // Top highlight line of panel
+    ctx.save();
+    const hl = ctx.createLinearGradient(SBX_X, SBX_Y, SBX_X + SBX_W, SBX_Y);
+    hl.addColorStop(0, 'transparent');
+    hl.addColorStop(0.3, 'rgba(191,255,0,0.25)');
+    hl.addColorStop(0.7, 'rgba(191,255,0,0.25)');
+    hl.addColorStop(1, 'transparent');
+    ctx.strokeStyle = hl; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(SBX_X + 22, SBX_Y); ctx.lineTo(SBX_X + SBX_W - 22, SBX_Y);
+    ctx.stroke(); ctx.restore();
 
     const stats = [
       { label: 'DISTANCE', value: `${Number(run?.distance_km || 0).toFixed(2)}`, unit: 'km' },
-      { label: 'PACE',     value: fmtPace(pace),                                  unit: '/km' },
-      { label: 'TIME',     value: fmtDur(durSec),                                 unit: '' },
+      { label: 'PACE',     value: fmtPace(pace),  unit: '/km' },
+      { label: 'TIME',     value: fmtDur(durSec), unit: '' },
     ];
 
-    // Fixed row anchors (canvas fillText y = baseline)
-    // Box height = 240, centered content block ~140px tall
-    // Label top:  SY + 50  → baseline SY + 76
-    // Number:               → baseline SY + 160
-    // Unit:                 → baseline SY + 202
-    const LABEL_Y  = SY + 76;
-    const NUMBER_Y = SY + 160;
-    const UNIT_Y   = SY + 202;
-    const colW = MW / 3;
+    // Fixed Y positions within stats panel — all relative to SBX_Y
+    // Panel H = 240px
+    // LABEL  → top area  → baseline at SBX_Y + 58
+    // VALUE  → center    → baseline at SBX_Y + 158
+    // UNIT   → below val → baseline at SBX_Y + 202
+    const LBL_Y = SBX_Y + 58;
+    const VAL_Y = SBX_Y + 158;
+    const UNT_Y = SBX_Y + 202;
+    const colW  = SBX_W / 3;
 
     stats.forEach((st, i) => {
-      const cx = MX + colW * i + colW / 2;
+      const cx = SBX_X + colW * i + colW / 2;
 
-      // Vertical divider
+      // Vertical divider (not before first)
       if (i > 0) {
+        const dvx = SBX_X + colW * i;
         ctx.save();
-        ctx.strokeStyle = 'rgba(255,255,255,0.10)';
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.moveTo(MX + colW * i, SY + 20);
-        ctx.lineTo(MX + colW * i, SY + 220);
+        const dg = ctx.createLinearGradient(dvx, SBX_Y + 20, dvx, SBX_Y + SBX_H - 20);
+        dg.addColorStop(0, 'transparent');
+        dg.addColorStop(0.3, 'rgba(191,255,0,0.18)');
+        dg.addColorStop(0.7, 'rgba(191,255,0,0.18)');
+        dg.addColorStop(1, 'transparent');
+        ctx.strokeStyle = dg; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(dvx, SBX_Y + 16); ctx.lineTo(dvx, SBX_Y + SBX_H - 16);
         ctx.stroke(); ctx.restore();
       }
 
-      // Label (small caps, muted)
+      // LABEL — small, letter-spaced, gray
       ctx.save();
-      ctx.font = '600 26px Helvetica Neue, Arial, sans-serif';
-      ctx.fillStyle = 'rgba(255,255,255,0.40)';
+      ctx.font = '600 24px Helvetica Neue, Arial, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.38)';
       ctx.textAlign = 'center';
-      ctx.fillText(st.label, cx, LABEL_Y);
+      ctx.fillText(st.label, cx, LBL_Y);
       ctx.restore();
 
-      // Number (large, no unit mixed in)
-      const numSize = i === 2 ? 64 : 68;
+      // VALUE — pure white, large, fixed font size per column
+      const vSize = i === 0 ? 68 : i === 1 ? 64 : 60;
       ctx.save();
-      ctx.font = `800 ${numSize}px Helvetica Neue, Arial, sans-serif`;
+      ctx.font = `800 ${vSize}px Helvetica Neue, Arial, sans-serif`;
       ctx.fillStyle = '#FFFFFF';
       ctx.textAlign = 'center';
-      ctx.shadowColor = 'rgba(191,255,0,0.15)';
-      ctx.shadowBlur = 10;
-      ctx.fillText(st.value, cx, NUMBER_Y);
+      ctx.shadowColor = 'rgba(191,255,0,0.20)';
+      ctx.shadowBlur = 14;
+      ctx.fillText(st.value, cx, VAL_Y);
       ctx.shadowBlur = 0;
       ctx.restore();
 
-      // Unit on its own line below the number
+      // UNIT — dim gray, own line, always below value
       if (st.unit) {
         ctx.save();
-        ctx.font = '500 30px Helvetica Neue, Arial, sans-serif';
-        ctx.fillStyle = 'rgba(255,255,255,0.45)';
+        ctx.font = '500 28px Helvetica Neue, Arial, sans-serif';
+        ctx.fillStyle = 'rgba(255,255,255,0.38)';
         ctx.textAlign = 'center';
-        ctx.fillText(st.unit, cx, UNIT_Y);
+        ctx.fillText(st.unit, cx, UNT_Y);
         ctx.restore();
       }
     });
 
-    // ── RUN · EARN · EVOLVE ────────────────────────────────────────────────
+    // ── Tagline
     ctx.save();
-    ctx.font = '600 28px Helvetica Neue, Arial, sans-serif';
-    ctx.fillStyle = 'rgba(255,255,255,0.28)';
+    ctx.font = '500 26px Helvetica Neue, Arial, sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.22)';
     ctx.textAlign = 'center';
-    ctx.letterSpacing = '8px';
-    ctx.fillText('RUN · EARN · EVOLVE', W / 2, SY + 300);
+    ctx.letterSpacing = '10px';
+    ctx.fillText('RUN · EARN · EVOLVE', W / 2, SBX_Y + SBX_H + 64);
     ctx.restore();
 
-    // ── BX logo bottom ──────────────────────────────────────────────────────
+    // ── BX logo — neon-lime, strong glow, blur halo
+    const BX_Y = SBX_Y + SBX_H + 240;
     ctx.save();
-    ctx.font = '900 160px Helvetica Neue, Arial, sans-serif';
+    ctx.font = '900 180px Helvetica Neue, Arial, sans-serif';
+    ctx.fillStyle = 'rgba(191,255,0,0.12)';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = '#BFFF00'; ctx.shadowBlur = 90;
+    ctx.fillText('BX', W / 2, BX_Y); // blur halo pass
+    ctx.shadowBlur = 0; ctx.restore();
+
+    ctx.save();
+    ctx.font = '900 180px Helvetica Neue, Arial, sans-serif';
     ctx.fillStyle = '#BFFF00';
     ctx.textAlign = 'center';
-    ctx.shadowColor = 'rgba(191,255,0,0.6)';
-    ctx.shadowBlur = 50;
-    ctx.fillText('BX', W / 2, H - 220);
-    ctx.shadowBlur = 0;
-    ctx.restore();
+    ctx.shadowColor = 'rgba(191,255,0,0.85)'; ctx.shadowBlur = 55;
+    ctx.fillText('BX', W / 2, BX_Y);
+    ctx.shadowBlur = 25; ctx.fillText('BX', W / 2, BX_Y); // second pass for punch
+    ctx.shadowBlur = 0; ctx.restore();
 
     resolve(canvas.toDataURL('image/png'));
   });
