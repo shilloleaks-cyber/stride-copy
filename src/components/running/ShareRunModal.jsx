@@ -444,13 +444,19 @@ function generateRunImage(run, variant) {
       ctx.shadowBlur = 0;
       ctx.restore();
 
-      // UNIT — dim gray, own line, always below value
+      // UNIT — clearly readable, own fixed line below value
       if (st.unit) {
         ctx.save();
-        ctx.font = '500 28px Helvetica Neue, Arial, sans-serif';
-        ctx.fillStyle = 'rgba(255,255,255,0.38)';
+        ctx.font = '600 38px Helvetica Neue, Arial, sans-serif';
+        ctx.fillStyle = 'rgba(255,255,255,0.58)';
         ctx.textAlign = 'center';
+        ctx.letterSpacing = '3px';
+        // subtle shadow so unit doesn't get lost in grain
+        ctx.shadowColor = 'rgba(0,0,0,0.85)';
+        ctx.shadowBlur = 8;
+        ctx.shadowOffsetY = 2;
         ctx.fillText(st.unit, cx, UNT_Y);
+        ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
         ctx.restore();
       }
     });
