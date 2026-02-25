@@ -398,62 +398,63 @@ function generateRunImage(run, variant) {
     ];
 
     // Fixed Y positions within stats panel — all relative to SBX_Y
-    // Panel H = 240px
-    // LABEL  → top area  → baseline at SBX_Y + 58
-    // VALUE  → center    → baseline at SBX_Y + 158
-    // UNIT   → below val → baseline at SBX_Y + 202
-    const LBL_Y = SBX_Y + 58;
+    // Panel H = 240px  |  content block centres ~160px tall
+    // LABEL  → baseline SBX_Y + 56
+    // VALUE  → baseline SBX_Y + 158
+    // UNIT   → baseline SBX_Y + 208  (extra 6px gap below value)
+    const LBL_Y = SBX_Y + 56;
     const VAL_Y = SBX_Y + 158;
-    const UNT_Y = SBX_Y + 202;
+    const UNT_Y = SBX_Y + 208;
     const colW  = SBX_W / 3;
 
     stats.forEach((st, i) => {
       const cx = SBX_X + colW * i + colW / 2;
 
-      // Vertical divider (not before first)
+      // Vertical divider
       if (i > 0) {
         const dvx = SBX_X + colW * i;
         ctx.save();
         const dg = ctx.createLinearGradient(dvx, SBX_Y + 20, dvx, SBX_Y + SBX_H - 20);
         dg.addColorStop(0, 'transparent');
-        dg.addColorStop(0.3, 'rgba(191,255,0,0.18)');
-        dg.addColorStop(0.7, 'rgba(191,255,0,0.18)');
+        dg.addColorStop(0.3, 'rgba(191,255,0,0.22)');
+        dg.addColorStop(0.7, 'rgba(191,255,0,0.22)');
         dg.addColorStop(1, 'transparent');
         ctx.strokeStyle = dg; ctx.lineWidth = 1.5;
         ctx.beginPath(); ctx.moveTo(dvx, SBX_Y + 16); ctx.lineTo(dvx, SBX_Y + SBX_H - 16);
         ctx.stroke(); ctx.restore();
       }
 
-      // LABEL — small, letter-spaced, gray
+      // LABEL — slightly larger, letter-spaced, mid-bright
       ctx.save();
-      ctx.font = '600 24px Helvetica Neue, Arial, sans-serif';
-      ctx.fillStyle = 'rgba(255,255,255,0.38)';
+      ctx.font = '600 28px Helvetica Neue, Arial, sans-serif';
+      ctx.fillStyle = 'rgba(200,210,200,0.52)';
       ctx.textAlign = 'center';
+      ctx.letterSpacing = '4px';
+      ctx.shadowColor = 'rgba(0,0,0,0.70)';
+      ctx.shadowBlur = 6;
       ctx.fillText(st.label, cx, LBL_Y);
-      ctx.restore();
+      ctx.shadowBlur = 0; ctx.restore();
 
-      // VALUE — pure white, large, fixed font size per column
+      // VALUE — pure bright white, dominant
       const vSize = i === 0 ? 68 : i === 1 ? 64 : 60;
       ctx.save();
       ctx.font = `800 ${vSize}px Helvetica Neue, Arial, sans-serif`;
       ctx.fillStyle = '#FFFFFF';
       ctx.textAlign = 'center';
-      ctx.shadowColor = 'rgba(191,255,0,0.20)';
+      ctx.shadowColor = 'rgba(191,255,0,0.22)';
       ctx.shadowBlur = 14;
       ctx.fillText(st.value, cx, VAL_Y);
-      ctx.shadowBlur = 0;
-      ctx.restore();
+      ctx.shadowBlur = 0; ctx.restore();
 
-      // UNIT — clearly readable, own fixed line below value
+      // UNIT — neon-soft tinted gray, clearly readable, below value
       if (st.unit) {
         ctx.save();
         ctx.font = '600 38px Helvetica Neue, Arial, sans-serif';
-        ctx.fillStyle = 'rgba(255,255,255,0.58)';
+        ctx.fillStyle = 'rgba(191,230,160,0.62)';
         ctx.textAlign = 'center';
         ctx.letterSpacing = '3px';
-        // subtle shadow so unit doesn't get lost in grain
         ctx.shadowColor = 'rgba(0,0,0,0.85)';
-        ctx.shadowBlur = 8;
+        ctx.shadowBlur = 9;
         ctx.shadowOffsetY = 2;
         ctx.fillText(st.unit, cx, UNT_Y);
         ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
