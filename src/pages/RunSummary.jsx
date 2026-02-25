@@ -45,6 +45,7 @@ export default function RunSummary() {
   const [claiming, setClaiming] = useState(false);
   const [claimError, setClaimError] = useState('');
   const [localClaimed, setLocalClaimed] = useState(null); // override after claim
+  const [showShare, setShowShare] = useState(false);
 
   const { data: runs, isLoading } = useQuery({
     queryKey: ['run', runId],
