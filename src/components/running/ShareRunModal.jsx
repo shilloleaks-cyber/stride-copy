@@ -682,7 +682,10 @@ export default function ShareRunModal({ run, user, onClose }) {
         </div>
 
         {/* 9:16 preview */}
-        <div style={S.previewWrap}>
+        <div style={{
+          ...S.previewWrap,
+          ...(variant === 'vibe' ? S.previewWrapVibe : {}),
+        }}>
           {generating ? (
             <div style={S.placeholder}>
               <div style={S.spinner} />
