@@ -500,7 +500,7 @@ function _drawVibeVariant(ctx, run, W, H) {
 
   const cText  = '#111111';
   const cMuted = 'rgba(0,0,0,0.50)';
-  const routeColor = '#00C853';
+  const routeColor = '#BFFF00';
 
   // BoomX title
   ctx.save();
