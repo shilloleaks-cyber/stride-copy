@@ -497,6 +497,8 @@ function generateRunImage(run, variant) {
 function _drawVibeVariant(ctx, run, W, H) {
   const PH = 80;
   ctx.clearRect(0, 0, W, H);
+  // Canvas remains fully transparent — no background fill here.
+  // Preview background is applied via CSS on the wrapper element.
 
   const cText  = '#111111';
   const cMuted = 'rgba(0,0,0,0.50)';
