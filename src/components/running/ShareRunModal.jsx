@@ -532,19 +532,23 @@ function _drawVibeVariant(ctx, run, W, H) {
     ctx.moveTo(toX(points[0].lng), toY(points[0].lat));
     for (let i = 1; i < points.length; i++) ctx.lineTo(toX(points[i].lng), toY(points[i].lat));
     ctx.strokeStyle = routeColor;
-    ctx.lineWidth = 9;
+    ctx.lineWidth = 7;
     ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-    ctx.shadowColor = routeColor; ctx.shadowBlur = 14;
-    ctx.stroke(); ctx.restore();
+    ctx.shadowColor = 'rgba(191,255,0,0.55)'; ctx.shadowBlur = 10;
+    ctx.stroke(); ctx.shadowBlur = 0; ctx.restore();
 
     ctx.save();
-    ctx.beginPath(); ctx.arc(toX(points[0].lng), toY(points[0].lat), 16, 0, Math.PI * 2);
-    ctx.fillStyle = routeColor; ctx.fill(); ctx.restore();
+    ctx.beginPath(); ctx.arc(toX(points[0].lng), toY(points[0].lat), 10, 0, Math.PI * 2);
+    ctx.fillStyle = routeColor;
+    ctx.shadowColor = 'rgba(191,255,0,0.6)'; ctx.shadowBlur = 8;
+    ctx.fill(); ctx.shadowBlur = 0; ctx.restore();
 
     const last = points[points.length - 1];
     ctx.save();
-    ctx.beginPath(); ctx.arc(toX(last.lng), toY(last.lat), 16, 0, Math.PI * 2);
-    ctx.fillStyle = '#FF5252'; ctx.fill(); ctx.restore();
+    ctx.beginPath(); ctx.arc(toX(last.lng), toY(last.lat), 10, 0, Math.PI * 2);
+    ctx.fillStyle = '#FF6B8A';
+    ctx.shadowColor = 'rgba(255,80,130,0.6)'; ctx.shadowBlur = 8;
+    ctx.fill(); ctx.shadowBlur = 0; ctx.restore();
   }
 
   const pace    = getPace(run);
