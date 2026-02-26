@@ -495,9 +495,8 @@ function generateRunImage(run, variant) {
 }
 
 function _drawVibeVariant(ctx, run, W, H) {
-  // Black background (as shown in the reference image)
-  ctx.fillStyle = '#0A0A0A';
-  ctx.fillRect(0, 0, W, H);
+  // Transparent canvas — background shown via CSS preview only
+  ctx.clearRect(0, 0, W, H);
 
   const routeColor = '#BFFF00';
 
