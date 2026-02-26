@@ -758,6 +758,11 @@ const S = {
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     flexShrink: 0,
   },
+  // Vibe preview-only background (CSS only, not drawn on canvas)
+  previewWrapVibe: {
+    background: 'linear-gradient(160deg, #f5f5f0 0%, #e8e8e2 50%, #efefea 100%)',
+    border: '1px solid rgba(0,0,0,0.08)',
+  },
   previewImg: { width: '100%', height: '100%', objectFit: 'contain', display: 'block' },
   placeholder: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 },
   spinner: { width: 28, height: 28, borderRadius: '50%', border: '2.5px solid rgba(191,255,0,0.20)', borderTopColor: '#BFFF00', animation: 'spin 0.8s linear infinite' },
