@@ -495,85 +495,91 @@ function generateRunImage(run, variant) {
 }
 
 function _drawVibeVariant(ctx, run, W, H) {
-  const PH = 80;
-  ctx.clearRect(0, 0, W, H);
-  // Canvas remains fully transparent — no background fill here.
-  // Preview background is applied via CSS on the wrapper element.
+  // Black background (as shown in the reference image)
+  ctx.fillStyle = '#0A0A0A';
+  ctx.fillRect(0, 0, W, H);
 
-  const cText  = '#111111';
-  const cMuted = 'rgba(0,0,0,0.50)';
   const routeColor = '#BFFF00';
 
-  // BoomX title
+  // ── BoomX title ──────────────────────────────────────────────────────────────
   ctx.save();
-  ctx.font = '900 140px Helvetica Neue, Arial, sans-serif';
-  ctx.fillStyle = '#111111';
+  ctx.font = '900 160px Helvetica Neue, Arial, sans-serif';
+  ctx.fillStyle = '#FFFFFF';
   ctx.textAlign = 'center';
-  ctx.fillText('BoomX', W / 2, 280);
+  ctx.fillText('BoomX', W / 2, 260);
   ctx.restore();
 
-  const MAP_Y = 360, MAP_H = 760;
+  // ── Route ────────────────────────────────────────────────────────────────────
+  const MAP_Y = 340, MAP_H = 820;
   const points = parseRoutePoints(run?.route_points);
 
   if (points.length >= 2) {
     const lats = points.map(p => p.lat), lngs = points.map(p => p.lng);
     const minLat = Math.min(...lats), maxLat = Math.max(...lats);
     const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
-    const ip = 80;
-    const iW = W - PH * 2 - ip * 2, iH = MAP_H - ip * 2;
+    const ip = 120;
+    const iW = W - ip * 2, iH = MAP_H - ip * 2;
     const scX = iW / (maxLng - minLng || 0.0001);
     const scY = iH / (maxLat - minLat || 0.0001);
     const sc = Math.min(scX, scY);
     const ofX = (iW - (maxLng - minLng) * sc) / 2;
     const ofY = (iH - (maxLat - minLat) * sc) / 2;
-    const toX = (lng) => PH + ip + ofX + (lng - minLng) * sc;
+    const toX = (lng) => ip + ofX + (lng - minLng) * sc;
     const toY = (lat) => MAP_Y + ip + ofY + (maxLat - lat) * sc;
 
+    // Route line
     ctx.save();
     ctx.beginPath();
     ctx.moveTo(toX(points[0].lng), toY(points[0].lat));
     for (let i = 1; i < points.length; i++) ctx.lineTo(toX(points[i].lng), toY(points[i].lat));
     ctx.strokeStyle = routeColor;
-    ctx.lineWidth = 7;
+    ctx.lineWidth = 10;
     ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-    ctx.shadowColor = 'rgba(191,255,0,0.55)'; ctx.shadowBlur = 10;
+    ctx.shadowColor = routeColor; ctx.shadowBlur = 18;
     ctx.stroke(); ctx.shadowBlur = 0; ctx.restore();
 
+    // Start dot — red
     ctx.save();
-    ctx.beginPath(); ctx.arc(toX(points[0].lng), toY(points[0].lat), 10, 0, Math.PI * 2);
-    ctx.fillStyle = routeColor;
-    ctx.shadowColor = 'rgba(191,255,0,0.6)'; ctx.shadowBlur = 8;
+    ctx.beginPath(); ctx.arc(toX(points[0].lng), toY(points[0].lat), 14, 0, Math.PI * 2);
+    ctx.fillStyle = '#FF3B3B';
+    ctx.shadowColor = 'rgba(255,60,60,0.7)'; ctx.shadowBlur = 14;
     ctx.fill(); ctx.shadowBlur = 0; ctx.restore();
 
+    // End dot — lime green
     const last = points[points.length - 1];
     ctx.save();
-    ctx.beginPath(); ctx.arc(toX(last.lng), toY(last.lat), 10, 0, Math.PI * 2);
-    ctx.fillStyle = '#FF6B8A';
-    ctx.shadowColor = 'rgba(255,80,130,0.6)'; ctx.shadowBlur = 8;
+    ctx.beginPath(); ctx.arc(toX(last.lng), toY(last.lat), 14, 0, Math.PI * 2);
+    ctx.fillStyle = routeColor;
+    ctx.shadowColor = 'rgba(191,255,0,0.7)'; ctx.shadowBlur = 14;
     ctx.fill(); ctx.shadowBlur = 0; ctx.restore();
   }
 
-  const pace    = getPace(run);
-  const durSec  = run?.duration_sec ?? run?.duration_seconds ?? 0;
+  // ── Stats ─────────────────────────────────────────────────────────────────────
+  const pace   = getPace(run);
+  const durSec = run?.duration_sec ?? run?.duration_seconds ?? 0;
   const statBlocks = [
     { value: `${Number(run?.distance_km || 0).toFixed(2)} km`, label: 'DISTANCE' },
-    { value: `${fmtPace(pace)} /km`, label: 'PACE' },
-    { value: fmtDur(durSec), label: 'TIME' },
+    { value: `${fmtPace(pace)} /km`,                           label: 'PACE' },
+    { value: fmtDur(durSec),                                   label: 'TIME' },
   ];
 
-  const STATS_TOP = MAP_Y + MAP_H + 72;
-  const SLOT = 170;
+  const STATS_TOP = MAP_Y + MAP_H + 60;
+  const SLOT = 190;
   statBlocks.forEach((st, i) => {
     const baseY = STATS_TOP + i * SLOT;
+    // Value — white, large bold
     ctx.save();
-    ctx.font = `800 84px Helvetica Neue, Arial, sans-serif`;
-    ctx.fillStyle = cText; ctx.textAlign = 'center';
-    ctx.fillText(st.value, W / 2, baseY + 84);
+    ctx.font = '800 96px Helvetica Neue, Arial, sans-serif';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.textAlign = 'center';
+    ctx.fillText(st.value, W / 2, baseY + 96);
     ctx.restore();
+    // Label — small, dimmed white, letter-spaced
     ctx.save();
-    ctx.font = `600 28px Helvetica Neue, Arial, sans-serif`;
-    ctx.fillStyle = cMuted; ctx.textAlign = 'center';
-    ctx.fillText(st.label, W / 2, baseY + 84 + 14 + 28);
+    ctx.font = '600 32px Helvetica Neue, Arial, sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.textAlign = 'center';
+    ctx.fillText(st.label, W / 2, baseY + 96 + 18 + 32);
     ctx.restore();
   });
 }
