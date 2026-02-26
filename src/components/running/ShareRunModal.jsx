@@ -772,8 +772,8 @@ const S = {
   },
   // Vibe preview-only background (CSS only, not drawn on canvas)
   previewWrapVibe: {
-    background: 'linear-gradient(160deg, #f5f5f0 0%, #e8e8e2 50%, #efefea 100%)',
-    border: '1px solid rgba(0,0,0,0.08)',
+    background: '#0A0A0A',
+    border: '1px solid rgba(255,255,255,0.06)',
   },
   previewImg: { width: '100%', height: '100%', objectFit: 'contain', display: 'block' },
   placeholder: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 },
