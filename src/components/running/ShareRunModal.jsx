@@ -744,6 +744,7 @@ const S = {
     border: '1px solid rgba(191,255,0,0.14)', borderBottom: 'none',
     boxShadow: '0 -8px 60px rgba(138,43,226,0.22)',
     padding: '12px 20px 0',
+    paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))',
     display: 'flex', flexDirection: 'column', gap: 14,
     WebkitOverflowScrolling: 'touch',
   },
