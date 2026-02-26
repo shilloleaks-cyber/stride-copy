@@ -612,16 +612,22 @@ export default function ShareRunModal({ run, user, onClose }) {
     setActionStatus('busy'); setMsg('');
     const blob = await getBlob();
     const file = new File([blob], 'boomx-run.png', { type: 'image/png' });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], title: 'BoomX Run' });
-      setActionStatus('success'); setMsg('Shared via Share Sheet!');
-    } else {
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `boomx-run-${run.id || Date.now()}.png`;
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      setActionStatus('success'); setMsg('Saved!');
+    // Try native share sheet first (iOS/Android) — user can tap "Save to Photos" directly
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: 'BoomX Run', text: 'My BoomX Run 🏃‍♂️⚡' });
+        setActionStatus('success'); setMsg('บันทึกรูปได้เลย!');
+        return;
+      } catch (e) {
+        if (e.name === 'AbortError') { setActionStatus(''); return; } // user cancelled
+      }
     }
+    // Fallback: direct download (desktop)
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `boomx-run-${run.id || Date.now()}.png`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setActionStatus('success'); setMsg('บันทึกแล้ว!');
   };
 
   const handleShareToFeed = async () => {
