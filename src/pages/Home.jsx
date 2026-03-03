@@ -327,9 +327,6 @@ export default function Home() {
         <div className="heroLeft">
           <div className="heroSmall">Ready to run?</div>
           <div className="heroBig">Start New Run</div>
-          <div className="heroRule">
-            <span className="ruleDot" /> 1 km = 10 coins
-          </div>
         </div>
         <button className="heroPlay" onClick={handleStartRun} aria-label="Start run">
           ▶
