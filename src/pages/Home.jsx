@@ -323,15 +323,40 @@ export default function Home() {
       </header>
 
       {/* HERO / START */}
-      <section className="heroCard" role="region" aria-label="Start new run">
-        <div className="heroLeft">
-          <div className="heroSmall">Ready to run?</div>
-          <div className="heroBig">Start New Run</div>
+      <section
+        role="region"
+        aria-label="Start new run"
+        style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "22px 24px", borderRadius: "18px", marginBottom: "18px",
+          background: "linear-gradient(135deg, #0f0f0f, #141414)",
+          boxShadow: "0 12px 30px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.04)"
+        }}
+      >
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: "13px", letterSpacing: "0.8px", textTransform: "uppercase", opacity: 0.55 }}>
+            Ready to run?
+          </div>
+          <div style={{ fontSize: "22px", fontWeight: 800, marginTop: "4px" }}>
+            Start New Run
+          </div>
           <div className="heroRule">
             <span className="ruleDot" /> 1 km = 10 coins
           </div>
         </div>
-        <button className="heroPlay" onClick={handleStartRun} aria-label="Start run">
+        <button
+          onClick={handleStartRun}
+          aria-label="Start run"
+          style={{
+            width: "72px", height: "72px", borderRadius: "999px",
+            border: "1px solid rgba(255,255,255,0.14)",
+            background: "radial-gradient(circle at 30% 25%, rgba(191,255,0,0.22), rgba(10,10,10,0.25))",
+            display: "grid", placeItems: "center",
+            fontSize: "32px", lineHeight: 1, color: "#ffffff", cursor: "pointer",
+            boxShadow: "0 12px 28px rgba(0,0,0,0.55), 0 0 28px rgba(191,255,0,0.25)",
+            transition: "all .18s ease"
+          }}
+        >
           ▶
         </button>
       </section>
