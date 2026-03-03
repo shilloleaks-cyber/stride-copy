@@ -323,40 +323,15 @@ export default function Home() {
       </header>
 
       {/* HERO / START */}
-      <section
-        role="region"
-        aria-label="Start new run"
-        style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "22px 24px", borderRadius: "18px", marginBottom: "18px",
-          background: "linear-gradient(135deg, #0f0f0f, #141414)",
-          boxShadow: "0 12px 30px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.04)"
-        }}
-      >
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: "13px", letterSpacing: "0.8px", textTransform: "uppercase", opacity: 0.55 }}>
-            Ready to run?
-          </div>
-          <div style={{ fontSize: "22px", fontWeight: 800, marginTop: "4px" }}>
-            Start New Run
-          </div>
+      <section className="heroCard" role="region" aria-label="Start new run">
+        <div className="heroLeft">
+          <div className="heroSmall">Ready to run?</div>
+          <div className="heroBig">Start New Run</div>
           <div className="heroRule">
             <span className="ruleDot" /> 1 km = 10 coins
           </div>
         </div>
-        <button
-          onClick={handleStartRun}
-          aria-label="Start run"
-          style={{
-            width: "72px", height: "72px", borderRadius: "999px",
-            border: "1px solid rgba(255,255,255,0.14)",
-            background: "radial-gradient(circle at 30% 25%, rgba(191,255,0,0.22), rgba(10,10,10,0.25))",
-            display: "grid", placeItems: "center",
-            fontSize: "32px", lineHeight: 1, color: "#ffffff", cursor: "pointer",
-            boxShadow: "0 12px 28px rgba(0,0,0,0.55), 0 0 28px rgba(191,255,0,0.25)",
-            transition: "all .18s ease"
-          }}
-        >
+        <button className="heroPlay" onClick={handleStartRun} aria-label="Start run">
           ▶
         </button>
       </section>
@@ -683,33 +658,28 @@ const homeStyles = `
   100%{ transform: translateY(-18px) scale(.95); opacity: 0; }
 }
 .heroCard{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 22px 24px;
-  border-radius: 18px;
-  background: linear-gradient(135deg, #0f0f0f, #141414);
-  box-shadow: 0 12px 30px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.04);
+  position: relative;
+  padding: 16px 16px;
+  border-radius: 22px;
+  background: linear-gradient(90deg, var(--lime) 0%, var(--purple) 100%);
+  color: #0A0A0A;
+  display:flex; align-items:center; justify-content:space-between;
+  box-shadow: var(--shadow);
   margin-bottom: 18px;
 }
-.heroLeft{ flex: 1; }
-.heroSmall{ font-size: 13px; letter-spacing: 0.8px; text-transform: uppercase; opacity: 0.55; color: var(--text); }
-.heroBig{ font-size: 22px; font-weight: 800; margin-top: 4px; color: var(--text); }
-.heroRule{ margin-top: 8px; font-size: 12px; font-weight: 700; opacity:.8; display:flex; align-items:center; gap:8px; color: var(--text); }
-.ruleDot{ width:8px; height:8px; border-radius:999px; background: var(--lime); opacity:.8; }
+.heroSmall{ font-size: 14px; opacity:.85; }
+.heroBig{ font-size: 28px; font-weight: 900; margin-top: 2px; }
+.heroRule{ margin-top: 8px; font-size: 12px; font-weight: 700; opacity:.8; display:flex; align-items:center; gap:8px; }
+.ruleDot{ width:8px; height:8px; border-radius:999px; background:#0A0A0A; opacity:.8; }
 .heroPlay{
-  width: 72px; height: 72px;
+  width: 52px; height: 52px;
   border-radius: 999px;
-  display: grid; place-items: center;
+  border: 1px solid rgba(10,10,10,0.25);
+  background: rgba(10,10,10,0.18);
+  display:grid; place-items:center;
+  font-weight: 900;
   cursor: pointer;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: radial-gradient(circle at 30% 25%, rgba(191,255,0,0.22), rgba(10,10,10,0.25));
-  box-shadow: 0 12px 28px rgba(0,0,0,0.55), 0 0 28px rgba(191,255,0,0.25);
-  font-size: 32px; line-height: 1; color: #ffffff;
-  transition: all .18s ease;
 }
-.heroPlay:hover{ transform: scale(1.06); box-shadow: 0 16px 32px rgba(0,0,0,0.65), 0 0 34px rgba(191,255,0,0.35); }
-.heroPlay:active{ transform: scale(0.97); }
 .section{ margin-top: 16px; }
 .sectionLabel{
   letter-spacing: .18em;
