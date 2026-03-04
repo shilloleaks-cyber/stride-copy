@@ -86,8 +86,9 @@ export default function GroupDetail() {
     },
   });
 
-  const isAdmin = members.find(m => m.user_email === user?.email)?.role === 'admin';
-  const isMember = members.some(m => m.user_email === user?.email);
+  const myMembership = members.find(m => m.user_email === user?.email && m.status === 'active');
+  const isAdmin = myMembership?.role === 'owner' || myMembership?.role === 'admin';
+  const isMember = !!myMembership;
 
   if (!group) {
     return (
