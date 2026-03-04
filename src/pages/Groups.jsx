@@ -263,7 +263,7 @@ export default function Groups() {
           <DialogHeader>
             <DialogTitle>Create New Group</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 mt-4 overflow-y-auto max-h-[65vh] pr-1">
+          <div className="overflow-y-auto max-h-[55vh] pr-1 space-y-4 mt-4">
             <div>
               <label className="text-sm text-gray-400 mb-2 block">Group Name</label>
               <Input
@@ -313,15 +313,15 @@ export default function Groups() {
                 Make this group private (only invited members can join)
               </label>
             </div>
-            <Button
-              onClick={() => createGroupMutation.mutate(newGroup)}
-              disabled={!newGroup.name || createGroupMutation.isPending}
-              className="w-full h-12"
-              style={{ backgroundColor: '#BFFF00', color: '#0A0A0A' }}
-            >
-              Create Group
-            </Button>
           </div>
+          <Button
+            onClick={() => createGroupMutation.mutate(newGroup)}
+            disabled={!newGroup.name || createGroupMutation.isPending}
+            className="w-full h-12 mt-4"
+            style={{ backgroundColor: '#BFFF00', color: '#0A0A0A' }}
+          >
+            Create Group
+          </Button>
         </DialogContent>
       </Dialog>
     </div>
