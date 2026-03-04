@@ -57,6 +57,7 @@ import GroupDetail from './pages/GroupDetail';
 import Groups from './pages/Groups';
 import HealthConnect from './pages/HealthConnect';
 import History from './pages/History';
+import Home from './pages/Home';
 import Leaderboard from './pages/Leaderboard';
 import LevelProgress from './pages/LevelProgress';
 import PaceHistory from './pages/PaceHistory';
@@ -70,7 +71,6 @@ import Stats from './pages/Stats';
 import Training from './pages/Training';
 import Wallet from './pages/Wallet';
 import Welcome from './pages/Welcome';
-import Home from './pages/Home';
 import __Layout from './Layout.jsx';
 
 
@@ -85,6 +85,7 @@ export const PAGES = {
     "Groups": Groups,
     "HealthConnect": HealthConnect,
     "History": History,
+    "Home": Home,
     "Leaderboard": Leaderboard,
     "LevelProgress": LevelProgress,
     "PaceHistory": PaceHistory,
@@ -98,7 +99,6 @@ export const PAGES = {
     "Training": Training,
     "Wallet": Wallet,
     "Welcome": Welcome,
-    "Home": Home,
 }
 
 export const pagesConfig = {

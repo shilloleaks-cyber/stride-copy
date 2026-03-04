@@ -676,7 +676,7 @@ const homeStyles = `
   flex-shrink: 0;
   margin-left: -16px;
   border: 1px solid rgba(255,255,255,0.12);
-  background: radial-gradient(circle at 30% 25%, rgba(191,255,0,0.22), rgba(10,10,10,0.25));
+  background: #0A0A0A;
   box-shadow: 0 12px 28px rgba(0,0,0,0.55), 0 0 28px rgba(191,255,0,0.25);
   font-size: 36px; line-height: 1; color: #ffffff;
   transition: all .18s ease;
