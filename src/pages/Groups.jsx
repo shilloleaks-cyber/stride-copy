@@ -121,7 +121,7 @@ export default function Groups() {
   );
 
   const myGroups = filteredGroups.filter(g => myGroupIds.has(g.id));
-  const discoverGroups = filteredGroups.filter(g => !myGroupIds.has(g.id) && !g.is_private);
+  const discoverGroups = filteredGroups.filter(g => !myGroupIds.has(g.id) && g.privacy !== 'private');
 
   const categories = [
     { id: 'marathon_training', label: 'Marathon Training', emoji: '🏃‍♂️' },
