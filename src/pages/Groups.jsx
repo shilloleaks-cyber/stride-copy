@@ -345,8 +345,9 @@ export default function Groups() {
             </div>
           </div>
           <Button
-            onClick={() => createGroupMutation.mutate(newGroup)}
-            disabled={!newGroup.name || createGroupMutation.isPending}
+            type="button"
+            onClick={() => createGroupMutation.mutate({ ...newGroup })}
+            disabled={!newGroup.name?.trim() || createGroupMutation.isPending}
             className="w-full h-12 mt-4"
             style={{ backgroundColor: '#BFFF00', color: '#0A0A0A' }}
           >
