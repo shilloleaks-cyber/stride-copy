@@ -263,7 +263,7 @@ export default function Groups() {
           <DialogHeader>
             <DialogTitle>Create New Group</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 mt-4">
+          <div className="space-y-4 mt-4 overflow-y-auto max-h-[65vh] pr-1">
             <div>
               <label className="text-sm text-gray-400 mb-2 block">Group Name</label>
               <Input
