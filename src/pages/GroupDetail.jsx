@@ -44,7 +44,7 @@ export default function GroupDetail() {
 
   const { data: posts = [] } = useQuery({
     queryKey: ['groupPosts', groupId],
-    queryFn: () => base44.entities.GroupPost.filter({ group_id: groupId }, '-created_date'),
+    queryFn: () => base44.entities.GroupPost.filter({ group_id: groupId }, '-created_date', 30),
     enabled: !!groupId,
   });
 
