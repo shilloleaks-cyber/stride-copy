@@ -36,7 +36,7 @@ export default function Groups() {
 
   const { data: myMemberships = [] } = useQuery({
     queryKey: ['myGroupMemberships', user?.email],
-    queryFn: () => base44.entities.GroupMember.filter({ user_email: user?.email }),
+    queryFn: () => base44.entities.GroupMember.filter({ user_email: user?.email, status: 'active' }),
     enabled: !!user?.email,
   });
 
