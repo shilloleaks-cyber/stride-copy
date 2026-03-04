@@ -42,11 +42,16 @@ export default function Groups() {
 
   const createGroupMutation = useMutation({
     mutationFn: async (groupData) => {
+      console.log("MUTATE payload:", groupData);
+      console.log("USER:", user);
+
+      if (!user?.email) throw new Error("User not ready (missing email)");
+
       const group = await base44.entities.Group.create({
-        name: groupData.name,
-        description: groupData.description,
+        name: groupData.name?.trim(),
+        description: groupData.description || '',
         privacy: groupData.is_private ? 'private' : 'public',
-        join_policy: groupData.is_private ? 'invite_only' : 'open',
+        join_policy: groupData.is_private ? 'approval' : 'open',
         group_type: 'social',
         owner_email: user.email,
         member_count: 1,
@@ -65,12 +70,17 @@ export default function Groups() {
       return group;
     },
     onSuccess: (group) => {
+      console.log("SUCCESS group:", group);
       queryClient.invalidateQueries(['groups']);
       queryClient.invalidateQueries(['myGroupMemberships']);
       setCreateDialogOpen(false);
       setNewGroup({ name: '', description: '', category: 'social', is_private: false });
       toast.success('Group created!');
       navigate(createPageUrl(`GroupDetail?id=${group.id}`));
+    },
+    onError: (e) => {
+      console.error("CREATE GROUP ERROR:", e);
+      toast.error(e?.message || 'Create group failed');
     },
   });
 
