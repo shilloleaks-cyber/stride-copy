@@ -676,9 +676,9 @@ const homeStyles = `
   flex-shrink: 0;
   margin-left: -16px;
   border: 1px solid rgba(255,255,255,0.12);
-  background: #000000;
+  background: radial-gradient(circle at 30% 25%, rgba(191,255,0,0.22), rgba(10,10,10,0.25));
   box-shadow: 0 12px 28px rgba(0,0,0,0.55), 0 0 28px rgba(191,255,0,0.25);
-  font-size: 36px; line-height: 1; color: #000000;
+  font-size: 36px; line-height: 1; color: #ffffff;
   transition: all .18s ease;
 }
 .heroPlay:hover{ transform: scale(1.06); box-shadow: 0 16px 32px rgba(0,0,0,0.65), 0 0 34px rgba(191,255,0,0.35); }
