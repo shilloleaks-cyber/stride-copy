@@ -43,9 +43,12 @@ export default function Groups() {
   const createGroupMutation = useMutation({
     mutationFn: async (groupData) => {
       const group = await base44.entities.Group.create({
-        ...groupData,
-        creator_email: user.email,
-        creator_name: user.full_name,
+        name: groupData.name,
+        description: groupData.description,
+        privacy: groupData.is_private ? 'private' : 'public',
+        join_policy: groupData.is_private ? 'invite_only' : 'open',
+        group_type: 'social',
+        owner_email: user.email,
         member_count: 1,
       });
 
@@ -53,43 +56,60 @@ export default function Groups() {
         group_id: group.id,
         user_email: user.email,
         user_name: user.full_name,
-        role: 'admin',
+        user_image: user.profile_image || '',
+        role: 'owner',
+        status: 'active',
+        joined_date: new Date().toISOString(),
       });
 
       return group;
     },
-    onSuccess: () => {
+    onSuccess: (group) => {
       queryClient.invalidateQueries(['groups']);
       queryClient.invalidateQueries(['myGroupMemberships']);
       setCreateDialogOpen(false);
       setNewGroup({ name: '', description: '', category: 'social', is_private: false });
       toast.success('Group created!');
+      navigate(createPageUrl(`GroupDetail?id=${group.id}`));
     },
   });
 
   const joinGroupMutation = useMutation({
     mutationFn: async (group) => {
+      // Check if already a member
+      const existing = await base44.entities.GroupMember.filter({
+        group_id: group.id,
+        user_email: user.email,
+      });
+      if (existing.length > 0) return;
+
+      const joinPolicy = group.join_policy || 'open';
+      const status = joinPolicy === 'approval' ? 'pending' : 'active';
+
       await base44.entities.GroupMember.create({
         group_id: group.id,
         user_email: user.email,
         user_name: user.full_name,
+        user_image: user.profile_image || '',
         role: 'member',
+        status,
+        joined_date: new Date().toISOString(),
       });
 
-      await base44.entities.Group.update(group.id, {
-        member_count: (group.member_count || 1) + 1,
-      });
-
-      // Award coins for joining group
-      await base44.functions.invoke('awardActivityCoins', {
-        activityType: 'group_joined',
-      });
+      if (status === 'active') {
+        await base44.entities.Group.update(group.id, {
+          member_count: (group.member_count || 0) + 1,
+        });
+        // Award coins for joining group
+        await base44.functions.invoke('awardActivityCoins', { activityType: 'group_joined' });
+      }
     },
-    onSuccess: () => {
+    onSuccess: (_, group) => {
       queryClient.invalidateQueries(['groups']);
       queryClient.invalidateQueries(['myGroupMemberships']);
       queryClient.invalidateQueries(['currentUser']);
-      toast.success('Joined group! +30 coins');
+      const policy = group.join_policy || 'open';
+      toast.success(policy === 'approval' ? 'Join request sent!' : 'Joined group! +30 coins');
     },
   });
 
