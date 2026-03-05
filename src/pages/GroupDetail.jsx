@@ -144,74 +144,62 @@ export default function GroupDetail() {
     setConfirmDialog({ message, onConfirm });
   };
 
-  const handleDeleteGroup = async () => {
+  const handleDeleteGroup = () => {
     if (!group?.id) return;
     if (myMembership?.role !== 'owner') {
       toast.error("Only owner can delete the group.");
       return;
     }
-
     showConfirm("Delete this group permanently?", async () => {
-
-    try {
-      setBusy(true);
-
-      const postsRes = await base44.entities.GroupPost.filter({ group_id: group.id });
-      const allPosts = postsRes?.items || postsRes || [];
-      for (const p of allPosts) await base44.entities.GroupPost.delete(p.id);
-
-      const memRes = await base44.entities.GroupMember.filter({ group_id: group.id });
-      const allMembers = memRes?.items || memRes || [];
-      for (const m of allMembers) await base44.entities.GroupMember.delete(m.id);
-
-      await base44.entities.Group.delete(group.id);
-
-      toast.success("Group deleted");
-      queryClient.invalidateQueries(['groups']);
-      queryClient.invalidateQueries(['myGroupMemberships']);
-      navigate(createPageUrl('Groups'));
-    } catch (e) {
-      console.error("delete group error:", e);
-      toast.error(e?.message || "Delete group failed");
-    } finally {
-      setBusy(false);
-      setGearOpen(false);
-    }
+      try {
+        setBusy(true);
+        const postsRes = await base44.entities.GroupPost.filter({ group_id: group.id });
+        const allPosts = postsRes?.items || postsRes || [];
+        for (const p of allPosts) await base44.entities.GroupPost.delete(p.id);
+        const memRes = await base44.entities.GroupMember.filter({ group_id: group.id });
+        const allMembers = memRes?.items || memRes || [];
+        for (const m of allMembers) await base44.entities.GroupMember.delete(m.id);
+        await base44.entities.Group.delete(group.id);
+        toast.success("Group deleted");
+        queryClient.invalidateQueries(['groups']);
+        queryClient.invalidateQueries(['myGroupMemberships']);
+        navigate(createPageUrl('Groups'));
+      } catch (e) {
+        toast.error(e?.message || "Delete group failed");
+      } finally {
+        setBusy(false);
+        setGearOpen(false);
+      }
+    });
   };
 
-  const handleLeaveGroup = async () => {
+  const handleLeaveGroup = () => {
     if (!group?.id || !myMembership?.id) return;
-
-    showConfirm("Leave this group?", async () => {
-
-    try {
-      setBusy(true);
-
-      if (myMembership.role === 'owner' && (group.member_count || 1) <= 1) {
-        toast.error("Owner can't leave when you're the only member. Delete group instead.");
-        return;
-      }
-
-      await base44.entities.GroupMember.update(myMembership.id, {
-        status: 'left',
-        left_date: new Date().toISOString(),
-      });
-
-      await base44.entities.Group.update(group.id, {
-        member_count: Math.max(0, (group.member_count || 1) - 1),
-      });
-
-      toast.success("Left group");
-      queryClient.invalidateQueries(['myGroupMemberships']);
-      queryClient.invalidateQueries(['groups']);
-      navigate(createPageUrl('Groups'));
-    } catch (e) {
-      console.error("leave group error:", e);
-      toast.error(e?.message || "Leave group failed");
-    } finally {
-      setBusy(false);
-      setGearOpen(false);
+    if (myMembership.role === 'owner' && (group.member_count || 1) <= 1) {
+      toast.error("Owner can't leave when you're the only member. Delete group instead.");
+      return;
     }
+    showConfirm("Leave this group?", async () => {
+      try {
+        setBusy(true);
+        await base44.entities.GroupMember.update(myMembership.id, {
+          status: 'left',
+          left_date: new Date().toISOString(),
+        });
+        await base44.entities.Group.update(group.id, {
+          member_count: Math.max(0, (group.member_count || 1) - 1),
+        });
+        toast.success("Left group");
+        queryClient.invalidateQueries(['myGroupMemberships']);
+        queryClient.invalidateQueries(['groups']);
+        navigate(createPageUrl('Groups'));
+      } catch (e) {
+        toast.error(e?.message || "Leave group failed");
+      } finally {
+        setBusy(false);
+        setGearOpen(false);
+      }
+    });
   };
 
   const handleUploadGroupAvatar = async (file) => {
