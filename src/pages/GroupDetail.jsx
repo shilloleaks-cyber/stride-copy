@@ -432,13 +432,13 @@ export default function GroupDetail() {
       {/* Settings Sheet */}
       {gearOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center"
-          style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
+          className="fixed inset-0 flex items-end justify-center"
+          style={{ backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 99999 }}
           onClick={() => setGearOpen(false)}
         >
           <div
             className="w-full max-w-md rounded-t-2xl p-6 pb-10 space-y-3"
-            style={{ backgroundColor: '#1A1A1A', border: '1px solid rgba(138,43,226,0.3)' }}
+            style={{ backgroundColor: '#1A1A1A', border: '1px solid rgba(138,43,226,0.3)', touchAction: 'none' }}
             onClick={(e) => e.stopPropagation()}
           >
             <p className="text-white font-semibold text-base mb-4">Group Settings</p>
