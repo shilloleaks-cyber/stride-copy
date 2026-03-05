@@ -151,8 +151,7 @@ export default function GroupDetail() {
       return;
     }
 
-    const ok = window.confirm("Delete this group permanently?");
-    if (!ok) return;
+    showConfirm("Delete this group permanently?", async () => {
 
     try {
       setBusy(true);
@@ -183,8 +182,7 @@ export default function GroupDetail() {
   const handleLeaveGroup = async () => {
     if (!group?.id || !myMembership?.id) return;
 
-    const ok = window.confirm("Leave this group?");
-    if (!ok) return;
+    showConfirm("Leave this group?", async () => {
 
     try {
       setBusy(true);
