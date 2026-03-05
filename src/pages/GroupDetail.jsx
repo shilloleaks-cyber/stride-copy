@@ -266,11 +266,6 @@ export default function GroupDetail() {
         </div>
       )}
 
-      {/* hidden spacer to close header div properly */}
-      <div style={{ display: 'none' }}>
-        </div>
-      </div>
-
       {/* Group Info */}
       <div className="px-6 pt-6 pb-4 border-b" style={{ borderColor: 'rgba(138, 43, 226, 0.3)' }}>
         <div className="text-center mb-4">
