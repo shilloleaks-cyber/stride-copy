@@ -418,7 +418,7 @@ export default function GroupDetail() {
         <TabsContent value="feed" className="space-y-4">
           {posts.length > 0 ? (
             posts.map(post => (
-              <PostCard key={post.id} post={post} currentUserEmail={user?.email} onLike={() => {}} onDelete={handleDeletePost} onViewComments={() => {}} isGroupPost />
+              <PostCard key={post.id} post={post} currentUserEmail={user?.email} onLike={handleLikePost} onDelete={handleDeletePost} onViewComments={(p) => setCommentsPost(p)} isGroupPost />
             ))
           ) : (
             <div className="text-center py-12 bg-white/5 rounded-2xl border border-white/10">
