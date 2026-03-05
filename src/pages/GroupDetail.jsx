@@ -139,6 +139,11 @@ export default function GroupDetail() {
   const isMember = !!myMembership;
   const [gearOpen, setGearOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState(null); // { message, onConfirm }
+
+  const showConfirm = (message, onConfirm) => {
+    setConfirmDialog({ message, onConfirm });
+  };
 
   const handleDeleteGroup = async () => {
     if (!group?.id) return;
