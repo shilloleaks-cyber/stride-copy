@@ -178,7 +178,7 @@ export default function GroupDetail() {
     if (myMembership.role === 'owner' && (group.member_count || 1) <= 1) {
       toast.error("Owner can't leave when you're the only member. Delete group instead.");
       return;
-    };
+    }
     showConfirm("Leave this group?", async () => {
       try {
         setBusy(true);
