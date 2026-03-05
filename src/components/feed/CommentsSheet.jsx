@@ -122,17 +122,7 @@ export default function CommentsSheet({ open, onClose, post, currentUser }) {
 
   return (
     <Sheet open={open} onOpenChange={onClose}>
-      <SheetContent
-        side="bottom"
-        className="commentsSheet"
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          maxHeight: '85vh',
-          height: 'auto',
-          overflow: 'hidden',
-        }}
-      >
+      <SheetContent side="bottom" className="commentsSheet">
         <SheetHeader className="pb-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
           <SheetTitle className="text-white text-center font-bold tracking-wide" style={{ letterSpacing: '0.05em' }}>
             Comments
@@ -140,18 +130,7 @@ export default function CommentsSheet({ open, onClose, post, currentUser }) {
         </SheetHeader>
 
         {/* Comments List */}
-        <div
-          className="commentsListArea"
-          style={{
-            flex: 1,
-            overflowY: 'auto',
-            overflowX: 'hidden',
-            WebkitOverflowScrolling: 'touch',
-            position: 'relative',
-            zIndex: 1,
-            minHeight: 0,
-          }}
-        >
+        <div className="commentsListArea" style={{ position: 'relative', zIndex: 1 }}>
           {isLoading ? (
             <div className="flex justify-center py-8">
               <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--green)', borderTopColor: 'transparent' }} />
