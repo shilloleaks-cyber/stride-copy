@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
     await base44.asServiceRole.entities.WalletLog.create({
       user: user.email,
       amount: coinsAwarded,
-      type: 'bonus',
+      source_type: 'bonus',
       note: reason,
     });
 
