@@ -146,6 +146,24 @@ export default function GroupDetail() {
     setConfirmDialog({ message, onConfirm });
   };
 
+  const onPickMedia = (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const maxMB = f.type.startsWith('video/') ? 60 : 10;
+    if (f.size > maxMB * 1024 * 1024) {
+      toast.error(`File too large (max ${maxMB}MB)`);
+      return;
+    }
+    setMediaFile(f);
+    setMediaPreview(URL.createObjectURL(f));
+  };
+
+  const clearMedia = () => {
+    if (mediaPreview) URL.revokeObjectURL(mediaPreview);
+    setMediaPreview(null);
+    setMediaFile(null);
+  };
+
   const handleDeleteGroup = () => {
     if (!group?.id) return;
     if (myMembership?.role !== 'owner') {
