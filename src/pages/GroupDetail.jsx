@@ -68,23 +68,37 @@ export default function GroupDetail() {
   const upcomingEvents = events.filter(e => new Date(e.event_date) > new Date());
 
   const createPostMutation = useMutation({
-    mutationFn: async () => {
-      await base44.entities.GroupPost.create({
+    mutationFn: async ({ content }) => {
+      return await base44.entities.GroupPost.create({
         group_id: groupId,
-        content: postContent,
-        author_name: user.full_name,
         author_email: user.email,
-        author_image: user.profile_image,
+        author_name: user.full_name,
+        author_image: user.profile_image || '',
+        content,
         likes: [],
-      });
-
-      // Award coins for group post
-      await base44.functions.invoke('awardActivityCoins', {
-        activityType: 'group_post',
+        comments_count: 0,
       });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['groupPosts']);
+    onMutate: async (vars) => {
+      await queryClient.cancelQueries({ queryKey: postsKey });
+      const previous = queryClient.getQueryData(postsKey) || [];
+      const tempId = `temp_${Date.now()}`;
+      queryClient.setQueryData(postsKey, [
+        { id: tempId, group_id: groupId, author_email: user.email, author_name: user.full_name, author_image: user.profile_image || '', content: vars.content, likes: [], comments_count: 0, created_date: new Date().toISOString(), __optimistic: true },
+        ...previous,
+      ]);
+      return { previous, tempId };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous) queryClient.setQueryData(postsKey, ctx.previous);
+    },
+    onSuccess: (serverPost, _vars, ctx) => {
+      queryClient.setQueryData(postsKey, (curr = []) =>
+        curr.map((p) => (p.id === ctx?.tempId ? serverPost : p))
+      );
+      setTimeout(() => queryClient.invalidateQueries({ queryKey: postsKey }), 800);
+      // Award coins
+      base44.functions.invoke('awardActivityCoins', { activityType: 'group_post' });
       queryClient.invalidateQueries(['currentUser']);
       setPostContent('');
       toast.success('Posted! +15 coins');
