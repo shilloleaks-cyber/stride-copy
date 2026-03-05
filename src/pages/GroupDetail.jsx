@@ -67,6 +67,34 @@ export default function GroupDetail() {
 
   const upcomingEvents = events.filter(e => new Date(e.event_date) > new Date());
 
+  const deletePostMutation = useMutation({
+    mutationFn: async (postId) => {
+      await base44.entities.GroupPost.delete(postId);
+      return postId;
+    },
+    onMutate: async (postId) => {
+      await queryClient.cancelQueries({ queryKey: postsKey });
+      const prev = queryClient.getQueryData(postsKey) || [];
+      queryClient.setQueryData(postsKey, prev.filter(p => p.id !== postId));
+      return { prev };
+    },
+    onError: (_err, _postId, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(postsKey, ctx.prev);
+      toast.error('Delete failed');
+    },
+    onSuccess: () => {
+      toast.success('Deleted');
+    },
+    onSettled: () => {
+      setTimeout(() => queryClient.invalidateQueries({ queryKey: postsKey }), 500);
+    },
+  });
+
+  const handleDeletePost = (postId) => {
+    if (!window.confirm('Delete this post?')) return;
+    deletePostMutation.mutate(postId);
+  };
+
   const createPostMutation = useMutation({
     mutationFn: async ({ content }) => {
       return await base44.entities.GroupPost.create({
