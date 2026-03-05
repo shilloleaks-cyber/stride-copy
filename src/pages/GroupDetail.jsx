@@ -119,6 +119,23 @@ export default function GroupDetail() {
     }
   };
 
+  const handleLeaveGroup = async () => {
+    if (!myMembership) return;
+    setBusy(true);
+    try {
+      await base44.entities.GroupMember.delete(myMembership.id);
+      await base44.entities.Group.update(group.id, { member_count: Math.max(0, (group.member_count || 1) - 1) });
+      toast.success("Left group");
+      queryClient.invalidateQueries(['groups']);
+      queryClient.invalidateQueries(['myGroupMemberships']);
+      navigate(createPageUrl('Groups'));
+    } catch (e) {
+      toast.error(e?.message || "Leave group failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const handleUploadGroupAvatar = async (file) => {
     if (!file || !group?.id) return;
     try {
