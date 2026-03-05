@@ -87,8 +87,18 @@ export default function GroupDetail() {
   });
 
   const myMembership = members.find(m => m.user_email === user?.email && m.status === 'active');
-  const isAdmin = myMembership?.role === 'owner' || myMembership?.role === 'admin';
+  const isOwner = myMembership?.role === 'owner';
+  const isAdmin = isOwner || myMembership?.role === 'admin';
   const isMember = !!myMembership;
+  const [gearOpen, setGearOpen] = useState(false);
+
+  const handleUploadGroupAvatar = async (file) => {
+    if (!file) return;
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    await base44.entities.Group.update(groupId, { avatar_image: file_url });
+    queryClient.invalidateQueries(['group', groupId]);
+    toast.success('Group photo updated!');
+  };
 
   if (!group) {
     return (
