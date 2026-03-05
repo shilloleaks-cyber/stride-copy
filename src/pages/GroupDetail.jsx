@@ -206,7 +206,7 @@ export default function GroupDetail() {
 
           {isAdmin ? (
             <button
-              className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center"
+              className="gearBtn w-10 h-10 rounded-full bg-white/10 flex items-center justify-center"
               onClick={() => setGearOpen(true)}
               aria-label="Group settings"
             >
@@ -215,6 +215,59 @@ export default function GroupDetail() {
           ) : (
             <div className="w-10" />
           )}
+        </div>
+      </div>
+
+      {/* Settings Sheet */}
+      {gearOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center"
+          style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
+          onClick={() => setGearOpen(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-t-2xl p-6 pb-10 space-y-3"
+            style={{ backgroundColor: '#1A1A1A', border: '1px solid rgba(138,43,226,0.3)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-white font-semibold text-base mb-4">Group Settings</p>
+
+            {isMember && !isOwner && (
+              <button
+                className="w-full py-3 rounded-xl text-white text-sm font-medium"
+                style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
+                onClick={handleLeaveGroup}
+                disabled={busy}
+              >
+                🚪 Leave group
+              </button>
+            )}
+
+            {isOwner && (
+              <button
+                className="w-full py-3 rounded-xl text-sm font-medium"
+                style={{ backgroundColor: 'rgba(239,68,68,0.15)', color: '#f87171', border: '1px solid rgba(239,68,68,0.3)' }}
+                onClick={handleDeleteGroup}
+                disabled={busy}
+              >
+                🗑️ Delete group
+              </button>
+            )}
+
+            <button
+              className="w-full py-3 rounded-xl text-sm font-medium"
+              style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.5)' }}
+              onClick={() => setGearOpen(false)}
+              disabled={busy}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* hidden spacer to close header div properly */}
+      <div style={{ display: 'none' }}>
         </div>
       </div>
 
