@@ -148,9 +148,9 @@ export default function GroupDetail() {
           </button>
 
           <div className="flex flex-col items-center flex-1">
-            <div className="relative">
+            <div className="groupAvatarWrap relative">
               <img
-                className="w-14 h-14 rounded-full object-cover border-2 border-white/20"
+                className="groupAvatar w-14 h-14 rounded-full object-cover border-2 border-white/20"
                 src={group?.avatar_image || group?.image_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(group?.name || 'G')}&background=222&color=BFFF00`}
                 alt="Group avatar"
               />
@@ -164,9 +164,10 @@ export default function GroupDetail() {
                     onChange={(e) => handleUploadGroupAvatar(e.target.files?.[0])}
                   />
                   <button
-                    className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-lime-400 text-black flex items-center justify-center text-xs font-bold"
+                    className="avatarEditBtn absolute bottom-0 right-0 w-6 h-6 rounded-full bg-lime-400 text-black flex items-center justify-center text-xs font-bold"
                     onClick={() => document.getElementById('groupAvatarInput')?.click()}
                     aria-label="Change group photo"
+                    disabled={busy}
                   >
                     ✎
                   </button>
