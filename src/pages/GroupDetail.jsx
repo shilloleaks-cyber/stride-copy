@@ -143,6 +143,7 @@ export default function GroupDetail() {
   const isOwner = myMembership?.role === 'owner';
   const isAdmin = isOwner || myMembership?.role === 'admin';
   const isMember = !!myMembership;
+  const [tab, setTab] = useState('feed');
   const [gearOpen, setGearOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState(null); // { message, onConfirm }
