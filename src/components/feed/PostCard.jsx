@@ -15,6 +15,7 @@ export default function PostCard({
   onViewComments,
   isGroupPost = false
 }) {
+  const [menuOpen, setMenuOpen] = useState(false);
   const isLiked = post.likes?.includes(currentUserEmail);
   const likesCount = post.likes?.length || 0;
 
