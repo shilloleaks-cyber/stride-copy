@@ -151,6 +151,18 @@ export default function GroupDetail() {
     setConfirmDialog({ message, onConfirm });
   };
 
+  const handleLikePost = async (postId, isLiked) => {
+    const post = posts.find(p => p.id === postId);
+    if (!post || !user?.email) return;
+    const newLikes = isLiked
+      ? (post.likes || []).filter(e => e !== user.email)
+      : [...(post.likes || []), user.email];
+    queryClient.setQueryData(postsKey, (curr = []) =>
+      curr.map(p => p.id === postId ? { ...p, likes: newLikes } : p)
+    );
+    await base44.entities.GroupPost.update(postId, { likes: newLikes });
+  };
+
   const onPickMedia = (e) => {
     const f = e.target.files?.[0];
     if (!f) return;
