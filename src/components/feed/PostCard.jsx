@@ -77,22 +77,60 @@ export default function PostCard({
         </div>
         
         {post.author_email === currentUserEmail && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white">
-                <MoreHorizontal className="w-5 h-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-gray-900 border-gray-800">
-              <DropdownMenuItem 
-                onClick={() => onDelete(post.id)}
-                className="text-red-400 focus:text-red-400 focus:bg-red-500/10"
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                ลบโพสต์
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={(e) => { e.stopPropagation(); setMenuOpen(v => !v); }}
+              style={{ background: 'transparent', border: 0, cursor: 'pointer', padding: 6, color: 'rgba(255,255,255,0.5)' }}
+              aria-label="Post actions"
+            >
+              <MoreHorizontal className="w-5 h-5" />
+            </button>
+
+            {menuOpen && (
+              <>
+                <div
+                  onClick={(e) => { e.stopPropagation(); setMenuOpen(false); }}
+                  style={{ position: 'fixed', inset: 0, zIndex: 9998, background: 'transparent' }}
+                />
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    position: 'absolute',
+                    right: 0,
+                    top: 36,
+                    zIndex: 9999,
+                    background: 'rgba(20,20,20,0.97)',
+                    border: '1px solid rgba(255,255,255,0.10)',
+                    borderRadius: 12,
+                    padding: 6,
+                    minWidth: 160,
+                    boxShadow: '0 16px 40px rgba(0,0,0,0.55)',
+                  }}
+                >
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onDelete(post.id); setMenuOpen(false); }}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      gap: 10,
+                      alignItems: 'center',
+                      padding: '10px 12px',
+                      borderRadius: 10,
+                      border: 0,
+                      background: 'transparent',
+                      color: '#ff4d4f',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      fontSize: 14,
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    ลบโพสต์
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         )}
       </div>
 
