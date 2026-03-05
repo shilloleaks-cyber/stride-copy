@@ -255,7 +255,6 @@
   overflow-x: hidden;
   padding: 16px 20px;
   min-height: 0;
-  mask-image: linear-gradient(to bottom, transparent 0%, black 20px, black calc(100% - 20px), transparent 100%);
   -webkit-overflow-scrolling: touch;
 }
 
