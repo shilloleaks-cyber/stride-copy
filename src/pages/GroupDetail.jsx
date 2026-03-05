@@ -627,6 +627,13 @@ export default function GroupDetail() {
         groupId={groupId}
         user={user}
       />
+
+      <CommentsSheet
+        open={!!commentsPost}
+        onClose={() => setCommentsPost(null)}
+        post={commentsPost}
+        currentUser={user}
+      />
     </div>
   );
 }
