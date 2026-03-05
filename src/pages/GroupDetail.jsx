@@ -407,30 +407,32 @@ export default function GroupDetail() {
       )}
 
       {/* Tabs */}
-      <Tabs defaultValue="feed" className="px-6 pt-4">
-        <TabsList className="w-full bg-white/5 grid grid-cols-4 mb-4">
-          <TabsTrigger value="feed">Feed</TabsTrigger>
-          <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
-          <TabsTrigger value="challenges">Challenges</TabsTrigger>
-          <TabsTrigger value="events">Events</TabsTrigger>
-        </TabsList>
+      <div className="groupTabs" role="tablist" aria-label="Group tabs">
+        <button type="button" className={`groupTab ${tab === 'feed' ? 'active' : ''}`} onClick={() => setTab('feed')} role="tab" aria-selected={tab === 'feed'}>Feed</button>
+        <button type="button" className={`groupTab ${tab === 'rank' ? 'active' : ''}`} onClick={() => setTab('rank')} role="tab" aria-selected={tab === 'rank'}>Rank</button>
+        <button type="button" className={`groupTab ${tab === 'challenges' ? 'active' : ''}`} onClick={() => setTab('challenges')} role="tab" aria-selected={tab === 'challenges'}>Challenges</button>
+        <button type="button" className={`groupTab ${tab === 'events' ? 'active' : ''}`} onClick={() => setTab('events')} role="tab" aria-selected={tab === 'events'}>Events</button>
+      </div>
 
+      <div className="px-4">
         {/* Feed Tab */}
-        <TabsContent value="feed" className="space-y-4">
-          {posts.length > 0 ? (
-            posts.map(post => (
-              <PostCard key={post.id} post={post} currentUserEmail={user?.email} onLike={handleLikePost} onDelete={handleDeletePost} onViewComments={(p) => setCommentsPost(p)} isGroupPost />
-            ))
-          ) : (
-            <div className="text-center py-12 bg-white/5 rounded-2xl border border-white/10">
-              <p className="text-gray-400 text-sm">No posts yet</p>
-              <p className="text-xs text-gray-600 mt-1">Be the first to share!</p>
-            </div>
-          )}
-        </TabsContent>
+        {tab === 'feed' && (
+          <div className="space-y-4">
+            {posts.length > 0 ? (
+              posts.map(post => (
+                <PostCard key={post.id} post={post} currentUserEmail={user?.email} onLike={handleLikePost} onDelete={handleDeletePost} onViewComments={(p) => setCommentsPost(p)} isGroupPost />
+              ))
+            ) : (
+              <div className="text-center py-12 bg-white/5 rounded-2xl border border-white/10">
+                <p className="text-gray-400 text-sm">No posts yet</p>
+                <p className="text-xs text-gray-600 mt-1">Be the first to share!</p>
+              </div>
+            )}
+          </div>
+        )}
 
-        {/* Leaderboard Tab */}
-        <TabsContent value="leaderboard">
+        {/* Rank Tab */}
+        {tab === 'rank' && (
           <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
             <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
               <Trophy className="w-5 h-5 text-yellow-400" />
@@ -438,104 +440,88 @@ export default function GroupDetail() {
             </h3>
             <GroupLeaderboard groupId={groupId} />
           </div>
-        </TabsContent>
+        )}
 
         {/* Challenges Tab */}
-        <TabsContent value="challenges" className="space-y-4">
-          <Button
-            onClick={() => setCreateChallengeOpen(true)}
-            className="w-full h-12"
-            style={{ backgroundColor: '#BFFF00', color: '#0A0A0A' }}
-          >
-            <Target className="w-4 h-4 mr-2" />
-            Create Mini Challenge
-          </Button>
-
-          {challenges.length > 0 ? (
-            challenges.map(challenge => (
-              <motion.div
-                key={challenge.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-gradient-to-r from-yellow-500/10 to-transparent border border-yellow-500/20 rounded-2xl p-4"
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <h4 className="text-white font-medium">{challenge.title}</h4>
-                    <p className="text-xs text-gray-400 mt-1">{challenge.description}</p>
+        {tab === 'challenges' && (
+          <div className="space-y-4">
+            <Button onClick={() => setCreateChallengeOpen(true)} className="w-full h-12" style={{ backgroundColor: '#BFFF00', color: '#0A0A0A' }}>
+              <Target className="w-4 h-4 mr-2" />
+              Create Mini Challenge
+            </Button>
+            {challenges.length > 0 ? (
+              challenges.map(challenge => (
+                <motion.div key={challenge.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-gradient-to-r from-yellow-500/10 to-transparent border border-yellow-500/20 rounded-2xl p-4">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <h4 className="text-white font-medium">{challenge.title}</h4>
+                      <p className="text-xs text-gray-400 mt-1">{challenge.description}</p>
+                    </div>
+                    <Target className="w-5 h-5 text-yellow-400" />
                   </div>
-                  <Target className="w-5 h-5 text-yellow-400" />
-                </div>
-                <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/10">
-                  <div>
-                    <p className="text-xs text-gray-500">Target</p>
-                    <p className="text-white font-medium">{challenge.target_value} {challenge.challenge_type === 'distance' ? 'km' : challenge.challenge_type === 'time' ? 'hrs' : challenge.challenge_type === 'runs_count' ? 'runs' : 'days'}</p>
+                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/10">
+                    <div>
+                      <p className="text-xs text-gray-500">Target</p>
+                      <p className="text-white font-medium">{challenge.target_value} {challenge.challenge_type === 'distance' ? 'km' : challenge.challenge_type === 'time' ? 'hrs' : challenge.challenge_type === 'runs_count' ? 'runs' : 'days'}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-gray-500">Ends</p>
+                      <p className="text-white text-sm">{format(new Date(challenge.end_date), 'MMM d')}</p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-xs text-gray-500">Ends</p>
-                    <p className="text-white text-sm">{format(new Date(challenge.end_date), 'MMM d')}</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))
-          ) : (
-            <div className="text-center py-12 bg-white/5 rounded-2xl border border-white/10">
-              <Target className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-              <p className="text-gray-400 text-sm">No challenges yet</p>
-            </div>
-          )}
-        </TabsContent>
+                </motion.div>
+              ))
+            ) : (
+              <div className="text-center py-12 bg-white/5 rounded-2xl border border-white/10">
+                <Target className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                <p className="text-gray-400 text-sm">No challenges yet</p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Events Tab */}
-        <TabsContent value="events" className="space-y-4">
-          <Button
-            onClick={() => setCreateEventOpen(true)}
-            className="w-full h-12"
-            style={{ backgroundColor: '#BFFF00', color: '#0A0A0A' }}
-          >
-            <Calendar className="w-4 h-4 mr-2" />
-            Schedule Event
-          </Button>
-
-          {upcomingEvents.length > 0 ? (
-            upcomingEvents.map(event => (
-              <motion.div
-                key={event.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-gradient-to-r from-emerald-500/10 to-transparent border border-emerald-500/20 rounded-2xl p-4"
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <h4 className="text-white font-medium">{event.title}</h4>
-                    <p className="text-xs text-gray-400 mt-1">{event.description}</p>
+        {tab === 'events' && (
+          <div className="space-y-4">
+            <Button onClick={() => setCreateEventOpen(true)} className="w-full h-12" style={{ backgroundColor: '#BFFF00', color: '#0A0A0A' }}>
+              <Calendar className="w-4 h-4 mr-2" />
+              Schedule Event
+            </Button>
+            {upcomingEvents.length > 0 ? (
+              upcomingEvents.map(event => (
+                <motion.div key={event.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-gradient-to-r from-emerald-500/10 to-transparent border border-emerald-500/20 rounded-2xl p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h4 className="text-white font-medium">{event.title}</h4>
+                      <p className="text-xs text-gray-400 mt-1">{event.description}</p>
+                    </div>
+                    <Calendar className="w-5 h-5 text-emerald-400" />
                   </div>
-                  <Calendar className="w-5 h-5 text-emerald-400" />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Calendar className="w-4 h-4 text-gray-500" />
-                    <span className="text-white">{format(new Date(event.event_date), 'MMM d, yyyy • h:mm a')}</span>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Calendar className="w-4 h-4 text-gray-500" />
+                      <span className="text-white">{format(new Date(event.event_date), 'MMM d, yyyy • h:mm a')}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <MapPin className="w-4 h-4 text-gray-500" />
+                      <span className="text-white">{event.location}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Users className="w-4 h-4 text-gray-500" />
+                      <span className="text-white">{event.attendee_emails?.length || 0} attending</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <MapPin className="w-4 h-4 text-gray-500" />
-                    <span className="text-white">{event.location}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Users className="w-4 h-4 text-gray-500" />
-                    <span className="text-white">{event.attendee_emails?.length || 0} attending</span>
-                  </div>
-                </div>
-              </motion.div>
-            ))
-          ) : (
-            <div className="text-center py-12 bg-white/5 rounded-2xl border border-white/10">
-              <Calendar className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-              <p className="text-gray-400 text-sm">No upcoming events</p>
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+                </motion.div>
+              ))
+            ) : (
+              <div className="text-center py-12 bg-white/5 rounded-2xl border border-white/10">
+                <Calendar className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                <p className="text-gray-400 text-sm">No upcoming events</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Settings Sheet */}
       {gearOpen && (
