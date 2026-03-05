@@ -42,10 +42,15 @@ export default function GroupDetail() {
     enabled: !!groupId,
   });
 
+  const postsKey = ['groupPosts', groupId];
+
   const { data: posts = [] } = useQuery({
-    queryKey: ['groupPosts', groupId],
+    queryKey: postsKey,
     queryFn: () => base44.entities.GroupPost.filter({ group_id: groupId }, '-created_date', 30),
     enabled: !!groupId,
+    refetchInterval: 2500,
+    refetchIntervalInBackground: true,
+    staleTime: 1500,
   });
 
   const { data: challenges = [] } = useQuery({

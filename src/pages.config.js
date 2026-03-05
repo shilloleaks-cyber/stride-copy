@@ -53,7 +53,6 @@ import Challenges from './pages/Challenges';
 import CommunityCoach from './pages/CommunityCoach';
 import Discover from './pages/Discover';
 import Feed from './pages/Feed';
-import GroupDetail from './pages/GroupDetail';
 import Groups from './pages/Groups';
 import HealthConnect from './pages/HealthConnect';
 import History from './pages/History';
@@ -71,6 +70,7 @@ import Stats from './pages/Stats';
 import Training from './pages/Training';
 import Wallet from './pages/Wallet';
 import Welcome from './pages/Welcome';
+import GroupDetail from './pages/GroupDetail';
 import __Layout from './Layout.jsx';
 
 
@@ -81,7 +81,6 @@ export const PAGES = {
     "CommunityCoach": CommunityCoach,
     "Discover": Discover,
     "Feed": Feed,
-    "GroupDetail": GroupDetail,
     "Groups": Groups,
     "HealthConnect": HealthConnect,
     "History": History,
@@ -99,6 +98,7 @@ export const PAGES = {
     "Training": Training,
     "Wallet": Wallet,
     "Welcome": Welcome,
+    "GroupDetail": GroupDetail,
 }
 
 export const pagesConfig = {
