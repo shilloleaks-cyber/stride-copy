@@ -97,40 +97,43 @@ export default function GroupDetail() {
   };
 
   const createPostMutation = useMutation({
-    mutationFn: async ({ content }) => {
+    mutationFn: async () => {
+      const content = postContent.trim();
+
+      let imageUrl = null;
+      let videoUrl = null;
+
+      if (mediaFile) {
+        const uploaded = await base44.integrations.Core.UploadFile({ file: mediaFile });
+        const url = uploaded?.file_url ?? null;
+        if (!url) throw new Error('Upload failed');
+        if (mediaFile.type.startsWith('video/')) videoUrl = url;
+        else imageUrl = url;
+      }
+
       return await base44.entities.GroupPost.create({
         group_id: groupId,
-        author_email: user.email,
-        author_name: user.full_name,
-        author_image: user.profile_image || '',
-        content,
+        author_email: user?.email || '',
+        author_name: user?.full_name || 'Runner',
+        author_image: user?.profile_image || '',
+        content: content || '',
+        image_url: imageUrl,
+        video_url: videoUrl,
         likes: [],
         comments_count: 0,
       });
     },
-    onMutate: async (vars) => {
-      await queryClient.cancelQueries({ queryKey: postsKey });
-      const previous = queryClient.getQueryData(postsKey) || [];
-      const tempId = `temp_${Date.now()}`;
-      queryClient.setQueryData(postsKey, [
-        { id: tempId, group_id: groupId, author_email: user.email, author_name: user.full_name, author_image: user.profile_image || '', content: vars.content, likes: [], comments_count: 0, created_date: new Date().toISOString(), __optimistic: true },
-        ...previous,
-      ]);
-      return { previous, tempId };
-    },
-    onError: (_err, _vars, ctx) => {
-      if (ctx?.previous) queryClient.setQueryData(postsKey, ctx.previous);
-    },
-    onSuccess: (serverPost, _vars, ctx) => {
-      queryClient.setQueryData(postsKey, (curr = []) =>
-        curr.map((p) => (p.id === ctx?.tempId ? serverPost : p))
-      );
+    onSuccess: () => {
+      toast.success('Posted! +15 coins');
+      setPostContent('');
+      clearMedia();
       setTimeout(() => queryClient.invalidateQueries({ queryKey: postsKey }), 800);
-      // Award coins
       base44.functions.invoke('awardActivityCoins', { activityType: 'group_post' });
       queryClient.invalidateQueries(['currentUser']);
-      setPostContent('');
-      toast.success('Posted! +15 coins');
+    },
+    onError: (e) => {
+      console.error(e);
+      toast.error('Post failed');
     },
   });
 
