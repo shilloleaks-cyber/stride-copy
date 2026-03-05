@@ -140,7 +140,18 @@ export default function CommentsSheet({ open, onClose, post, currentUser }) {
         </SheetHeader>
 
         {/* Comments List */}
-        <div className="commentsListArea" style={{ position: 'relative', zIndex: 1 }}>
+        <div
+          className="commentsListArea"
+          style={{
+            flex: 1,
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            WebkitOverflowScrolling: 'touch',
+            position: 'relative',
+            zIndex: 1,
+            minHeight: 0,
+          }}
+        >
           {isLoading ? (
             <div className="flex justify-center py-8">
               <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--green)', borderTopColor: 'transparent' }} />
