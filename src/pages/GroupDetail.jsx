@@ -94,16 +94,25 @@ export default function GroupDetail() {
   const [busy, setBusy] = useState(false);
 
   const handleDeleteGroup = async () => {
+    if (!group?.id) return;
+    if (myMembership?.role !== 'owner') {
+      toast.error("Only owner can delete the group.");
+      return;
+    }
+
     const ok = window.confirm("Delete this group permanently?");
     if (!ok) return;
 
-    setBusy(true);
     try {
-      const allMembers = await base44.entities.GroupMember.filter({ group_id: group.id });
-      for (const m of allMembers) await base44.entities.GroupMember.delete(m.id);
+      setBusy(true);
 
-      const allPosts = await base44.entities.GroupPost.filter({ group_id: group.id });
+      const postsRes = await base44.entities.GroupPost.filter({ group_id: group.id });
+      const allPosts = postsRes?.items || postsRes || [];
       for (const p of allPosts) await base44.entities.GroupPost.delete(p.id);
+
+      const memRes = await base44.entities.GroupMember.filter({ group_id: group.id });
+      const allMembers = memRes?.items || memRes || [];
+      for (const m of allMembers) await base44.entities.GroupMember.delete(m.id);
 
       await base44.entities.Group.delete(group.id);
 
@@ -112,10 +121,11 @@ export default function GroupDetail() {
       queryClient.invalidateQueries(['myGroupMemberships']);
       navigate(createPageUrl('Groups'));
     } catch (e) {
-      console.error(e);
+      console.error("delete group error:", e);
       toast.error(e?.message || "Delete group failed");
     } finally {
       setBusy(false);
+      setGearOpen(false);
     }
   };
 
