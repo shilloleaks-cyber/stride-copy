@@ -122,7 +122,17 @@ export default function CommentsSheet({ open, onClose, post, currentUser }) {
 
   return (
     <Sheet open={open} onOpenChange={onClose}>
-      <SheetContent side="bottom" className="commentsSheet">
+      <SheetContent
+        side="bottom"
+        className="commentsSheet"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          maxHeight: '85vh',
+          height: 'auto',
+          overflow: 'hidden',
+        }}
+      >
         <SheetHeader className="pb-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
           <SheetTitle className="text-white text-center font-bold tracking-wide" style={{ letterSpacing: '0.05em' }}>
             Comments
