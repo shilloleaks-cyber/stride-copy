@@ -91,6 +91,33 @@ export default function GroupDetail() {
   const isAdmin = isOwner || myMembership?.role === 'admin';
   const isMember = !!myMembership;
   const [gearOpen, setGearOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const handleDeleteGroup = async () => {
+    const ok = window.confirm("Delete this group permanently?");
+    if (!ok) return;
+
+    setBusy(true);
+    try {
+      const allMembers = await base44.entities.GroupMember.filter({ group_id: group.id });
+      for (const m of allMembers) await base44.entities.GroupMember.delete(m.id);
+
+      const allPosts = await base44.entities.GroupPost.filter({ group_id: group.id });
+      for (const p of allPosts) await base44.entities.GroupPost.delete(p.id);
+
+      await base44.entities.Group.delete(group.id);
+
+      toast.success("Group deleted");
+      queryClient.invalidateQueries(['groups']);
+      queryClient.invalidateQueries(['myGroupMemberships']);
+      navigate(createPageUrl('Groups'));
+    } catch (e) {
+      console.error(e);
+      toast.error(e?.message || "Delete group failed");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const handleUploadGroupAvatar = async (file) => {
     if (!file) return;
