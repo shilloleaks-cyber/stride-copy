@@ -344,15 +344,48 @@ export default function GroupDetail() {
                 className="bg-white/5 border-white/10 text-white mb-2"
                 rows={2}
               />
-              <Button
-                onClick={() => createPostMutation.mutate({ content: postContent })}
-                disabled={!postContent.trim() || createPostMutation.isPending}
-                size="sm"
-                style={{ backgroundColor: '#BFFF00', color: '#0A0A0A' }}
-              >
-                <Send className="w-4 h-4 mr-2" />
-                Post
-              </Button>
+              {mediaPreview && (
+                <div className="mb-2">
+                  {mediaFile?.type?.startsWith('video/') ? (
+                    <video src={mediaPreview} controls playsInline className="w-full rounded-xl" />
+                  ) : (
+                    <img src={mediaPreview} alt="preview" className="w-full rounded-xl" />
+                  )}
+                  <button
+                    type="button"
+                    onClick={clearMedia}
+                    className="mt-1 text-xs text-red-400 hover:text-red-300"
+                  >
+                    Remove media
+                  </button>
+                </div>
+              )}
+              <div className="flex gap-2">
+                <input
+                  id="groupMedia"
+                  type="file"
+                  accept="image/*,video/*"
+                  style={{ display: 'none' }}
+                  onChange={onPickMedia}
+                />
+                <button
+                  type="button"
+                  onClick={() => document.getElementById('groupMedia')?.click()}
+                  className="text-xs px-3 py-2 rounded-lg text-gray-400 hover:text-white"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
+                >
+                  📎 Media
+                </button>
+                <Button
+                  onClick={() => createPostMutation.mutate()}
+                  disabled={(!postContent.trim() && !mediaFile) || createPostMutation.isPending}
+                  size="sm"
+                  style={{ backgroundColor: '#BFFF00', color: '#0A0A0A' }}
+                >
+                  <Send className="w-4 h-4 mr-2" />
+                  {createPostMutation.isPending ? 'Posting...' : 'Post'}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
