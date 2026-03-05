@@ -120,19 +120,38 @@ export default function GroupDetail() {
   };
 
   const handleLeaveGroup = async () => {
-    if (!myMembership) return;
-    setBusy(true);
+    if (!group?.id || !myMembership?.id) return;
+
+    const ok = window.confirm("Leave this group?");
+    if (!ok) return;
+
     try {
-      await base44.entities.GroupMember.delete(myMembership.id);
-      await base44.entities.Group.update(group.id, { member_count: Math.max(0, (group.member_count || 1) - 1) });
+      setBusy(true);
+
+      if (myMembership.role === 'owner' && (group.member_count || 1) <= 1) {
+        toast.error("Owner can't leave when you're the only member. Delete group instead.");
+        return;
+      }
+
+      await base44.entities.GroupMember.update(myMembership.id, {
+        status: 'left',
+        left_date: new Date().toISOString(),
+      });
+
+      await base44.entities.Group.update(group.id, {
+        member_count: Math.max(0, (group.member_count || 1) - 1),
+      });
+
       toast.success("Left group");
-      queryClient.invalidateQueries(['groups']);
       queryClient.invalidateQueries(['myGroupMemberships']);
+      queryClient.invalidateQueries(['groups']);
       navigate(createPageUrl('Groups'));
     } catch (e) {
+      console.error("leave group error:", e);
       toast.error(e?.message || "Leave group failed");
     } finally {
       setBusy(false);
+      setGearOpen(false);
     }
   };
 
