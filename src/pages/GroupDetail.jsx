@@ -64,7 +64,7 @@ export default function GroupDetail() {
 
   const createPostMutation = useMutation({
     mutationFn: async () => {
-      await base44.entities.GroupPost.create({
+      const newPost = await base44.entities.GroupPost.create({
         group_id: groupId,
         content: postContent,
         author_name: user.full_name,
@@ -73,16 +73,39 @@ export default function GroupDetail() {
         likes: [],
       });
 
-      // Award coins for group post
-      await base44.functions.invoke('awardActivityCoins', {
-        activityType: 'group_post',
-      });
+      // Award coins for group post (non-blocking)
+      base44.functions.invoke('awardActivityCoins', { activityType: 'group_post' }).catch(() => {});
+
+      return newPost;
+    },
+    onMutate: async () => {
+      // Optimistic update: prepend the new post immediately
+      await queryClient.cancelQueries(['groupPosts', groupId]);
+      const optimisticPost = {
+        id: `temp-${Date.now()}`,
+        group_id: groupId,
+        content: postContent,
+        author_name: user.full_name,
+        author_email: user.email,
+        author_image: user.profile_image,
+        likes: [],
+        created_date: new Date().toISOString(),
+      };
+      queryClient.setQueryData(['groupPosts', groupId], (old = []) => [optimisticPost, ...old]);
+      setPostContent('');
+      return { optimisticPost };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['groupPosts']);
+      queryClient.invalidateQueries(['groupPosts', groupId]);
       queryClient.invalidateQueries(['currentUser']);
-      setPostContent('');
       toast.success('Posted! +15 coins');
+    },
+    onError: (_err, _vars, context) => {
+      // Rollback optimistic update
+      queryClient.setQueryData(['groupPosts', groupId], (old = []) =>
+        old.filter(p => p.id !== context?.optimisticPost?.id)
+      );
+      setPostContent(postContent);
     },
   });
 
