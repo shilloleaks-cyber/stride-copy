@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
 
     // Update user coins
     const newBalance = (user.total_coins || 0) + coinsAwarded;
-    await base44.asServiceRole.auth.updateUser(user.email, {
+    await base44.asServiceRole.entities.User.update(user.id, {
       total_coins: newBalance,
     });
 
