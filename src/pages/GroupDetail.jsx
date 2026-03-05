@@ -120,11 +120,21 @@ export default function GroupDetail() {
   };
 
   const handleUploadGroupAvatar = async (file) => {
-    if (!file) return;
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    await base44.entities.Group.update(groupId, { avatar_image: file_url });
-    queryClient.invalidateQueries(['group', groupId]);
-    toast.success('Group photo updated!');
+    if (!file || !group?.id) return;
+    try {
+      setBusy(true);
+      const uploaded = await base44.integrations.Core.UploadFile({ file });
+      const url = uploaded?.file_url;
+      if (!url) throw new Error("Upload failed (no file_url)");
+      await base44.entities.Group.update(group.id, { avatar_image: url });
+      toast.success("Updated group photo!");
+      queryClient.invalidateQueries(['group', groupId]);
+    } catch (e) {
+      console.error("upload avatar error:", e);
+      toast.error(e?.message || "Update photo failed");
+    } finally {
+      setBusy(false);
+    }
   };
 
   if (!group) {
