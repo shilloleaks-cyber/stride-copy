@@ -304,7 +304,7 @@ export default function GroupDetail() {
                 rows={2}
               />
               <Button
-                onClick={() => createPostMutation.mutate()}
+                onClick={() => createPostMutation.mutate({ content: postContent })}
                 disabled={!postContent.trim() || createPostMutation.isPending}
                 size="sm"
                 style={{ backgroundColor: '#BFFF00', color: '#0A0A0A' }}
