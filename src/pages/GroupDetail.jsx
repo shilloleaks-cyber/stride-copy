@@ -25,6 +25,7 @@ export default function GroupDetail() {
   const [mediaPreview, setMediaPreview] = useState(null);
   const [createChallengeOpen, setCreateChallengeOpen] = useState(false);
   const [createEventOpen, setCreateEventOpen] = useState(false);
+  const [commentsPost, setCommentsPost] = useState(null);
   const urlParams = new URLSearchParams(window.location.search);
   const groupId = urlParams.get('id');
 
