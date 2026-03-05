@@ -2,17 +2,9 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { timeAgo } from '@/components/utils/timeUtils';
 import { 
-  Heart, MessageCircle, Share2, MoreHorizontal, 
-  MapPin, Clock, Flame, Zap, Trash2 
+  Heart, MessageCircle, MapPin, Clock, Flame, Zap, Trash2, MoreHorizontal
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 export default function PostCard({ 
   post, 
