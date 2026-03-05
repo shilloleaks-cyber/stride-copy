@@ -113,19 +113,53 @@ export default function GroupDetail() {
       {/* Header */}
       <div className="sticky top-0 z-50 px-6 pt-6 pb-4 backdrop-blur-lg border-b" style={{ backgroundColor: 'rgba(10, 10, 10, 0.95)', borderColor: 'rgba(138, 43, 226, 0.3)' }}>
         <div className="flex items-center justify-between">
-          <button 
-            onClick={() => navigate(createPageUrl('Groups'))}
+          <button
+            onClick={() => navigate(-1)}
             className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-lg font-medium flex-1 text-center">{group.name}</h1>
-          {isAdmin && (
-            <button className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+
+          <div className="flex flex-col items-center flex-1">
+            <div className="relative">
+              <img
+                className="w-14 h-14 rounded-full object-cover border-2 border-white/20"
+                src={group?.avatar_image || group?.image_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(group?.name || 'G')}&background=222&color=BFFF00`}
+                alt="Group avatar"
+              />
+              {isOwner && (
+                <>
+                  <input
+                    id="groupAvatarInput"
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={(e) => handleUploadGroupAvatar(e.target.files?.[0])}
+                  />
+                  <button
+                    className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-lime-400 text-black flex items-center justify-center text-xs font-bold"
+                    onClick={() => document.getElementById('groupAvatarInput')?.click()}
+                    aria-label="Change group photo"
+                  >
+                    ✎
+                  </button>
+                </>
+              )}
+            </div>
+            <h1 className="text-base font-medium mt-1">{group.name}</h1>
+          </div>
+
+          {isAdmin ? (
+            <button
+              className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center"
+              onClick={() => setGearOpen(true)}
+              aria-label="Group settings"
+            >
               <Settings className="w-5 h-5" />
             </button>
+          ) : (
+            <div className="w-10" />
           )}
-          {!isAdmin && <div className="w-10" />}
         </div>
       </div>
 
