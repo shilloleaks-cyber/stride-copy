@@ -13,6 +13,7 @@ import PostCard from '@/components/feed/PostCard';
 import GroupLeaderboard from '@/components/group/GroupLeaderboard';
 import CreateGroupChallengeDialog from '@/components/group/CreateGroupChallengeDialog';
 import CreateEventDialog from '@/components/group/CreateEventDialog';
+import CommentsSheet from '@/components/feed/CommentsSheet';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
