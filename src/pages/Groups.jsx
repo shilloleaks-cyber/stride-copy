@@ -85,15 +85,7 @@ export default function Groups() {
   const myGroups = filteredGroups.filter(g => myGroupIds.has(g.id));
   const discoverGroups = filteredGroups.filter(g => !myGroupIds.has(g.id) && g.privacy !== 'private');
 
-  const categories = [
-    { id: 'marathon_training', label: 'Marathon Training', emoji: '🏃‍♂️' },
-    { id: 'local_club', label: 'Local Club', emoji: '📍' },
-    { id: 'beginners', label: 'Beginners', emoji: '🌱' },
-    { id: 'advanced', label: 'Advanced', emoji: '⚡' },
-    { id: 'trail_running', label: 'Trail Running', emoji: '⛰️' },
-    { id: 'social', label: 'Social', emoji: '🎉' },
-    { id: 'other', label: 'Other', emoji: '✨' },
-  ];
+
 
 
 
