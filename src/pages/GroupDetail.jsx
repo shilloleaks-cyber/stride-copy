@@ -620,6 +620,8 @@ export default function GroupDetail() {
         onClose={() => setCommentsPost(null)}
         post={commentsPost}
         currentUser={user}
+        entityType="group"
+        groupId={groupId}
       />
     </div>
   );
