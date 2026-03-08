@@ -205,11 +205,11 @@ export default function Groups() {
                   whileTap={{ scale: 0.98 }}
                   className="w-full bg-gradient-to-r from-purple-500/10 to-transparent border border-purple-500/20 rounded-2xl p-4 flex items-center gap-4"
                 >
-                  <Avatar className="w-14 h-14">
+                  <Avatar className="w-16 h-16 ring-2 ring-purple-500/25 border border-purple-400/15">
                     {(group.avatar_image || group.image_url || group.cover_image) ? (
-                      <AvatarImage src={group.avatar_image || group.image_url || group.cover_image} />
+                      <AvatarImage src={group.avatar_image || group.image_url || group.cover_image} className="object-cover object-center" />
                     ) : null}
-                    <AvatarFallback className="bg-gradient-to-br from-purple-500 to-purple-600 text-white text-lg">
+                    <AvatarFallback className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] text-white text-lg">
                       {categoryInfo.emoji}
                     </AvatarFallback>
                   </Avatar>
