@@ -248,11 +248,11 @@ export default function Groups() {
                   animate={{ opacity: 1, x: 0 }}
                   className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4"
                 >
-                  <Avatar className="w-14 h-14">
+                  <Avatar className="w-16 h-16 ring-2 ring-emerald-500/25 border border-emerald-400/15">
                     {(group.avatar_image || group.image_url || group.cover_image) ? (
-                      <AvatarImage src={group.avatar_image || group.image_url || group.cover_image} />
+                      <AvatarImage src={group.avatar_image || group.image_url || group.cover_image} className="object-cover object-center" />
                     ) : null}
-                    <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white text-lg">
+                    <AvatarFallback className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] text-white text-lg">
                       {categoryInfo.emoji}
                     </AvatarFallback>
                   </Avatar>
