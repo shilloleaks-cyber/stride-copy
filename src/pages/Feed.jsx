@@ -237,11 +237,7 @@ export default function Feed() {
       {/* Content */}
       <div className="px-6 py-6 space-y-6">
         {activeTab === 'groups' ? (
-          <div className="text-center py-16">
-            <Users className="w-16 h-16 text-purple-400 mx-auto mb-4" />
-            <p className="text-gray-400 text-lg">Groups UI</p>
-            <p className="text-sm text-gray-600 mt-2">Groups content from the original Groups page will be displayed here</p>
-          </div>
+          <GroupsPanel mode="embedded" showHeader={false} showCreateButton={true} />
         ) : activeTab === 'challenges' ? (
           <div className="text-center py-16">
             <Target className="w-16 h-16 text-yellow-400 mx-auto mb-4" />
