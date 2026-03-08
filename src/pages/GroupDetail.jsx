@@ -58,19 +58,6 @@ export default function GroupDetail() {
     staleTime: 1500,
   });
 
-  const { data: challenges = [] } = useQuery({
-    queryKey: ['groupChallenges', groupId],
-    queryFn: () => base44.entities.GroupChallenge.filter({ group_id: groupId }, '-created_date'),
-    enabled: !!groupId,
-  });
-
-  const { data: events = [] } = useQuery({
-    queryKey: ['groupEvents', groupId],
-    queryFn: () => base44.entities.GroupEvent.filter({ group_id: groupId }, 'event_date'),
-    enabled: !!groupId,
-  });
-
-  const upcomingEvents = events.filter(e => new Date(e.event_date) > new Date());
 
   const deletePostMutation = useMutation({
     mutationFn: async (postId) => {
