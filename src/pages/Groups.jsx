@@ -168,74 +168,16 @@ export default function Groups() {
         )}
       </div>
 
-      {/* Create Group Dialog */}
-      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-        <DialogContent className="bg-gray-900 border-gray-800 text-white">
-          <DialogHeader>
-            <DialogTitle>Create New Group</DialogTitle>
-          </DialogHeader>
-          <div className="overflow-y-auto max-h-[55vh] pr-1 space-y-4 mt-4">
-            <div>
-              <label className="text-sm text-gray-400 mb-2 block">Group Name</label>
-              <Input
-                value={newGroup.name}
-                onChange={(e) => setNewGroup({ ...newGroup, name: e.target.value })}
-                placeholder="e.g., Bangkok Runners"
-                className="bg-white/5 border-white/10 text-white"
-              />
-            </div>
-            <div>
-              <label className="text-sm text-gray-400 mb-2 block">Description</label>
-              <Textarea
-                value={newGroup.description}
-                onChange={(e) => setNewGroup({ ...newGroup, description: e.target.value })}
-                placeholder="Tell others what this group is about..."
-                className="bg-white/5 border-white/10 text-white"
-                rows={3}
-              />
-            </div>
-            <div>
-              <label className="text-sm text-gray-400 mb-2 block">Category</label>
-              <div className="grid grid-cols-2 gap-2">
-                {categories.map(cat => (
-                  <button
-                    key={cat.id}
-                    onClick={() => setNewGroup({ ...newGroup, category: cat.id })}
-                    className={`p-3 rounded-xl text-sm transition-all ${
-                      newGroup.category === cat.id
-                        ? 'bg-purple-500/20 border-2 border-purple-500/50'
-                        : 'bg-white/5 border border-white/10'
-                    }`}
-                  >
-                    <span className="text-lg mr-2">{cat.emoji}</span>
-                    {cat.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl">
-              <input
-                type="checkbox"
-                checked={newGroup.is_private}
-                onChange={(e) => setNewGroup({ ...newGroup, is_private: e.target.checked })}
-                className="w-4 h-4"
-              />
-              <label className="text-sm text-gray-300">
-                Make this group private (only invited members can join)
-              </label>
-            </div>
-          </div>
-          <Button
-            type="button"
-            onClick={() => createGroupMutation.mutate({ ...newGroup })}
-            disabled={!newGroup.name?.trim() || createGroupMutation.isPending}
-            className="w-full h-12 mt-4"
-            style={{ backgroundColor: '#BFFF00', color: '#0A0A0A' }}
-          >
-            Create Group
-          </Button>
-        </DialogContent>
-      </Dialog>
+      <CreateGroupDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        user={user}
+        onCreated={(group) => {
+          queryClient.invalidateQueries(['groups']);
+          queryClient.invalidateQueries(['myGroupMemberships']);
+          navigate(createPageUrl(`GroupDetail?id=${group.id}`));
+        }}
+      />
     </div>
   );
 }
