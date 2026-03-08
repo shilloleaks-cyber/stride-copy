@@ -343,67 +343,15 @@ export default function GroupDetail() {
       {/* Post Input */}
       {isMember && (
         <div className="px-6 pt-4 pb-4 border-b" style={{ borderColor: 'rgba(138, 43, 226, 0.3)' }}>
-          <div className="flex gap-3">
-            <Avatar className="w-10 h-10">
-              {user?.profile_image ? (
-                <AvatarImage src={user.profile_image} />
-              ) : null}
-              <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
-                {user?.full_name?.[0] || 'U'}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <Textarea
-                value={postContent}
-                onChange={(e) => setPostContent(e.target.value)}
-                placeholder="Share with the group..."
-                className="bg-white/5 border-white/10 text-white mb-2"
-                rows={2}
-              />
-              {mediaPreview && (
-                <div className="mb-2">
-                  {mediaFile?.type?.startsWith('video/') ? (
-                    <video src={mediaPreview} controls playsInline className="w-full rounded-xl" />
-                  ) : (
-                    <img src={mediaPreview} alt="preview" className="w-full rounded-xl" />
-                  )}
-                  <button
-                    type="button"
-                    onClick={clearMedia}
-                    className="mt-1 text-xs text-red-400 hover:text-red-300"
-                  >
-                    Remove media
-                  </button>
-                </div>
-              )}
-              <div className="flex gap-2">
-                <input
-                  id="groupMedia"
-                  type="file"
-                  accept="image/*,video/*"
-                  style={{ display: 'none' }}
-                  onChange={onPickMedia}
-                />
-                <button
-                  type="button"
-                  onClick={() => document.getElementById('groupMedia')?.click()}
-                  className="text-xs px-3 py-2 rounded-lg text-gray-400 hover:text-white"
-                  style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
-                >
-                  📎 Media
-                </button>
-                <Button
-                  onClick={() => createPostMutation.mutate()}
-                  disabled={(!postContent.trim() && !mediaFile) || createPostMutation.isPending}
-                  size="sm"
-                  style={{ backgroundColor: '#BFFF00', color: '#0A0A0A' }}
-                >
-                  <Send className="w-4 h-4 mr-2" />
-                  {createPostMutation.isPending ? 'Posting...' : 'Post'}
-                </Button>
-              </div>
-            </div>
-          </div>
+          <PostComposer
+            mode="group"
+            groupId={groupId}
+            user={user}
+            onSuccess={() => {
+              setTimeout(() => queryClient.invalidateQueries({ queryKey: postsKey }), 800);
+              queryClient.invalidateQueries(['currentUser']);
+            }}
+          />
         </div>
       )}
 
