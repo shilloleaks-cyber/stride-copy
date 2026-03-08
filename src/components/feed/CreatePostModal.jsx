@@ -12,8 +12,8 @@ export default function CreatePostModal({ open, onClose, onSubmit, user }) {
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg rounded-t-2xl"
-        style={{ backgroundColor: '#0A0A0A', border: '1px solid rgba(255,255,255,0.08)', borderBottom: 'none' }}
+        className="w-full max-w-lg rounded-t-2xl overflow-y-auto"
+        style={{ backgroundColor: '#0A0A0A', border: '1px solid rgba(255,255,255,0.08)', borderBottom: 'none', maxHeight: '90dvh' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Handle + Title */}
