@@ -16,7 +16,6 @@ import CreateGroupChallengeDialog from '@/components/group/CreateGroupChallengeD
 import CreateEventDialog from '@/components/group/CreateEventDialog';
 import CommentsSheet from '@/components/feed/CommentsSheet';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
 
 export default function GroupDetail() {
   const navigate = useNavigate();
