@@ -235,7 +235,7 @@ export default function PostComposer({ mode = 'feed', groupId, user, onSubmit, o
           ref={mediaInputRef}
           type="file"
           accept="image/*,video/*"
-          style={{ display: 'none' }}
+          className="sr-only"
           onChange={onPickMedia}
         />
 
