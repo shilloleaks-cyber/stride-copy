@@ -438,7 +438,7 @@ export default function GroupDetail() {
               <Trophy className="w-5 h-5 text-yellow-400" />
               Group Rankings
             </h3>
-            <GroupLeaderboard groupId={groupId} />
+            <GroupRankTab groupId={groupId} />
           </div>
         )}
 
