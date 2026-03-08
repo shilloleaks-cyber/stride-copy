@@ -95,14 +95,7 @@ export default function Groups() {
     { id: 'other', label: 'Other', emoji: '✨' },
   ];
 
-  const getInitials = (name) => {
-    if (!name) return 'G';
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-  };
 
-  const getCategoryInfo = (categoryId) => {
-    return categories.find(c => c.id === categoryId) || categories[categories.length - 1];
-  };
 
   return (
     <div className="min-h-screen text-white pb-24" style={{ backgroundColor: '#0A0A0A' }}>
