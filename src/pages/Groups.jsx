@@ -39,49 +39,7 @@ export default function Groups() {
     enabled: !!user?.email,
   });
 
-  const createGroupMutation = useMutation({
-    mutationFn: async (groupData) => {
-      console.log("MUTATE payload:", groupData);
-      console.log("USER:", user);
 
-      if (!user?.email) throw new Error("User not ready (missing email)");
-
-      const group = await base44.entities.Group.create({
-        name: groupData.name?.trim(),
-        description: groupData.description || '',
-        privacy: groupData.is_private ? 'private' : 'public',
-        join_policy: groupData.is_private ? 'approval' : 'open',
-        group_type: 'social',
-        owner_email: user.email,
-        member_count: 1,
-      });
-
-      await base44.entities.GroupMember.create({
-        group_id: group.id,
-        user_email: user.email,
-        user_name: user.full_name,
-        user_image: user.profile_image || '',
-        role: 'owner',
-        status: 'active',
-        joined_date: new Date().toISOString(),
-      });
-
-      return group;
-    },
-    onSuccess: (group) => {
-      console.log("SUCCESS group:", group);
-      queryClient.invalidateQueries(['groups']);
-      queryClient.invalidateQueries(['myGroupMemberships']);
-      setCreateDialogOpen(false);
-      setNewGroup({ name: '', description: '', category: 'social', is_private: false });
-      toast.success('Group created!');
-      navigate(createPageUrl(`GroupDetail?id=${group.id}`));
-    },
-    onError: (e) => {
-      console.error("CREATE GROUP ERROR:", e);
-      toast.error(e?.message || 'Create group failed');
-    },
-  });
 
   const joinGroupMutation = useMutation({
     mutationFn: async (group) => {
