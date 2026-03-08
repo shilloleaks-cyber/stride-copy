@@ -25,7 +25,7 @@ export default function CreatePostModal({ open, onClose, onSubmit, user }) {
           </button>
         </div>
 
-        <div className="px-4 pb-6">
+        <div className="px-4 pb-8" style={{ paddingBottom: 'calc(32px + env(safe-area-inset-bottom))' }}>
           <PostComposer
             mode="feed"
             user={user}
