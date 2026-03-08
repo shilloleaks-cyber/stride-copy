@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PostCard from '@/components/feed/PostCard';
+import PostComposer from '@/components/post/PostComposer';
 import GroupRankTab from '@/components/group/GroupRankTab';
 import CreateGroupChallengeDialog from '@/components/group/CreateGroupChallengeDialog';
 import CreateEventDialog from '@/components/group/CreateEventDialog';
