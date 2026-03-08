@@ -213,45 +213,15 @@ export default function Groups() {
         </h2>
         {discoverGroups.length > 0 ? (
           <div className="space-y-3">
-            {discoverGroups.map(group => {
-              const categoryInfo = getCategoryInfo(group.category);
-              return (
-                <motion.div
-                  key={group.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4"
-                >
-                  <Avatar className="w-16 h-16 ring-2 ring-emerald-500/25 border border-emerald-400/15">
-                    {(group.avatar_image || group.image_url || group.cover_image) ? (
-                      <AvatarImage src={group.avatar_image || group.image_url || group.cover_image} className="object-cover object-center" />
-                    ) : null}
-                    <AvatarFallback className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] text-white text-lg">
-                      {categoryInfo.emoji}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="font-medium text-white">{group.name}</p>
-                      <Globe className="w-3 h-3 text-gray-500" />
-                    </div>
-                    <p className="text-xs text-gray-500 line-clamp-1 mb-1">{group.description || 'No description'}</p>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs text-gray-600">{group.member_count} members</span>
-                      <span className="text-xs text-emerald-400">{categoryInfo.label}</span>
-                    </div>
-                  </div>
-                  <Button
-                    onClick={() => joinGroupMutation.mutate(group)}
-                    disabled={joinGroupMutation.isPending}
-                    size="sm"
-                    style={{ backgroundColor: '#BFFF00', color: '#0A0A0A' }}
-                  >
-                    Join
-                  </Button>
-                </motion.div>
-              );
-            })}
+            {discoverGroups.map(group => (
+              <GroupCard
+                key={group.id}
+                group={group}
+                variant="discover"
+                onJoin={() => joinGroupMutation.mutate(group)}
+                isJoining={joinGroupMutation.isPending}
+              />
+            ))}
           </div>
         ) : (
           <div className="text-center py-12 bg-white/5 rounded-2xl border border-white/10">
