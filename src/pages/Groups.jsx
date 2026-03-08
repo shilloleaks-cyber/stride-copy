@@ -193,40 +193,14 @@ export default function Groups() {
             My Groups ({myGroups.length})
           </h2>
           <div className="space-y-3">
-            {myGroups.map(group => {
-              const categoryInfo = getCategoryInfo(group.category);
-              return (
-                <motion.button
-                  key={group.id}
-                  onClick={() => navigate(createPageUrl(`GroupDetail?id=${group.id}`))}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full bg-gradient-to-r from-purple-500/10 to-transparent border border-purple-500/20 rounded-2xl p-4 flex items-center gap-4"
-                >
-                  <Avatar className="w-16 h-16 ring-2 ring-purple-500/25 border border-purple-400/15">
-                    {(group.avatar_image || group.image_url || group.cover_image) ? (
-                      <AvatarImage src={group.avatar_image || group.image_url || group.cover_image} className="object-cover object-center" />
-                    ) : null}
-                    <AvatarFallback className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] text-white text-lg">
-                      {categoryInfo.emoji}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 text-left">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="font-medium text-white">{group.name}</p>
-                      {group.is_private && <Lock className="w-3 h-3 text-gray-500" />}
-                    </div>
-                    <p className="text-xs text-gray-500 line-clamp-1">{group.description || 'No description'}</p>
-                    <div className="flex items-center gap-3 mt-1">
-                      <span className="text-xs text-gray-600">{group.member_count} members</span>
-                      <span className="text-xs text-purple-400">{categoryInfo.label}</span>
-                    </div>
-                  </div>
-                </motion.button>
-              );
-            })}
+            {myGroups.map(group => (
+              <GroupCard
+                key={group.id}
+                group={group}
+                variant="my"
+                onClick={() => navigate(createPageUrl(`GroupDetail?id=${group.id}`))}
+              />
+            ))}
           </div>
         </div>
       )}
