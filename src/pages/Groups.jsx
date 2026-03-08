@@ -16,12 +16,7 @@ export default function Groups() {
   const queryClient = useQueryClient();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [newGroup, setNewGroup] = useState({
-    name: '',
-    description: '',
-    category: 'social',
-    is_private: false,
-  });
+
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
