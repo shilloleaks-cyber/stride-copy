@@ -249,8 +249,8 @@ export default function Groups() {
                   className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4"
                 >
                   <Avatar className="w-14 h-14">
-                    {group.cover_image ? (
-                      <AvatarImage src={group.cover_image} />
+                    {(group.avatar_image || group.image_url || group.cover_image) ? (
+                      <AvatarImage src={group.avatar_image || group.image_url || group.cover_image} />
                     ) : null}
                     <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white text-lg">
                       {categoryInfo.emoji}
