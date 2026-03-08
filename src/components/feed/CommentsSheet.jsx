@@ -73,30 +73,39 @@ export default function CommentsSheet({ open, onClose, post, currentUser, entity
 
   const addCommentMutation = useMutation({
     mutationFn: async (content) => {
-      console.log('🚀 Creating comment for post:', postId);
       const newCommentData = await base44.entities.Comment.create({
         post_id: postId,
         content,
         author_name: currentUser?.full_name || 'Runner',
         author_email: currentUser?.email,
       });
-      console.log('✅ Comment created:', newCommentData);
-      // Update comments count
-      await base44.entities.Post.update(postId, {
-        comments_count: (post.comments_count || 0) + 1,
-      });
+
+      const nextCount = (post?.comments_count || 0) + 1;
+
+      if (entityType === 'group') {
+        await base44.entities.GroupPost.update(postId, { comments_count: nextCount });
+      } else {
+        await base44.entities.Post.update(postId, { comments_count: nextCount });
+      }
+
       return newCommentData;
     },
-    onSuccess: (data) => {
-      console.log('🎉 Comment mutation success, invalidating queries');
-      console.log('📅 NEW COMMENT CREATED_DATE:', data?.created_date);
-      console.log('📦 FULL NEW COMMENT DATA:', data);
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['comments', postId] });
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
+
+      if (entityType === 'group') {
+        queryClient.setQueryData(['groupPosts', groupId], (old = []) =>
+          old.map((p) => p.id === postId ? { ...p, comments_count: (p.comments_count || 0) + 1 } : p)
+        );
+        queryClient.invalidateQueries({ queryKey: ['groupPosts', groupId] });
+      } else {
+        queryClient.setQueryData(['posts'], (old = []) =>
+          old.map((p) => p.id === postId ? { ...p, comments_count: (p.comments_count || 0) + 1 } : p)
+        );
+        queryClient.invalidateQueries({ queryKey: ['posts'] });
+      }
+
       setNewComment('');
-    },
-    onError: (err) => {
-      console.log('❌ ADD COMMENT ERROR', err);
     },
   });
 
