@@ -8,7 +8,6 @@ import { ArrowLeft, Users, Settings, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PostCard from '@/components/feed/PostCard';
 import RankTab from '@/components/group/RankTab';
 import ChallengesTab from '@/components/group/ChallengesTab';
