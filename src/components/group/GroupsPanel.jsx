@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import GroupCard from '@/components/group/GroupCard';
 import CreateGroupDialog from '@/components/group/CreateGroupDialog';
 
-export default function GroupsPanel({ mode = 'page', showHeader = true, showCreateButton = true }) {
+export default function GroupsPanel({ mode = 'page', showHeader = true, showCreateButton = true, embedded = false }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
@@ -91,7 +91,7 @@ export default function GroupsPanel({ mode = 'page', showHeader = true, showCrea
             className="pl-10 bg-white/5 border-white/10 text-white"
           />
         </div>
-        {showCreateButton && (
+        {showCreateButton && !embedded && (
           <button
             onClick={() => setCreateDialogOpen(true)}
             className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"

@@ -237,7 +237,7 @@ export default function Feed() {
       {/* Content */}
       <div className="px-6 py-6 space-y-6">
         {activeTab === 'groups' ? (
-          <GroupsPanel mode="embedded" showHeader={false} showCreateButton={true} />
+          <GroupsPanel embedded={true} />
         ) : activeTab === 'challenges' ? (
           <div className="text-center py-16">
             <Target className="w-16 h-16 text-yellow-400 mx-auto mb-4" />
