@@ -95,46 +95,7 @@ export default function GroupDetail() {
     showConfirm('Delete this post?', () => deletePostMutation.mutate(postId));
   };
 
-  const createPostMutation = useMutation({
-    mutationFn: async () => {
-      const content = postContent.trim();
 
-      let imageUrl = null;
-      let videoUrl = null;
-
-      if (mediaFile) {
-        const uploaded = await base44.integrations.Core.UploadFile({ file: mediaFile });
-        const url = uploaded?.file_url ?? null;
-        if (!url) throw new Error('Upload failed');
-        if (mediaFile.type.startsWith('video/')) videoUrl = url;
-        else imageUrl = url;
-      }
-
-      return await base44.entities.GroupPost.create({
-        group_id: groupId,
-        author_email: user?.email || '',
-        author_name: user?.full_name || 'Runner',
-        author_image: user?.profile_image || '',
-        content: content || '',
-        image_url: imageUrl,
-        video_url: videoUrl,
-        likes: [],
-        comments_count: 0,
-      });
-    },
-    onSuccess: () => {
-      toast.success('Posted! +15 coins');
-      setPostContent('');
-      clearMedia();
-      setTimeout(() => queryClient.invalidateQueries({ queryKey: postsKey }), 800);
-      base44.functions.invoke('awardActivityCoins', { activityType: 'group_post' });
-      queryClient.invalidateQueries(['currentUser']);
-    },
-    onError: (e) => {
-      console.error(e);
-      toast.error('Post failed');
-    },
-  });
 
   const myMembership = members.find(m => m.user_email === user?.email && m.status === 'active');
   const isOwner = myMembership?.role === 'owner';
