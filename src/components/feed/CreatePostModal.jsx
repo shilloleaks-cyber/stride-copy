@@ -20,7 +20,6 @@ export default function CreatePostModal({ open, onClose, onSubmit, user }) {
           maxHeight: '90dvh',
           display: 'flex',
           flexDirection: 'column',
-          overflow: 'hidden',
         }}
         onClick={(e) => e.stopPropagation()}
       >
