@@ -16,6 +16,7 @@ import {
 import PostCard from '@/components/feed/PostCard';
 import CreatePostModal from '@/components/feed/CreatePostModal';
 import CommentsSheet from '@/components/feed/CommentsSheet';
+import GroupsPanel from '@/components/group/GroupsPanel';
 
 export default function Feed() {
   const navigate = useNavigate();
