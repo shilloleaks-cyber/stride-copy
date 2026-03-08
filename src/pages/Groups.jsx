@@ -7,10 +7,9 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Plus, Users, Search, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import GroupCard from '@/components/group/GroupCard';
+import CreateGroupDialog from '@/components/group/CreateGroupDialog';
 
 export default function Groups() {
   const navigate = useNavigate();
