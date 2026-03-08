@@ -14,7 +14,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
-export default function CommentsSheet({ open, onClose, post, currentUser }) {
+export default function CommentsSheet({ open, onClose, post, currentUser, entityType = 'post', groupId }) {
   const [newComment, setNewComment] = useState('');
   const queryClient = useQueryClient();
   const postId = post?.id;
