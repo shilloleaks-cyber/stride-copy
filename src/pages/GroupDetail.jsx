@@ -20,9 +20,6 @@ import { format } from 'date-fns';
 export default function GroupDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [postContent, setPostContent] = useState('');
-  const [mediaFile, setMediaFile] = useState(null);
-  const [mediaPreview, setMediaPreview] = useState(null);
   const [createChallengeOpen, setCreateChallengeOpen] = useState(false);
   const [createEventOpen, setCreateEventOpen] = useState(false);
   const [commentsPost, setCommentsPost] = useState(null);
