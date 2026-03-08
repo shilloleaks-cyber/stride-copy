@@ -112,13 +112,31 @@ export default function CommentsSheet({ open, onClose, post, currentUser, entity
   const deleteCommentMutation = useMutation({
     mutationFn: async (commentId) => {
       await base44.entities.Comment.delete(commentId);
-      await base44.entities.Post.update(postId, {
-        comments_count: Math.max(0, (post.comments_count || 1) - 1),
-      });
+
+      const nextCount = Math.max(0, (post?.comments_count || 0) - 1);
+
+      if (entityType === 'group') {
+        await base44.entities.GroupPost.update(postId, { comments_count: nextCount });
+      } else {
+        await base44.entities.Post.update(postId, { comments_count: nextCount });
+      }
+
+      return commentId;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['comments', postId] });
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
+
+      if (entityType === 'group') {
+        queryClient.setQueryData(['groupPosts', groupId], (old = []) =>
+          old.map((p) => p.id === postId ? { ...p, comments_count: Math.max(0, (p.comments_count || 0) - 1) } : p)
+        );
+        queryClient.invalidateQueries({ queryKey: ['groupPosts', groupId] });
+      } else {
+        queryClient.setQueryData(['posts'], (old = []) =>
+          old.map((p) => p.id === postId ? { ...p, comments_count: Math.max(0, (p.comments_count || 0) - 1) } : p)
+        );
+        queryClient.invalidateQueries({ queryKey: ['posts'] });
+      }
     },
   });
 
