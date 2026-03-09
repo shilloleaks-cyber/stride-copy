@@ -273,9 +273,9 @@ export default function PostComposer({ mode = 'feed', groupId, user, onSubmit, o
 
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={!canPost || isSubmitting}
           onClick={handleSubmit}
-          className="inline-flex items-center justify-center gap-2 min-w-[120px] h-11 rounded-xl px-4 font-medium transition-all disabled:opacity-70"
+          className="inline-flex items-center justify-center gap-2 min-w-[132px] h-11 rounded-xl px-4 font-medium transition-all disabled:opacity-70 disabled:cursor-not-allowed"
           style={{ backgroundColor: '#BFFF00', color: '#0A0A0A' }}
         >
           {isSubmitting ? (
