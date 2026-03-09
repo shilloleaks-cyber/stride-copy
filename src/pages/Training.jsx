@@ -9,6 +9,9 @@ import { Button } from '@/components/ui/button';
 import WeeklyCalendar from '@/components/training/WeeklyCalendar';
 import CreateGoalDialog from '@/components/training/CreateGoalDialog';
 import WorkoutCard from '@/components/training/WorkoutCard';
+import ActiveGoalCard from '@/components/training/ActiveGoalCard';
+import EmptyGoalState from '@/components/training/EmptyGoalState';
+import WeekSwitcher from '@/components/training/WeekSwitcher';
 
 export default function Training() {
   const [showCreateGoal, setShowCreateGoal] = useState(false);
