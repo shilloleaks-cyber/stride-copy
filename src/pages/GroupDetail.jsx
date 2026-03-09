@@ -105,10 +105,10 @@ export default function GroupDetail() {
   const [tab, setTab] = useState('feed');
   const [gearOpen, setGearOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [confirmDialog, setConfirmDialog] = useState(null); // { message, onConfirm }
+  const [confirmDialog, setConfirmDialog] = useState(null); // { title, description, onConfirm, confirmVariant }
 
-  const showConfirm = (message, onConfirm) => {
-    setConfirmDialog({ message, onConfirm });
+  const showConfirm = (title, onConfirm, opts = {}) => {
+    setConfirmDialog({ title, onConfirm, ...opts });
   };
 
   const handleLikePost = async (postId, isLiked) => {
