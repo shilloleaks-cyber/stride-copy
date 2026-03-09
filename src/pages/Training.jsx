@@ -95,7 +95,7 @@ export default function Training() {
       {activeGoal && (
         <div className="px-6 mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xs uppercase tracking-widest text-gray-500">This Week</h2>
+            <h2 className="text-xs uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.35)' }}>This Week</h2>
             <WeekSwitcher
               selectedWeek={selectedWeek}
               onPrev={() => setSelectedWeek(w => w - 1)}
