@@ -180,9 +180,7 @@ export default function Training() {
         <div className="px-6">
           <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-4">Workouts</h2>
           <div className="space-y-3">
-            {weekSessions
-              .sort((a, b) => new Date(a.scheduled_date) - new Date(b.scheduled_date))
-              .map(session => (
+            {weekSessions.map(session => (
                 <WorkoutCard key={session.id} session={session} />
               ))}
           </div>
