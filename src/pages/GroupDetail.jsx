@@ -458,37 +458,15 @@ export default function GroupDetail() {
       )}
 
       {/* Confirm Dialog */}
-      {confirmDialog && (
-        <div
-          className="fixed inset-0 flex items-center justify-center px-6"
-          style={{ backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 999999 }}
-          onClick={() => setConfirmDialog(null)}
-        >
-          <div
-            className="w-full max-w-sm rounded-2xl p-6 space-y-4"
-            style={{ backgroundColor: '#1A1A1A', border: '1px solid rgba(138,43,226,0.3)' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <p className="text-white text-base font-medium text-center">{confirmDialog.message}</p>
-            <div className="flex gap-3">
-              <button
-                className="flex-1 py-3 rounded-xl text-sm font-medium"
-                style={{ backgroundColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)' }}
-                onClick={() => setConfirmDialog(null)}
-              >
-                Cancel
-              </button>
-              <button
-                className="flex-1 py-3 rounded-xl text-sm font-bold"
-                style={{ backgroundColor: 'rgba(239,68,68,0.2)', color: '#f87171', border: '1px solid rgba(239,68,68,0.3)' }}
-                onClick={() => { confirmDialog.onConfirm(); setConfirmDialog(null); }}
-              >
-                Confirm
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        open={!!confirmDialog}
+        title={confirmDialog?.title || ''}
+        description={confirmDialog?.description}
+        confirmVariant={confirmDialog?.confirmVariant || 'destructive'}
+        loading={busy && !!confirmDialog}
+        onCancel={() => setConfirmDialog(null)}
+        onConfirm={() => { confirmDialog?.onConfirm(); setConfirmDialog(null); }}
+      />
 
       {/* Create Dialogs */}
       <CreateGroupChallengeDialog
