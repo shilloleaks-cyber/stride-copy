@@ -5,52 +5,78 @@ import { X, Target, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useQueryClient } from '@tanstack/react-query';
 
-export default function CreateGoalDialog({ isOpen, onClose, user }) {
-  const [goalType, setGoalType] = useState('5k');
-  const [targetDate, setTargetDate] = useState('');
+// Goal types that map to a fixed target_value (km)
+const FIXED_TARGET_VALUES = {
+  '5k': 5,
+  '10k': 10,
+  'half_marathon': 21.1,
+};
+
+// Goal types that require the user to enter a target value
+const REQUIRES_TARGET_VALUE = ['distance', 'pace'];
+
+const goalOptions = [
+  { value: '5k',            label: '5K Run',          description: 'Complete a 5km run' },
+  { value: '10k',           label: '10K Run',          description: 'Complete a 10km run' },
+  { value: 'half_marathon', label: 'Half Marathon',    description: '21km challenge' },
+  { value: 'pace',          label: 'Improve Pace',     description: 'Get faster (min/km)' },
+  { value: 'distance',      label: 'Distance Goal',    description: 'Run further (km)' },
+  { value: 'endurance',     label: 'Build Endurance',  description: 'Run longer' },
+];
+
+export default function CreateGoalDialog({ isOpen, onClose, user, existingActiveGoal }) {
+  const [goalType, setGoalType]       = useState('5k');
+  const [targetDate, setTargetDate]   = useState('');
   const [targetValue, setTargetValue] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [errorMsg, setErrorMsg]       = useState('');
   const queryClient = useQueryClient();
+
+  const needsTargetValue = REQUIRES_TARGET_VALUE.includes(goalType);
+
+  // Resolved target_value: fixed for race goals, user-supplied for others
+  const resolvedTargetValue = FIXED_TARGET_VALUES[goalType] ?? (targetValue ? parseFloat(targetValue) : null);
+
+  const canSubmit =
+    !isGenerating &&
+    targetDate.trim() !== '' &&
+    (!needsTargetValue || (targetValue !== '' && !isNaN(parseFloat(targetValue))));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!canSubmit) return;
+    setErrorMsg('');
     setIsGenerating(true);
 
     try {
-      // Create goal
+      // Deactivate any existing active goal first to prevent duplicates
+      if (existingActiveGoal) {
+        await base44.entities.TrainingGoal.update(existingActiveGoal.id, { status: 'paused' });
+      }
+
       const goal = await base44.entities.TrainingGoal.create({
-        user_email: user.email,
-        goal_type: goalType,
-        target_value: targetValue ? parseFloat(targetValue) : null,
-        target_date: targetDate,
+        user_email:    user.email,
+        goal_type:     goalType,
+        target_value:  resolvedTargetValue,
+        target_date:   targetDate,
         current_level: user.current_level || 0,
-        status: 'active'
+        status:        'active',
       });
 
-      // Generate training plan
-      await base44.functions.invoke('generateTrainingPlan', {
-        goal_id: goal.id
-      });
+      await base44.functions.invoke('generateTrainingPlan', { goal_id: goal.id });
 
-      queryClient.invalidateQueries(['training-goals']);
-      queryClient.invalidateQueries(['workout-sessions']);
+      // Use the exact query keys from pages/Training
+      queryClient.invalidateQueries({ queryKey: ['training-goals', user.email] });
+      queryClient.invalidateQueries({ queryKey: ['workout-sessions', user.email] });
+
       onClose();
     } catch (error) {
       console.error('Failed to create goal:', error);
-      alert('Failed to create training plan. Please try again.');
+      setErrorMsg('Failed to create training plan. Please try again.');
     } finally {
       setIsGenerating(false);
     }
   };
-
-  const goalOptions = [
-    { value: '5k', label: '5K Run', description: 'Complete a 5km run' },
-    { value: '10k', label: '10K Run', description: 'Complete a 10km run' },
-    { value: 'half_marathon', label: 'Half Marathon', description: '21km challenge' },
-    { value: 'pace', label: 'Improve Pace', description: 'Get faster' },
-    { value: 'distance', label: 'Distance Goal', description: 'Run further' },
-    { value: 'endurance', label: 'Build Endurance', description: 'Run longer' }
-  ];
 
   return (
     <AnimatePresence>
@@ -63,7 +89,7 @@ export default function CreateGoalDialog({ isOpen, onClose, user }) {
             className="fixed inset-0 bg-black/70 z-[99998]"
             onClick={onClose}
           />
-          
+
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -97,7 +123,7 @@ export default function CreateGoalDialog({ isOpen, onClose, user }) {
                       <button
                         key={option.value}
                         type="button"
-                        onClick={() => setGoalType(option.value)}
+                        onClick={() => { setGoalType(option.value); setTargetValue(''); }}
                         className={`p-4 rounded-2xl border text-left transition-all ${
                           goalType === option.value
                             ? 'bg-purple-500/20 border-purple-500/50'
@@ -111,8 +137,8 @@ export default function CreateGoalDialog({ isOpen, onClose, user }) {
                   </div>
                 </div>
 
-                {/* Target Value (if applicable) */}
-                {(goalType === 'distance' || goalType === 'pace') && (
+                {/* Target Value — only for distance / pace */}
+                {needsTargetValue && (
                   <div>
                     <label className="block text-sm font-medium text-gray-400 mb-2">
                       Target {goalType === 'distance' ? 'Distance (km)' : 'Pace (min/km)'}
@@ -120,6 +146,7 @@ export default function CreateGoalDialog({ isOpen, onClose, user }) {
                     <input
                       type="number"
                       step="0.1"
+                      min="0"
                       value={targetValue}
                       onChange={(e) => setTargetValue(e.target.value)}
                       className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-purple-500/50"
@@ -143,10 +170,15 @@ export default function CreateGoalDialog({ isOpen, onClose, user }) {
                   />
                 </div>
 
+                {/* Inline error message */}
+                {errorMsg && (
+                  <p className="text-sm text-red-400 text-center">{errorMsg}</p>
+                )}
+
                 {/* Submit */}
                 <Button
                   type="submit"
-                  disabled={isGenerating || !targetDate}
+                  disabled={!canSubmit}
                   className="w-full h-12 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 text-white font-medium rounded-full disabled:opacity-50"
                 >
                   {isGenerating ? (
