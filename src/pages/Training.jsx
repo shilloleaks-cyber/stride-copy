@@ -79,75 +79,15 @@ export default function Training() {
           </Button>
         </div>
 
-        {/* Active Goal Card */}
         {activeGoal ? (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-br from-purple-500/20 to-purple-600/10 border border-purple-500/30 rounded-3xl p-6 mb-6"
-          >
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Target className="w-5 h-5 text-purple-400" />
-                  <p className="text-xs uppercase tracking-widest text-purple-400">Active Goal</p>
-                </div>
-                <h2 className="text-2xl font-semibold text-white mb-1">
-                  {activeGoal.goal_type.replace('_', ' ').toUpperCase()}
-                </h2>
-                {activeGoal.target_value && (
-                  <p className="text-gray-400">
-                    Target: {activeGoal.target_value}
-                    {activeGoal.goal_type.includes('pace') ? ' min/km' : 'km'}
-                  </p>
-                )}
-              </div>
-              <div className="text-right">
-                <p className="text-sm text-gray-400">Target Date</p>
-                <p className="text-lg font-medium text-white">
-                  {new Date(activeGoal.target_date).toLocaleDateString('en-US', { 
-                    month: 'short', 
-                    day: 'numeric' 
-                  })}
-                </p>
-              </div>
-            </div>
-
-            {/* Progress */}
-            <div className="bg-white/5 rounded-xl p-4">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-gray-400">This Week</p>
-                <p className="text-sm font-medium text-white">
-                  {completedThisWeek} / {totalThisWeek} workouts
-                </p>
-              </div>
-              <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${weekProgress}%` }}
-                  className="h-full bg-gradient-to-r from-purple-500 to-purple-600"
-                />
-              </div>
-            </div>
-          </motion.div>
+          <ActiveGoalCard
+            goal={activeGoal}
+            completedThisWeek={completedThisWeek}
+            totalThisWeek={totalThisWeek}
+            weekProgress={weekProgress}
+          />
         ) : (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white/5 border border-white/10 rounded-3xl p-8 text-center mb-6"
-          >
-            <Target className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-            <h3 className="text-xl font-medium text-white mb-2">No Active Goal</h3>
-            <p className="text-gray-400 mb-4">
-              Create a training goal to get your personalized plan
-            </p>
-            <Button
-              onClick={() => setShowCreateGoal(true)}
-              className="bg-emerald-600 hover:bg-emerald-700"
-            >
-              Create Goal
-            </Button>
-          </motion.div>
+          <EmptyGoalState onCreateGoal={() => setShowCreateGoal(true)} />
         )}
       </div>
 
