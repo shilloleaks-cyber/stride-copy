@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
@@ -11,26 +11,18 @@ import CreateGoalDialog from '@/components/training/CreateGoalDialog';
 import WorkoutCard from '@/components/training/WorkoutCard';
 
 export default function Training() {
-  const [user, setUser] = useState(null);
   const [showCreateGoal, setShowCreateGoal] = useState(false);
   const [selectedWeek, setSelectedWeek] = useState(0); // 0 = current week
 
-  useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const userData = await base44.auth.me();
-        setUser(userData);
-      } catch (error) {
-        console.log('Could not load user:', error);
-      }
-    };
-    loadUser();
-  }, []);
+  const { data: user } = useQuery({
+    queryKey: ['me'],
+    queryFn: () => base44.auth.me(),
+  });
 
   const { data: goals = [] } = useQuery({
     queryKey: ['training-goals', user?.email],
     queryFn: () => base44.entities.TrainingGoal.filter({ user_email: user.email }),
-    enabled: !!user
+    enabled: !!user?.email,
   });
 
   const activeGoal = goals.find(g => g.status === 'active');
@@ -38,24 +30,33 @@ export default function Training() {
   const { data: sessions = [] } = useQuery({
     queryKey: ['workout-sessions', user?.email],
     queryFn: () => base44.entities.WorkoutSession.filter({ user_email: user.email }),
-    enabled: !!user
+    enabled: !!user?.email,
   });
 
-  // Get current week's sessions
-  const today = new Date();
-  const startOfWeek = new Date(today);
-  startOfWeek.setDate(today.getDate() - today.getDay() + selectedWeek * 7);
-  
-  const endOfWeek = new Date(startOfWeek);
-  endOfWeek.setDate(startOfWeek.getDate() + 6);
+  // Compute week boundaries (normalized to midnight)
+  const { startOfWeek, endOfWeek } = useMemo(() => {
+    const today = new Date();
+    const start = new Date(today);
+    start.setDate(today.getDate() - today.getDay() + selectedWeek * 7);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    end.setHours(23, 59, 59, 999);
+    return { startOfWeek: start, endOfWeek: end };
+  }, [selectedWeek]);
 
-  const weekSessions = sessions.filter(s => {
-    const sessionDate = new Date(s.scheduled_date);
-    return sessionDate >= startOfWeek && sessionDate <= endOfWeek;
-  });
+  const weekSessions = useMemo(() => {
+    return sessions
+      .filter(s => {
+        const sessionDate = new Date(s.scheduled_date);
+        return sessionDate >= startOfWeek && sessionDate <= endOfWeek;
+      })
+      .sort((a, b) => new Date(a.scheduled_date) - new Date(b.scheduled_date));
+  }, [sessions, startOfWeek, endOfWeek]);
 
   const completedThisWeek = weekSessions.filter(s => s.completed).length;
   const totalThisWeek = weekSessions.length;
+  const weekProgress = totalThisWeek > 0 ? (completedThisWeek / totalThisWeek) * 100 : 0;
 
   return (
     <div className="min-h-screen bg-gray-950 text-white pb-24">
