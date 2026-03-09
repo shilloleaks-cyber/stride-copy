@@ -4,7 +4,7 @@ import { CheckCircle2, Circle } from 'lucide-react';
 
 export default function WeeklyCalendar({ sessions, startDate }) {
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  
+
   const weekDates = Array.from({ length: 7 }, (_, i) => {
     const date = new Date(startDate);
     date.setDate(startDate.getDate() + i);
@@ -14,18 +14,6 @@ export default function WeeklyCalendar({ sessions, startDate }) {
   const getSessionForDate = (date) => {
     const dateStr = date.toISOString().split('T')[0];
     return sessions.find(s => s.scheduled_date === dateStr);
-  };
-
-  const getWorkoutTypeColor = (type) => {
-    const colors = {
-      easy_run: 'bg-blue-500/20 text-blue-400',
-      tempo_run: 'bg-orange-500/20 text-orange-400',
-      intervals: 'bg-red-500/20 text-red-400',
-      long_run: 'bg-purple-500/20 text-purple-400',
-      rest: 'bg-gray-500/20 text-gray-400',
-      cross_training: 'bg-green-500/20 text-green-400'
-    };
-    return colors[type] || 'bg-white/5 text-gray-400';
   };
 
   const today = new Date();
@@ -44,16 +32,22 @@ export default function WeeklyCalendar({ sessions, startDate }) {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.05 }}
-            className={`relative aspect-square rounded-2xl border overflow-hidden ${
-              isToday
-                ? 'border-emerald-500/50 bg-emerald-500/10'
-                : 'border-white/10 bg-white/5'
-            }`}
+            className="relative aspect-square rounded-2xl overflow-hidden"
+            style={{
+              background: isToday ? 'rgba(191,255,0,0.08)' : 'rgba(255,255,255,0.04)',
+              border: isToday
+                ? '1px solid rgba(191,255,0,0.35)'
+                : '1px solid rgba(255,255,255,0.08)',
+              boxShadow: isToday ? '0 0 12px rgba(191,255,0,0.12)' : 'none',
+            }}
           >
             <div className="p-2 h-full flex flex-col">
               <div className="text-center mb-1">
-                <p className="text-xs text-gray-500">{days[date.getDay()]}</p>
-                <p className={`text-sm font-medium ${isToday ? 'text-emerald-400' : 'text-white'}`}>
+                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>{days[date.getDay()]}</p>
+                <p
+                  className="text-sm font-semibold"
+                  style={{ color: isToday ? '#BFFF00' : 'rgba(255,255,255,0.85)' }}
+                >
                   {date.getDate()}
                 </p>
               </div>
@@ -61,23 +55,29 @@ export default function WeeklyCalendar({ sessions, startDate }) {
               {session ? (
                 <div className="flex-1 flex flex-col items-center justify-center">
                   {session.completed ? (
-                    <CheckCircle2 className="w-6 h-6 text-emerald-400 mb-1" />
+                    <CheckCircle2 className="w-5 h-5 mb-1" style={{ color: '#BFFF00' }} />
                   ) : isPast ? (
-                    <Circle className="w-6 h-6 text-gray-600 mb-1" />
+                    <Circle className="w-5 h-5 mb-1" style={{ color: 'rgba(255,255,255,0.2)' }} />
                   ) : (
-                    <div className={`w-2 h-2 rounded-full ${
-                      session.workout_type === 'rest' ? 'bg-gray-500' : 'bg-emerald-500'
-                    }`} />
+                    <div
+                      className="w-2 h-2 rounded-full"
+                      style={{
+                        backgroundColor: session.workout_type === 'rest'
+                          ? 'rgba(255,255,255,0.25)'
+                          : '#8A2BE2',
+                        boxShadow: session.workout_type !== 'rest' ? '0 0 6px rgba(138,43,226,0.6)' : 'none',
+                      }}
+                    />
                   )}
                   {session.planned_distance > 0 && (
-                    <p className="text-xs text-gray-400 text-center mt-1">
+                    <p className="text-xs text-center mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>
                       {session.planned_distance}km
                     </p>
                   )}
                 </div>
               ) : (
                 <div className="flex-1 flex items-center justify-center">
-                  <Circle className="w-4 h-4 text-gray-700" />
+                  <Circle className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.15)' }} />
                 </div>
               )}
             </div>
