@@ -16,6 +16,7 @@ import CreateEventDialog from '@/components/group/CreateEventDialog';
 import CommentsSheet from '@/components/feed/CommentsSheet';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 export default function GroupDetail() {
   const navigate = useNavigate();
