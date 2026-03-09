@@ -20,7 +20,7 @@ export default function WeeklyCalendar({ sessions, startDate }) {
   today.setHours(0, 0, 0, 0);
 
   return (
-    <div className="grid grid-cols-7 gap-2">
+    <div className="grid grid-cols-7 gap-1.5">
       {weekDates.map((date, index) => {
         const session = getSessionForDate(date);
         const isToday = date.getTime() === today.getTime();
