@@ -255,18 +255,8 @@ export default function PostComposer({ mode = 'feed', groupId, user, onSubmit, o
           className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-gray-400 border border-white/10 transition-colors hover:bg-purple-500/20 hover:text-white"
           style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}
         >
-          <Image className="w-4 h-4" />
-          Photo
-        </button>
-
-        <button
-          type="button"
-          onClick={() => mediaInputRef.current?.click()}
-          className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-gray-400 border border-white/10 transition-colors hover:bg-purple-500/20 hover:text-white"
-          style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}
-        >
-          <Video className="w-4 h-4" />
-          Video
+          <Paperclip className="w-4 h-4" />
+          Media
         </button>
 
         <div className="flex-1" />
