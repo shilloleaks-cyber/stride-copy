@@ -93,7 +93,7 @@ export default function GroupDetail() {
   });
 
   const handleDeletePost = (postId) => {
-    showConfirm('Delete this post?', () => deletePostMutation.mutate(postId));
+    showConfirm('Delete this post?', () => deletePostMutation.mutate(postId), { confirmVariant: 'destructive' });
   };
 
 
