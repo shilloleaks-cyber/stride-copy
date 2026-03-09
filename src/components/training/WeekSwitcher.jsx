@@ -8,14 +8,16 @@ export default function WeekSwitcher({ selectedWeek, onPrev, onNext }) {
     <div className="flex items-center gap-2">
       <button
         onClick={onPrev}
-        className="px-3 py-1 bg-white/5 rounded-lg text-sm text-gray-400 hover:bg-white/10"
+        className="px-3 py-1 rounded-lg text-sm transition-colors"
+        style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}
       >
         ←
       </button>
-      <span className="text-sm text-gray-400">{label}</span>
+      <span className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.6)' }}>{label}</span>
       <button
         onClick={onNext}
-        className="px-3 py-1 bg-white/5 rounded-lg text-sm text-gray-400 hover:bg-white/10"
+        className="px-3 py-1 rounded-lg text-sm transition-colors"
+        style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}
       >
         →
       </button>
