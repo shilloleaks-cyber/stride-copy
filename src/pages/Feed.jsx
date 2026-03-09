@@ -317,6 +317,18 @@ export default function Feed() {
         user={currentUser}
       />
 
+      {/* Confirm Delete Dialog */}
+      <ConfirmDialog
+        open={!!deleteTargetPostId}
+        title="Delete this post?"
+        confirmLabel="Confirm"
+        cancelLabel="Cancel"
+        confirmVariant="destructive"
+        loading={deleteMutation.isPending}
+        onCancel={() => setDeleteTargetPostId(null)}
+        onConfirm={() => deleteMutation.mutateAsync(deleteTargetPostId)}
+      />
+
       {/* Comments Sheet */}
       <CommentsSheet
         open={showComments}
