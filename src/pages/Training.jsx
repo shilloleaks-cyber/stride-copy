@@ -96,23 +96,11 @@ export default function Training() {
         <div className="px-6 mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xs uppercase tracking-widest text-gray-500">This Week</h2>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setSelectedWeek(w => w - 1)}
-                className="px-3 py-1 bg-white/5 rounded-lg text-sm text-gray-400 hover:bg-white/10"
-              >
-                ←
-              </button>
-              <span className="text-sm text-gray-400">
-                {selectedWeek === 0 ? 'Current' : selectedWeek > 0 ? `+${selectedWeek}w` : `${selectedWeek}w`}
-              </span>
-              <button
-                onClick={() => setSelectedWeek(w => w + 1)}
-                className="px-3 py-1 bg-white/5 rounded-lg text-sm text-gray-400 hover:bg-white/10"
-              >
-                →
-              </button>
-            </div>
+            <WeekSwitcher
+              selectedWeek={selectedWeek}
+              onPrev={() => setSelectedWeek(w => w - 1)}
+              onNext={() => setSelectedWeek(w => w + 1)}
+            />
           </div>
           <WeeklyCalendar sessions={weekSessions} startDate={startOfWeek} />
         </div>
