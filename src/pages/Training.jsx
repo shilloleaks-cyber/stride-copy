@@ -132,6 +132,7 @@ export default function Training() {
         isOpen={showCreateGoal}
         onClose={() => setShowCreateGoal(false)}
         user={user}
+        existingActiveGoal={activeGoal}
       />
     </div>
   );
