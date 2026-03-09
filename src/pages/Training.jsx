@@ -121,7 +121,7 @@ export default function Training() {
               <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
-                  animate={{ width: `${(completedThisWeek / totalThisWeek) * 100}%` }}
+                  animate={{ width: `${weekProgress}%` }}
                   className="h-full bg-gradient-to-r from-purple-500 to-purple-600"
                 />
               </div>
