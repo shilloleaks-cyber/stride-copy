@@ -182,7 +182,7 @@ export default function Training() {
           <div className="space-y-3">
             {weekSessions.map(session => (
                 <WorkoutCard key={session.id} session={session} />
-              ))}
+                ))}
           </div>
         </div>
       )}
