@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import PostCard from '@/components/feed/PostCard';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import CreatePostModal from '@/components/feed/CreatePostModal';
 import CommentsSheet from '@/components/feed/CommentsSheet';
 import GroupsPanel from '@/components/group/GroupsPanel';
