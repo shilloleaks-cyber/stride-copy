@@ -61,21 +61,22 @@ export default function Training() {
   const weekProgress = totalThisWeek > 0 ? (completedThisWeek / totalThisWeek) * 100 : 0;
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white pb-24">
+    <div className="min-h-screen text-white pb-24" style={{ backgroundColor: '#0A0A0A' }}>
       {/* Header */}
       <div className="px-6 pt-12 pb-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <p className="text-gray-500 text-sm uppercase tracking-widest">Training</p>
-            <h1 className="text-3xl font-light mt-1">Your Plan</h1>
+            <p className="text-xs uppercase tracking-widest mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>Training</p>
+            <h1 className="text-3xl font-bold text-white">Your Plan</h1>
           </div>
-          <Button
+          <button
             onClick={() => setShowCreateGoal(true)}
-            className="bg-emerald-600 hover:bg-emerald-700"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm transition-all"
+            style={{ backgroundColor: '#BFFF00', color: '#0A0A0A' }}
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="w-4 h-4" />
             New Goal
-          </Button>
+          </button>
         </div>
 
         {activeGoal ? (
