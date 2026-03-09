@@ -107,14 +107,23 @@ export default function Training() {
       )}
 
       {/* Upcoming Workouts */}
-      {activeGoal && weekSessions.length > 0 && (
+      {activeGoal && (
         <div className="px-6">
           <h2 className="text-xs uppercase tracking-widest mb-4" style={{ color: 'rgba(255,255,255,0.35)' }}>Workouts</h2>
-          <div className="space-y-3">
-            {weekSessions.map(session => (
+          {weekSessions.length === 0 ? (
+            <div
+              className="rounded-2xl p-6 text-center"
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+            >
+              <p className="text-sm" style={{ color: 'rgba(255,255,255,0.35)' }}>No workouts scheduled this week</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {weekSessions.map(session => (
                 <WorkoutCard key={session.id} session={session} />
-                ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
