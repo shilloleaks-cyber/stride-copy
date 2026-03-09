@@ -98,6 +98,7 @@ export default function Feed() {
     mutationFn: (postId) => base44.entities.Post.delete(postId),
     onSuccess: () => {
       queryClient.invalidateQueries(['posts']);
+      setDeleteTargetPostId(null);
     },
   });
 
