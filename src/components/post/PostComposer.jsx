@@ -105,6 +105,16 @@ export default function PostComposer({ mode = 'feed', groupId, user, onSubmit, o
 
       } else {
         // feed mode — caller provides onSubmit
+        let uploadedImageUrl = imageUrl || null;
+        let uploadedVideoUrl = videoUrl || null;
+        if (mediaFile) {
+          const uploaded = await base44.integrations.Core.UploadFile({ file: mediaFile });
+          const url = uploaded?.file_url ?? null;
+          if (!url) throw new Error('Upload failed');
+          if (mediaFile.type.startsWith('video/')) uploadedVideoUrl = url;
+          else uploadedImageUrl = url;
+        }
+
         const postData = {
           content: content.trim(),
           author_name: user?.full_name || 'Runner',
@@ -113,8 +123,8 @@ export default function PostComposer({ mode = 'feed', groupId, user, onSubmit, o
           likes: [],
           comments_count: 0,
         };
-        if (imageUrl) postData.image_url = imageUrl;
-        if (videoUrl) postData.video_url = videoUrl;
+        if (uploadedImageUrl) postData.image_url = uploadedImageUrl;
+        if (uploadedVideoUrl) postData.video_url = uploadedVideoUrl;
         if (selectedRun) {
           postData.run_id = selectedRun.id;
           postData.run_data = {
