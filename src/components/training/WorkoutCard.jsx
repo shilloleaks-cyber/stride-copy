@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { CheckCircle2, Circle, Zap, MapPin, Clock, TrendingUp, ChevronDown, ChevronUp } from 'lucide-react';
+import { CheckCircle2, Circle, Zap, MapPin, TrendingUp, ChevronDown, ChevronUp } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -17,20 +17,31 @@ export default function WorkoutCard({ session }) {
     intervals: Zap,
     long_run: MapPin,
     rest: Circle,
-    cross_training: Zap
+    cross_training: Zap,
   };
 
-  const workoutColors = {
-    easy_run: 'text-blue-400 bg-blue-500/20',
-    tempo_run: 'text-orange-400 bg-orange-500/20',
-    intervals: 'text-red-400 bg-red-500/20',
-    long_run: 'text-purple-400 bg-purple-500/20',
-    rest: 'text-gray-400 bg-gray-500/20',
-    cross_training: 'text-green-400 bg-green-500/20'
+  // Icon accent colors per workout type
+  const iconColors = {
+    easy_run: 'rgba(120,180,255,0.9)',
+    tempo_run: 'rgba(255,160,60,0.9)',
+    intervals: 'rgba(255,90,90,0.9)',
+    long_run: '#8A2BE2',
+    rest: 'rgba(255,255,255,0.3)',
+    cross_training: '#BFFF00',
+  };
+
+  const iconBgs = {
+    easy_run: 'rgba(120,180,255,0.12)',
+    tempo_run: 'rgba(255,160,60,0.12)',
+    intervals: 'rgba(255,90,90,0.12)',
+    long_run: 'rgba(138,43,226,0.15)',
+    rest: 'rgba(255,255,255,0.06)',
+    cross_training: 'rgba(191,255,0,0.12)',
   };
 
   const Icon = workoutIcons[session.workout_type] || Zap;
-  const colorClass = workoutColors[session.workout_type] || 'text-white bg-white/5';
+  const iconColor = iconColors[session.workout_type] || 'rgba(255,255,255,0.5)';
+  const iconBg = iconBgs[session.workout_type] || 'rgba(255,255,255,0.06)';
 
   const formatDate = (dateStr) => {
     const date = new Date(dateStr);
@@ -38,7 +49,6 @@ export default function WorkoutCard({ session }) {
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    
     if (date.toDateString() === today.toDateString()) return 'Today';
     if (date.toDateString() === tomorrow.toDateString()) return 'Tomorrow';
     return date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
@@ -46,61 +56,59 @@ export default function WorkoutCard({ session }) {
 
   const handleFeedback = async (feedback) => {
     setIsUpdating(true);
-    try {
-      await base44.entities.WorkoutSession.update(session.id, { feedback });
-      queryClient.invalidateQueries(['workout-sessions']);
-    } catch (error) {
-      console.error('Failed to update feedback:', error);
-    } finally {
-      setIsUpdating(false);
-    }
+    await base44.entities.WorkoutSession.update(session.id, { feedback });
+    queryClient.invalidateQueries(['workout-sessions']);
+    setIsUpdating(false);
   };
 
   const isPast = new Date(session.scheduled_date) < new Date();
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`rounded-2xl border overflow-hidden ${
-        session.completed
-          ? 'bg-emerald-500/10 border-emerald-500/30'
-          : 'bg-white/5 border-white/10'
-      }`}
+      className="rounded-2xl overflow-hidden"
+      style={{
+        background: session.completed ? 'rgba(191,255,0,0.06)' : 'rgba(255,255,255,0.04)',
+        border: session.completed
+          ? '1px solid rgba(191,255,0,0.20)'
+          : '1px solid rgba(255,255,255,0.08)',
+      }}
     >
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="w-full p-4 text-left"
-      >
+      <button onClick={() => setExpanded(!expanded)} className="w-full p-4 text-left">
         <div className="flex items-start gap-4">
-          <div className={`p-3 rounded-xl ${colorClass}`}>
+          <div
+            className="p-3 rounded-xl flex-shrink-0"
+            style={{ background: session.completed ? 'rgba(191,255,0,0.10)' : iconBg }}
+          >
             {session.completed ? (
-              <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+              <CheckCircle2 className="w-5 h-5" style={{ color: '#BFFF00' }} />
             ) : (
-              <Icon className="w-5 h-5" />
+              <Icon className="w-5 h-5" style={{ color: iconColor }} />
             )}
           </div>
 
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between mb-1">
               <div>
-                <h3 className="font-medium text-white capitalize">
+                <h3 className="font-semibold text-white capitalize">
                   {session.workout_type.replace('_', ' ')}
                 </h3>
-                <p className="text-sm text-gray-400">{formatDate(session.scheduled_date)}</p>
+                <p className="text-sm" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                  {formatDate(session.scheduled_date)}
+                </p>
               </div>
-              {expanded ? (
-                <ChevronUp className="w-5 h-5 text-gray-400" />
-              ) : (
-                <ChevronDown className="w-5 h-5 text-gray-400" />
-              )}
+              {expanded
+                ? <ChevronUp className="w-5 h-5 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.35)' }} />
+                : <ChevronDown className="w-5 h-5 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.35)' }} />
+              }
             </div>
 
             {session.planned_distance > 0 && (
-              <div className="flex items-center gap-4 text-sm text-gray-400 mt-2">
-                <span>{session.planned_distance}km</span>
+              <div className="flex items-center gap-4 text-sm mt-1" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                <span style={{ color: '#BFFF00', fontWeight: 700 }}>{session.planned_distance}km</span>
                 {session.planned_pace > 0 && (
-                  <span>@{session.planned_pace.toFixed(1)} min/km</span>
+                  <span>@ {session.planned_pace.toFixed(1)} min/km</span>
                 )}
               </div>
             )}
@@ -114,68 +122,78 @@ export default function WorkoutCard({ session }) {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="border-t border-white/10"
+            style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}
           >
             <div className="p-4 space-y-4">
               {/* Instructions */}
               <div>
-                <p className="text-xs uppercase tracking-widest text-gray-500 mb-2">Instructions</p>
-                <p className="text-sm text-gray-300">{session.instructions}</p>
+                <p className="text-xs uppercase tracking-widest mb-2" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                  Instructions
+                </p>
+                <p className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>{session.instructions}</p>
               </div>
 
-              {/* Warm-up & Cool-down */}
-              <div className="bg-white/5 rounded-xl p-3">
-                <p className="text-xs uppercase tracking-widest text-gray-500 mb-2">Tips</p>
-                <div className="space-y-2 text-sm text-gray-400">
-                  <p>🔥 <strong>Warm-up:</strong> 5-10 min easy jog + dynamic stretches</p>
-                  <p>❄️ <strong>Cool-down:</strong> 5 min easy walk + static stretches</p>
+              {/* Tips */}
+              <div
+                className="rounded-xl p-3"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
+              >
+                <p className="text-xs uppercase tracking-widest mb-2" style={{ color: 'rgba(255,255,255,0.3)' }}>Tips</p>
+                <div className="space-y-1.5 text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                  <p>🔥 <strong className="text-white">Warm-up:</strong> 5-10 min easy jog + dynamic stretches</p>
+                  <p>❄️ <strong className="text-white">Cool-down:</strong> 5 min easy walk + static stretches</p>
                 </div>
               </div>
 
-              {/* Actions */}
+              {/* Start button */}
               {!session.completed && !isPast && (
                 <Link to={createPageUrl('ActiveRun')}>
-                  <button className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl transition-colors">
+                  <button
+                    className="w-full py-3 rounded-xl font-semibold text-sm transition-opacity"
+                    style={{ backgroundColor: '#BFFF00', color: '#0A0A0A' }}
+                  >
                     Start Workout
                   </button>
                 </Link>
               )}
 
+              {/* Feedback buttons */}
               {session.completed && !session.feedback && (
                 <div>
-                  <p className="text-xs uppercase tracking-widest text-gray-500 mb-2">
+                  <p className="text-xs uppercase tracking-widest mb-2" style={{ color: 'rgba(255,255,255,0.3)' }}>
                     How was this workout?
                   </p>
                   <div className="grid grid-cols-3 gap-2">
-                    <button
-                      onClick={() => handleFeedback('too_easy')}
-                      disabled={isUpdating}
-                      className="py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg text-sm transition-colors"
-                    >
-                      Too Easy
-                    </button>
-                    <button
-                      onClick={() => handleFeedback('just_right')}
-                      disabled={isUpdating}
-                      className="py-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 rounded-lg text-sm transition-colors"
-                    >
-                      Just Right
-                    </button>
-                    <button
-                      onClick={() => handleFeedback('too_hard')}
-                      disabled={isUpdating}
-                      className="py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-sm transition-colors"
-                    >
-                      Too Hard
-                    </button>
+                    {[
+                      { key: 'too_easy', label: 'Too Easy', color: 'rgba(120,180,255,0.15)', text: 'rgba(120,180,255,0.9)' },
+                      { key: 'just_right', label: 'Just Right', color: 'rgba(191,255,0,0.12)', text: '#BFFF00' },
+                      { key: 'too_hard', label: 'Too Hard', color: 'rgba(255,90,90,0.12)', text: 'rgba(255,90,90,0.9)' },
+                    ].map(({ key, label, color, text }) => (
+                      <button
+                        key={key}
+                        onClick={() => handleFeedback(key)}
+                        disabled={isUpdating}
+                        className="py-2 rounded-xl text-sm font-medium transition-opacity disabled:opacity-40"
+                        style={{ background: color, color: text }}
+                      >
+                        {label}
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}
 
+              {/* Feedback display */}
               {session.feedback && (
-                <div className="bg-white/5 rounded-lg p-3 text-center">
-                  <p className="text-xs text-gray-400">
-                    You rated this: <span className="text-white font-medium">{session.feedback.replace('_', ' ')}</span>
+                <div
+                  className="rounded-xl p-3 text-center"
+                  style={{ background: 'rgba(255,255,255,0.04)' }}
+                >
+                  <p className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                    You rated this:{' '}
+                    <span className="font-semibold" style={{ color: '#BFFF00' }}>
+                      {session.feedback.replace('_', ' ')}
+                    </span>
                   </p>
                 </div>
               )}
