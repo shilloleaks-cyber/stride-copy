@@ -8,16 +8,21 @@ export default function EmptyGoalState({ onCreateGoal }) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white/5 border border-white/10 rounded-3xl p-8 text-center mb-6"
+      className="rounded-3xl p-8 text-center mb-6"
+      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
     >
-      <Target className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-      <h3 className="text-xl font-medium text-white mb-2">No Active Goal</h3>
-      <p className="text-gray-400 mb-4">
+      <Target className="w-12 h-12 mx-auto mb-4" style={{ color: 'rgba(255,255,255,0.2)' }} />
+      <h3 className="text-xl font-semibold text-white mb-2">No Active Goal</h3>
+      <p className="mb-5" style={{ color: 'rgba(255,255,255,0.45)' }}>
         Create a training goal to get your personalized plan
       </p>
-      <Button onClick={onCreateGoal} className="bg-emerald-600 hover:bg-emerald-700">
+      <button
+        onClick={onCreateGoal}
+        className="px-6 py-2.5 rounded-xl font-semibold text-sm"
+        style={{ backgroundColor: '#BFFF00', color: '#0A0A0A' }}
+      >
         Create Goal
-      </Button>
+      </button>
     </motion.div>
   );
 }
