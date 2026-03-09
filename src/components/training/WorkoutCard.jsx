@@ -76,7 +76,7 @@ export default function WorkoutCard({ session }) {
       }}
     >
       <button onClick={() => setExpanded(!expanded)} className="w-full p-4 text-left">
-        <div className="flex items-start gap-4">
+        <div className="flex items-start gap-3">
           <div
             className="p-3 rounded-xl flex-shrink-0"
             style={{ background: session.completed ? 'rgba(191,255,0,0.10)' : iconBg }}
