@@ -261,7 +261,7 @@ export default function Feed() {
                 post={post}
                 currentUserEmail={currentUser?.email}
                 onLike={handleLike}
-                onDelete={(id) => deleteMutation.mutate(id)}
+                onDelete={(id) => setDeleteTargetPostId(id)}
                 onViewComments={handleViewComments}
               />
             ))}
