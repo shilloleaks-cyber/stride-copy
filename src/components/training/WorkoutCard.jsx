@@ -124,7 +124,7 @@ export default function WorkoutCard({ session }) {
             exit={{ height: 0, opacity: 0 }}
             style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}
           >
-            <div className="p-4 space-y-4">
+            <div className="p-4 pt-3 space-y-3">
               {/* Instructions */}
               <div>
                 <p className="text-xs uppercase tracking-widest mb-2" style={{ color: 'rgba(255,255,255,0.3)' }}>
