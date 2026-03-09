@@ -109,7 +109,7 @@ export default function Training() {
       {/* Upcoming Workouts */}
       {activeGoal && weekSessions.length > 0 && (
         <div className="px-6">
-          <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-4">Workouts</h2>
+          <h2 className="text-xs uppercase tracking-widest mb-4" style={{ color: 'rgba(255,255,255,0.35)' }}>Workouts</h2>
           <div className="space-y-3">
             {weekSessions.map(session => (
                 <WorkoutCard key={session.id} session={session} />
