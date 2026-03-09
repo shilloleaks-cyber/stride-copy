@@ -32,6 +32,7 @@ export default function Feed() {
   const [selectedPost, setSelectedPost] = useState(null);
   const [showComments, setShowComments] = useState(false);
   const [sortBy, setSortBy] = useState('time'); // 'time' or 'engagement'
+  const [deleteTargetPostId, setDeleteTargetPostId] = useState(null);
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
