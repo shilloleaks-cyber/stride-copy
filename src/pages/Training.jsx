@@ -60,6 +60,23 @@ export default function Training() {
       .sort((a, b) => new Date(a.scheduled_date) - new Date(b.scheduled_date));
   }, [sessions, startOfWeek, endOfWeek]);
 
+  const handleConfirmAction = async () => {
+    if (!confirmAction) return;
+    setIsActioning(true);
+    try {
+      if (confirmAction.type === 'delete') {
+        await base44.entities.TrainingGoal.delete(confirmAction.goal.id);
+      } else if (confirmAction.type === 'pause') {
+        await base44.entities.TrainingGoal.update(confirmAction.goal.id, { status: 'paused' });
+      }
+      queryClient.invalidateQueries({ queryKey: ['training-goals', user?.email] });
+      queryClient.invalidateQueries({ queryKey: ['workout-sessions', user?.email] });
+    } finally {
+      setIsActioning(false);
+      setConfirmAction(null);
+    }
+  };
+
   const completedThisWeek = weekSessions.filter(s => s.completed).length;
   const totalThisWeek = weekSessions.length;
   const weekProgress = totalThisWeek > 0 ? (completedThisWeek / totalThisWeek) * 100 : 0;
