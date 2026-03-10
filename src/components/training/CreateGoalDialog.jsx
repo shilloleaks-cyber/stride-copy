@@ -7,23 +7,17 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 // ─── Goal Config ────────────────────────────────────────────────────────────
 const GOAL_CONFIG = {
-  '5k':            { label: '5K Run',          description: 'Complete a 5km run',    fixedTargetValue: 5,    requiresTargetValue: false, minDaysAhead: 7  },
-  '10k':           { label: '10K Run',          description: 'Complete a 10km run',   fixedTargetValue: 10,   requiresTargetValue: false, minDaysAhead: 7  },
-  'half_marathon': { label: 'Half Marathon',    description: '21km challenge',         fixedTargetValue: 21.1, requiresTargetValue: false, minDaysAhead: 14 },
-  'pace':          { label: 'Improve Pace',     description: 'Get faster (min/km)',    fixedTargetValue: null, requiresTargetValue: true,  minDaysAhead: 7  },
-  'distance':      { label: 'Distance Goal',    description: 'Run further (km)',       fixedTargetValue: null, requiresTargetValue: true,  minDaysAhead: 7  },
-  'endurance':     { label: 'Build Endurance',  description: 'Run longer',             fixedTargetValue: null, requiresTargetValue: false, minDaysAhead: 7  },
+  '5k':            { label: '5K Run',          description: 'Complete a 5km run',    fixedTargetValue: 5,    requiresTargetValue: false },
+  '10k':           { label: '10K Run',          description: 'Complete a 10km run',   fixedTargetValue: 10,   requiresTargetValue: false },
+  'half_marathon': { label: 'Half Marathon',    description: '21km challenge',         fixedTargetValue: 21.1, requiresTargetValue: false },
+  'pace':          { label: 'Improve Pace',     description: 'Get faster (min/km)',    fixedTargetValue: null, requiresTargetValue: true  },
+  'distance':      { label: 'Distance Goal',    description: 'Run further (km)',       fixedTargetValue: null, requiresTargetValue: true  },
+  'endurance':     { label: 'Build Endurance',  description: 'Run longer',             fixedTargetValue: null, requiresTargetValue: false },
 };
 
 const GOAL_TYPES = Object.keys(GOAL_CONFIG);
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
-function addDays(n) {
-  const d = new Date();
-  d.setDate(d.getDate() + n);
-  return d.toISOString().split('T')[0];
-}
-
 function today() {
   return new Date().toISOString().split('T')[0];
 }
@@ -50,12 +44,10 @@ export default function CreateGoalDialog({ isOpen, onClose, user, existingActive
     return isNaN(parsed) ? null : parsed;
   }, [goalConfig, needsTargetValue, targetValue]);
 
-  const minimumAllowedDate = addDays(goalConfig.minDaysAhead);
-
   const isTargetDateValid = useMemo(() => {
     if (!targetDate) return false;
-    return targetDate >= minimumAllowedDate;
-  }, [targetDate, minimumAllowedDate]);
+    return targetDate >= today();
+  }, [targetDate]);
 
   const isTargetValueValid = useMemo(() => {
     if (!needsTargetValue) return true;
@@ -67,9 +59,8 @@ export default function CreateGoalDialog({ isOpen, onClose, user, existingActive
 
   const dateErrorMsg = useMemo(() => {
     if (!targetDate || isTargetDateValid) return '';
-    const days = goalConfig.minDaysAhead;
-    return `Please choose a target date at least ${days} days from today.`;
-  }, [targetDate, isTargetDateValid, goalConfig]);
+    return 'Start date cannot be in the past.';
+  }, [targetDate, isTargetDateValid]);
 
   const targetValueErrorMsg = useMemo(() => {
     if (!needsTargetValue || !targetValue) return '';
@@ -254,10 +245,10 @@ export default function CreateGoalDialog({ isOpen, onClose, user, existingActive
                     </div>
                   )}
 
-                  {/* Target Date */}
+                  {/* Start Date */}
                   <div>
                     <label className="block text-xs uppercase tracking-widest mb-2" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                      Target Date
+                      Start Date
                     </label>
                     <input
                       type="date"
@@ -272,8 +263,11 @@ export default function CreateGoalDialog({ isOpen, onClose, user, existingActive
                         WebkitAppearance: 'none',
                       }}
                     />
+                    <p className="text-xs mt-1.5" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                      Your training plan will begin on this date.
+                    </p>
                     {dateErrorMsg && (
-                      <p className="text-xs mt-1.5" style={{ color: 'rgba(255,100,100,0.9)' }}>{dateErrorMsg}</p>
+                      <p className="text-xs mt-1" style={{ color: 'rgba(255,100,100,0.9)' }}>{dateErrorMsg}</p>
                     )}
                   </div>
 
@@ -308,7 +302,7 @@ export default function CreateGoalDialog({ isOpen, onClose, user, existingActive
                   </button>
 
                   <p className="text-xs text-center" style={{ color: 'rgba(255,255,255,0.25)' }}>
-                    AI will generate a personalized 4-week training plan based on your goal and current fitness level
+                    A personalized training plan will be generated starting from your selected start date
                   </p>
                 </form>
               </div>
