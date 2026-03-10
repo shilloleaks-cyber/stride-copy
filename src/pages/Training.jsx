@@ -106,6 +106,8 @@ export default function Training() {
             completedThisWeek={completedThisWeek}
             totalThisWeek={totalThisWeek}
             weekProgress={weekProgress}
+            onPause={() => setConfirmAction({ type: 'pause', goal: activeGoal })}
+            onDelete={() => setConfirmAction({ type: 'delete', goal: activeGoal })}
           />
         ) : (
           <EmptyGoalState onCreateGoal={() => setShowCreateGoal(true)} />
