@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Target, MoreVertical, PauseCircle, Trash2 } from 'lucide-react';
 
-export default function ActiveGoalCard({ goal, completedThisWeek, totalThisWeek, weekProgress, onPause, onDelete }) {
+export default function ActiveGoalCard({ goal, completedThisWeek, totalThisWeek, weekProgress, completedTotal, totalPlan, planProgress, onPause, onDelete }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
