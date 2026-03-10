@@ -182,18 +182,12 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: `Unknown goal type: ${goalType}` }, { status: 400 });
     }
 
-    // ── Validate time horizon ───────────────────────────────────────────────
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const targetDate = new Date(goal.target_date);
-    targetDate.setHours(0, 0, 0, 0);
-    const totalDays = Math.round((targetDate - today) / (1000 * 60 * 60 * 24));
+    // ── Resolve start date (target_date = plan start date) ─────────────────
+    const startDate = new Date(goal.target_date);
+    startDate.setHours(0, 0, 0, 0);
 
-    if (totalDays < 3) {
-      return Response.json({
-        success: false,
-        error: 'Target date is too soon to generate a plan (minimum 3 days required).',
-      }, { status: 400 });
+    if (isNaN(startDate.getTime())) {
+      return Response.json({ success: false, error: 'Invalid start date on goal.' }, { status: 400 });
     }
 
     // ── Delete stale plans and sessions for this goal ───────────────────────
@@ -227,7 +221,7 @@ Deno.serve(async (req) => {
 
     // ── Create WorkoutSession records ───────────────────────────────────────
     for (const { offset, session } of sessions) {
-      const scheduledDate = addDaysToDate(today, offset);
+      const scheduledDate = addDaysToDate(startDate, offset);
       await base44.asServiceRole.entities.WorkoutSession.create({
         user_email: user.email,
         plan_id: plan.id,
