@@ -126,6 +126,7 @@ export default function CreateGoalDialog({ isOpen, onClose, user, existingActive
       // 4. invalidate queries
       queryClient.invalidateQueries({ queryKey: ['training-goals',   user.email] });
       queryClient.invalidateQueries({ queryKey: ['workout-sessions', user.email] });
+      queryClient.invalidateQueries({ queryKey: ['training-plans',   goal.id] });
 
       // 5. close
       onClose();
