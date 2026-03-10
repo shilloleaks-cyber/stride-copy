@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Target, MoreVertical, PauseCircle, Trash2 } from 'lucide-react';
 
-export default function ActiveGoalCard({ goal, completedThisWeek, totalThisWeek, weekProgress, completedTotal, totalPlan, planProgress, onPause, onDelete }) {
+export default function ActiveGoalCard({ goal, completedThisWeek, totalThisWeek, weekProgress, onPause, onDelete }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -106,49 +106,24 @@ export default function ActiveGoalCard({ goal, completedThisWeek, totalThisWeek,
         </div>
       </div>
 
-      <div className="space-y-3">
-        {/* Plan Progress */}
-        <div
-          className="rounded-2xl p-4"
-          style={{ background: 'rgba(191,255,0,0.06)', border: '1px solid rgba(191,255,0,0.15)' }}
-        >
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-medium" style={{ color: 'rgba(191,255,0,0.8)' }}>Plan Progress</p>
-            <p className="text-sm font-bold text-white">
-              {completedTotal} / {totalPlan} sessions
-            </p>
-          </div>
-          <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${planProgress}%` }}
-              transition={{ duration: 0.8, ease: 'easeOut' }}
-              className="h-full rounded-full"
-              style={{ background: 'linear-gradient(90deg, #BFFF00, #8A2BE2)' }}
-            />
-          </div>
+      <div
+        className="rounded-2xl p-4"
+        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+      >
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>This Week</p>
+          <p className="text-sm font-semibold text-white">
+            {completedThisWeek} / {totalThisWeek} workouts
+          </p>
         </div>
-
-        {/* This Week */}
-        <div
-          className="rounded-2xl p-4"
-          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
-        >
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>This Week</p>
-            <p className="text-sm font-semibold text-white">
-              {completedThisWeek} / {totalThisWeek} workouts
-            </p>
-          </div>
-          <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${weekProgress}%` }}
-              transition={{ duration: 0.8, ease: 'easeOut' }}
-              className="h-full rounded-full"
-              style={{ background: 'linear-gradient(90deg, rgba(191,255,0,0.6), rgba(138,43,226,0.6))' }}
-            />
-          </div>
+        <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${weekProgress}%` }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
+            className="h-full rounded-full"
+            style={{ background: 'linear-gradient(90deg, #BFFF00, #8A2BE2)' }}
+          />
         </div>
       </div>
     </motion.div>
