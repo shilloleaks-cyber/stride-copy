@@ -10,45 +10,33 @@ function addDaysToDate(base, days) {
 
 // ─── Session builders ─────────────────────────────────────────────────────────
 
-function easy(km, seed = 0) {
-  const msgs = [
-    `Run ${km}km at a relaxed, conversational pace. Keep heart rate low and effort comfortable throughout.`,
-    `${km}km easy aerobic run. You should be able to hold a full conversation — back off if breathing gets hard.`,
-    `Easy ${km}km. Run by feel, stay comfortable. Focus on consistency, not speed.`,
-    `${km}km easy run. Keep it light and relaxed — this session builds your aerobic base.`,
-  ];
-  return { workout_type: 'easy_run', planned_distance: km, planned_pace: 0, instructions: msgs[seed % msgs.length] };
+function easy(km) {
+  return {
+    workout_type: 'easy_run',
+    planned_distance: km,
+    planned_pace: 0,
+    instructions: `Run ${km}km at a relaxed, conversational pace. Keep your heart rate low — you should be able to hold a full conversation throughout. Focus on consistency, not speed.`,
+  };
 }
 
 function tempo(km) {
-  const warmup = Math.round(km * 0.25 * 2) / 2;
-  const main   = Math.round(km * 0.55 * 2) / 2;
-  const cd     = Math.round((km - warmup - main) * 2) / 2;
+  const warmup = 1;
+  const main = Math.round((km - 2) * 10) / 10;
+  const cd = 1;
   return {
     workout_type: 'tempo_run',
     planned_distance: km,
     planned_pace: 0,
-    instructions: `Warm up ${warmup}km easy. Run ${main}km at a comfortably hard, sustained effort. Cool down ${cd}km easy. Total ${km}km.`,
+    instructions: `Warm up ${warmup}km easy. Run ${main}km at a comfortably hard, sustained effort — you should be able to say a few words but not hold a full conversation. Cool down ${cd}km easy. Total ${km}km.`,
   };
 }
 
 function intervals(km) {
-  const reps = 4;
-  const repKm = Math.round(((km - 2) / reps) * 5) / 5;
   return {
     workout_type: 'intervals',
     planned_distance: km,
     planned_pace: 0,
-    instructions: `Warm up 1km easy. Run ${reps} × ${repKm}km at hard effort with 90-sec easy jog recovery between each. Cool down 1km easy. Total ~${km}km.`,
-  };
-}
-
-function longRun(km) {
-  return {
-    workout_type: 'long_run',
-    planned_distance: km,
-    planned_pace: 0,
-    instructions: `${km}km long run at easy, relaxed effort. Build endurance — run slower than you think you need to. Walk breaks are fine.`,
+    instructions: `Warm up 1km easy. Run 4 × 400m at hard effort with 90-second easy jog recovery between each. Repeat the set twice. Cool down 1km easy. Total ~${km}km. Focus on consistent effort each rep.`,
   };
 }
 
@@ -57,67 +45,103 @@ function recovery(km) {
     workout_type: 'cross_training',
     planned_distance: km,
     planned_pace: 0,
-    instructions: `${km}km very easy recovery jog. Slower than your easy pace. This is active recovery, not training.`,
+    instructions: `${km}km very easy recovery jog. Run slower than your easy pace. This is active recovery — legs should feel loose and relaxed. Walk breaks are encouraged.`,
   };
 }
 
-// ─── Deterministic blueprints ─────────────────────────────────────────────────
-// 5K:            3 sessions max
-// 10K:           4 sessions max
-// half_marathon: 6 sessions max
-// pace/distance/endurance: 4-5 sessions
+function longRun(km) {
+  return {
+    workout_type: 'long_run',
+    planned_distance: km,
+    planned_pace: 0,
+    instructions: `${km}km long run at easy, comfortable effort. Run slower than you think you need to — the goal is time on feet, not speed. Walk breaks are completely fine.`,
+  };
+}
 
-function buildSessions(goalType) {
+function goalRun(km, label) {
+  return {
+    workout_type: 'long_run',
+    planned_distance: km,
+    planned_pace: 0,
+    instructions: `🎯 Goal Run: ${label}. This is your completion session — run the full ${km}km at your best comfortable effort. Warm up with 5 minutes of easy walking, then go for it. You've done the training. Trust yourself.`,
+  };
+}
+
+function paceTest(km) {
+  return {
+    workout_type: 'tempo_run',
+    planned_distance: km,
+    planned_pace: 0,
+    instructions: `Pace Test Run — ${km}km. Warm up 1km easy, then run ${km - 2}km at your target goal pace. Cool down 1km. Check your splits and see how your pace has improved since training started.`,
+  };
+}
+
+// ─── Deterministic blueprints (every-other-day scheduling) ───────────────────
+
+function buildSessions(goalType, targetValue) {
   switch (goalType) {
+
     case '5k':
+      // 3 sessions, every other day (offsets: 0, 2, 4)
       return [
-        { offset: 0, session: easy(3, 0) },
-        { offset: 2, session: intervals(4) },
-        { offset: 4, session: easy(4, 1) },
+        { offset: 0, session: easy(3) },
+        { offset: 2, session: tempo(4) },
+        { offset: 4, session: goalRun(5, '5K') },
       ];
 
     case '10k':
+      // 4 sessions, every other day (offsets: 0, 2, 4, 6)
       return [
-        { offset: 0, session: easy(4, 0) },
+        { offset: 0, session: easy(4) },
         { offset: 2, session: tempo(6) },
-        { offset: 4, session: easy(5, 1) },
-        { offset: 6, session: longRun(8) },
+        { offset: 4, session: easy(6) },
+        { offset: 6, session: goalRun(10, '10K') },
       ];
 
     case 'half_marathon':
+      // 6 sessions, every other day (offsets: 0, 2, 4, 6, 8, 10)
       return [
-        { offset: 0,  session: easy(5, 0) },
-        { offset: 2,  session: tempo(7) },
-        { offset: 4,  session: easy(6, 1) },
-        { offset: 6,  session: intervals(6) },
-        { offset: 8,  session: easy(5, 2) },
-        { offset: 10, session: longRun(12) },
+        { offset: 0,  session: easy(6) },
+        { offset: 2,  session: tempo(8) },
+        { offset: 4,  session: easy(10) },
+        { offset: 6,  session: recovery(8) },
+        { offset: 8,  session: longRun(12) },
+        { offset: 10, session: goalRun(21, 'Half Marathon') },
       ];
 
     case 'pace':
+      // 4 sessions, every other day (offsets: 0, 2, 4, 6)
       return [
-        { offset: 0, session: easy(4, 0) },
+        { offset: 0, session: easy(4) },
         { offset: 2, session: tempo(6) },
-        { offset: 4, session: easy(5, 1) },
-        { offset: 6, session: easy(4, 2) },
+        { offset: 4, session: intervals(5) },
+        { offset: 6, session: paceTest(6) },
       ];
 
-    case 'distance':
+    case 'distance': {
+      // 5 sessions, every other day — last session = target distance
+      const target = targetValue && targetValue > 0 ? targetValue : 10;
+      const s1 = Math.max(3, Math.round(target * 0.35));
+      const s2 = Math.round(target * 0.50);
+      const s3 = Math.round(target * 0.65);
+      const s4 = Math.round(target * 0.80);
       return [
-        { offset: 0, session: easy(5, 0) },
-        { offset: 2, session: easy(6, 1) },
-        { offset: 4, session: tempo(7) },
-        { offset: 5, session: recovery(3) },
-        { offset: 7, session: longRun(10) },
+        { offset: 0,  session: easy(s1) },
+        { offset: 2,  session: easy(s2) },
+        { offset: 4,  session: tempo(s3) },
+        { offset: 6,  session: recovery(s4) },
+        { offset: 8,  session: goalRun(target, `${target}km Distance`) },
       ];
+    }
 
     case 'endurance':
+      // 5 sessions, every other day
       return [
-        { offset: 0, session: easy(5, 0) },
-        { offset: 2, session: easy(6, 1) },
-        { offset: 3, session: recovery(3) },
-        { offset: 5, session: easy(6, 2) },
-        { offset: 7, session: longRun(10) },
+        { offset: 0,  session: easy(5) },
+        { offset: 2,  session: easy(7) },
+        { offset: 4,  session: recovery(5) },
+        { offset: 6,  session: easy(9) },
+        { offset: 8,  session: longRun(12) },
       ];
 
     default:
