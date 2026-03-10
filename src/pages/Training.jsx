@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import WeeklyCalendar from '@/components/training/WeeklyCalendar';
@@ -11,6 +11,7 @@ import WorkoutCard from '@/components/training/WorkoutCard';
 import ActiveGoalCard from '@/components/training/ActiveGoalCard';
 import EmptyGoalState from '@/components/training/EmptyGoalState';
 import WeekSwitcher from '@/components/training/WeekSwitcher';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 export default function Training() {
   const [showCreateGoal, setShowCreateGoal] = useState(false);
