@@ -33,11 +33,26 @@ export default function Training() {
 
   const activeGoal = goals.find(g => g.status === 'active');
 
-  const { data: sessions = [] } = useQuery({
+  // Fetch plans for active goal only
+  const { data: activePlans = [] } = useQuery({
+    queryKey: ['training-plans', activeGoal?.id],
+    queryFn: () => base44.entities.TrainingPlan.filter({ goal_id: activeGoal.id, user_email: user.email }),
+    enabled: !!activeGoal?.id,
+  });
+
+  const activePlanIds = useMemo(() => new Set(activePlans.map(p => p.id)), [activePlans]);
+
+  const { data: allSessions = [] } = useQuery({
     queryKey: ['workout-sessions', user?.email],
     queryFn: () => base44.entities.WorkoutSession.filter({ user_email: user.email }),
     enabled: !!user?.email,
   });
+
+  // Only show sessions belonging to the active goal's plans
+  const sessions = useMemo(
+    () => activeGoal ? allSessions.filter(s => activePlanIds.has(s.plan_id)) : [],
+    [allSessions, activePlanIds, activeGoal]
+  );
 
   // Compute week boundaries (normalized to midnight)
   const { startOfWeek, endOfWeek } = useMemo(() => {
@@ -65,12 +80,23 @@ export default function Training() {
     setIsActioning(true);
     try {
       if (confirmAction.type === 'delete') {
+        // Delete all sessions and plans for this goal before deleting the goal
+        const plans = await base44.entities.TrainingPlan.filter({ goal_id: confirmAction.goal.id, user_email: user.email });
+        const planIds = new Set(plans.map(p => p.id));
+        const sessionsToDelete = allSessions.filter(s => planIds.has(s.plan_id));
+        for (const s of sessionsToDelete) {
+          await base44.entities.WorkoutSession.delete(s.id);
+        }
+        for (const p of plans) {
+          await base44.entities.TrainingPlan.delete(p.id);
+        }
         await base44.entities.TrainingGoal.delete(confirmAction.goal.id);
       } else if (confirmAction.type === 'pause') {
         await base44.entities.TrainingGoal.update(confirmAction.goal.id, { status: 'paused' });
       }
       queryClient.invalidateQueries({ queryKey: ['training-goals', user?.email] });
       queryClient.invalidateQueries({ queryKey: ['workout-sessions', user?.email] });
+      queryClient.invalidateQueries({ queryKey: ['training-plans', confirmAction.goal.id] });
     } finally {
       setIsActioning(false);
       setConfirmAction(null);
