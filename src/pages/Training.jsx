@@ -16,6 +16,9 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog';
 export default function Training() {
   const [showCreateGoal, setShowCreateGoal] = useState(false);
   const [selectedWeek, setSelectedWeek] = useState(0); // 0 = current week
+  const [confirmAction, setConfirmAction] = useState(null); // { type: 'delete' | 'pause', goal }
+  const [isActioning, setIsActioning] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: user } = useQuery({
     queryKey: ['me'],
