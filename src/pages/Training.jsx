@@ -136,6 +136,9 @@ export default function Training() {
             completedThisWeek={completedThisWeek}
             totalThisWeek={totalThisWeek}
             weekProgress={weekProgress}
+            completedTotal={completedTotal}
+            totalPlan={totalPlan}
+            planProgress={planProgress}
             onPause={() => setConfirmAction({ type: 'pause', goal: activeGoal })}
             onDelete={() => setConfirmAction({ type: 'delete', goal: activeGoal })}
           />
