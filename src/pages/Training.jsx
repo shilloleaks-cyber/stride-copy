@@ -160,10 +160,10 @@ export default function Training() {
 
       {/* Confirm pause / delete */}
       <ConfirmDialog
-        isOpen={!!confirmAction}
-        onClose={() => setConfirmAction(null)}
+        open={!!confirmAction}
+        onCancel={() => setConfirmAction(null)}
         onConfirm={handleConfirmAction}
-        isLoading={isActioning}
+        loading={isActioning}
         title={confirmAction?.type === 'delete' ? 'Delete Goal?' : 'Pause Goal?'}
         description={
           confirmAction?.type === 'delete'
@@ -171,7 +171,7 @@ export default function Training() {
             : 'Your goal will be paused. You can create a new goal anytime.'
         }
         confirmLabel={confirmAction?.type === 'delete' ? 'Delete' : 'Pause'}
-        confirmVariant={confirmAction?.type === 'delete' ? 'destructive' : 'default'}
+        confirmVariant={confirmAction?.type === 'delete' ? 'destructive' : 'primary'}
       />
     </div>
   );
