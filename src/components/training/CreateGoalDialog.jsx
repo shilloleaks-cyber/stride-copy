@@ -188,11 +188,12 @@ export default function CreateGoalDialog({ isOpen, onClose, user, existingActive
                     onChange={(e) => setTargetDate(e.target.value)}
                     min={new Date().toISOString().split('T')[0]}
                     required
-                    className="w-full px-4 py-3 rounded-2xl text-white text-base focus:outline-none transition-colors"
+                    className="w-full px-4 py-3 rounded-2xl text-white text-base focus:outline-none transition-colors appearance-none box-border"
                     style={{
                       background: 'rgba(255,255,255,0.05)',
                       border: '1px solid rgba(255,255,255,0.10)',
                       colorScheme: 'dark',
+                      WebkitAppearance: 'none',
                     }}
                   />
                 </div>
