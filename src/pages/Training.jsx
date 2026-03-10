@@ -107,6 +107,10 @@ export default function Training() {
   const totalThisWeek = weekSessions.length;
   const weekProgress = totalThisWeek > 0 ? (completedThisWeek / totalThisWeek) * 100 : 0;
 
+  const completedTotal = sessions.filter(s => s.completed).length;
+  const totalPlan = sessions.length;
+  const planProgress = totalPlan > 0 ? (completedTotal / totalPlan) * 100 : 0;
+
   return (
     <div className="min-h-screen text-white pb-24" style={{ backgroundColor: '#0A0A0A' }}>
       {/* Header */}
