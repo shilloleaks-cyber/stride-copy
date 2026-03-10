@@ -128,9 +128,8 @@ export default function Training() {
         {activeGoal ? (
           <ActiveGoalCard
             goal={activeGoal}
-            completedThisWeek={completedThisWeek}
-            totalThisWeek={totalThisWeek}
-            weekProgress={weekProgress}
+            completedTotal={completedTotal}
+            totalSessions={totalSessions}
             onPause={() => setConfirmAction({ type: 'pause', goal: activeGoal })}
             onDelete={() => setConfirmAction({ type: 'delete', goal: activeGoal })}
           />
@@ -154,20 +153,20 @@ export default function Training() {
         </div>
       )}
 
-      {/* Upcoming Workouts */}
+      {/* All Plan Workouts */}
       {activeGoal && (
         <div className="px-6">
           <h2 className="text-xs uppercase tracking-widest mb-4" style={{ color: 'rgba(255,255,255,0.35)' }}>Workouts</h2>
-          {weekSessions.length === 0 ? (
+          {sessions.length === 0 ? (
             <div
               className="rounded-2xl p-6 text-center"
               style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
             >
-              <p className="text-sm" style={{ color: 'rgba(255,255,255,0.35)' }}>No workouts scheduled this week</p>
+              <p className="text-sm" style={{ color: 'rgba(255,255,255,0.35)' }}>No workouts in this plan yet</p>
             </div>
           ) : (
             <div className="space-y-3">
-              {weekSessions.map(session => (
+              {[...sessions].sort((a, b) => new Date(a.scheduled_date) - new Date(b.scheduled_date)).map(session => (
                 <WorkoutCard key={session.id} session={session} />
               ))}
             </div>
