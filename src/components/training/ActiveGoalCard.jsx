@@ -1,8 +1,10 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Target } from 'lucide-react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Target, MoreVertical, PauseCircle, Trash2 } from 'lucide-react';
 
-export default function ActiveGoalCard({ goal, completedThisWeek, totalThisWeek, weekProgress }) {
+export default function ActiveGoalCard({ goal, completedThisWeek, totalThisWeek, weekProgress, onPause, onDelete }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -29,7 +31,7 @@ export default function ActiveGoalCard({ goal, completedThisWeek, totalThisWeek,
             </p>
           </div>
           <h2 className="text-2xl font-bold text-white mb-1">
-            {goal.goal_type.replace('_', ' ').toUpperCase()}
+            {goal.goal_type.replace(/_/g, ' ').toUpperCase()}
           </h2>
           {goal.target_value && (
             <p style={{ color: 'rgba(255,255,255,0.5)' }}>
@@ -38,14 +40,69 @@ export default function ActiveGoalCard({ goal, completedThisWeek, totalThisWeek,
             </p>
           )}
         </div>
-        <div className="text-right">
-          <p className="text-xs mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>Target Date</p>
-          <p className="text-lg font-semibold text-white">
-            {new Date(goal.target_date).toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-            })}
-          </p>
+
+        {/* Right side: date + menu */}
+        <div className="flex items-start gap-3">
+          <div className="text-right">
+            <p className="text-xs mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>Target Date</p>
+            <p className="text-lg font-semibold text-white">
+              {new Date(goal.target_date).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+              })}
+            </p>
+          </div>
+
+          {/* Menu */}
+          <div className="relative">
+            <button
+              onClick={() => setMenuOpen(v => !v)}
+              className="w-8 h-8 rounded-full flex items-center justify-center transition-colors mt-1"
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}
+            >
+              <MoreVertical className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.6)' }} />
+            </button>
+
+            <AnimatePresence>
+              {menuOpen && (
+                <>
+                  {/* click-away */}
+                  <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9, y: -4 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9, y: -4 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 top-10 z-20 min-w-[160px] rounded-2xl overflow-hidden py-1"
+                    style={{
+                      background: 'rgba(18,18,18,0.95)',
+                      border: '1px solid rgba(255,255,255,0.10)',
+                      boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+                      backdropFilter: 'blur(12px)',
+                    }}
+                  >
+                    <button
+                      onClick={() => { setMenuOpen(false); onPause?.(); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left transition-colors hover:bg-white/5"
+                      style={{ color: 'rgba(255,255,255,0.75)' }}
+                    >
+                      <PauseCircle className="w-4 h-4 opacity-70" />
+                      Pause Goal
+                    </button>
+                    <div style={{ height: '1px', background: 'rgba(255,255,255,0.06)', margin: '0 12px' }} />
+                    <button
+                      onClick={() => { setMenuOpen(false); onDelete?.(); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left transition-colors hover:bg-white/5"
+                      style={{ color: 'rgba(255,80,80,0.9)' }}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Delete Goal
+                    </button>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
 
