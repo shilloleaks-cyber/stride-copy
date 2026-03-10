@@ -177,7 +177,7 @@ Deno.serve(async (req) => {
     }
 
     const goal = goals[0];
-    const sessions = buildSessions(goal.goal_type);
+    const sessions = buildSessions(goal.goal_type, goal.target_value);
 
     if (!sessions) {
       return Response.json({ success: false, error: `Unknown goal type: ${goal.goal_type}` }, { status: 400 });
