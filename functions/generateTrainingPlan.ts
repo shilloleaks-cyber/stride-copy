@@ -2,10 +2,6 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function round(val, step = 0.5) {
-  return Math.round(val / step) * step;
-}
-
 function addDaysToDate(base, days) {
   const d = new Date(base);
   d.setDate(d.getDate() + days);
@@ -25,25 +21,25 @@ function easy(km, seed = 0) {
 }
 
 function tempo(km) {
-  const warmup = round(km * 0.25, 0.5);
-  const main   = round(km * 0.55, 0.5);
-  const cd     = round(km - warmup - main, 0.5);
+  const warmup = Math.round(km * 0.25 * 2) / 2;
+  const main   = Math.round(km * 0.55 * 2) / 2;
+  const cd     = Math.round((km - warmup - main) * 2) / 2;
   return {
     workout_type: 'tempo_run',
     planned_distance: km,
     planned_pace: 0,
-    instructions: `Warm up ${warmup}km easy. Run ${main}km at a comfortably hard, sustained effort (short phrases but not full sentences). Cool down ${cd}km easy. Total ${km}km.`,
+    instructions: `Warm up ${warmup}km easy. Run ${main}km at a comfortably hard, sustained effort. Cool down ${cd}km easy. Total ${km}km.`,
   };
 }
 
 function intervals(km) {
   const reps = 4;
-  const repKm = round((km - 2) / reps, 0.2);
+  const repKm = Math.round(((km - 2) / reps) * 5) / 5;
   return {
     workout_type: 'intervals',
     planned_distance: km,
     planned_pace: 0,
-    instructions: `Warm up 1km easy. Run ${reps} × ${repKm}km at hard (not sprint) effort with 90-sec easy jog recovery between each. Cool down 1km easy. Total ~${km}km.`,
+    instructions: `Warm up 1km easy. Run ${reps} × ${repKm}km at hard effort with 90-sec easy jog recovery between each. Cool down 1km easy. Total ~${km}km.`,
   };
 }
 
@@ -52,41 +48,28 @@ function longRun(km) {
     workout_type: 'long_run',
     planned_distance: km,
     planned_pace: 0,
-    instructions: `${km}km long run at easy, relaxed effort. This session builds endurance — run slower than you think you need to. Walk breaks are fine if needed.`,
+    instructions: `${km}km long run at easy, relaxed effort. Build endurance — run slower than you think you need to. Walk breaks are fine.`,
   };
 }
 
 function recovery(km) {
   return {
-    workout_type: 'recovery_run',
+    workout_type: 'cross_training',
     planned_distance: km,
     planned_pace: 0,
-    instructions: `${km}km very easy recovery jog. Slower than your easy pace. Keep effort minimal — this is active recovery, not training.`,
+    instructions: `${km}km very easy recovery jog. Slower than your easy pace. This is active recovery, not training.`,
   };
 }
 
 // ─── Deterministic blueprints ─────────────────────────────────────────────────
-//
-// Each blueprint defines the exact session list for the plan duration.
-// Sessions are spread across day offsets from day 0 (start date).
-// Rules enforced:
-//   - no consecutive hard days (tempo/intervals offset from each other and long runs)
-//   - max 1 interval session
-//   - max 1 tempo session
-//   - exactly 1 long run for 10k and half_marathon
-//   - easy runs are majority
-//   - session count caps respected
-//
-// 5K:  duration 3 days, max 3 sessions
-// 10K: duration 5 days, max 4 sessions
-// HM:  duration 7-10 days, max 6 sessions
-//
-// pace / distance / endurance: 7-day plans, similar structure to 10k/HM
+// 5K:            3 sessions max
+// 10K:           4 sessions max
+// half_marathon: 6 sessions max
+// pace/distance/endurance: 4-5 sessions
 
 function buildSessions(goalType) {
   switch (goalType) {
     case '5k':
-      // 3 sessions over 3 days: easy → intervals → easy
       return [
         { offset: 0, session: easy(3, 0) },
         { offset: 2, session: intervals(4) },
@@ -94,7 +77,6 @@ function buildSessions(goalType) {
       ];
 
     case '10k':
-      // 4 sessions over 5 days: easy → tempo → easy → long
       return [
         { offset: 0, session: easy(4, 0) },
         { offset: 2, session: tempo(6) },
@@ -103,7 +85,6 @@ function buildSessions(goalType) {
       ];
 
     case 'half_marathon':
-      // 6 sessions over 10 days: easy → tempo → easy → intervals → easy → long
       return [
         { offset: 0,  session: easy(5, 0) },
         { offset: 2,  session: tempo(7) },
@@ -114,7 +95,6 @@ function buildSessions(goalType) {
       ];
 
     case 'pace':
-      // 4 sessions over 7 days: easy → tempo → easy → easy
       return [
         { offset: 0, session: easy(4, 0) },
         { offset: 2, session: tempo(6) },
@@ -123,7 +103,6 @@ function buildSessions(goalType) {
       ];
 
     case 'distance':
-      // 5 sessions over 7 days: easy → easy → tempo → easy → long
       return [
         { offset: 0, session: easy(5, 0) },
         { offset: 2, session: easy(6, 1) },
@@ -133,7 +112,6 @@ function buildSessions(goalType) {
       ];
 
     case 'endurance':
-      // 5 sessions over 7 days: easy → easy → easy → tempo → long
       return [
         { offset: 0, session: easy(5, 0) },
         { offset: 2, session: easy(6, 1) },
@@ -175,14 +153,12 @@ Deno.serve(async (req) => {
     }
 
     const goal = goals[0];
-    const goalType = goal.goal_type;
+    const sessions = buildSessions(goal.goal_type);
 
-    const sessions = buildSessions(goalType);
     if (!sessions) {
-      return Response.json({ success: false, error: `Unknown goal type: ${goalType}` }, { status: 400 });
+      return Response.json({ success: false, error: `Unknown goal type: ${goal.goal_type}` }, { status: 400 });
     }
 
-    // ── Resolve start date (target_date = plan start date) ─────────────────
     const startDate = new Date(goal.target_date);
     startDate.setHours(0, 0, 0, 0);
 
@@ -190,27 +166,25 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: 'Invalid start date on goal.' }, { status: 400 });
     }
 
-    // ── Delete stale plans and sessions for this goal ───────────────────────
+    // ── IDEMPOTENT CLEANUP: delete all existing plans + sessions for this goal ──
     const existingPlans = await base44.asServiceRole.entities.TrainingPlan.filter({
       goal_id,
       user_email: user.email,
     });
-    const existingPlanIds = new Set(existingPlans.map(p => p.id));
 
-    const existingSessions = await base44.asServiceRole.entities.WorkoutSession.filter({
-      user_email: user.email,
-    });
-
-    for (const s of existingSessions) {
-      if (existingPlanIds.has(s.plan_id)) {
+    for (const plan of existingPlans) {
+      // Delete all sessions for this plan
+      const planSessions = await base44.asServiceRole.entities.WorkoutSession.filter({
+        plan_id: plan.id,
+        user_email: user.email,
+      });
+      for (const s of planSessions) {
         await base44.asServiceRole.entities.WorkoutSession.delete(s.id);
       }
-    }
-    for (const p of existingPlans) {
-      await base44.asServiceRole.entities.TrainingPlan.delete(p.id);
+      await base44.asServiceRole.entities.TrainingPlan.delete(plan.id);
     }
 
-    // ── Create a single TrainingPlan record for this goal ───────────────────
+    // ── Create exactly ONE TrainingPlan for this goal ───────────────────────
     const plan = await base44.asServiceRole.entities.TrainingPlan.create({
       user_email: user.email,
       goal_id,
@@ -221,11 +195,10 @@ Deno.serve(async (req) => {
 
     // ── Create WorkoutSession records ───────────────────────────────────────
     for (const { offset, session } of sessions) {
-      const scheduledDate = addDaysToDate(startDate, offset);
       await base44.asServiceRole.entities.WorkoutSession.create({
         user_email: user.email,
         plan_id: plan.id,
-        scheduled_date: scheduledDate,
+        scheduled_date: addDaysToDate(startDate, offset),
         workout_type: session.workout_type,
         planned_distance: session.planned_distance,
         planned_pace: session.planned_pace,
@@ -237,6 +210,7 @@ Deno.serve(async (req) => {
     return Response.json({
       success: true,
       goal_id,
+      plan_id: plan.id,
       sessions_created: sessions.length,
     });
 
