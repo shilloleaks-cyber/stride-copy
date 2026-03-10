@@ -61,7 +61,8 @@ export default function WorkoutCard({ session }) {
     setIsUpdating(false);
   };
 
-  const isPast = new Date(session.scheduled_date) < new Date();
+  const todayStr = new Date().toISOString().split('T')[0];
+  const isPast = session.scheduled_date < todayStr;
 
   return (
     <motion.div
