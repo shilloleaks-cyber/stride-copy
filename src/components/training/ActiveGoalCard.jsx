@@ -45,7 +45,7 @@ export default function ActiveGoalCard({ goal, completedTotal, totalSessions, on
         {/* Right side: date + menu */}
         <div className="flex items-start gap-3">
           <div className="text-right">
-            <p className="text-xs mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>Target Date</p>
+            <p className="text-xs mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>Starts On</p>
             <p className="text-lg font-semibold text-white">
               {new Date(goal.target_date).toLocaleDateString('en-US', {
                 month: 'short',
