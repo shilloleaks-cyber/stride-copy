@@ -157,6 +157,22 @@ export default function Training() {
         user={user}
         existingActiveGoal={activeGoal}
       />
+
+      {/* Confirm pause / delete */}
+      <ConfirmDialog
+        isOpen={!!confirmAction}
+        onClose={() => setConfirmAction(null)}
+        onConfirm={handleConfirmAction}
+        isLoading={isActioning}
+        title={confirmAction?.type === 'delete' ? 'Delete Goal?' : 'Pause Goal?'}
+        description={
+          confirmAction?.type === 'delete'
+            ? 'This will permanently delete your training goal and its generated plan. This cannot be undone.'
+            : 'Your goal will be paused. You can create a new goal anytime.'
+        }
+        confirmLabel={confirmAction?.type === 'delete' ? 'Delete' : 'Pause'}
+        confirmVariant={confirmAction?.type === 'delete' ? 'destructive' : 'default'}
+      />
     </div>
   );
 }
