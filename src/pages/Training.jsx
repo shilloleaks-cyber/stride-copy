@@ -103,9 +103,8 @@ export default function Training() {
     }
   };
 
-  const completedThisWeek = weekSessions.filter(s => s.completed).length;
-  const totalThisWeek = weekSessions.length;
-  const weekProgress = totalThisWeek > 0 ? (completedThisWeek / totalThisWeek) * 100 : 0;
+  const completedTotal = sessions.filter(s => s.completed).length;
+  const totalSessions = sessions.length;
 
   return (
     <div className="min-h-screen text-white pb-24" style={{ backgroundColor: '#0A0A0A' }}>

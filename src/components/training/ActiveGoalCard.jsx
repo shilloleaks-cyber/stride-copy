@@ -112,15 +112,15 @@ export default function ActiveGoalCard({ goal, completedTotal, totalSessions, on
         style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
       >
         <div className="flex items-center justify-between mb-3">
-          <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>This Week</p>
+          <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>Progress</p>
           <p className="text-sm font-semibold text-white">
-            {completedThisWeek} / {totalThisWeek} workouts
+            {completedTotal} / {totalSessions} workouts
           </p>
         </div>
         <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
           <motion.div
             initial={{ width: 0 }}
-            animate={{ width: `${weekProgress}%` }}
+            animate={{ width: `${progress}%` }}
             transition={{ duration: 0.8, ease: 'easeOut' }}
             className="h-full rounded-full"
             style={{ background: 'linear-gradient(90deg, #BFFF00, #8A2BE2)' }}
