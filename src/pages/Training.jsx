@@ -40,19 +40,14 @@ export default function Training() {
     enabled: !!activeGoal?.id,
   });
 
-  const activePlanIds = useMemo(() => new Set(activePlans.map(p => p.id)), [activePlans]);
+  const activePlan = activePlans.find(p => p.status === 'active') || activePlans[0];
 
-  const { data: allSessions = [] } = useQuery({
-    queryKey: ['workout-sessions', user?.email],
-    queryFn: () => base44.entities.WorkoutSession.filter({ user_email: user.email }),
-    enabled: !!user?.email,
+  // Fetch sessions scoped strictly to the active plan only
+  const { data: sessions = [] } = useQuery({
+    queryKey: ['workout-sessions', activePlan?.id],
+    queryFn: () => base44.entities.WorkoutSession.filter({ plan_id: activePlan.id, user_email: user.email }),
+    enabled: !!activePlan?.id,
   });
-
-  // Only show sessions belonging to the active goal's plans
-  const sessions = useMemo(
-    () => activeGoal ? allSessions.filter(s => activePlanIds.has(s.plan_id)) : [],
-    [allSessions, activePlanIds, activeGoal]
-  );
 
   // Compute week boundaries (normalized to midnight)
   const { startOfWeek, endOfWeek } = useMemo(() => {
