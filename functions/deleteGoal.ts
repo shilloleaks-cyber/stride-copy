@@ -21,17 +21,15 @@ Deno.serve(async (req) => {
       user_email: user.email,
     });
 
-    // Delete all sessions and plans
-    for (const plan of plans) {
+    // Delete all sessions in parallel, then plans in parallel
+    await Promise.all(plans.map(async (plan) => {
       const sessions = await base44.asServiceRole.entities.WorkoutSession.filter({
         plan_id: plan.id,
         user_email: user.email,
       });
-      for (const s of sessions) {
-        await base44.asServiceRole.entities.WorkoutSession.delete(s.id);
-      }
+      await Promise.all(sessions.map(s => base44.asServiceRole.entities.WorkoutSession.delete(s.id)));
       await base44.asServiceRole.entities.TrainingPlan.delete(plan.id);
-    }
+    }));
 
     // Delete the goal itself
     await base44.asServiceRole.entities.TrainingGoal.delete(goal_id);
