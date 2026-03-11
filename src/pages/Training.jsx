@@ -75,16 +75,7 @@ export default function Training() {
     setIsActioning(true);
     try {
       if (confirmAction.type === 'delete') {
-        // Fetch fresh from server to ensure no stale/missed records
-        const plans = await base44.entities.TrainingPlan.filter({ goal_id: confirmAction.goal.id, user_email: user.email });
-        for (const p of plans) {
-          const planSessions = await base44.entities.WorkoutSession.filter({ plan_id: p.id, user_email: user.email });
-          for (const s of planSessions) {
-            await base44.entities.WorkoutSession.delete(s.id);
-          }
-          await base44.entities.TrainingPlan.delete(p.id);
-        }
-        await base44.entities.TrainingGoal.delete(confirmAction.goal.id);
+        await base44.functions.invoke('deleteGoal', { goal_id: confirmAction.goal.id });
       } else if (confirmAction.type === 'pause') {
         await base44.entities.TrainingGoal.update(confirmAction.goal.id, { status: 'paused' });
       }
