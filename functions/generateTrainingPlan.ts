@@ -211,9 +211,9 @@ Deno.serve(async (req) => {
       goal_id,
     });
 
-    // ── Create WorkoutSession records ───────────────────────────────────────
-    for (const { offset, session } of sessions) {
-      await base44.asServiceRole.entities.WorkoutSession.create({
+    // ── Create WorkoutSession records (parallel) ────────────────────────────
+    await Promise.all(sessions.map(({ offset, session }) =>
+      base44.asServiceRole.entities.WorkoutSession.create({
         user_email: user.email,
         plan_id: plan.id,
         scheduled_date: addDaysToDate(startDate, offset),
@@ -222,8 +222,8 @@ Deno.serve(async (req) => {
         planned_pace: session.planned_pace,
         instructions: session.instructions,
         completed: false,
-      });
-    }
+      })
+    ));
 
     return Response.json({
       success: true,
