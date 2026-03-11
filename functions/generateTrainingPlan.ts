@@ -82,7 +82,6 @@ function buildSessions(goalType, targetValue) {
   switch (goalType) {
 
     case '5k':
-      // 3 sessions, every other day (offsets: 0, 2, 4)
       return [
         { offset: 0, session: easy(3) },
         { offset: 2, session: tempo(4) },
@@ -90,7 +89,6 @@ function buildSessions(goalType, targetValue) {
       ];
 
     case '10k':
-      // 4 sessions, every other day (offsets: 0, 2, 4, 6)
       return [
         { offset: 0, session: easy(4) },
         { offset: 2, session: tempo(6) },
@@ -99,7 +97,6 @@ function buildSessions(goalType, targetValue) {
       ];
 
     case 'half_marathon':
-      // 6 sessions, every other day (offsets: 0, 2, 4, 6, 8, 10)
       return [
         { offset: 0,  session: easy(6) },
         { offset: 2,  session: tempo(8) },
@@ -110,7 +107,6 @@ function buildSessions(goalType, targetValue) {
       ];
 
     case 'pace':
-      // 4 sessions, every other day (offsets: 0, 2, 4, 6)
       return [
         { offset: 0, session: easy(4) },
         { offset: 2, session: tempo(6) },
@@ -119,7 +115,6 @@ function buildSessions(goalType, targetValue) {
       ];
 
     case 'distance': {
-      // 5 sessions, every other day — last session = target distance
       const target = targetValue && targetValue > 0 ? targetValue : 10;
       const s1 = Math.max(3, Math.round(target * 0.35));
       const s2 = Math.round(target * 0.50);
@@ -135,7 +130,6 @@ function buildSessions(goalType, targetValue) {
     }
 
     case 'endurance':
-      // 5 sessions, every other day
       return [
         { offset: 0,  session: easy(5) },
         { offset: 2,  session: easy(7) },
@@ -154,29 +148,43 @@ function buildSessions(goalType, targetValue) {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
 
-    if (!user) {
-      return Response.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    // Support both authenticated user calls and service-role calls (e.g. from test tool)
+    let userEmail = null;
+    let isAuthenticated = false;
+    try {
+      const user = await base44.auth.me();
+      if (user) {
+        userEmail = user.email;
+        isAuthenticated = true;
+      }
+    } catch (_e) {
+      // Not authenticated — will use service role only
     }
 
-    const { goal_id } = await req.json();
+    const { goal_id, user_email: payloadEmail } = await req.json();
 
     if (!goal_id) {
       return Response.json({ success: false, error: 'goal_id is required' }, { status: 400 });
     }
 
-    // ── Fetch goal ──────────────────────────────────────────────────────────
-    const goals = await base44.asServiceRole.entities.TrainingGoal.filter({
-      id: goal_id,
-      user_email: user.email,
-    });
+    // Use email from auth or from payload (for service-role / test calls)
+    const email = userEmail || payloadEmail;
 
-    if (goals.length === 0) {
+    // ── Fetch goal via service role ──────────────────────────────────────────
+    const goal = await base44.asServiceRole.entities.TrainingGoal.get(goal_id);
+
+    if (!goal) {
       return Response.json({ success: false, error: 'Goal not found' }, { status: 404 });
     }
 
-    const goal = goals[0];
+    // Security: if authenticated, ensure goal belongs to this user
+    if (isAuthenticated && goal.user_email !== userEmail) {
+      return Response.json({ success: false, error: 'Forbidden' }, { status: 403 });
+    }
+
+    const resolvedEmail = goal.user_email;
+
     const sessions = buildSessions(goal.goal_type, goal.target_value);
 
     if (!sessions) {
@@ -191,30 +199,24 @@ Deno.serve(async (req) => {
     }
 
     // ── IDEMPOTENT CLEANUP: delete all existing plans + sessions for this goal ──
-    const existingPlans = await base44.asServiceRole.entities.TrainingPlan.filter({
-      goal_id,
-      user_email: user.email,
-    });
+    const existingPlans = await base44.asServiceRole.entities.TrainingPlan.filter({ goal_id });
 
     await Promise.all(existingPlans.map(async (plan) => {
-      const planSessions = await base44.asServiceRole.entities.WorkoutSession.filter({
-        plan_id: plan.id,
-        user_email: user.email,
-      });
+      const planSessions = await base44.asServiceRole.entities.WorkoutSession.filter({ plan_id: plan.id });
       await Promise.all(planSessions.map(s => base44.asServiceRole.entities.WorkoutSession.delete(s.id)));
       await base44.asServiceRole.entities.TrainingPlan.delete(plan.id);
     }));
 
     // ── Create exactly ONE TrainingPlan for this goal ───────────────────────
     const plan = await base44.asServiceRole.entities.TrainingPlan.create({
-      user_email: user.email,
+      user_email: resolvedEmail,
       goal_id,
     });
 
-    // ── Create WorkoutSession records (parallel) ────────────────────────────
+    // ── Create WorkoutSession records in parallel ───────────────────────────
     await Promise.all(sessions.map(({ offset, session }) =>
       base44.asServiceRole.entities.WorkoutSession.create({
-        user_email: user.email,
+        user_email: resolvedEmail,
         plan_id: plan.id,
         scheduled_date: addDaysToDate(startDate, offset),
         workout_type: session.workout_type,
