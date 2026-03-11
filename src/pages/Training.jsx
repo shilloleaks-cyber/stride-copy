@@ -33,16 +33,16 @@ export default function Training() {
 
   const activeGoal = goals.find(g => g.status === 'active');
 
-  // Fetch plans for active goal only
-  const { data: activePlans = [] } = useQuery({
+  // One plan per goal — fetch the single plan for the active goal
+  const { data: plans = [] } = useQuery({
     queryKey: ['training-plans', activeGoal?.id],
     queryFn: () => base44.entities.TrainingPlan.filter({ goal_id: activeGoal.id, user_email: user.email }),
     enabled: !!activeGoal?.id,
   });
 
-  const activePlan = activePlans.find(p => p.status === 'active') || activePlans[0];
+  const activePlan = plans[0];
 
-  // Fetch sessions scoped strictly to the active plan only
+  // Fetch sessions strictly by plan_id
   const { data: sessions = [] } = useQuery({
     queryKey: ['workout-sessions', activePlan?.id],
     queryFn: () => base44.entities.WorkoutSession.filter({ plan_id: activePlan.id, user_email: user.email }),
