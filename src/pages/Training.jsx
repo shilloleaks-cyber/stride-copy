@@ -75,14 +75,13 @@ export default function Training() {
     setIsActioning(true);
     try {
       if (confirmAction.type === 'delete') {
-        // Delete all sessions and plans for this goal before deleting the goal
+        // Fetch fresh from server to ensure no stale/missed records
         const plans = await base44.entities.TrainingPlan.filter({ goal_id: confirmAction.goal.id, user_email: user.email });
-        const planIds = new Set(plans.map(p => p.id));
-        const sessionsToDelete = allSessions.filter(s => planIds.has(s.plan_id));
-        for (const s of sessionsToDelete) {
-          await base44.entities.WorkoutSession.delete(s.id);
-        }
         for (const p of plans) {
+          const planSessions = await base44.entities.WorkoutSession.filter({ plan_id: p.id, user_email: user.email });
+          for (const s of planSessions) {
+            await base44.entities.WorkoutSession.delete(s.id);
+          }
           await base44.entities.TrainingPlan.delete(p.id);
         }
         await base44.entities.TrainingGoal.delete(confirmAction.goal.id);
