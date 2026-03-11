@@ -196,17 +196,14 @@ Deno.serve(async (req) => {
       user_email: user.email,
     });
 
-    for (const plan of existingPlans) {
-      // Delete all sessions for this plan
+    await Promise.all(existingPlans.map(async (plan) => {
       const planSessions = await base44.asServiceRole.entities.WorkoutSession.filter({
         plan_id: plan.id,
         user_email: user.email,
       });
-      for (const s of planSessions) {
-        await base44.asServiceRole.entities.WorkoutSession.delete(s.id);
-      }
+      await Promise.all(planSessions.map(s => base44.asServiceRole.entities.WorkoutSession.delete(s.id)));
       await base44.asServiceRole.entities.TrainingPlan.delete(plan.id);
-    }
+    }));
 
     // ── Create exactly ONE TrainingPlan for this goal ───────────────────────
     const plan = await base44.asServiceRole.entities.TrainingPlan.create({
