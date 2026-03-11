@@ -89,8 +89,8 @@ export default function Training() {
         await base44.entities.TrainingGoal.update(confirmAction.goal.id, { status: 'paused' });
       }
       queryClient.invalidateQueries({ queryKey: ['training-goals', user?.email] });
-      queryClient.invalidateQueries({ queryKey: ['workout-sessions', user?.email] });
-      queryClient.invalidateQueries({ queryKey: ['training-plans', confirmAction.goal.id] });
+      queryClient.invalidateQueries({ queryKey: ['training-plans'] });
+      queryClient.invalidateQueries({ queryKey: ['workout-sessions'] });
     } finally {
       setIsActioning(false);
       setConfirmAction(null);
