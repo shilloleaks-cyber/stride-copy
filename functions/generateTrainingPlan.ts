@@ -212,9 +212,6 @@ Deno.serve(async (req) => {
     const plan = await base44.asServiceRole.entities.TrainingPlan.create({
       user_email: user.email,
       goal_id,
-      week_number: 1,
-      plan_data: {},
-      status: 'active',
     });
 
     // ── Create WorkoutSession records ───────────────────────────────────────
