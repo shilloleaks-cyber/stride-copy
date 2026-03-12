@@ -47,12 +47,12 @@ export default function CreateEvent() {
   };
 
   const handleBannerUpload = async (e) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files[0];
     if (!file) return;
     setIsUploadingBanner(true);
     setBannerPreview(URL.createObjectURL(file));
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    handleChange('banner_image', file_url);
+    const result = await base44.integrations.Core.UploadFile({ file });
+    handleChange('banner_image', result.file_url);
     setIsUploadingBanner(false);
   };
 
@@ -63,9 +63,7 @@ export default function CreateEvent() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.group_id || !form.title || !form.start_at) return;
-    if (!user) return;
-
+    if (!form.group_id || !form.title || !form.start_at || !user) return;
     setIsSubmitting(true);
 
     const event = await base44.entities.Event.create({
@@ -74,7 +72,7 @@ export default function CreateEvent() {
       created_by_user_name: user.full_name,
       title: form.title,
       description: form.description,
-      banner_image: form.banner_image || '',
+      banner_image: form.banner_image,
       location_name: form.location_name,
       start_at: new Date(form.start_at).toISOString(),
       max_attendees: form.max_attendees ? parseInt(form.max_attendees) : 0,
@@ -89,7 +87,7 @@ export default function CreateEvent() {
     ]);
 
     setIsSubmitting(false);
-    navigate(createPageUrl(`EventDetail?id=${event.id}`));
+    navigate(createPageUrl('EventDetail') + '?id=' + event.id);
   };
 
   const inputStyle = {
@@ -112,14 +110,16 @@ export default function CreateEvent() {
     display: 'block',
   };
 
+  const isDisabled = isSubmitting || !form.group_id || !form.title || !form.start_at;
+
   return (
     <div className="min-h-screen text-white pb-24" style={{ backgroundColor: '#0A0A0A' }}>
-      {/* Header */}
       <div
         className="sticky top-0 z-50 px-6 pt-10 pb-4 flex items-center gap-4"
         style={{ backgroundColor: 'rgba(10,10,10,0.95)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
       >
         <button
+          type="button"
           onClick={() => navigate(-1)}
           className="w-9 h-9 rounded-full flex items-center justify-center"
           style={{ background: 'rgba(255,255,255,0.08)' }}
@@ -130,7 +130,7 @@ export default function CreateEvent() {
       </div>
 
       <form onSubmit={handleSubmit} className="px-6 pt-6 space-y-5">
-        {/* Group */}
+
         <div>
           <label style={labelStyle}>Group *</label>
           <select
@@ -146,7 +146,6 @@ export default function CreateEvent() {
           </select>
         </div>
 
-        {/* Title */}
         <div>
           <label style={labelStyle}>Event Title *</label>
           <input
@@ -159,12 +158,11 @@ export default function CreateEvent() {
           />
         </div>
 
-        {/* Banner Image */}
         <div>
           <label style={labelStyle}>Banner Image</label>
           {bannerPreview ? (
             <div className="relative rounded-xl overflow-hidden" style={{ height: '140px' }}>
-              <img src={bannerPreview} alt="Banner" className="w-full h-full object-cover" />
+              <img src={bannerPreview} alt="Banner preview" className="w-full h-full object-cover" />
               {isUploadingBanner && (
                 <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)' }}>
                   <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#BFFF00' }} />
@@ -183,7 +181,7 @@ export default function CreateEvent() {
             </div>
           ) : (
             <label
-              className="flex flex-col items-center justify-center gap-2 rounded-xl cursor-pointer transition-all"
+              className="flex flex-col items-center justify-center gap-2 rounded-xl cursor-pointer"
               style={{ background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.15)', height: '100px' }}
             >
               <ImagePlus className="w-6 h-6" style={{ color: 'rgba(255,255,255,0.3)' }} />
@@ -193,7 +191,6 @@ export default function CreateEvent() {
           )}
         </div>
 
-        {/* Description */}
         <div>
           <label style={labelStyle}>Description</label>
           <textarea
@@ -205,7 +202,6 @@ export default function CreateEvent() {
           />
         </div>
 
-        {/* Location */}
         <div>
           <label style={labelStyle}>Location</label>
           <input
@@ -217,9 +213,8 @@ export default function CreateEvent() {
           />
         </div>
 
-        {/* Start Date/Time */}
         <div>
-          <label style={labelStyle}>Start Date & Time *</label>
+          <label style={labelStyle}>Start Date &amp; Time *</label>
           <input
             type="datetime-local"
             value={form.start_at}
@@ -229,7 +224,6 @@ export default function CreateEvent() {
           />
         </div>
 
-        {/* Max Attendees */}
         <div>
           <label style={labelStyle}>Max Attendees (0 = unlimited)</label>
           <input
@@ -242,14 +236,10 @@ export default function CreateEvent() {
           />
         </div>
 
-        {/* Visibility */}
         <div>
           <label style={labelStyle}>Visibility</label>
           <div className="flex gap-3">
-            {[
-              { value: 'group_only', label: 'Group Only' },
-              { value: 'public', label: 'Public' },
-            ].map(opt => (
+            {[{ value: 'group_only', label: 'Group Only' }, { value: 'public', label: 'Public' }].map(opt => (
               <button
                 key={opt.value}
                 type="button"
@@ -267,21 +257,16 @@ export default function CreateEvent() {
           </div>
         </div>
 
-        {/* Submit */}
         <button
           type="submit"
-          disabled={isSubmitting || !form.group_id || !form.title || !form.start_at}
+          disabled={isDisabled}
           className="w-full py-4 rounded-2xl font-bold text-base mt-4 flex items-center justify-center gap-2 transition-all"
-          style={{
-            background: isSubmitting || !form.group_id || !form.title || !form.start_at
-              ? 'rgba(191,255,0,0.3)'
-              : '#BFFF00',
-            color: '#0A0A0A',
-          }}
+          style={{ background: isDisabled ? 'rgba(191,255,0,0.3)' : '#BFFF00', color: '#0A0A0A' }}
         >
-          {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
+          {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
           {isSubmitting ? 'Creating...' : 'Create Event'}
         </button>
+
       </form>
     </div>
   );
