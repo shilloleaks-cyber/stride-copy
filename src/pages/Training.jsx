@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
@@ -88,16 +88,8 @@ export default function Training() {
     }
   };
 
-  // Always use ALL sessions in the plan for progress — never filter by week/date
   const completedTotal = sessions.filter(s => s.completed).length;
   const totalSessions = sessions.length;
-
-  // Debug: log session state to catch stale queries
-  React.useEffect(() => {
-    if (activePlan?.id) {
-      console.log('[Training] plan_id:', activePlan.id, '| sessions:', sessions.length, '| completed:', completedTotal);
-    }
-  }, [activePlan?.id, sessions.length, completedTotal]);
 
   return (
     <div className="min-h-screen text-white pb-24" style={{ backgroundColor: '#0A0A0A' }}>
