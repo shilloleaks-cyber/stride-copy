@@ -5,6 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Calendar, MapPin, Users, Loader2, CheckCircle2, CalendarDays, Star, Clock } from 'lucide-react';
 import { format } from 'date-fns';
+import SponsorRewards from '@/components/events/SponsorRewards';
 
 const STATUS_BADGE = {
   joined:     { label: 'Joined',     bg: 'rgba(138,43,226,0.2)',  color: '#BFFF00',           border: 'rgba(191,255,0,0.2)' },
@@ -111,6 +112,27 @@ export default function EventDetail() {
       status: 'checked_in',
       checked_in_at: new Date().toISOString(),
     });
+
+    // Unlock coupons for this event
+    const eventCoupons = await base44.entities.Coupon.filter({ event_id: eventId });
+    if (eventCoupons.length > 0) {
+      const existingUserCoupons = await base44.entities.UserCoupon.filter({ event_id: eventId, user_id: user.email });
+      const alreadyUnlockedIds = new Set(existingUserCoupons.map(uc => uc.coupon_id));
+      const now = new Date().toISOString();
+      for (const coupon of eventCoupons) {
+        if (!alreadyUnlockedIds.has(coupon.id)) {
+          await base44.entities.UserCoupon.create({
+            user_id: user.email,
+            coupon_id: coupon.id,
+            event_id: eventId,
+            status: 'unlocked',
+            unlocked_at: now,
+          });
+        }
+      }
+      queryClient.invalidateQueries({ queryKey: ['user-coupons-event', eventId, user.email] });
+    }
+
     queryClient.invalidateQueries({ queryKey: ['event-participants', eventId] });
     queryClient.invalidateQueries({ queryKey: ['my-participations', user?.email] });
     setIsCheckingIn(false);
@@ -338,6 +360,11 @@ export default function EventDetail() {
             <p className="text-xs uppercase tracking-widest mb-3" style={{ color: 'rgba(255,255,255,0.35)' }}>About</p>
             <p className="leading-relaxed" style={{ color: 'rgba(255,255,255,0.75)' }}>{event.description}</p>
           </div>
+        )}
+
+        {/* Sponsor Rewards — shown after check-in */}
+        {alreadyCheckedIn && user && (
+          <SponsorRewards eventId={eventId} userEmail={user.email} />
         )}
 
         {/* Participants */}

@@ -8,6 +8,7 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import CreateOfficialEvent from './pages/CreateOfficialEvent';
 import MyEvents from './pages/MyEvents';
+import MyRewards from './pages/MyRewards';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 
 const { Pages, Layout, mainPage } = pagesConfig;
@@ -62,6 +63,7 @@ const AuthenticatedApp = () => {
       ))}
       <Route path="/CreateOfficialEvent" element={<LayoutWrapper currentPageName="CreateOfficialEvent"><CreateOfficialEvent /></LayoutWrapper>} />
       <Route path="/MyEvents" element={<LayoutWrapper currentPageName="MyEvents"><MyEvents /></LayoutWrapper>} />
+      <Route path="/MyRewards" element={<LayoutWrapper currentPageName="MyRewards"><MyRewards /></LayoutWrapper>} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
