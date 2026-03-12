@@ -59,6 +59,7 @@ const AuthenticatedApp = () => {
           }
         />
       ))}
+      <Route path="/CreateOfficialEvent" element={<LayoutWrapper currentPageName="CreateOfficialEvent"><CreateOfficialEvent /></LayoutWrapper>} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
