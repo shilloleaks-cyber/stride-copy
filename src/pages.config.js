@@ -71,6 +71,9 @@ import Stats from './pages/Stats';
 import Training from './pages/Training';
 import Wallet from './pages/Wallet';
 import Welcome from './pages/Welcome';
+import Events from './pages/Events';
+import CreateEvent from './pages/CreateEvent';
+import EventDetail from './pages/EventDetail';
 import __Layout from './Layout.jsx';
 
 
@@ -99,6 +102,9 @@ export const PAGES = {
     "Training": Training,
     "Wallet": Wallet,
     "Welcome": Welcome,
+    "Events": Events,
+    "CreateEvent": CreateEvent,
+    "EventDetail": EventDetail,
 }
 
 export const pagesConfig = {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { Home, Activity, BarChart2, User, Users, Wallet, Trophy } from 'lucide-react';
+import { Home, BarChart2, User, Users, CalendarDays } from 'lucide-react';
 import './globals.css';
 
 export default function Layout({ children }) {
@@ -11,7 +11,7 @@ export default function Layout({ children }) {
     { name: 'หน้าหลัก', icon: Home, page: 'Home' },
     { name: 'เทรน', icon: BarChart2, page: 'Training' },
     { name: 'ฟีด', icon: Users, page: 'Feed' },
-    { name: 'กลุ่ม', icon: Users, page: 'Feed', query: 'tab=groups' },
+    { name: 'Events', icon: CalendarDays, page: 'Events' },
     { name: 'โปรไฟล์', icon: User, page: 'Profile' },
   ];
 
