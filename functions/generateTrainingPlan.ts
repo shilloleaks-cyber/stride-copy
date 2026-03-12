@@ -172,11 +172,13 @@ Deno.serve(async (req) => {
     const email = userEmail || payloadEmail;
 
     // ── Fetch goal via service role ──────────────────────────────────────────
-    const goal = await base44.asServiceRole.entities.TrainingGoal.get(goal_id);
+    const goalList = await base44.asServiceRole.entities.TrainingGoal.filter({ id: goal_id });
 
-    if (!goal) {
+    if (!goalList || goalList.length === 0) {
       return Response.json({ success: false, error: 'Goal not found' }, { status: 404 });
     }
+
+    const goal = goalList[0];
 
     // Security: if authenticated, ensure goal belongs to this user
     if (isAuthenticated && goal.user_email !== userEmail) {
