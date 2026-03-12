@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, MapPin, Users, Loader2, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, Loader2, CheckCircle2, CalendarDays } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function EventDetail() {
@@ -87,22 +87,35 @@ export default function EventDetail() {
 
   return (
     <div className="min-h-screen text-white pb-32" style={{ backgroundColor: '#0A0A0A' }}>
-      {/* Header */}
-      <div
-        className="sticky top-0 z-50 px-6 pt-10 pb-4 flex items-center gap-4"
-        style={{ backgroundColor: 'rgba(10,10,10,0.95)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
-      >
+      {/* Banner / Header */}
+      <div className="relative w-full" style={{ height: '220px' }}>
+        {event.banner_image ? (
+          <img
+            src={event.banner_image}
+            alt={event.title}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div
+            className="w-full h-full flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg, rgba(138,43,226,0.25) 0%, rgba(10,10,10,1) 100%)' }}
+          >
+            <CalendarDays className="w-16 h-16" style={{ color: 'rgba(255,255,255,0.12)' }} />
+          </div>
+        )}
+        {/* Dark gradient overlay at bottom */}
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(10,10,10,0.9) 100%)' }} />
+        {/* Back button */}
         <button
           onClick={() => navigate(-1)}
-          className="w-9 h-9 rounded-full flex items-center justify-center"
-          style={{ background: 'rgba(255,255,255,0.08)' }}
+          className="absolute top-10 left-4 w-9 h-9 rounded-full flex items-center justify-center z-10"
+          style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)' }}
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-5 h-5 text-white" />
         </button>
-        <h1 className="text-lg font-bold truncate">{event.title}</h1>
       </div>
 
-      <div className="px-6 pt-6 space-y-6">
+      <div className="px-6 pt-4 space-y-6">
         {/* Group badge */}
         {group && (
           <span

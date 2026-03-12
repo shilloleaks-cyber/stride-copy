@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, MapPin, Users, Calendar } from 'lucide-react';
+import { Plus, MapPin, Users, Calendar, CalendarDays } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function Events() {
@@ -84,41 +84,62 @@ export default function Events() {
           <button
             key={event.id}
             onClick={() => navigate(createPageUrl(`EventDetail?id=${event.id}`))}
-            className="w-full text-left rounded-2xl p-5 transition-all"
-            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+            className="w-full text-left rounded-2xl overflow-hidden transition-all flex"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', minHeight: '130px' }}
           >
-            {/* Group badge */}
-            {groupMap[event.group_id] && (
-              <span
-                className="text-xs font-semibold px-2 py-0.5 rounded-full mb-3 inline-block"
-                style={{ background: 'rgba(138,43,226,0.2)', color: '#BFFF00', border: '1px solid rgba(191,255,0,0.2)' }}
-              >
-                {groupMap[event.group_id]}
-              </span>
-            )}
-
-            <h3 className="text-lg font-bold text-white mb-3">{event.title}</h3>
-
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 flex-shrink-0" style={{ color: '#BFFF00' }} />
-                <span className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>
-                  {format(new Date(event.start_at), 'EEE, MMM d · h:mm a')}
+            {/* Left: info */}
+            <div className="flex-1 p-4 flex flex-col justify-between min-w-0">
+              {/* Group badge */}
+              {groupMap[event.group_id] && (
+                <span
+                  className="text-xs font-semibold px-2 py-0.5 rounded-full mb-2 inline-block self-start"
+                  style={{ background: 'rgba(138,43,226,0.2)', color: '#BFFF00', border: '1px solid rgba(191,255,0,0.2)' }}
+                >
+                  {groupMap[event.group_id]}
                 </span>
+              )}
+
+              <p className="font-bold text-white text-base leading-tight mb-2 line-clamp-2">{event.title}</p>
+
+              <div className="space-y-1">
+                <div className="flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#BFFF00' }} />
+                  <span className="text-xs" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                    {format(new Date(event.start_at), 'EEE, MMM d · h:mm a')}
+                  </span>
+                </div>
+                {event.location_name && (
+                  <div className="flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.35)' }} />
+                    <span className="text-xs truncate" style={{ color: 'rgba(255,255,255,0.45)' }}>{event.location_name}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.35)' }} />
+                  <span className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                    {event.attendee_count || 0} joined{event.max_attendees ? ` · max ${event.max_attendees}` : ''}
+                  </span>
+                </div>
               </div>
-              {event.location_name && (
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.4)' }} />
-                  <span className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>{event.location_name}</span>
+            </div>
+
+            {/* Right: banner thumbnail */}
+            <div className="flex-shrink-0 w-24 m-3 rounded-xl overflow-hidden" style={{ minHeight: '104px' }}>
+              {event.banner_image ? (
+                <img
+                  src={event.banner_image}
+                  alt={event.title}
+                  className="w-full h-full object-cover"
+                  style={{ minHeight: '104px' }}
+                />
+              ) : (
+                <div
+                  className="w-full h-full flex items-center justify-center"
+                  style={{ background: 'rgba(255,255,255,0.06)', minHeight: '104px' }}
+                >
+                  <CalendarDays className="w-7 h-7" style={{ color: 'rgba(255,255,255,0.2)' }} />
                 </div>
               )}
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.4)' }} />
-                <span className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                  {event.attendee_count || 0} joined
-                  {event.max_attendees ? ` · max ${event.max_attendees}` : ''}
-                </span>
-              </div>
             </div>
           </button>
         ))}

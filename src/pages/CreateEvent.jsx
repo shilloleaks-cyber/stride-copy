@@ -26,7 +26,6 @@ export default function CreateEvent() {
     queryFn: () => base44.auth.me(),
   });
 
-  // Fetch groups the user belongs to
   const { data: memberships = [] } = useQuery({
     queryKey: ['group-memberships', user?.email],
     queryFn: () => base44.entities.GroupMember.filter({ user_email: user.email, status: 'active' }),
@@ -51,8 +50,7 @@ export default function CreateEvent() {
     const file = e.target.files?.[0];
     if (!file) return;
     setIsUploadingBanner(true);
-    const previewUrl = URL.createObjectURL(file);
-    setBannerPreview(previewUrl);
+    setBannerPreview(URL.createObjectURL(file));
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
     handleChange('banner_image', file_url);
     setIsUploadingBanner(false);
@@ -71,32 +69,23 @@ export default function CreateEvent() {
     setIsSubmitting(true);
 
     const event = await base44.entities.Event.create({
-    group_id: form.group_id,
-    created_by_user_email: user.email,
-    created_by_user_name: user.full_name,
-    title: form.title,
-    description: form.description,
-    banner_image: form.banner_image || '',
-    location_name: form.location_name,
-    start_at: new Date(form.start_at).toISOString(),
-    max_attendees: form.max_attendees ? parseInt(form.max_attendees) : 0,
-    visibility: form.visibility,
-    status: 'published',
-    attendee_count: 1,
+      group_id: form.group_id,
+      created_by_user_email: user.email,
+      created_by_user_name: user.full_name,
+      title: form.title,
+      description: form.description,
+      banner_image: form.banner_image || '',
+      location_name: form.location_name,
+      start_at: new Date(form.start_at).toISOString(),
+      max_attendees: form.max_attendees ? parseInt(form.max_attendees) : 0,
+      visibility: form.visibility,
+      status: 'published',
+      attendee_count: 1,
     });
 
     await Promise.all([
-      base44.entities.EventAdmin.create({
-        event_id: event.id,
-        user_email: user.email,
-        role: 'owner',
-      }),
-      base44.entities.EventParticipant.create({
-        event_id: event.id,
-        user_email: user.email,
-        user_name: user.full_name,
-        status: 'joined',
-      }),
+      base44.entities.EventAdmin.create({ event_id: event.id, user_email: user.email, role: 'owner' }),
+      base44.entities.EventParticipant.create({ event_id: event.id, user_email: user.email, user_name: user.full_name, status: 'joined' }),
     ]);
 
     setIsSubmitting(false);
@@ -160,11 +149,6 @@ export default function CreateEvent() {
         {/* Title */}
         <div>
           <label style={labelStyle}>Event Title *</label>
-        </div>
-
-        {/* Banner Image - placed after title in form, declared before it structurally */}
-        {/* (keep original title input below) */}
-        <div style={{ display: 'none' }} />
           <input
             type="text"
             value={form.title}
@@ -173,6 +157,40 @@ export default function CreateEvent() {
             required
             style={inputStyle}
           />
+        </div>
+
+        {/* Banner Image */}
+        <div>
+          <label style={labelStyle}>Banner Image</label>
+          {bannerPreview ? (
+            <div className="relative rounded-xl overflow-hidden" style={{ height: '140px' }}>
+              <img src={bannerPreview} alt="Banner" className="w-full h-full object-cover" />
+              {isUploadingBanner && (
+                <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)' }}>
+                  <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#BFFF00' }} />
+                </div>
+              )}
+              {!isUploadingBanner && (
+                <button
+                  type="button"
+                  onClick={clearBanner}
+                  className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center"
+                  style={{ background: 'rgba(0,0,0,0.7)' }}
+                >
+                  <X className="w-4 h-4 text-white" />
+                </button>
+              )}
+            </div>
+          ) : (
+            <label
+              className="flex flex-col items-center justify-center gap-2 rounded-xl cursor-pointer transition-all"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.15)', height: '100px' }}
+            >
+              <ImagePlus className="w-6 h-6" style={{ color: 'rgba(255,255,255,0.3)' }} />
+              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>Tap to upload banner</span>
+              <input type="file" accept="image/*" className="hidden" onChange={handleBannerUpload} />
+            </label>
+          )}
         </div>
 
         {/* Description */}
