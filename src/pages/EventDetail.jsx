@@ -6,10 +6,31 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Calendar, MapPin, Users, Loader2, CheckCircle2, CalendarDays, Star, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 
+const STATUS_BADGE = {
+  joined:     { label: 'Joined',     bg: 'rgba(138,43,226,0.2)',  color: '#BFFF00',           border: 'rgba(191,255,0,0.2)' },
+  registered: { label: 'Registered', bg: 'rgba(191,255,0,0.12)', color: '#BFFF00',           border: 'rgba(191,255,0,0.3)' },
+  checked_in: { label: 'Checked In', bg: 'rgba(0,200,100,0.15)', color: 'rgb(0,220,120)',     border: 'rgba(0,200,100,0.3)' },
+  cancelled:  { label: 'Cancelled',  bg: 'rgba(255,80,80,0.12)', color: 'rgba(255,120,120,1)',border: 'rgba(255,80,80,0.25)' },
+};
+
+function StatusBadge({ status }) {
+  const s = STATUS_BADGE[status] || STATUS_BADGE.joined;
+  return (
+    <span
+      className="text-xs font-bold px-3 py-1 rounded-full inline-flex items-center gap-1"
+      style={{ background: s.bg, color: s.color, border: `1px solid ${s.border}` }}
+    >
+      {status === 'checked_in' && <CheckCircle2 className="w-3 h-3" />}
+      {s.label}
+    </span>
+  );
+}
+
 export default function EventDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isActing, setIsActing] = useState(false);
+  const [isCheckingIn, setIsCheckingIn] = useState(false);
 
   const params = new URLSearchParams(window.location.search);
   const eventId = params.get('id');
@@ -30,14 +51,13 @@ export default function EventDetail() {
 
   const isOfficial = event?.event_kind === 'official';
 
-  // Fetch participants - for official events also look for "registered" status
   const { data: participants = [] } = useQuery({
     queryKey: ['event-participants', eventId],
     queryFn: () => base44.entities.EventParticipant.filter({ event_id: eventId }),
     enabled: !!eventId,
   });
 
-  const activeParticipants = participants.filter(p => p.status === 'joined' || p.status === 'registered');
+  const activeParticipants = participants.filter(p => p.status !== 'cancelled');
 
   const { data: group } = useQuery({
     queryKey: ['event-group', event?.group_id],
@@ -48,29 +68,52 @@ export default function EventDetail() {
     enabled: !!event?.group_id,
   });
 
-  const alreadyParticipating = activeParticipants.some(p => p.user_email === user?.email);
+  const myParticipation = participants.find(p => p.user_email === user?.email && p.status !== 'cancelled');
+  const alreadyParticipating = !!myParticipation;
   const isFull = event?.max_attendees > 0 && activeParticipants.length >= event.max_attendees;
 
-  const handleAction = async () => {
+  // Check-in window: 3h before start until 2h after start
+  const isInCheckInWindow = () => {
+    if (!event?.start_at) return false;
+    const now = Date.now();
+    const start = new Date(event.start_at).getTime();
+    return now >= start - 3 * 60 * 60 * 1000 && now <= start + 2 * 60 * 60 * 1000;
+  };
+
+  const canCheckIn = isOfficial
+    && myParticipation?.status === 'registered'
+    && isInCheckInWindow();
+
+  const alreadyCheckedIn = myParticipation?.status === 'checked_in';
+
+  const handleJoinOrRegister = async () => {
     if (!user || alreadyParticipating || isFull) return;
     setIsActing(true);
-
     const participantStatus = isOfficial ? 'registered' : 'joined';
-
     await base44.entities.EventParticipant.create({
       event_id: eventId,
       user_email: user.email,
       user_name: user.full_name,
       status: participantStatus,
     });
-
     await base44.entities.Event.update(eventId, {
       attendee_count: (event.attendee_count || 0) + 1,
     });
-
     queryClient.invalidateQueries({ queryKey: ['event-participants', eventId] });
     queryClient.invalidateQueries({ queryKey: ['event', eventId] });
     setIsActing(false);
+  };
+
+  const handleCheckIn = async () => {
+    if (!canCheckIn || !myParticipation) return;
+    setIsCheckingIn(true);
+    await base44.entities.EventParticipant.update(myParticipation.id, {
+      status: 'checked_in',
+      checked_in_at: new Date().toISOString(),
+    });
+    queryClient.invalidateQueries({ queryKey: ['event-participants', eventId] });
+    queryClient.invalidateQueries({ queryKey: ['my-participations', user?.email] });
+    setIsCheckingIn(false);
   };
 
   if (isLoading) {
@@ -92,9 +135,91 @@ export default function EventDetail() {
     );
   }
 
-  // Button state
-  const actionLabel = isOfficial ? 'Register' : 'Join Event';
-  const confirmedLabel = isOfficial ? 'Registered!' : "You're in!";
+  // Bottom button logic
+  const renderBottomAction = () => {
+    if (event.status !== 'published') return null;
+
+    if (isOfficial) {
+      if (alreadyCheckedIn) {
+        return (
+          <button
+            disabled
+            className="w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2"
+            style={{ background: 'rgba(0,200,100,0.15)', color: 'rgb(0,220,120)', border: '1px solid rgba(0,200,100,0.3)' }}
+          >
+            <CheckCircle2 className="w-5 h-5" /> You're checked in ✅
+          </button>
+        );
+      }
+      if (myParticipation?.status === 'registered') {
+        return (
+          <div className="space-y-3">
+            {canCheckIn ? (
+              <button
+                onClick={handleCheckIn}
+                disabled={isCheckingIn}
+                className="w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all"
+                style={{ background: '#BFFF00', color: '#0A0A0A' }}
+              >
+                {isCheckingIn ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle2 className="w-5 h-5" />}
+                {isCheckingIn ? 'Checking in...' : 'Check In'}
+              </button>
+            ) : (
+              <button
+                disabled
+                className="w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2"
+                style={{ background: 'rgba(191,255,0,0.12)', color: '#BFFF00', border: '1px solid rgba(191,255,0,0.25)' }}
+              >
+                <CheckCircle2 className="w-5 h-5" /> Registered
+              </button>
+            )}
+          </div>
+        );
+      }
+      // Not yet registered
+      return (
+        <button
+          onClick={handleJoinOrRegister}
+          disabled={isActing || isFull}
+          className="w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all"
+          style={isFull
+            ? { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.35)' }
+            : { background: '#BFFF00', color: '#0A0A0A' }
+          }
+        >
+          {isActing ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
+          {isActing ? 'Registering...' : isFull ? 'Event Full' : 'Register'}
+        </button>
+      );
+    }
+
+    // Group event
+    if (myParticipation?.status === 'joined') {
+      return (
+        <button
+          disabled
+          className="w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2"
+          style={{ background: 'rgba(191,255,0,0.12)', color: '#BFFF00', border: '1px solid rgba(191,255,0,0.25)' }}
+        >
+          <CheckCircle2 className="w-5 h-5" /> You're in!
+        </button>
+      );
+    }
+    return (
+      <button
+        onClick={handleJoinOrRegister}
+        disabled={isActing || isFull}
+        className="w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all"
+        style={isFull
+          ? { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.35)' }
+          : { background: '#BFFF00', color: '#0A0A0A' }
+        }
+      >
+        {isActing ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
+        {isActing ? 'Joining...' : isFull ? 'Event Full' : 'Join Event'}
+      </button>
+    );
+  };
 
   return (
     <div className="min-h-screen text-white pb-32" style={{ backgroundColor: '#0A0A0A' }}>
@@ -128,7 +253,7 @@ export default function EventDetail() {
       </div>
 
       <div className="px-6 pt-4 space-y-6">
-        {/* Kind + Group badges */}
+        {/* Kind + Group + My Status badges */}
         <div className="flex items-center gap-2 flex-wrap">
           {isOfficial ? (
             <span
@@ -146,14 +271,7 @@ export default function EventDetail() {
               {group.name}
             </span>
           ) : null}
-          {event.registration_required && isOfficial && (
-            <span
-              className="text-xs font-semibold px-3 py-1 rounded-full inline-block"
-              style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.1)' }}
-            >
-              Registration Required
-            </span>
-          )}
+          {myParticipation && <StatusBadge status={myParticipation.status} />}
         </div>
 
         {/* Title */}
@@ -241,12 +359,15 @@ export default function EventDetail() {
                   >
                     {(p.user_name || p.user_email || '?')[0].toUpperCase()}
                   </div>
-                  <p className="text-sm font-medium text-white">{p.user_name || p.user_email}</p>
-                  {p.user_email === event.created_by_user_email && (
-                    <span className="ml-auto text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(191,255,0,0.15)', color: '#BFFF00' }}>
-                      Organizer
-                    </span>
-                  )}
+                  <p className="text-sm font-medium text-white flex-1">{p.user_name || p.user_email}</p>
+                  <div className="flex items-center gap-2">
+                    {p.user_email === event.created_by_user_email && (
+                      <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(191,255,0,0.15)', color: '#BFFF00' }}>
+                        Organizer
+                      </span>
+                    )}
+                    <StatusBadge status={p.status} />
+                  </div>
                 </div>
               ))}
             </div>
@@ -254,33 +375,10 @@ export default function EventDetail() {
         )}
       </div>
 
-      {/* Action Button */}
-      {event.status === 'published' && (
-        <div className="fixed bottom-20 left-0 right-0 px-6 pb-2">
-          <button
-            onClick={handleAction}
-            disabled={isActing || alreadyParticipating || isFull}
-            className="w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all"
-            style={
-              alreadyParticipating
-                ? { background: 'rgba(191,255,0,0.12)', color: '#BFFF00', border: '1px solid rgba(191,255,0,0.25)' }
-                : isFull
-                ? { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.35)' }
-                : { background: '#BFFF00', color: '#0A0A0A' }
-            }
-          >
-            {isActing ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : alreadyParticipating ? (
-              <><CheckCircle2 className="w-5 h-5" /> {confirmedLabel}</>
-            ) : isFull ? (
-              'Event Full'
-            ) : (
-              actionLabel
-            )}
-          </button>
-        </div>
-      )}
+      {/* Bottom Action */}
+      <div className="fixed bottom-20 left-0 right-0 px-6 pb-2">
+        {renderBottomAction()}
+      </div>
     </div>
   );
 }
