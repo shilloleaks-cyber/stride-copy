@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, ImagePlus, X } from 'lucide-react';
 
 export default function CreateEvent() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [bannerPreview, setBannerPreview] = useState(null);
+  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
   const [form, setForm] = useState({
     group_id: '',
     title: '',
@@ -16,6 +18,7 @@ export default function CreateEvent() {
     start_at: '',
     max_attendees: '',
     visibility: 'group_only',
+    banner_image: '',
   });
 
   const { data: user } = useQuery({
@@ -44,6 +47,22 @@ export default function CreateEvent() {
     setForm(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleBannerUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingBanner(true);
+    const previewUrl = URL.createObjectURL(file);
+    setBannerPreview(previewUrl);
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    handleChange('banner_image', file_url);
+    setIsUploadingBanner(false);
+  };
+
+  const clearBanner = () => {
+    setBannerPreview(null);
+    handleChange('banner_image', '');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.group_id || !form.title || !form.start_at) return;
@@ -52,17 +71,18 @@ export default function CreateEvent() {
     setIsSubmitting(true);
 
     const event = await base44.entities.Event.create({
-      group_id: form.group_id,
-      created_by_user_email: user.email,
-      created_by_user_name: user.full_name,
-      title: form.title,
-      description: form.description,
-      location_name: form.location_name,
-      start_at: new Date(form.start_at).toISOString(),
-      max_attendees: form.max_attendees ? parseInt(form.max_attendees) : 0,
-      visibility: form.visibility,
-      status: 'published',
-      attendee_count: 1,
+    group_id: form.group_id,
+    created_by_user_email: user.email,
+    created_by_user_name: user.full_name,
+    title: form.title,
+    description: form.description,
+    banner_image: form.banner_image || '',
+    location_name: form.location_name,
+    start_at: new Date(form.start_at).toISOString(),
+    max_attendees: form.max_attendees ? parseInt(form.max_attendees) : 0,
+    visibility: form.visibility,
+    status: 'published',
+    attendee_count: 1,
     });
 
     await Promise.all([
@@ -140,6 +160,11 @@ export default function CreateEvent() {
         {/* Title */}
         <div>
           <label style={labelStyle}>Event Title *</label>
+        </div>
+
+        {/* Banner Image - placed after title in form, declared before it structurally */}
+        {/* (keep original title input below) */}
+        <div style={{ display: 'none' }} />
           <input
             type="text"
             value={form.title}
