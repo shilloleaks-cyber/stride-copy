@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, MapPin, Users, Calendar, CalendarDays, Star, ChevronDown } from 'lucide-react';
+import { Plus, MapPin, Users, Calendar, CalendarDays, Star, Bookmark } from 'lucide-react';
 import { format } from 'date-fns';
 
 function EventCard({ event, groupMap, onClick }) {
@@ -170,6 +170,14 @@ export default function Events() {
             <h1 className="text-3xl font-bold text-white">Events</h1>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate(createPageUrl('MyEvents'))}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl font-semibold text-xs"
+              style={{ backgroundColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.12)' }}
+            >
+              <Bookmark className="w-3.5 h-3.5" />
+              Mine
+            </button>
             <button
               onClick={() => navigate(createPageUrl('CreateOfficialEvent'))}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl font-semibold text-xs"
