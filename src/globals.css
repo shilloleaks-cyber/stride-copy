@@ -1,5 +1,19 @@
 @charset "UTF-8";
 
+/* iOS WebView compatibility */
+body {
+  overscroll-behavior: none;
+}
+
+button, a {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
 :root {
   --rc-bg: #0A0A0A;
   --rc-lime: #BFFF00;

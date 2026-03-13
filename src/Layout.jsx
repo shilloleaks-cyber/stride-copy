@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Home, BarChart2, User, Users, CalendarDays } from 'lucide-react';
@@ -6,6 +6,17 @@ import './globals.css';
 
 export default function Layout({ children }) {
   const location = useLocation();
+
+  // Detect system color scheme and toggle .dark class
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const apply = (e) => {
+      document.documentElement.classList.toggle('dark', e.matches);
+    };
+    apply(mq);
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, []);
   
   const navItems = [
     { name: 'หน้าหลัก', icon: Home, page: 'Home' },
@@ -27,7 +38,7 @@ export default function Layout({ children }) {
       {children}
       
       {!hideNav && (
-        <nav className="fixed bottom-0 left-0 right-0 backdrop-blur-lg border-t border-white/5 px-6 py-4 safe-area-bottom" style={{ backgroundColor: 'rgba(10, 10, 10, 0.95)', zIndex: 9999, pointerEvents: 'auto' }}>
+        <nav className="fixed bottom-0 left-0 right-0 backdrop-blur-lg border-t border-white/5 px-6 pt-4 safe-area-bottom" style={{ backgroundColor: 'rgba(10, 10, 10, 0.95)', zIndex: 9999, pointerEvents: 'auto' }}>
           <div className="flex items-center justify-around max-w-md mx-auto">
             {navItems.map((item) => {
               const isActive = isActivePage(item.page);
