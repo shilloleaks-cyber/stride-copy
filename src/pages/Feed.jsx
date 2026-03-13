@@ -76,34 +76,47 @@ export default function Feed() {
   });
 
   const likeMutation = useMutation({
-    mutationFn: async ({ postId, isLiked }) => {
-      const post = allPosts.find(p => p.id === postId);
-      const currentLikes = post?.likes || [];
-      
-      let newLikes;
-      if (isLiked) {
-        newLikes = currentLikes.filter(email => email !== currentUser?.email);
-      } else {
-        newLikes = [...currentLikes, currentUser?.email];
-      }
-      
+    mutationFn: async ({ postId, newLikes }) => {
       await base44.entities.Post.update(postId, { likes: newLikes });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['posts']);
+    onMutate: async ({ postId, newLikes }) => {
+      await queryClient.cancelQueries({ queryKey: ['posts'] });
+      const previous = queryClient.getQueryData(['posts']);
+      queryClient.setQueryData(['posts'], (old = []) =>
+        old.map(p => p.id === postId ? { ...p, likes: newLikes } : p)
+      );
+      return { previous };
     },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous) queryClient.setQueryData(['posts'], ctx.previous);
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['posts'] }),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (postId) => base44.entities.Post.delete(postId),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['posts']);
+    onMutate: async (postId) => {
+      await queryClient.cancelQueries({ queryKey: ['posts'] });
+      const previous = queryClient.getQueryData(['posts']);
+      queryClient.setQueryData(['posts'], (old = []) => old.filter(p => p.id !== postId));
+      return { previous };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous) queryClient.setQueryData(['posts'], ctx.previous);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
       setDeleteTargetPostId(null);
     },
   });
 
   const handleLike = (postId, isLiked) => {
-    likeMutation.mutate({ postId, isLiked });
+    const post = allPosts.find(p => p.id === postId);
+    const currentLikes = post?.likes || [];
+    const newLikes = isLiked
+      ? currentLikes.filter(email => email !== currentUser?.email)
+      : [...currentLikes, currentUser?.email];
+    likeMutation.mutate({ postId, newLikes });
   };
 
   const handleViewComments = (post) => {

@@ -8,7 +8,7 @@ import { format } from 'date-fns';
 import { 
   ArrowLeft, Share2, User, MapPin, Clock, Flame, Heart, 
   Award, Calendar, TrendingUp, Facebook, Copy, Check,
-  Settings, LogOut, Trophy, Target, Users, Edit3, Palette, Wallet
+  Settings, LogOut, Trophy, Target, Users, Edit3, Palette, Wallet, Trash2
 } from 'lucide-react';
 import UserCard from '@/components/feed/UserCard';
 import { useMutation } from '@tanstack/react-query';
@@ -44,6 +44,9 @@ export default function Profile() {
   const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
   const [activeFollowTab, setActiveFollowTab] = useState('following');
   const [followSheetOpen, setFollowSheetOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   const { data: user, refetch: refetchUser } = useQuery({
     queryKey: ['currentUser'],
@@ -216,6 +219,12 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
   };
 
   const handleLogout = () => {
+    base44.auth.logout();
+  };
+
+  const handleDeleteAccount = async () => {
+    setIsDeletingAccount(true);
+    await base44.auth.updateMe({ status: 'deleted', deleted_at: new Date().toISOString() });
     base44.auth.logout();
   };
 
@@ -393,6 +402,16 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
             className="achievementsDetailsBtn"
           >
             Details
+          </button>
+          <button
+            onClick={() => setSettingsOpen(true)}
+            style={{
+              marginLeft: 'auto', width: '34px', height: '34px', borderRadius: '10px',
+              background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+              color: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+            }}
+          >
+            <Settings style={{ width: 16, height: 16 }} />
           </button>
         </div>
         
@@ -621,6 +640,106 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
             </div>
           </motion.div>
         </motion.div>
+      )}
+
+      {/* Settings Sheet */}
+      {settingsOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="achievementsModalOverlay"
+          onClick={() => setSettingsOpen(false)}
+        >
+          <motion.div
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+            className="achievementsModalSheet"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="achievementsModalHeader">
+              <div>
+                <h3 className="achievementsModalTitle">Settings</h3>
+              </div>
+              <button onClick={() => setSettingsOpen(false)} className="achievementsModalClose">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div style={{ padding: '0 4px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <button
+                onClick={() => { setSettingsOpen(false); handleLogout(); }}
+                style={{
+                  width: '100%', padding: '14px 16px', borderRadius: '14px', display: 'flex',
+                  alignItems: 'center', gap: '12px', background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.85)',
+                  fontSize: '15px', fontWeight: '600', cursor: 'pointer',
+                }}
+              >
+                <LogOut style={{ width: 18, height: 18 }} />
+                Log Out
+              </button>
+
+              <button
+                onClick={() => { setSettingsOpen(false); setDeleteConfirmOpen(true); }}
+                style={{
+                  width: '100%', padding: '14px 16px', borderRadius: '14px', display: 'flex',
+                  alignItems: 'center', gap: '12px', background: 'rgba(255,60,60,0.08)',
+                  border: '1px solid rgba(255,60,60,0.2)', color: 'rgba(255,100,100,0.95)',
+                  fontSize: '15px', fontWeight: '600', cursor: 'pointer',
+                }}
+              >
+                <Trash2 style={{ width: 18, height: 18 }} />
+                Delete Account
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+
+      {/* Delete Account Confirm */}
+      {deleteConfirmOpen && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 99999,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px',
+        }}>
+          <div style={{
+            background: '#111', borderRadius: '20px', padding: '28px 24px',
+            border: '1px solid rgba(255,60,60,0.3)', maxWidth: '360px', width: '100%',
+          }}>
+            <p style={{ fontSize: '20px', fontWeight: '800', color: '#fff', marginBottom: '10px' }}>Delete Account?</p>
+            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.55)', marginBottom: '24px', lineHeight: 1.6 }}>
+              This action cannot be undone. Your profile and data will be permanently removed.
+            </p>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={() => setDeleteConfirmOpen(false)}
+                style={{
+                  flex: 1, padding: '13px', borderRadius: '12px', fontSize: '14px', fontWeight: '700',
+                  background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)',
+                  color: 'rgba(255,255,255,0.7)', cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={isDeletingAccount}
+                style={{
+                  flex: 1, padding: '13px', borderRadius: '12px', fontSize: '14px', fontWeight: '700',
+                  background: 'rgba(255,60,60,0.85)', border: 'none', color: '#fff', cursor: 'pointer',
+                  opacity: isDeletingAccount ? 0.6 : 1,
+                }}
+              >
+                {isDeletingAccount ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Follow Sheet Modal */}
