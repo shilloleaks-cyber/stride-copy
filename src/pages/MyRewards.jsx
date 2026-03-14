@@ -13,13 +13,14 @@ const TABS = [
   { key: 'expired',  label: 'Expired' },
 ];
 
-function CouponWalletCard({ userCoupon, coupon, sponsor, event }) {
+function CouponWalletCard({ userCoupon, coupon, sponsor, event, onClick }) {
   const isRedeemed = userCoupon.status === 'redeemed';
   const isExpired = userCoupon.status === 'expired';
 
   return (
     <div
-      className="rounded-2xl overflow-hidden transition-all"
+      onClick={onClick}
+      className="rounded-2xl overflow-hidden transition-all cursor-pointer active:scale-95"
       style={{
         background: 'rgba(255,255,255,0.04)',
         border: isRedeemed
