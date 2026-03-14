@@ -53,17 +53,20 @@ function CouponWalletCard({ userCoupon, coupon, sponsor, event, onClick }) {
           <span className="text-sm font-semibold text-white">{sponsor?.name || 'Sponsor'}</span>
         </div>
 
-        {coupon?.discount_text && !isExpired && (
-          <span
-            className="text-xs font-black px-2.5 py-1 rounded-full"
-            style={isRedeemed
-              ? { background: 'rgba(138,43,226,0.25)', color: '#BFFF00' }
-              : { background: '#BFFF00', color: '#0A0A0A' }
-            }
-          >
-            {coupon.discount_text}
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {coupon?.discount_text && !isExpired && (
+            <span
+              className="text-xs font-black px-2.5 py-1 rounded-full"
+              style={isRedeemed
+                ? { background: 'rgba(138,43,226,0.25)', color: '#BFFF00' }
+                : { background: '#BFFF00', color: '#0A0A0A' }
+              }
+            >
+              {coupon.discount_text}
+            </span>
+          )}
+          <ChevronRight className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.25)' }} />
+        </div>
       </div>
 
       {/* Body */}
@@ -120,6 +123,7 @@ function CouponWalletCard({ userCoupon, coupon, sponsor, event, onClick }) {
 export default function MyRewards() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('unlocked');
+  const [selectedUC, setSelectedUC] = useState(null);
 
   const { data: user } = useQuery({
     queryKey: ['me'],
@@ -163,6 +167,11 @@ export default function MyRewards() {
     redeemed: userCoupons.filter(uc => uc.status === 'redeemed').length,
     expired: userCoupons.filter(uc => uc.status === 'expired').length,
   };
+
+  // Detail sheet data
+  const selectedCoupon = selectedUC ? couponMap[selectedUC.coupon_id] : null;
+  const selectedSponsor = selectedCoupon ? sponsorMap[selectedCoupon.sponsor_id] : null;
+  const selectedEvent = selectedUC ? eventMap[selectedUC.event_id] : null;
 
   return (
     <div className="min-h-screen text-white pb-24" style={{ backgroundColor: '#0A0A0A' }}>
@@ -252,12 +261,24 @@ export default function MyRewards() {
                   coupon={coupon}
                   sponsor={sponsor}
                   event={event}
+                  onClick={() => setSelectedUC(uc)}
                 />
               );
             })}
           </div>
         )}
       </div>
+
+      {/* Coupon Detail Sheet */}
+      {selectedUC && (
+        <CouponDetailSheet
+          userCoupon={selectedUC}
+          coupon={selectedCoupon}
+          sponsor={selectedSponsor}
+          event={selectedEvent}
+          onClose={() => setSelectedUC(null)}
+        />
+      )}
     </div>
   );
 }
