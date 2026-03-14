@@ -51,7 +51,11 @@ import ActiveRun from './pages/ActiveRun';
 import ChallengeDetail from './pages/ChallengeDetail';
 import Challenges from './pages/Challenges';
 import CommunityCoach from './pages/CommunityCoach';
+import CreateEvent from './pages/CreateEvent';
+import CreateOfficialEvent from './pages/CreateOfficialEvent';
 import Discover from './pages/Discover';
+import EventDetail from './pages/EventDetail';
+import Events from './pages/Events';
 import Feed from './pages/Feed';
 import GroupDetail from './pages/GroupDetail';
 import Groups from './pages/Groups';
@@ -60,6 +64,8 @@ import History from './pages/History';
 import Home from './pages/Home';
 import Leaderboard from './pages/Leaderboard';
 import LevelProgress from './pages/LevelProgress';
+import MyEvents from './pages/MyEvents';
+import MyRewards from './pages/MyRewards';
 import PaceHistory from './pages/PaceHistory';
 import Profile from './pages/Profile';
 import Redeem from './pages/Redeem';
@@ -71,9 +77,7 @@ import Stats from './pages/Stats';
 import Training from './pages/Training';
 import Wallet from './pages/Wallet';
 import Welcome from './pages/Welcome';
-import Events from './pages/Events';
-import CreateEvent from './pages/CreateEvent';
-import EventDetail from './pages/EventDetail';
+import StaffRedeem from './pages/StaffRedeem';
 import __Layout from './Layout.jsx';
 
 
@@ -82,7 +86,11 @@ export const PAGES = {
     "ChallengeDetail": ChallengeDetail,
     "Challenges": Challenges,
     "CommunityCoach": CommunityCoach,
+    "CreateEvent": CreateEvent,
+    "CreateOfficialEvent": CreateOfficialEvent,
     "Discover": Discover,
+    "EventDetail": EventDetail,
+    "Events": Events,
     "Feed": Feed,
     "GroupDetail": GroupDetail,
     "Groups": Groups,
@@ -91,6 +99,8 @@ export const PAGES = {
     "Home": Home,
     "Leaderboard": Leaderboard,
     "LevelProgress": LevelProgress,
+    "MyEvents": MyEvents,
+    "MyRewards": MyRewards,
     "PaceHistory": PaceHistory,
     "Profile": Profile,
     "Redeem": Redeem,
@@ -102,9 +112,7 @@ export const PAGES = {
     "Training": Training,
     "Wallet": Wallet,
     "Welcome": Welcome,
-    "Events": Events,
-    "CreateEvent": CreateEvent,
-    "EventDetail": EventDetail,
+    "StaffRedeem": StaffRedeem,
 }
 
 export const pagesConfig = {
