@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Gift, Tag, Calendar, CheckCircle2, Clock } from 'lucide-react';
+import { ArrowLeft, Gift, Tag, Calendar, CheckCircle2, Clock, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
+import CouponDetailSheet from '@/components/coupons/CouponDetailSheet';
 
 const TABS = [
   { key: 'unlocked', label: 'Available' },
