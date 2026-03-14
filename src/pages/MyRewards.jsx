@@ -191,7 +191,18 @@ export default function MyRewards() {
           <p className="text-xs uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.4)' }}>My</p>
           <h1 className="text-xl font-bold text-white leading-tight">Rewards</h1>
         </div>
-        <Gift className="ml-auto w-5 h-5" style={{ color: '#BFFF00' }} />
+        <div className="ml-auto flex items-center gap-2">
+          {user?.role === 'admin' && (
+            <button
+              onClick={() => navigate(createPageUrl('StaffRedeem'))}
+              className="text-xs font-bold px-3 py-1.5 rounded-xl"
+              style={{ background: 'rgba(191,255,0,0.1)', color: '#BFFF00', border: '1px solid rgba(191,255,0,0.2)' }}
+            >
+              Staff Redeem
+            </button>
+          )}
+          <Gift className="w-5 h-5" style={{ color: '#BFFF00' }} />
+        </div>
       </div>
 
       {/* Tabs */}
