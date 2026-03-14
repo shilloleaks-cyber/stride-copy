@@ -7,6 +7,15 @@ import { ArrowLeft, Calendar, MapPin, Users, Loader2, CheckCircle2, CalendarDays
 import { format } from 'date-fns';
 import SponsorRewards from '@/components/events/SponsorRewards';
 
+function generateRedeemCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return code;
+}
+
 const STATUS_BADGE = {
   joined:     { label: 'Joined',     bg: 'rgba(138,43,226,0.2)',  color: '#BFFF00',           border: 'rgba(191,255,0,0.2)' },
   registered: { label: 'Registered', bg: 'rgba(191,255,0,0.12)', color: '#BFFF00',           border: 'rgba(191,255,0,0.3)' },
@@ -121,11 +130,13 @@ export default function EventDetail() {
       const now = new Date().toISOString();
       for (const coupon of eventCoupons) {
         if (!alreadyUnlockedIds.has(coupon.id)) {
+          const redeemCode = generateRedeemCode();
           await base44.entities.UserCoupon.create({
             user_id: user.email,
             coupon_id: coupon.id,
             event_id: eventId,
             status: 'unlocked',
+            redeem_code: redeemCode,
             unlocked_at: now,
           });
         }
