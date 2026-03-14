@@ -193,13 +193,22 @@ export default function MyRewards() {
         </div>
         <div className="ml-auto flex items-center gap-2">
           {user?.role === 'admin' && (
-            <button
-              onClick={() => navigate(createPageUrl('StaffRedeem'))}
-              className="text-xs font-bold px-3 py-1.5 rounded-xl"
-              style={{ background: 'rgba(191,255,0,0.1)', color: '#BFFF00', border: '1px solid rgba(191,255,0,0.2)' }}
-            >
-              Staff Redeem
-            </button>
+            <>
+              <button
+                onClick={() => navigate(createPageUrl('CouponDashboard'))}
+                className="text-xs font-bold px-3 py-1.5 rounded-xl"
+                style={{ background: 'rgba(138,43,226,0.15)', color: '#BFFF00', border: '1px solid rgba(138,43,226,0.25)' }}
+              >
+                Dashboard
+              </button>
+              <button
+                onClick={() => navigate(createPageUrl('StaffRedeem'))}
+                className="text-xs font-bold px-3 py-1.5 rounded-xl"
+                style={{ background: 'rgba(191,255,0,0.1)', color: '#BFFF00', border: '1px solid rgba(191,255,0,0.2)' }}
+              >
+                Redeem
+              </button>
+            </>
           )}
           <Gift className="w-5 h-5" style={{ color: '#BFFF00' }} />
         </div>
