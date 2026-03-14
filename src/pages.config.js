@@ -78,6 +78,8 @@ import Training from './pages/Training';
 import Wallet from './pages/Wallet';
 import Welcome from './pages/Welcome';
 import StaffRedeem from './pages/StaffRedeem';
+import CouponDashboard from './pages/CouponDashboard';
+import StaffManagement from './pages/StaffManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -113,6 +115,8 @@ export const PAGES = {
     "Wallet": Wallet,
     "Welcome": Welcome,
     "StaffRedeem": StaffRedeem,
+    "CouponDashboard": CouponDashboard,
+    "StaffManagement": StaffManagement,
 }
 
 export const pagesConfig = {
