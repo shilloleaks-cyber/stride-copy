@@ -260,6 +260,7 @@ export default function StrideCheckin() {
               <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
                 {foundReg?.first_name} {foundReg?.last_name} · Bib {foundReg?.bib_number}
               </p>
+              <p className="text-xs" style={{ color: 'rgba(191,255,0,0.7)' }}>🎁 Rewards unlocked in their account</p>
               <button onClick={handleReset} className="w-full py-3.5 rounded-2xl font-bold text-sm" style={{ background: '#BFFF00', color: '#0A0A0A' }}>
                 Scan Next
               </button>
