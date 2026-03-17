@@ -150,8 +150,36 @@ export default function StrideAdminDashboard() {
           />
         </div>
 
-        {/* Filter toggle */}
-        <button
+        {/* Tabs */}
+        <div className="flex gap-2 mb-3">
+          {[
+            { key: 'registrations', label: 'Registrations', icon: Users },
+            { key: 'payments', label: 'Payments', icon: CreditCard,
+              badge: allPayments.filter(p => p.status === 'pending').length },
+          ].map(({ key, label, icon: Icon, badge }) => (
+            <button
+              key={key}
+              onClick={() => setActiveTab(key)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all"
+              style={activeTab === key
+                ? { background: '#BFFF00', color: '#0A0A0A' }
+                : { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,255,255,0.1)' }
+              }
+            >
+              <Icon className="w-3.5 h-3.5" />
+              {label}
+              {badge > 0 && (
+                <span className="w-4 h-4 rounded-full text-xs flex items-center justify-center font-black"
+                  style={activeTab === key ? { background: '#0A0A0A', color: '#BFFF00' } : { background: 'rgba(255,200,80,0.3)', color: 'rgba(255,200,80,1)' }}>
+                  {badge}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Filter toggle — registrations tab only */}
+        {activeTab === 'registrations' && <button
           onClick={() => setShowFilters(f => !f)}
           className="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-xl"
           style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.1)' }}
@@ -193,6 +221,7 @@ export default function StrideAdminDashboard() {
             </div>
           </div>
         )}
+        }
       </div>
 
       <div className="px-6 pt-4 space-y-4">
