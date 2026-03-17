@@ -46,11 +46,16 @@ export default function History() {
     queryFn: () => base44.auth.me(),
   });
 
-  const { data: allRuns = [], isLoading: runsLoading } = useQuery({
+  const { data: allRuns = [], isLoading: runsLoading, refetch: refetchRuns } = useQuery({
     queryKey: ['historyRuns'],
     queryFn: () => base44.entities.Runs.filter({ status: 'completed' }, '-start_time', 100),
     enabled: !isLoading && !!user,
   });
+
+  const { containerRef: pullRef, pullDistance, isRefreshing } = usePullToRefresh(
+    () => refetchRuns(),
+    { threshold: 72 }
+  );
 
   // Scroll to top on every mount/route enter
   useEffect(() => {
