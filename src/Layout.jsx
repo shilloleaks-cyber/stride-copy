@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useEffect, useRef } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Home, BarChart2, User, Users, CalendarDays } from 'lucide-react';
 import './globals.css';
