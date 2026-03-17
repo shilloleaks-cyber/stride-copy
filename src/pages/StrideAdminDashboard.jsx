@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Users, CheckCircle2, Clock, XCircle, ScanLine, Search, Filter, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Users, CheckCircle2, Clock, XCircle, ScanLine, Search, Filter, ChevronDown, CreditCard } from 'lucide-react';
 import { format } from 'date-fns';
+import PaymentReviewPanel from '@/components/stride/PaymentReviewPanel';
 
 const STATUS_CFG = {
   pending:   { label: 'Pending',   color: 'rgba(255,200,80,1)',  bg: 'rgba(255,200,80,0.1)' },
@@ -16,6 +17,7 @@ export default function StrideAdminDashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
+  const [activeTab, setActiveTab] = useState('registrations');
   const [selectedEvent, setSelectedEvent] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
@@ -39,6 +41,12 @@ export default function StrideAdminDashboard() {
   const { data: registrations = [], isLoading } = useQuery({
     queryKey: ['all-regs-admin'],
     queryFn: () => base44.entities.EventRegistration.list('-created_date', 500),
+    enabled: user?.role === 'admin',
+  });
+
+  const { data: allPayments = [], isLoading: loadingPayments } = useQuery({
+    queryKey: ['all-payments-admin'],
+    queryFn: () => base44.entities.EventPayment.list('-created_date', 500),
     enabled: user?.role === 'admin',
   });
 
