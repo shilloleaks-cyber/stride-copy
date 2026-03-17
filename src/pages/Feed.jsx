@@ -132,7 +132,8 @@ export default function Feed() {
   };
 
   return (
-    <div className="min-h-screen text-white pb-24" style={{ backgroundColor: '#0A0A0A' }}>
+    <div ref={pullRef} className="min-h-screen text-white pb-28" style={{ backgroundColor: '#0A0A0A', position: 'relative' }}>
+      <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
       {/* Header */}
       <div className="sticky top-0 z-10 backdrop-blur-lg border-b border-white/5" style={{ backgroundColor: 'rgba(10, 10, 10, 0.95)' }}>
         <div className="px-6 pt-6 pb-4">
