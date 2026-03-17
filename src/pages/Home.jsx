@@ -613,7 +613,7 @@ const homeStyles = `
               radial-gradient(900px 500px at 15% 10%, rgba(191,255,0,.10), transparent 60%),
               var(--bg);
   color: var(--text);
-  padding: 18px 16px 90px;
+  padding: 18px 16px calc(96px + env(safe-area-inset-bottom));
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
 }
 .topHeader{ margin: 6px 2px 14px; }
