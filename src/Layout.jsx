@@ -6,6 +6,7 @@ import './globals.css';
 
 export default function Layout({ children }) {
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Detect system color scheme and toggle .dark class
   useEffect(() => {
@@ -17,6 +18,37 @@ export default function Layout({ children }) {
     mq.addEventListener('change', apply);
     return () => mq.removeEventListener('change', apply);
   }, []);
+
+  // Swipe-back gesture (right-edge swipe → navigate back)
+  const swipeStartX = useRef(null);
+  const swipeStartY = useRef(null);
+  useEffect(() => {
+    const onTouchStart = (e) => {
+      const t = e.touches[0];
+      if (t.clientX < 30) {
+        swipeStartX.current = t.clientX;
+        swipeStartY.current = t.clientY;
+      } else {
+        swipeStartX.current = null;
+      }
+    };
+    const onTouchEnd = (e) => {
+      if (swipeStartX.current === null) return;
+      const t = e.changedTouches[0];
+      const dx = t.clientX - swipeStartX.current;
+      const dy = Math.abs(t.clientY - swipeStartY.current);
+      if (dx > 60 && dy < 80) {
+        navigate(-1);
+      }
+      swipeStartX.current = null;
+    };
+    document.addEventListener('touchstart', onTouchStart, { passive: true });
+    document.addEventListener('touchend', onTouchEnd, { passive: true });
+    return () => {
+      document.removeEventListener('touchstart', onTouchStart);
+      document.removeEventListener('touchend', onTouchEnd);
+    };
+  }, [navigate]);
   
   const navItems = [
     { name: 'หน้าหลัก', icon: Home, page: 'Home' },
@@ -26,28 +58,42 @@ export default function Layout({ children }) {
     { name: 'โปรไฟล์', icon: User, page: 'Profile' },
   ];
 
-  const isActivePage = (pageName) => {
-    return location.pathname.includes(pageName);
-  };
+  const isActivePage = (pageName) => location.pathname.includes(pageName);
 
   // Hide nav on active run page
   const hideNav = location.pathname.includes('ActiveRun');
+
+  const handleNavTap = (e, item) => {
+    const isActive = isActivePage(item.page);
+    if (isActive) {
+      // Already on this tab — reset to root by replacing current history entry
+      e.preventDefault();
+      navigate(createPageUrl(item.page), { replace: true });
+      // Haptic feedback
+      if (navigator.vibrate) navigator.vibrate(10);
+    } else {
+      if (navigator.vibrate) navigator.vibrate(10);
+    }
+  };
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#0A0A0A' }}>
       {children}
       
       {!hideNav && (
-        <nav className="fixed bottom-0 left-0 right-0 backdrop-blur-lg border-t border-white/5 px-6 pt-4 safe-area-bottom" style={{ backgroundColor: 'rgba(10, 10, 10, 0.95)', zIndex: 9999, pointerEvents: 'auto' }}>
+        <nav
+          className="fixed bottom-0 left-0 right-0 backdrop-blur-lg border-t border-white/5 px-6 pt-4 safe-area-bottom"
+          style={{ backgroundColor: 'rgba(10, 10, 10, 0.95)', zIndex: 9999, pointerEvents: 'auto' }}
+        >
           <div className="flex items-center justify-around max-w-md mx-auto">
             {navItems.map((item) => {
               const isActive = isActivePage(item.page);
-              const targetUrl = item.query ? `${item.page}?${item.query}` : item.page;
               return (
                 <Link
                   key={item.name}
-                  to={createPageUrl(targetUrl)}
-                  className={`flex flex-col items-center gap-1 transition-colors ${
+                  to={createPageUrl(item.page)}
+                  onClick={(e) => handleNavTap(e, item)}
+                  className={`flex flex-col items-center gap-1 transition-colors min-w-[44px] min-h-[44px] justify-center ${
                     isActive ? 'neon-text' : 'text-gray-500'
                   }`}
                   style={isActive ? { color: '#BFFF00' } : {}}
