@@ -180,48 +180,49 @@ export default function StrideAdminDashboard() {
 
         {/* Filter toggle — registrations tab only */}
         {activeTab === 'registrations' && (
-          <button
-            onClick={() => setShowFilters(f => !f)}
-            className="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-xl"
-            style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.1)' }}
-          >
-            <Filter className="w-3.5 h-3.5" /> Filters
-            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
-          </button>
-        )}
-
-        {showFilters && (
-          <div className="mt-3 space-y-2">
-            <select
-              value={selectedEvent} onChange={e => { setSelectedEvent(e.target.value); setSelectedCategory('all'); }}
-              className="w-full px-3 py-2 rounded-xl text-sm text-white outline-none"
-              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+          <>
+            <button
+              onClick={() => setShowFilters(f => !f)}
+              className="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-xl"
+              style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.1)' }}
             >
-              <option value="all">All Events</option>
-              {events.map(e => <option key={e.id} value={e.id}>{e.title}</option>)}
-            </select>
-            <div className="flex gap-2">
-              <select
-                value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)}
-                className="flex-1 px-3 py-2 rounded-xl text-sm text-white outline-none"
-                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
-              >
-                <option value="all">All Categories</option>
-                {categoriesForEvent.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-              <select
-                value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)}
-                className="flex-1 px-3 py-2 rounded-xl text-sm text-white outline-none"
-                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
-              >
-                <option value="all">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="confirmed">Confirmed</option>
-                <option value="rejected">Rejected</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-            </div>
-          </div>
+              <Filter className="w-3.5 h-3.5" /> Filters
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+            </button>
+            {showFilters && (
+              <div className="mt-3 space-y-2">
+                <select
+                  value={selectedEvent} onChange={e => { setSelectedEvent(e.target.value); setSelectedCategory('all'); }}
+                  className="w-full px-3 py-2 rounded-xl text-sm text-white outline-none"
+                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+                >
+                  <option value="all">All Events</option>
+                  {events.map(e => <option key={e.id} value={e.id}>{e.title}</option>)}
+                </select>
+                <div className="flex gap-2">
+                  <select
+                    value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)}
+                    className="flex-1 px-3 py-2 rounded-xl text-sm text-white outline-none"
+                    style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+                  >
+                    <option value="all">All Categories</option>
+                    {categoriesForEvent.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                  <select
+                    value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)}
+                    className="flex-1 px-3 py-2 rounded-xl text-sm text-white outline-none"
+                    style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+                  >
+                    <option value="all">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
