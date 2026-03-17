@@ -5,6 +5,8 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Calendar, MapPin, QrCode, CheckCircle2, Clock, XCircle, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import QRModal from '@/components/stride/QRModal';
+import PaymentUpload from '@/components/stride/PaymentUpload';
+import RewardUnlockBanner from '@/components/stride/RewardUnlockBanner';
 
 const STATUS_CFG = {
   pending:   { label: 'Pending',   color: 'rgba(255,200,80,1)',  bg: 'rgba(255,200,80,0.1)',  border: 'rgba(255,200,80,0.25)', Icon: Clock },
@@ -77,6 +79,20 @@ function RegCard({ reg, event, category, onShowQR }) {
 
         {reg.shirt_size && (
           <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>Shirt: <span className="text-white font-semibold">{reg.shirt_size}</span></p>
+        )}
+
+        {/* Payment upload — only for paid categories that are not yet confirmed */}
+        {category && category.price > 0 && reg.payment_status !== 'paid' && reg.status !== 'cancelled' && reg.status !== 'rejected' && (
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 12 }}>
+            <PaymentUpload registration={reg} category={category} />
+          </div>
+        )}
+
+        {/* Reward unlocks — shown after check-in */}
+        {reg.checked_in && (
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 12 }}>
+            <RewardUnlockBanner registrationId={reg.id} userEmail={reg.user_email} />
+          </div>
         )}
       </div>
     </div>
