@@ -126,7 +126,8 @@ export default function History() {
   ];
 
   return (
-    <div style={S.root}>
+    <div ref={pullRef} style={{ ...S.root, position: 'relative' }}>
+      <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
 
       {/* ── Background (pointer-events: none — never blocks taps) ── */}
       <div style={S.bg}>
