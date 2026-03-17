@@ -63,7 +63,7 @@ export default function StrideMyEvents() {
           </div>
         )}
         {regs.map(reg => (
-          <RegCard
+          <RaceTicket
             key={reg.id}
             reg={reg}
             event={eventMap[reg.event_id]}
