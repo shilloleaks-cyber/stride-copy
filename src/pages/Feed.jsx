@@ -54,6 +54,11 @@ export default function Feed() {
     queryFn: () => base44.entities.Post.list('-created_date', 100),
   });
 
+  const { containerRef: pullRef, pullDistance, isRefreshing } = usePullToRefresh(
+    () => refetch(),
+    { threshold: 72 }
+  );
+
   // Filter posts based on active tab
   const filteredPosts = activeTab === 'following' 
     ? allPosts.filter(p => followingEmails.includes(p.author_email) || p.author_email === currentUser?.email)
