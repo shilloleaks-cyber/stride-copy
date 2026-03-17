@@ -221,7 +221,6 @@ export default function StrideAdminDashboard() {
             </div>
           </div>
         )}
-        }
       </div>
 
       <div className="px-6 pt-4 space-y-4">
