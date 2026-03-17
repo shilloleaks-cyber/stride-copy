@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useMutation } from '@tanstack/react-query';
-import { X, Loader2 } from 'lucide-react';
+import { X, Loader2, AlertCircle } from 'lucide-react';
 
 const SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
 const BLOOD_TYPES = ['A', 'B', 'AB', 'O', 'unknown'];
@@ -27,9 +27,24 @@ export default function RegistrationForm({ event, category, user, onClose, onSuc
   });
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const [blockReason, setBlockReason] = useState(null);
 
   const registerMutation = useMutation({
     mutationFn: async () => {
+      // Rule 1: Prevent duplicate registration (same user, same event — any active status)
+      const existing = await base44.entities.EventRegistration.filter({ event_id: event.id, user_email: user.email });
+      const activeExisting = existing.filter(r => r.status !== 'cancelled' && r.status !== 'rejected');
+      if (activeExisting.length > 0) {
+        throw new Error('DUPLICATE');
+      }
+
+      // Rule 2: Re-verify capacity server-side (category may have filled since page loaded)
+      const freshCats = await base44.entities.EventCategory.filter({ id: category.id });
+      const freshCat = freshCats[0];
+      if (freshCat && freshCat.max_slots > 0 && freshCat.registered_count >= freshCat.max_slots) {
+        throw new Error('FULL');
+      }
+
       const qr = generateQR();
       const reg = await base44.entities.EventRegistration.create({
         event_id: event.id,
@@ -42,16 +57,23 @@ export default function RegistrationForm({ event, category, user, onClose, onSuc
         checked_in: false,
         payment_status: category.price > 0 ? 'pending' : 'not_required',
       });
-      // Increment category count
       await base44.entities.EventCategory.update(category.id, {
-        registered_count: (category.registered_count || 0) + 1,
+        registered_count: (freshCat?.registered_count || category.registered_count || 0) + 1,
       });
       await base44.entities.StrideEvent.update(event.id, {
         total_registered: (event.total_registered || 0) + 1,
       });
       return reg;
     },
-    onSuccess,
+    onSuccess: () => {
+      setBlockReason(null);
+      onSuccess();
+    },
+    onError: (err) => {
+      if (err.message === 'DUPLICATE') setBlockReason('You are already registered for this event.');
+      else if (err.message === 'FULL') setBlockReason('Sorry, this category just filled up.');
+      else setBlockReason('Registration failed. Please try again.');
+    },
   });
 
   const inputStyle = {
