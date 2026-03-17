@@ -225,7 +225,44 @@ export default function StrideAdminDashboard() {
         )}
       </div>
 
-      <div className="px-6 pt-4 space-y-4">
+      {/* Payments Tab */}
+      {activeTab === 'payments' && (
+        <div className="px-6 pt-4 space-y-4">
+          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
+            {allPayments.filter(p => p.status === 'pending').length} pending · {allPayments.length} total
+          </p>
+          {loadingPayments && <div className="text-center py-10" style={{ color: 'rgba(255,255,255,0.35)' }}>Loading...</div>}
+          {!loadingPayments && allPayments.length === 0 && (
+            <div className="rounded-2xl p-8 text-center" style={{ background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.08)' }}>
+              <p className="text-2xl mb-2">💳</p>
+              <p className="text-sm text-white font-semibold">No payments yet</p>
+            </div>
+          )}
+          {/* Pending first, then rest */}
+          {[...allPayments].sort((a, b) => {
+            if (a.status === 'pending' && b.status !== 'pending') return -1;
+            if (a.status !== 'pending' && b.status === 'pending') return 1;
+            return 0;
+          }).map(payment => {
+            const reg = registrations.find(r => r.id === payment.registration_id);
+            if (!reg) return null;
+            return (
+              <PaymentReviewPanel
+                key={payment.id}
+                payment={payment}
+                reg={reg}
+                catMap={catMap}
+                registrations={registrations}
+                user={user}
+                onDone={() => {}}
+              />
+            );
+          })}
+        </div>
+      )}
+
+      {/* Registrations Tab */}
+      {activeTab === 'registrations' && <div className="px-6 pt-4 space-y-4">
         {/* Stats row */}
         <div className="grid grid-cols-4 gap-2">
           {[
@@ -297,7 +334,7 @@ export default function StrideAdminDashboard() {
             </div>
           );
         })}
-      </div>
+      </div>}
     </div>
   );
 }
