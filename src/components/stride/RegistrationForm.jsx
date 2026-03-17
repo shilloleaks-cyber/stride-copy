@@ -122,6 +122,14 @@ export default function RegistrationForm({ event, category, user, onClose, onSuc
           </button>
         </div>
 
+        {/* Error banner */}
+        {blockReason && (
+          <div className="mx-6 mt-3 flex items-center gap-2 px-4 py-3 rounded-xl" style={{ background: 'rgba(255,80,80,0.1)', border: '1px solid rgba(255,80,80,0.25)' }}>
+            <AlertCircle className="w-4 h-4 flex-shrink-0" style={{ color: 'rgba(255,100,100,1)' }} />
+            <p className="text-sm font-semibold" style={{ color: 'rgba(255,120,120,1)' }}>{blockReason}</p>
+          </div>
+        )}
+
         {/* Scrollable form */}
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4" style={{ WebkitOverflowScrolling: 'touch' }}>
 

@@ -94,9 +94,20 @@ export default function StrideAdminDashboard() {
   const generateBib = (reg) => {
     const cat = catMap[reg.category_id];
     const prefix = cat?.bib_prefix || 'R';
-    const countConfirmed = registrations.filter(r => r.category_id === reg.category_id && r.status === 'confirmed').length;
     const start = cat?.bib_start || 1;
-    return `${prefix}${String(start + countConfirmed).padStart(3, '0')}`;
+    // Collect all bib numbers already assigned in this category to guarantee uniqueness
+    const usedBibs = new Set(
+      registrations
+        .filter(r => r.category_id === reg.category_id && r.bib_number)
+        .map(r => r.bib_number)
+    );
+    let candidate = start;
+    let bib;
+    do {
+      bib = `${prefix}${String(candidate).padStart(3, '0')}`;
+      candidate++;
+    } while (usedBibs.has(bib));
+    return bib;
   };
 
   return (
