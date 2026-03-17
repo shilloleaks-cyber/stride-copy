@@ -124,6 +124,11 @@ const AuthenticatedApp = () => {
         <Route path="/CouponDashboard" element={<LayoutWrapper currentPageName="CouponDashboard"><CouponDashboard /></LayoutWrapper>} />
         <Route path="/StaffManagement" element={<LayoutWrapper currentPageName="StaffManagement"><StaffManagement /></LayoutWrapper>} />
         <Route path="/StaffRedeem" element={<LayoutWrapper currentPageName="StaffRedeem"><StaffRedeem /></LayoutWrapper>} />
+        <Route path="/StrideEvents" element={<LayoutWrapper currentPageName="StrideEvents"><StrideEvents /></LayoutWrapper>} />
+        <Route path="/StrideEventDetail" element={<LayoutWrapper currentPageName="StrideEventDetail"><StrideEventDetail /></LayoutWrapper>} />
+        <Route path="/StrideMyEvents" element={<LayoutWrapper currentPageName="StrideMyEvents"><StrideMyEvents /></LayoutWrapper>} />
+        <Route path="/StrideAdminDashboard" element={<LayoutWrapper currentPageName="StrideAdminDashboard"><StrideAdminDashboard /></LayoutWrapper>} />
+        <Route path="/StrideCheckin" element={<LayoutWrapper currentPageName="StrideCheckin"><StrideCheckin /></LayoutWrapper>} />
         <Route path="*" element={<PageNotFound />} />
       </Routes>
     </AnimatedRoutes>
