@@ -54,6 +54,7 @@ export default function PaymentReviewPanel({ payment, reg, catMap, registrations
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['all-payments-admin'] });
       queryClient.invalidateQueries({ queryKey: ['all-regs-admin'] });
+      queryClient.invalidateQueries({ queryKey: ['all-cats-admin'] });
       onDone();
     },
   });

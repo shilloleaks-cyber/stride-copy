@@ -1,11 +1,11 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Gift, Star, Coins } from 'lucide-react';
+import { Gift, Star, Zap } from 'lucide-react';
 
 const REWARD_ICONS = {
   coupon: Gift,
-  coins: Coins,
+  coins: Zap,
   badge: Star,
   other: Gift,
 };
