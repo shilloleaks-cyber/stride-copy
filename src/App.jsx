@@ -95,28 +95,33 @@ const AuthenticatedApp = () => {
 
   // Render the main app
   return (
-    <Routes>
-      <Route path="/" element={
-        <LayoutWrapper currentPageName={mainPageKey}>
-          <MainPage />
-        </LayoutWrapper>
-      } />
-      {Object.entries(Pages).map(([path, Page]) => (
-        <Route
-          key={path}
-          path={`/${path}`}
-          element={
-            <LayoutWrapper currentPageName={path}>
-              <Page />
-            </LayoutWrapper>
-          }
-        />
-      ))}
-      <Route path="/CreateOfficialEvent" element={<LayoutWrapper currentPageName="CreateOfficialEvent"><CreateOfficialEvent /></LayoutWrapper>} />
-      <Route path="/MyEvents" element={<LayoutWrapper currentPageName="MyEvents"><MyEvents /></LayoutWrapper>} />
-      <Route path="/MyRewards" element={<LayoutWrapper currentPageName="MyRewards"><MyRewards /></LayoutWrapper>} />
-      <Route path="*" element={<PageNotFound />} />
-    </Routes>
+    <AnimatedRoutes>
+      <Routes location={location}>
+        <Route path="/" element={
+          <LayoutWrapper currentPageName={mainPageKey}>
+            <MainPage />
+          </LayoutWrapper>
+        } />
+        {Object.entries(Pages).map(([path, Page]) => (
+          <Route
+            key={path}
+            path={`/${path}`}
+            element={
+              <LayoutWrapper currentPageName={path}>
+                <Page />
+              </LayoutWrapper>
+            }
+          />
+        ))}
+        <Route path="/CreateOfficialEvent" element={<LayoutWrapper currentPageName="CreateOfficialEvent"><CreateOfficialEvent /></LayoutWrapper>} />
+        <Route path="/MyEvents" element={<LayoutWrapper currentPageName="MyEvents"><MyEvents /></LayoutWrapper>} />
+        <Route path="/MyRewards" element={<LayoutWrapper currentPageName="MyRewards"><MyRewards /></LayoutWrapper>} />
+        <Route path="/CouponDashboard" element={<LayoutWrapper currentPageName="CouponDashboard"><CouponDashboard /></LayoutWrapper>} />
+        <Route path="/StaffManagement" element={<LayoutWrapper currentPageName="StaffManagement"><StaffManagement /></LayoutWrapper>} />
+        <Route path="/StaffRedeem" element={<LayoutWrapper currentPageName="StaffRedeem"><StaffRedeem /></LayoutWrapper>} />
+        <Route path="*" element={<PageNotFound />} />
+      </Routes>
+    </AnimatedRoutes>
   );
 };
 
