@@ -44,7 +44,11 @@ export default function StrideAdminDashboard() {
 
   const approveMutation = useMutation({
     mutationFn: ({ id, bibNumber }) => base44.entities.EventRegistration.update(id, { status: 'confirmed', bib_number: bibNumber }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['all-regs-admin'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['all-regs-admin'] });
+      queryClient.invalidateQueries({ queryKey: ['all-cats-admin'] });
+      queryClient.invalidateQueries({ queryKey: ['stride-events-admin'] });
+    },
   });
 
   const rejectMutation = useMutation({

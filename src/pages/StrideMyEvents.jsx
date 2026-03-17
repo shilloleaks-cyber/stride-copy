@@ -64,7 +64,7 @@ function RegCard({ reg, event, category, onShowQR }) {
               <span className="text-xs font-bold" style={{ color: 'rgb(0,210,110)' }}>Checked In</span>
             </div>
           )}
-          {reg.qr_code && reg.status === 'confirmed' && (
+          {reg.qr_code && (reg.status === 'confirmed' || reg.status === 'pending') && (
             <button
               onClick={() => onShowQR(reg)}
               className="flex items-center gap-2 px-3 py-2 rounded-xl font-bold text-xs"

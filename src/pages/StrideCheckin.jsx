@@ -18,13 +18,14 @@ export default function StrideCheckin() {
 
   const { data: user, isLoading: loadingUser } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
 
-  const { data: boothStaff = [] } = useQuery({
+  const { data: boothStaff = [], isLoading: loadingStaff } = useQuery({
     queryKey: ['my-booth-staff', user?.email],
     queryFn: () => base44.entities.BoothStaff.filter({ user_id: user.email, is_active: true }),
     enabled: !!user?.email && user?.role !== 'admin',
   });
 
   const isAdmin = user?.role === 'admin';
+  const isLoadingAccess = loadingUser || (!isAdmin && !user?.email ? false : !isAdmin && loadingStaff);
   const hasAccess = isAdmin || boothStaff.length > 0;
 
   const checkinMutation = useMutation({
@@ -70,13 +71,30 @@ export default function StrideCheckin() {
 
     setFoundReg(reg);
     setFoundEvent(evs[0] || null);
-    setResult(reg.checked_in ? RESULT.ALREADY : RESULT.FOUND);
+
+    if (reg.checked_in) {
+      setResult(RESULT.ALREADY);
+      // Log duplicate scan attempt
+      await base44.entities.EventCheckinLog.create({
+        event_id: reg.event_id,
+        registration_id: reg.id,
+        user_email: reg.user_email,
+        bib_number: reg.bib_number || '',
+        scanned_by: user.email,
+        scanned_at: new Date().toISOString(),
+        result: 'already_checked_in',
+      });
+    } else if (reg.status !== 'confirmed') {
+      setResult(RESULT.NO_ACCESS);
+    } else {
+      setResult(RESULT.FOUND);
+    }
     setIsSearching(false);
   };
 
   const handleReset = () => { setInput(''); setResult(RESULT.IDLE); setFoundReg(null); setFoundEvent(null); };
 
-  if (loadingUser) return <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#0A0A0A' }}><Loader2 className="w-7 h-7 animate-spin" style={{ color: '#BFFF00' }} /></div>;
+  if (loadingUser || isLoadingAccess) return <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#0A0A0A' }}><Loader2 className="w-7 h-7 animate-spin" style={{ color: '#BFFF00' }} /></div>;
 
   return (
     <div className="min-h-screen text-white pb-28" style={{ backgroundColor: '#0A0A0A' }}>
@@ -90,7 +108,7 @@ export default function StrideCheckin() {
         </div>
       </div>
 
-      {!hasAccess && !loadingUser && (
+      {!hasAccess && (
         <div className="flex flex-col items-center justify-center pt-20 px-8 text-center space-y-4">
           <ShieldOff className="w-14 h-14" style={{ color: 'rgba(255,80,80,0.5)' }} />
           <p className="text-xl font-bold">Access Denied</p>
@@ -129,6 +147,18 @@ export default function StrideCheckin() {
           </div>
 
           {/* Results */}
+          {result === RESULT.NO_ACCESS && foundReg && (
+            <div className="rounded-2xl p-5 flex items-center gap-3" style={{ background: 'rgba(255,200,80,0.08)', border: '1px solid rgba(255,200,80,0.25)' }}>
+              <AlertCircle className="w-7 h-7 flex-shrink-0" style={{ color: 'rgba(255,200,80,1)' }} />
+              <div>
+                <p className="font-bold text-white">Registration Not Confirmed</p>
+                <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                  {foundReg.first_name} {foundReg.last_name}'s registration is <span className="capitalize font-semibold">{foundReg.status}</span>. Only confirmed registrations can check in.
+                </p>
+              </div>
+            </div>
+          )}
+
           {result === RESULT.NOT_FOUND && (
             <div className="rounded-2xl p-5 flex items-center gap-3" style={{ background: 'rgba(255,80,80,0.1)', border: '1px solid rgba(255,80,80,0.25)' }}>
               <XCircle className="w-7 h-7 flex-shrink-0" style={{ color: 'rgba(255,100,100,1)' }} />
