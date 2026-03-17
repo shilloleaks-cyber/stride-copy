@@ -31,11 +31,15 @@ export default function StrideCheckin() {
   const checkinMutation = useMutation({
     mutationFn: async () => {
       const now = new Date().toISOString();
+
+      // 1. Mark registration checked in
       await base44.entities.EventRegistration.update(foundReg.id, {
         checked_in: true,
         checked_in_at: now,
         checked_in_by: user.email,
       });
+
+      // 2. Write audit log
       await base44.entities.EventCheckinLog.create({
         event_id: foundReg.event_id,
         registration_id: foundReg.id,
@@ -45,10 +49,41 @@ export default function StrideCheckin() {
         scanned_at: now,
         result: 'success',
       });
+
+      // 3. Unlock rewards — only for confirmed registrations (guard already enforced before this runs)
+      // Check no rewards already unlocked for this registration
+      const existingRewards = await base44.entities.EventRewardUnlock.filter({ registration_id: foundReg.id });
+      if (existingRewards.length === 0) {
+        // Unlock a finisher reward by default
+        await base44.entities.EventRewardUnlock.create({
+          registration_id: foundReg.id,
+          event_id: foundReg.event_id,
+          user_email: foundReg.user_email,
+          reward_type: 'badge',
+          reward_label: 'Finisher Badge',
+          status: 'unlocked',
+          unlocked_at: now,
+        });
+        // Unlock coupon rewards if any coupons exist for this event
+        const eventCoupons = await base44.entities.Coupon.filter({ event_id: foundReg.event_id });
+        for (const coupon of eventCoupons) {
+          await base44.entities.EventRewardUnlock.create({
+            registration_id: foundReg.id,
+            event_id: foundReg.event_id,
+            user_email: foundReg.user_email,
+            reward_type: 'coupon',
+            reward_id: coupon.id,
+            reward_label: coupon.title,
+            status: 'unlocked',
+            unlocked_at: now,
+          });
+        }
+      }
     },
     onSuccess: () => {
       setResult(RESULT.SUCCESS);
       queryClient.invalidateQueries({ queryKey: ['all-regs-admin'] });
+      queryClient.invalidateQueries({ queryKey: ['rewards', foundReg.id] });
     },
   });
 
