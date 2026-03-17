@@ -179,14 +179,16 @@ export default function StrideAdminDashboard() {
         </div>
 
         {/* Filter toggle — registrations tab only */}
-        {activeTab === 'registrations' && <button
-          onClick={() => setShowFilters(f => !f)}
-          className="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-xl"
-          style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.1)' }}
-        >
-          <Filter className="w-3.5 h-3.5" /> Filters
-          <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
-        </button>
+        {activeTab === 'registrations' && (
+          <button
+            onClick={() => setShowFilters(f => !f)}
+            className="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-xl"
+            style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.1)' }}
+          >
+            <Filter className="w-3.5 h-3.5" /> Filters
+            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+          </button>
+        )}
 
         {showFilters && (
           <div className="mt-3 space-y-2">
