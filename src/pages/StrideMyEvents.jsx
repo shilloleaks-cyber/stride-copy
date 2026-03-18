@@ -6,6 +6,7 @@ import { ArrowLeft, Loader2 } from 'lucide-react';
 import QRModal from '@/components/stride/QRModal';
 import RaceTicket from '@/components/stride/RaceTicket';
 
+
 export default function StrideMyEvents() {
   const navigate = useNavigate();
   const [qrReg, setQrReg] = useState(null);
