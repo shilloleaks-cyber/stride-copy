@@ -148,14 +148,24 @@ export default function MyEvents() {
           <p className="text-xs uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.4)' }}>My</p>
           <h1 className="text-xl font-bold text-white leading-tight">Events</h1>
         </div>
-        <button
-          onClick={() => navigate(createPageUrl('MyRewards'))}
-          className="ml-auto flex items-center gap-1.5 px-3 py-2 rounded-xl font-semibold text-xs"
-          style={{ background: 'rgba(191,255,0,0.1)', color: '#BFFF00', border: '1px solid rgba(191,255,0,0.2)' }}
-        >
-          <Gift className="w-3.5 h-3.5" />
-          Rewards
-        </button>
+        <div className="ml-auto flex items-center gap-2">
+          <button
+            onClick={() => navigate('/StrideMyEvents')}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl font-semibold text-xs"
+            style={{ background: 'rgba(191,255,0,0.15)', color: '#BFFF00', border: '1px solid rgba(191,255,0,0.35)' }}
+          >
+            <Ticket className="w-3.5 h-3.5" />
+            E-Ticket
+          </button>
+          <button
+            onClick={() => navigate(createPageUrl('MyRewards'))}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl font-semibold text-xs"
+            style={{ background: 'rgba(191,255,0,0.1)', color: '#BFFF00', border: '1px solid rgba(191,255,0,0.2)' }}
+          >
+            <Gift className="w-3.5 h-3.5" />
+            Rewards
+          </button>
+        </div>
       </div>
 
       {stillLoading && (
