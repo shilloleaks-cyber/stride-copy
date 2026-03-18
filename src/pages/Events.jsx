@@ -1,5 +1,5 @@
-// Events page — now fully powered by the Stride event system.
-// This file redirects all traffic to StrideEvents.
+// Events tab — fully powered by the Stride event system.
+// Immediate redirect to StrideEvents so the nav tab still works.
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
