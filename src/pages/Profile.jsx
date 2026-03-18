@@ -20,6 +20,7 @@ import { toast } from 'sonner';
 import ProfileAvatar from '@/components/shared/ProfileAvatar';
 import SkinsShop from '@/components/skins/SkinsShop';
 import AchievementBadgesSection from '@/components/profile/AchievementBadgesSection';
+import SettingsSheet from '@/components/profile/SettingsSheet';
 import {
   Dialog,
   DialogContent,
