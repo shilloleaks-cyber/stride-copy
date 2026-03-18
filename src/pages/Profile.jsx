@@ -283,14 +283,17 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
     <div className="profileRoot">
       <style>{profileStyles}</style>
 
-      {/* Settings button — top-right header */}
-      <button
-        onClick={() => setSettingsOpen(true)}
-        className="profileSettingsBtn"
-        aria-label="Settings"
-      >
-        <Settings style={{ width: 18, height: 18 }} />
-      </button>
+      {/* Sticky page header */}
+      <div className="profilePageHeader">
+        <span className="profilePageTitle">Profile</span>
+        <button
+          onClick={() => setSettingsOpen(true)}
+          className="profileSettingsBtn"
+          aria-label="Settings"
+        >
+          <Settings style={{ width: 18, height: 18 }} />
+        </button>
+      </div>
 
       {/* Identity + Level Header */}
       <motion.div
@@ -839,14 +842,14 @@ const profileStyles = `
     background: radial-gradient(900px 500px at 50% 0%, rgba(123,77,255,0.05), transparent 60%),
                 #050508;
     color: rgba(255,255,255,0.95);
-    padding: 28px 0 100px;
+    padding: 0 0 100px;
     font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
   }
 
   /* Identity + Level Header */
   .identityHeader {
     text-align: center;
-    padding: 0 24px 32px;
+    padding: 28px 24px 32px;
   }
 
   .avatarContainer {
@@ -1215,11 +1218,28 @@ const profileStyles = `
     padding-bottom: calc(90px + env(safe-area-inset-bottom));
   }
 
+  .profilePageHeader {
+    position: sticky;
+    top: 0;
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: calc(env(safe-area-inset-top) + 10px) 18px 10px;
+    background: rgba(5, 5, 8, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .profilePageTitle {
+    font-size: 17px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.9);
+    letter-spacing: -0.2px;
+  }
+
   .profileSettingsBtn {
-    position: fixed;
-    top: calc(14px + env(safe-area-inset-top));
-    right: 18px;
-    z-index: 1000;
     width: 44px;
     height: 44px;
     border-radius: 14px;
@@ -1231,6 +1251,7 @@ const profileStyles = `
     justify-content: center;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
+    flex-shrink: 0;
   }
 
   .profileSettingsBtn:active {
