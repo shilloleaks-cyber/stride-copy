@@ -53,7 +53,7 @@ import Challenges from './pages/Challenges';
 import CommunityCoach from './pages/CommunityCoach';
 import CouponDashboard from './pages/CouponDashboard';
 import CreateEvent from './pages/CreateEvent';
-import CreateOfficialEvent from './pages/CreateOfficialEvent';
+import CreateOfficialEvent from './pages/CreateOfficialEvent.jsx';
 import Discover from './pages/Discover';
 import EventDetail from './pages/EventDetail';
 import Events from './pages/Events';
