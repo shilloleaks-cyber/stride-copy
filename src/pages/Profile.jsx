@@ -283,6 +283,15 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
     <div className="profileRoot">
       <style>{profileStyles}</style>
 
+      {/* Settings button — top-right header */}
+      <button
+        onClick={() => setSettingsOpen(true)}
+        className="profileSettingsBtn"
+        aria-label="Settings"
+      >
+        <Settings style={{ width: 18, height: 18 }} />
+      </button>
+
       {/* Identity + Level Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -403,16 +412,7 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
           >
             Details
           </button>
-          <button
-            onClick={() => setSettingsOpen(true)}
-            style={{
-              marginLeft: 'auto', width: '34px', height: '34px', borderRadius: '10px',
-              background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
-              color: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-            }}
-          >
-            <Settings style={{ width: 16, height: 16 }} />
-          </button>
+
         </div>
         
         <div className="achievementsDivider" />
@@ -1190,8 +1190,8 @@ const profileStyles = `
   .achievementsModalOverlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.45);
-    z-index: 9999;
+    background: rgba(0, 0, 0, 0.65);
+    z-index: 99999;
     display: flex;
     align-items: flex-end;
     justify-content: center;
@@ -1200,17 +1200,42 @@ const profileStyles = `
   .achievementsModalSheet {
     width: 100%;
     max-width: 600px;
-    max-height: 85vh;
+    max-height: 85dvh;
     background: linear-gradient(180deg, #0b0b10 0%, #0a0a0a 100%);
     border-top-left-radius: 24px;
     border-top-right-radius: 24px;
-    border: 2px solid;
-    border-image: linear-gradient(135deg, rgba(138, 43, 226, 0.6) 0%, rgba(191, 255, 0, 0.4) 100%) 1;
+    border-top: 2px solid rgba(138, 43, 226, 0.5);
+    border-left: 2px solid rgba(138, 43, 226, 0.3);
+    border-right: 2px solid rgba(191, 255, 0, 0.3);
     border-bottom: none;
-    box-shadow: 0 0 60px rgba(138, 43, 226, 0.5), 0 0 40px rgba(191, 255, 0, 0.3);
+    box-shadow: 0 -8px 60px rgba(138, 43, 226, 0.4), 0 -4px 30px rgba(191, 255, 0, 0.2);
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     padding: 24px;
-    padding-bottom: calc(24px + env(safe-area-inset-bottom));
+    padding-bottom: calc(90px + env(safe-area-inset-bottom));
+  }
+
+  .profileSettingsBtn {
+    position: fixed;
+    top: calc(14px + env(safe-area-inset-top));
+    right: 18px;
+    z-index: 1000;
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .profileSettingsBtn:active {
+    background: rgba(255,255,255,0.12);
+    transform: scale(0.94);
   }
 
   .achievementsModalHeader {
