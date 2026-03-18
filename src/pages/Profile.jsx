@@ -648,61 +648,12 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
 
       {/* Settings Sheet */}
       {settingsOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="achievementsModalOverlay"
-          onClick={() => setSettingsOpen(false)}
-        >
-          <motion.div
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="achievementsModalSheet"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="achievementsModalHeader">
-              <div>
-                <h3 className="achievementsModalTitle">Settings</h3>
-              </div>
-              <button onClick={() => setSettingsOpen(false)} className="achievementsModalClose">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <div style={{ padding: '0 4px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <button
-                onClick={() => { setSettingsOpen(false); handleLogout(); }}
-                style={{
-                  width: '100%', padding: '14px 16px', borderRadius: '14px', display: 'flex',
-                  alignItems: 'center', gap: '12px', background: 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.85)',
-                  fontSize: '15px', fontWeight: '600', cursor: 'pointer',
-                }}
-              >
-                <LogOut style={{ width: 18, height: 18 }} />
-                Log Out
-              </button>
-
-              <button
-                onClick={() => { setSettingsOpen(false); setDeleteConfirmOpen(true); }}
-                style={{
-                  width: '100%', padding: '14px 16px', borderRadius: '14px', display: 'flex',
-                  alignItems: 'center', gap: '12px', background: 'rgba(255,60,60,0.08)',
-                  border: '1px solid rgba(255,60,60,0.2)', color: 'rgba(255,100,100,0.95)',
-                  fontSize: '15px', fontWeight: '600', cursor: 'pointer',
-                }}
-              >
-                <Trash2 style={{ width: 18, height: 18 }} />
-                Delete Account
-              </button>
-            </div>
-          </motion.div>
-        </motion.div>
+        <SettingsSheet
+          user={user}
+          onClose={() => setSettingsOpen(false)}
+          onLogout={() => { setSettingsOpen(false); handleLogout(); }}
+          onDeleteRequest={() => { setSettingsOpen(false); setDeleteConfirmOpen(true); }}
+        />
       )}
 
       {/* Delete Account Confirm */}
