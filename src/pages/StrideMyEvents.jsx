@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import QRModal from '@/components/stride/QRModal';
-import RaceTicket from '@/components/stride/RaceTicket';
+import RaceTicket from '@/components/stride/RaceTicket.jsx';
 
 export default function StrideMyEvents() {
   const navigate = useNavigate();
