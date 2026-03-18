@@ -283,17 +283,14 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
     <div className="profileRoot">
       <style>{profileStyles}</style>
 
-      {/* Sticky profile header */}
-      <div className="profileTopBar">
-        <span className="profileTopBarTitle">Profile</span>
-        <button
-          onClick={() => setSettingsOpen(true)}
-          className="profileSettingsBtn"
-          aria-label="Settings"
-        >
-          <Settings style={{ width: 18, height: 18 }} />
-        </button>
-      </div>
+      {/* Settings button — top-right header */}
+      <button
+        onClick={() => setSettingsOpen(true)}
+        className="profileSettingsBtn"
+        aria-label="Settings"
+      >
+        <Settings style={{ width: 18, height: 18 }} />
+      </button>
 
       {/* Identity + Level Header */}
       <motion.div
@@ -842,7 +839,7 @@ const profileStyles = `
     background: radial-gradient(900px 500px at 50% 0%, rgba(123,77,255,0.05), transparent 60%),
                 #050508;
     color: rgba(255,255,255,0.95);
-    padding: 0 0 100px;
+    padding: 28px 0 100px;
     font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
   }
 
@@ -1218,28 +1215,11 @@ const profileStyles = `
     padding-bottom: calc(90px + env(safe-area-inset-bottom));
   }
 
-  .profileTopBar {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: calc(env(safe-area-inset-top) + 12px) 20px 12px;
-    background: rgba(5, 5, 8, 0.92);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-  }
-
-  .profileTopBarTitle {
-    font-size: 17px;
-    font-weight: 700;
-    color: rgba(255,255,255,0.9);
-    letter-spacing: 0.01em;
-  }
-
   .profileSettingsBtn {
+    position: fixed;
+    top: calc(14px + env(safe-area-inset-top));
+    right: 18px;
+    z-index: 1000;
     width: 44px;
     height: 44px;
     border-radius: 14px;
@@ -1251,7 +1231,6 @@ const profileStyles = `
     justify-content: center;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
-    flex-shrink: 0;
   }
 
   .profileSettingsBtn:active {
