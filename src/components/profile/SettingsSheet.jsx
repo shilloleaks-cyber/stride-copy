@@ -176,10 +176,11 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: 5,
                   padding: '5px 10px', borderRadius: 99, flexShrink: 0,
-                  background: 'rgba(0,210,110,0.1)', border: '1px solid rgba(0,210,110,0.25)',
+                  background: 'rgba(191,255,0,0.1)', border: '1px solid rgba(191,255,0,0.3)',
+                  boxShadow: '0 0 10px rgba(191,255,0,0.15)',
                 }}>
-                  <CheckCircle2 style={{ width: 12, height: 12, color: 'rgb(0,210,110)' }} />
-                  <span style={{ fontSize: 10, fontWeight: 700, color: 'rgb(0,210,110)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  <CheckCircle2 style={{ width: 12, height: 12, color: '#BFFF00' }} />
+                  <span style={{ fontSize: 10, fontWeight: 700, color: '#BFFF00', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Signed In
                   </span>
                 </div>
