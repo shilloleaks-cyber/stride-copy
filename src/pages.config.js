@@ -51,6 +51,7 @@ import ActiveRun from './pages/ActiveRun';
 import ChallengeDetail from './pages/ChallengeDetail';
 import Challenges from './pages/Challenges';
 import CommunityCoach from './pages/CommunityCoach';
+import CouponDashboard from './pages/CouponDashboard';
 import CreateEvent from './pages/CreateEvent';
 import CreateOfficialEvent from './pages/CreateOfficialEvent';
 import Discover from './pages/Discover';
@@ -73,13 +74,17 @@ import RedeemCatalog from './pages/RedeemCatalog';
 import RedeemDetail from './pages/RedeemDetail';
 import RunDetails from './pages/RunDetails';
 import RunSummary from './pages/RunSummary';
+import StaffManagement from './pages/StaffManagement';
+import StaffRedeem from './pages/StaffRedeem';
 import Stats from './pages/Stats';
+import StrideAdminDashboard from './pages/StrideAdminDashboard';
+import StrideCheckin from './pages/StrideCheckin';
+import StrideEventDetail from './pages/StrideEventDetail';
+import StrideEvents from './pages/StrideEvents';
+import StrideMyEvents from './pages/StrideMyEvents';
 import Training from './pages/Training';
 import Wallet from './pages/Wallet';
 import Welcome from './pages/Welcome';
-import StaffRedeem from './pages/StaffRedeem';
-import CouponDashboard from './pages/CouponDashboard';
-import StaffManagement from './pages/StaffManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -88,6 +93,7 @@ export const PAGES = {
     "ChallengeDetail": ChallengeDetail,
     "Challenges": Challenges,
     "CommunityCoach": CommunityCoach,
+    "CouponDashboard": CouponDashboard,
     "CreateEvent": CreateEvent,
     "CreateOfficialEvent": CreateOfficialEvent,
     "Discover": Discover,
@@ -110,13 +116,17 @@ export const PAGES = {
     "RedeemDetail": RedeemDetail,
     "RunDetails": RunDetails,
     "RunSummary": RunSummary,
+    "StaffManagement": StaffManagement,
+    "StaffRedeem": StaffRedeem,
     "Stats": Stats,
+    "StrideAdminDashboard": StrideAdminDashboard,
+    "StrideCheckin": StrideCheckin,
+    "StrideEventDetail": StrideEventDetail,
+    "StrideEvents": StrideEvents,
+    "StrideMyEvents": StrideMyEvents,
     "Training": Training,
     "Wallet": Wallet,
     "Welcome": Welcome,
-    "StaffRedeem": StaffRedeem,
-    "CouponDashboard": CouponDashboard,
-    "StaffManagement": StaffManagement,
 }
 
 export const pagesConfig = {
