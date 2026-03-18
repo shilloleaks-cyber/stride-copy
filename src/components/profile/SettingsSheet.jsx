@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { LogOut, Trash2, X, User, Mail, Shield, ChevronRight } from 'lucide-react';
+import { LogOut, Trash2, X, User, Mail, Shield, ChevronRight, Loader2, CheckCircle2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
-// Provider button configs
+// Provider configs — all route through base44.auth.redirectToLogin (platform handles provider selection)
 const PROVIDERS = [
   {
     id: 'google',
@@ -46,10 +46,24 @@ const PROVIDERS = [
   },
 ];
 
-function ProviderRow({ provider, onClick }) {
+// Detect which provider the user signed in with from their email domain / auth_provider field
+function detectProvider(user) {
+  if (!user) return null;
+  const p = user.auth_provider || user.provider || '';
+  if (p.toLowerCase().includes('google')) return 'Google';
+  if (p.toLowerCase().includes('facebook')) return 'Facebook';
+  if (p.toLowerCase().includes('apple')) return 'Apple';
+  // Fallback: guess from email
+  if (user.email?.endsWith('@gmail.com')) return 'Google';
+  return null;
+}
+
+function ProviderRow({ provider, loading, onClick }) {
+  const isLoading = loading === provider.id;
   return (
     <button
-      onClick={onClick}
+      onClick={() => onClick(provider.id)}
+      disabled={!!loading}
       style={{
         width: '100%',
         minHeight: 52,
@@ -63,213 +77,278 @@ function ProviderRow({ provider, onClick }) {
         color: provider.color,
         fontSize: 15,
         fontWeight: 600,
-        cursor: 'pointer',
+        cursor: loading ? 'default' : 'pointer',
         WebkitTapHighlightColor: 'transparent',
-        transition: 'opacity 0.15s',
+        opacity: loading && !isLoading ? 0.45 : 1,
+        transition: 'opacity 0.2s',
         textAlign: 'left',
       }}
     >
       <span style={{ width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        {provider.icon}
+        {isLoading ? <Loader2 style={{ width: 18, height: 18, animation: 'spin 1s linear infinite' }} /> : provider.icon}
       </span>
-      <span style={{ flex: 1 }}>{provider.label}</span>
-      <ChevronRight style={{ width: 16, height: 16, opacity: 0.4 }} />
+      <span style={{ flex: 1 }}>{isLoading ? 'Redirecting…' : provider.label}</span>
+      {!isLoading && <ChevronRight style={{ width: 16, height: 16, opacity: 0.4 }} />}
     </button>
   );
 }
 
 export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest }) {
   const isAuthenticated = !!user;
+  const [loadingProvider, setLoadingProvider] = useState(null);
+  const didRedirect = useRef(false);
 
-  const handleSignIn = () => {
-    // Redirects to platform login page which handles all providers
+  // When page regains focus after auth redirect, reload to pick up new session
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && didRedirect.current) {
+        didRedirect.current = false;
+        // Reload so AuthContext re-checks auth state and Profile updates
+        window.location.reload();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, []);
+
+  const handleSignIn = (providerId) => {
+    setLoadingProvider(providerId);
+    didRedirect.current = true;
+    // Platform login page handles all providers — no per-provider URL needed
     base44.auth.redirectToLogin(window.location.href);
   };
 
+  const handleCreateAccount = () => {
+    setLoadingProvider('create');
+    didRedirect.current = true;
+    base44.auth.redirectToLogin(window.location.href);
+  };
+
+  const detectedProvider = detectProvider(user);
+
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.65)',
-        zIndex: 99999,
-        display: 'flex',
-        alignItems: 'flex-end',
-        justifyContent: 'center',
-      }}
-      onClick={onClose}
-    >
+    <>
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
       <motion.div
-        initial={{ y: '100%' }}
-        animate={{ y: 0 }}
-        exit={{ y: '100%' }}
-        transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
         style={{
-          width: '100%',
-          maxWidth: 600,
-          maxHeight: '85dvh',
-          background: 'linear-gradient(180deg, #0f0f14 0%, #0a0a0a 100%)',
-          borderTopLeftRadius: 24,
-          borderTopRightRadius: 24,
-          borderTop: '1.5px solid rgba(138,43,226,0.45)',
-          borderLeft: '1.5px solid rgba(138,43,226,0.2)',
-          borderRight: '1.5px solid rgba(191,255,0,0.2)',
-          boxShadow: '0 -8px 60px rgba(138,43,226,0.35), 0 -4px 30px rgba(191,255,0,0.15)',
-          overflowY: 'auto',
-          WebkitOverflowScrolling: 'touch',
-          paddingBottom: 'calc(90px + env(safe-area-inset-bottom))',
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.65)',
+          zIndex: 99999,
+          display: 'flex',
+          alignItems: 'flex-end',
+          justifyContent: 'center',
         }}
-        onClick={(e) => e.stopPropagation()}
+        onClick={onClose}
       >
-        {/* Handle bar */}
-        <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 12, paddingBottom: 4 }}>
-          <div style={{ width: 36, height: 4, borderRadius: 99, background: 'rgba(255,255,255,0.15)' }} />
-        </div>
+        <motion.div
+          initial={{ y: '100%' }}
+          animate={{ y: 0 }}
+          exit={{ y: '100%' }}
+          transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+          style={{
+            width: '100%',
+            maxWidth: 600,
+            maxHeight: '85dvh',
+            background: 'linear-gradient(180deg, #0f0f14 0%, #0a0a0a 100%)',
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
+            borderTop: '1.5px solid rgba(138,43,226,0.45)',
+            borderLeft: '1.5px solid rgba(138,43,226,0.2)',
+            borderRight: '1.5px solid rgba(191,255,0,0.2)',
+            boxShadow: '0 -8px 60px rgba(138,43,226,0.35), 0 -4px 30px rgba(191,255,0,0.15)',
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            paddingBottom: 'calc(90px + env(safe-area-inset-bottom))',
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Handle bar */}
+          <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 12, paddingBottom: 4 }}>
+            <div style={{ width: 36, height: 4, borderRadius: 99, background: 'rgba(255,255,255,0.15)' }} />
+          </div>
 
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px 4px' }}>
-          <h3 style={{ fontSize: 20, fontWeight: 800, color: '#fff', margin: 0 }}>Account</h3>
-          <button
-            onClick={onClose}
-            style={{
-              width: 36, height: 36, borderRadius: 12,
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.12)',
-              color: 'rgba(255,255,255,0.6)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
-            }}
-          >
-            <X style={{ width: 16, height: 16 }} />
-          </button>
-        </div>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px 4px' }}>
+            <h3 style={{ fontSize: 20, fontWeight: 800, color: '#fff', margin: 0 }}>Account</h3>
+            <button
+              onClick={onClose}
+              style={{
+                width: 36, height: 36, borderRadius: 12,
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                color: 'rgba(255,255,255,0.6)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
+              }}
+            >
+              <X style={{ width: 16, height: 16 }} />
+            </button>
+          </div>
 
-        <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
 
-          {isAuthenticated ? (
-            <>
-              {/* Current account info */}
-              <div style={{
-                padding: '16px',
-                borderRadius: 18,
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 14,
-                marginBottom: 6,
-              }}>
+            {isAuthenticated ? (
+              <>
+                {/* Current account info card */}
                 <div style={{
-                  width: 48, height: 48, borderRadius: 14,
-                  background: 'linear-gradient(135deg, rgba(138,43,226,0.4), rgba(191,255,0,0.3))',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 20, fontWeight: 800, color: '#fff', flexShrink: 0,
-                }}>
-                  {user?.full_name ? user.full_name[0].toUpperCase() : <User style={{ width: 22, height: 22 }} />}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: 0, marginBottom: 2 }}>
-                    {user?.full_name || 'Runner'}
-                  </p>
-                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', margin: 0, display: 'flex', alignItems: 'center', gap: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    <Mail style={{ width: 11, height: 11, flexShrink: 0 }} />
-                    {user?.email || '—'}
-                  </p>
-                </div>
-                <div style={{
-                  padding: '4px 10px', borderRadius: 99,
-                  background: 'rgba(191,255,0,0.1)',
-                  border: '1px solid rgba(191,255,0,0.2)',
-                }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: '#BFFF00', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Active
-                  </span>
-                </div>
-              </div>
-
-              {/* Divider */}
-              <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '4px 0' }} />
-
-              {/* Log Out */}
-              <button
-                onClick={onLogout}
-                style={{
-                  width: '100%', minHeight: 52, padding: '14px 16px', borderRadius: 16,
-                  display: 'flex', alignItems: 'center', gap: 14,
-                  background: 'rgba(255,255,255,0.05)',
+                  padding: '16px',
+                  borderRadius: 18,
+                  background: 'rgba(255,255,255,0.04)',
                   border: '1px solid rgba(255,255,255,0.08)',
-                  color: 'rgba(255,255,255,0.85)', fontSize: 15, fontWeight: 600,
-                  cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
-                }}
-              >
-                <LogOut style={{ width: 18, height: 18, flexShrink: 0 }} />
-                <span style={{ flex: 1, textAlign: 'left' }}>Log Out</span>
-              </button>
-
-              {/* Delete Account */}
-              <button
-                onClick={onDeleteRequest}
-                style={{
-                  width: '100%', minHeight: 52, padding: '14px 16px', borderRadius: 16,
-                  display: 'flex', alignItems: 'center', gap: 14,
-                  background: 'rgba(255,60,60,0.07)',
-                  border: '1px solid rgba(255,60,60,0.2)',
-                  color: 'rgba(255,100,100,0.95)', fontSize: 15, fontWeight: 600,
-                  cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
-                }}
-              >
-                <Trash2 style={{ width: 18, height: 18, flexShrink: 0 }} />
-                <span style={{ flex: 1, textAlign: 'left' }}>Delete Account</span>
-              </button>
-            </>
-          ) : (
-            <>
-              {/* Not signed in — show providers */}
-              <div style={{ textAlign: 'center', padding: '12px 0 20px' }}>
-                <div style={{
-                  width: 56, height: 56, borderRadius: 18, margin: '0 auto 14px',
-                  background: 'linear-gradient(135deg, rgba(138,43,226,0.3), rgba(191,255,0,0.2))',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 14,
+                  marginBottom: 6,
                 }}>
-                  <Shield style={{ width: 26, height: 26, color: '#BFFF00' }} />
+                  {/* Avatar initial */}
+                  <div style={{
+                    width: 48, height: 48, borderRadius: 14, flexShrink: 0,
+                    background: 'linear-gradient(135deg, rgba(138,43,226,0.5), rgba(191,255,0,0.3))',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 20, fontWeight: 800, color: '#fff',
+                  }}>
+                    {user?.full_name ? user.full_name[0].toUpperCase() : <User style={{ width: 22, height: 22 }} />}
+                  </div>
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: '0 0 3px' }}>
+                      {user?.full_name || 'Runner'}
+                    </p>
+                    <p style={{
+                      fontSize: 12, color: 'rgba(255,255,255,0.45)', margin: '0 0 5px',
+                      display: 'flex', alignItems: 'center', gap: 5,
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}>
+                      <Mail style={{ width: 11, height: 11, flexShrink: 0 }} />
+                      {user?.email || '—'}
+                    </p>
+                    {/* Signed-in provider badge */}
+                    {detectedProvider && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                        <CheckCircle2 style={{ width: 11, height: 11, color: '#BFFF00' }} />
+                        <span style={{ fontSize: 11, color: 'rgba(191,255,0,0.8)', fontWeight: 600 }}>
+                          via {detectedProvider}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={{
+                    padding: '4px 10px', borderRadius: 99,
+                    background: 'rgba(191,255,0,0.1)',
+                    border: '1px solid rgba(191,255,0,0.2)',
+                    flexShrink: 0,
+                  }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: '#BFFF00', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Active
+                    </span>
+                  </div>
                 </div>
-                <p style={{ fontSize: 18, fontWeight: 800, color: '#fff', margin: '0 0 6px' }}>Sign in to Stride</p>
-                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', margin: 0 }}>Connect your account to save your progress</p>
-              </div>
 
-              {PROVIDERS.map((p) => (
-                <ProviderRow key={p.id} provider={p} onClick={handleSignIn} />
-              ))}
+                {/* Divider */}
+                <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '4px 0' }} />
 
-              {/* Divider */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '4px 0' }}>
-                <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
-                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>OR</span>
-                <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
-              </div>
+                {/* Log Out */}
+                <button
+                  onClick={onLogout}
+                  style={{
+                    width: '100%', minHeight: 52, padding: '14px 16px', borderRadius: 16,
+                    display: 'flex', alignItems: 'center', gap: 14,
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    color: 'rgba(255,255,255,0.85)', fontSize: 15, fontWeight: 600,
+                    cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
+                  }}
+                >
+                  <LogOut style={{ width: 18, height: 18, flexShrink: 0 }} />
+                  <span style={{ flex: 1, textAlign: 'left' }}>Log Out</span>
+                </button>
 
-              {/* Create new account */}
-              <button
-                onClick={handleSignIn}
-                style={{
-                  width: '100%', minHeight: 52, padding: '14px 16px', borderRadius: 16,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                  background: 'linear-gradient(135deg, rgba(191,255,0,0.15), rgba(138,43,226,0.15))',
-                  border: '1px solid rgba(191,255,0,0.3)',
-                  color: '#BFFF00', fontSize: 15, fontWeight: 700,
-                  cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
-                }}
-              >
-                Create New Account
-              </button>
-            </>
-          )}
-        </div>
+                {/* Delete Account */}
+                <button
+                  onClick={onDeleteRequest}
+                  style={{
+                    width: '100%', minHeight: 52, padding: '14px 16px', borderRadius: 16,
+                    display: 'flex', alignItems: 'center', gap: 14,
+                    background: 'rgba(255,60,60,0.07)',
+                    border: '1px solid rgba(255,60,60,0.2)',
+                    color: 'rgba(255,100,100,0.95)', fontSize: 15, fontWeight: 600,
+                    cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
+                  }}
+                >
+                  <Trash2 style={{ width: 18, height: 18, flexShrink: 0 }} />
+                  <span style={{ flex: 1, textAlign: 'left' }}>Delete Account</span>
+                </button>
+              </>
+            ) : (
+              <>
+                {/* Not signed in */}
+                <div style={{ textAlign: 'center', padding: '12px 0 20px' }}>
+                  <div style={{
+                    width: 56, height: 56, borderRadius: 18, margin: '0 auto 14px',
+                    background: 'linear-gradient(135deg, rgba(138,43,226,0.3), rgba(191,255,0,0.2))',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <Shield style={{ width: 26, height: 26, color: '#BFFF00' }} />
+                  </div>
+                  <p style={{ fontSize: 18, fontWeight: 800, color: '#fff', margin: '0 0 6px' }}>Sign in to Stride</p>
+                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', margin: 0 }}>
+                    Connect your account to save your progress
+                  </p>
+                </div>
+
+                {PROVIDERS.map((p) => (
+                  <ProviderRow
+                    key={p.id}
+                    provider={p}
+                    loading={loadingProvider}
+                    onClick={handleSignIn}
+                  />
+                ))}
+
+                {/* OR divider */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '4px 0' }}>
+                  <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
+                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>OR</span>
+                  <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
+                </div>
+
+                {/* Create New Account */}
+                <button
+                  onClick={handleCreateAccount}
+                  disabled={!!loadingProvider}
+                  style={{
+                    width: '100%', minHeight: 52, padding: '14px 16px', borderRadius: 16,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                    background: 'linear-gradient(135deg, rgba(191,255,0,0.15), rgba(138,43,226,0.15))',
+                    border: '1px solid rgba(191,255,0,0.3)',
+                    color: loadingProvider === 'create' ? 'rgba(191,255,0,0.5)' : '#BFFF00',
+                    fontSize: 15, fontWeight: 700,
+                    cursor: loadingProvider ? 'default' : 'pointer',
+                    WebkitTapHighlightColor: 'transparent',
+                    opacity: loadingProvider && loadingProvider !== 'create' ? 0.45 : 1,
+                    transition: 'opacity 0.2s',
+                  }}
+                >
+                  {loadingProvider === 'create'
+                    ? <><Loader2 style={{ width: 16, height: 16, animation: 'spin 1s linear infinite' }} /> Redirecting…</>
+                    : 'Create New Account'
+                  }
+                </button>
+
+                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', textAlign: 'center', margin: '8px 0 0', lineHeight: 1.5 }}>
+                  By continuing you agree to our Terms of Service and Privacy Policy.
+                </p>
+              </>
+            )}
+          </div>
+        </motion.div>
       </motion.div>
-    </motion.div>
+    </>
   );
 }
