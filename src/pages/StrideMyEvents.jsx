@@ -6,7 +6,6 @@ import { ArrowLeft, Loader2 } from 'lucide-react';
 import QRModal from '@/components/stride/QRModal';
 import RaceTicket from '@/components/stride/RaceTicket';
 
-
 export default function StrideMyEvents() {
   const navigate = useNavigate();
   const [qrReg, setQrReg] = useState(null);
@@ -54,13 +53,17 @@ export default function StrideMyEvents() {
 
       <div className="px-6 pt-5 space-y-4">
         {isLoading && (
-          <div className="flex justify-center py-16"><Loader2 className="w-7 h-7 animate-spin" style={{ color: '#BFFF00' }} /></div>
+          <div className="flex justify-center py-16">
+            <Loader2 className="w-7 h-7 animate-spin" style={{ color: '#BFFF00' }} />
+          </div>
         )}
         {!isLoading && regs.length === 0 && (
           <div className="rounded-2xl p-10 text-center" style={{ background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.08)' }}>
             <p className="text-3xl mb-3">🏅</p>
             <p className="text-sm font-semibold text-white mb-1">No registrations yet</p>
-            <button onClick={() => navigate('/StrideEvents')} className="mt-3 text-sm font-bold" style={{ color: '#BFFF00' }}>Browse Events →</button>
+            <button onClick={() => navigate('/StrideEvents')} className="mt-3 text-sm font-bold" style={{ color: '#BFFF00' }}>
+              Browse Events →
+            </button>
           </div>
         )}
         {regs.map(reg => (
