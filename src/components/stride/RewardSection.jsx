@@ -97,7 +97,7 @@ export default function RewardSection({ registrationId, userEmail }) {
   const redeemed = rewards.filter(r => r.status === 'redeemed');
 
   return (
-    <div className="space-y-3">
+    <div className="px-5 pb-5 space-y-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 12 }}>
       <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#BFFF00' }}>
         🎁 Rewards · {unlocked.length} available
       </p>

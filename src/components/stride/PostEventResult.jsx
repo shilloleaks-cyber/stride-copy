@@ -28,8 +28,12 @@ export default function PostEventResult({ registrationId, userEmail, event }) {
 
   const result = results[0];
 
-  // Only show if event has passed
-  const eventPassed = event?.event_date && new Date(event.event_date) < new Date();
+  // Only show if event date has passed (compare date-only to avoid UTC midnight issues)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const eventDay = event?.event_date ? new Date(event.event_date) : null;
+  if (eventDay) eventDay.setHours(0, 0, 0, 0);
+  const eventPassed = eventDay && eventDay <= today;
   if (!eventPassed) return null;
 
   if (!result) {

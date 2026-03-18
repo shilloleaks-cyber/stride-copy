@@ -22,7 +22,7 @@ const PAYMENT_CFG = {
 export default function RaceTicket({ reg, event, category, onShowQR }) {
   const cfg = STATUS_CFG[reg.status] || STATUS_CFG.pending;
   const StatusIcon = cfg.Icon;
-  const payCfg = PAYMENT_CFG[reg.payment_status] || PAYMENT_CFG.pending;
+  const payCfg = PAYMENT_CFG[reg.payment_status] || PAYMENT_CFG.not_required;
   const isConfirmed = reg.status === 'confirmed';
   const isCancelled = reg.status === 'cancelled' || reg.status === 'rejected';
 
@@ -84,9 +84,9 @@ export default function RaceTicket({ reg, event, category, onShowQR }) {
       </div>
 
       {/* Bib + QR row */}
-      <div className="px-5 py-4 flex items-center gap-4">
+      <div className="px-5 py-4 flex items-center gap-3 min-w-0">
         {/* Bib */}
-        <div className="flex-1">
+        <div className="min-w-0" style={{ flex: '0 0 auto' }}>
           <p className="text-xs uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.35)' }}>Bib No.</p>
           <p className="text-4xl font-black tracking-tight mt-0.5" style={{ color: reg.bib_number ? '#BFFF00' : 'rgba(255,255,255,0.2)', lineHeight: 1 }}>
             {reg.bib_number || '—'}
@@ -97,7 +97,7 @@ export default function RaceTicket({ reg, event, category, onShowQR }) {
         <div style={{ width: 1, height: 56, background: 'rgba(255,255,255,0.08)' }} />
 
         {/* Shirt + payment */}
-        <div className="flex-1 space-y-1.5">
+        <div className="flex-1 min-w-0 space-y-1.5">
           <div className="flex items-center gap-1.5">
             <Shirt className="w-3 h-3 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.3)' }} />
             <span className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>{reg.shirt_size || '—'}</span>
@@ -138,11 +138,9 @@ export default function RaceTicket({ reg, event, category, onShowQR }) {
         <PostEventResult registrationId={reg.id} userEmail={reg.user_email} event={event} />
       )}
 
-      {/* Rewards section */}
+      {/* Rewards section — border is rendered inside RewardSection to avoid painting when empty */}
       {reg.checked_in && (
-        <div className="px-5 pb-5" style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 12 }}>
-          <RewardSection registrationId={reg.id} userEmail={reg.user_email} />
-        </div>
+        <RewardSection registrationId={reg.id} userEmail={reg.user_email} />
       )}
     </div>
   );
