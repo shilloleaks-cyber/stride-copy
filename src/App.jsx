@@ -116,8 +116,7 @@ const AuthenticatedApp = () => {
             }
           />
         ))}
-        <Route path="/CreateOfficialEvent" element={<LayoutWrapper currentPageName="CreateOfficialEvent"><CreateOfficialEvent /></LayoutWrapper>} />
-        <Route path="/MyEvents" element={<LayoutWrapper currentPageName="MyEvents"><MyEvents /></LayoutWrapper>} />
+        <Route path="/CreateOfficialEvent" element={<LayoutWrapper currentPageName="CreateOfficialEvent"><StrideAdminDashboard /></LayoutWrapper>} />
         <Route path="/MyRewards" element={<LayoutWrapper currentPageName="MyRewards"><MyRewards /></LayoutWrapper>} />
         <Route path="/CouponDashboard" element={<LayoutWrapper currentPageName="CouponDashboard"><CouponDashboard /></LayoutWrapper>} />
         <Route path="/StaffManagement" element={<LayoutWrapper currentPageName="StaffManagement"><StaffManagement /></LayoutWrapper>} />
