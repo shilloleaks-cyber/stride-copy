@@ -6,8 +6,6 @@ import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
-import CreateOfficialEvent from './pages/CreateOfficialEvent';
-import MyEvents from './pages/MyEvents';
 import MyRewards from './pages/MyRewards';
 import CouponDashboard from './pages/CouponDashboard';
 import StaffManagement from './pages/StaffManagement';
