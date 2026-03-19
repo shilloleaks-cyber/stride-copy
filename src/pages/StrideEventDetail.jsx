@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Calendar, MapPin, Users, Loader2, CheckCircle2, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import RegistrationForm from '@/components/stride/RegistrationForm';
+import CommunityRSVP from '@/components/stride/CommunityRSVP';
 
 const CAT_COLORS = ['#BFFF00', '#8A2BE2', 'rgb(0,200,180)', 'rgb(255,180,0)', 'rgb(255,80,130)'];
 
@@ -16,6 +17,7 @@ export default function StrideEventDetail() {
 
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const isCommunity = (event) => event?.event_type === 'community';
 
   const { data: user } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
 
