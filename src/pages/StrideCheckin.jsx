@@ -204,18 +204,29 @@ export default function StrideCheckin() {
       {hasAccess && (
         <div className="px-5 pt-6 space-y-4">
 
-          {/* Scanner prompt */}
+          {/* Camera scan CTA — primary action */}
           {state === S.IDLE && (
-            <div className="rounded-2xl p-5 text-center space-y-2" style={{ background: 'rgba(191,255,0,0.05)', border: '1px solid rgba(191,255,0,0.12)' }}>
-              <ScanLine className="w-9 h-9 mx-auto" style={{ color: '#BFFF00' }} />
-              <p className="text-sm font-semibold text-white">Scan QR or enter Bib Number</p>
-              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>Use a QR scanner app or type the bib number below</p>
-            </div>
+            <button
+              onClick={() => setShowScanner(true)}
+              className="w-full py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-3 transition-all active:scale-[0.98]"
+              style={{ background: '#BFFF00', color: '#0A0A0A' }}
+            >
+              <Camera className="w-6 h-6" /> Scan QR with Camera
+            </button>
           )}
 
           {/* Input + search — always visible unless success */}
           {state !== S.SUCCESS && (
             <div className="space-y-3">
+              {state !== S.IDLE && (
+                <button
+                  onClick={() => setShowScanner(true)}
+                  className="w-full py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2"
+                  style={{ background: 'rgba(191,255,0,0.08)', color: '#BFFF00', border: '1px solid rgba(191,255,0,0.2)' }}
+                >
+                  <Camera className="w-4 h-4" /> Scan Again
+                </button>
+              )}
               <input
                 ref={inputRef}
                 type="text"
