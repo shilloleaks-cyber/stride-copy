@@ -63,7 +63,7 @@ export default function GroupDetail() {
 
   const { data: events = [] } = useQuery({
     queryKey: ['groupEvents', groupId],
-    queryFn: () => base44.entities.GroupEvent.filter({ group_id: groupId }, 'event_date'),
+    queryFn: () => base44.entities.StrideEvent.filter({ group_id: groupId, event_type: 'community' }, 'event_date'),
     enabled: !!groupId,
   });
 
@@ -393,11 +393,11 @@ export default function GroupDetail() {
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                       <MapPin className="w-4 h-4 text-gray-500" />
-                      <span className="text-white">{event.location}</span>
+                      <span className="text-white">{event.location_name || '—'}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                       <Users className="w-4 h-4 text-gray-500" />
-                      <span className="text-white">{event.attendee_emails?.length || 0} attending</span>
+                      <span className="text-white">{event.total_registered || 0} registered</span>
                     </div>
                   </div>
                 </motion.div>
