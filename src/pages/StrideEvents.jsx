@@ -2,74 +2,110 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { Calendar, MapPin, Users, Search, ChevronRight, Star } from 'lucide-react';
+import { Calendar, MapPin, Users, Star, Search } from 'lucide-react';
 import { format } from 'date-fns';
 
-const STATUS_STYLE = {
-  open:      { label: 'Open',      bg: 'rgba(0,210,110,0.15)',  color: 'rgb(0,210,110)',     border: 'rgba(0,210,110,0.3)' },
-  closed:    { label: 'Closed',    bg: 'rgba(255,80,80,0.12)',  color: 'rgba(255,120,120,1)',border: 'rgba(255,80,80,0.25)' },
-  completed: { label: 'Completed', bg: 'rgba(138,43,226,0.15)', color: '#BFFF00',            border: 'rgba(138,43,226,0.3)' },
-  draft:     { label: 'Draft',     bg: 'rgba(255,255,255,0.06)',color: 'rgba(255,255,255,0.4)', border: 'rgba(255,255,255,0.1)' },
-  cancelled: { label: 'Cancelled', bg: 'rgba(255,80,80,0.08)',  color: 'rgba(255,100,100,0.6)', border: 'rgba(255,80,80,0.15)' },
-};
-
-function EventCard({ event, myRegistration, onClick }) {
-  const s = STATUS_STYLE[event.status] || STATUS_STYLE.draft;
-  const isRegistered = !!myRegistration;
-
+function OfficialEventCard({ event, isRegistered, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="w-full text-left rounded-2xl overflow-hidden transition-all active:scale-[0.98]"
-      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+      className="w-full text-left transition-all active:scale-[0.98]"
+      style={{
+        background: '#1A1A1A',
+        border: '1px solid rgba(255,255,255,0.08)',
+        borderRadius: 18,
+        padding: '16px',
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: 14,
+        minHeight: 44,
+      }}
     >
-      {event.banner_image ? (
-        <img src={event.banner_image} alt={event.title} className="w-full object-cover" style={{ height: 140 }} />
-      ) : (
-        <div className="w-full flex items-center justify-center" style={{ height: 100, background: 'linear-gradient(135deg, rgba(138,43,226,0.2), rgba(191,255,0,0.1))' }}>
-          <Star className="w-10 h-10" style={{ color: 'rgba(191,255,0,0.2)' }} />
-        </div>
-      )}
-
-      <div className="p-4 space-y-3">
-        <div className="flex items-start justify-between gap-2">
-          <p className="font-bold text-white text-base leading-tight flex-1">{event.title}</p>
-          <div className="flex flex-col items-end gap-1 flex-shrink-0">
-            <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ background: s.bg, color: s.color, border: `1px solid ${s.border}` }}>
-              {s.label}
+      {/* Left content */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {/* Badges */}
+        <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 5,
+            background: 'rgba(191,255,0,0.15)', border: '1px solid rgba(191,255,0,0.3)',
+            color: '#BFFF00', fontSize: 11, fontWeight: 700,
+            padding: '4px 10px', borderRadius: 99,
+          }}>
+            <Star style={{ width: 10, height: 10, fill: '#BFFF00' }} /> Official
+          </span>
+          {isRegistered && (
+            <span style={{
+              display: 'inline-flex', alignItems: 'center',
+              background: 'rgba(191,255,0,0.1)', border: '1px solid rgba(191,255,0,0.25)',
+              color: '#BFFF00', fontSize: 11, fontWeight: 700,
+              padding: '4px 10px', borderRadius: 99,
+            }}>
+              Registered
             </span>
-            {isRegistered && (
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: 'rgba(191,255,0,0.15)', color: '#BFFF00', border: '1px solid rgba(191,255,0,0.25)' }}>
-                Registered
-              </span>
-            )}
-          </div>
+          )}
         </div>
 
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2">
-            <Calendar className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#BFFF00' }} />
-            <span className="text-xs" style={{ color: 'rgba(255,255,255,0.65)' }}>
-              {format(new Date(event.event_date), 'EEEE, MMMM d, yyyy')}
+        {/* Title */}
+        <p style={{ fontSize: 17, fontWeight: 800, color: '#fff', margin: '0 0 10px', lineHeight: 1.25 }}>
+          {event.title}
+        </p>
+
+        {/* Meta rows */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+            <Calendar style={{ width: 13, height: 13, color: '#BFFF00', flexShrink: 0 }} />
+            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>
+              {format(new Date(event.event_date), 'EEE, MMM d')}
               {event.start_time ? ` · ${event.start_time}` : ''}
             </span>
           </div>
           {event.location_name && (
-            <div className="flex items-center gap-2">
-              <MapPin className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.3)' }} />
-              <span className="text-xs truncate" style={{ color: 'rgba(255,255,255,0.5)' }}>{event.location_name}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+              <MapPin style={{ width: 13, height: 13, color: 'rgba(255,255,255,0.3)', flexShrink: 0 }} />
+              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {event.location_name}
+              </span>
             </div>
           )}
-          <div className="flex items-center gap-2">
-            <Users className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.3)' }} />
-            <span className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+            <Users style={{ width: 13, height: 13, color: 'rgba(255,255,255,0.3)', flexShrink: 0 }} />
+            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>
               {event.total_registered || 0} registered
-              {event.max_participants > 0 ? ` · ${event.max_participants} max` : ''}
+              {event.max_participants > 0 ? ` · max ${event.max_participants}` : ''}
             </span>
           </div>
         </div>
       </div>
+
+      {/* Right: thumbnail */}
+      <div style={{ flexShrink: 0, width: 90, height: 90, borderRadius: 14, overflow: 'hidden', background: 'rgba(255,255,255,0.05)' }}>
+        {event.banner_image
+          ? <img src={event.banner_image} alt={event.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          : <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, rgba(138,43,226,0.3), rgba(191,255,0,0.15))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Star style={{ width: 28, height: 28, color: 'rgba(191,255,0,0.25)' }} />
+            </div>
+        }
+      </div>
     </button>
+  );
+}
+
+function SectionHeader({ label, count }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+      <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+        {label}
+      </span>
+      {count > 0 && (
+        <span style={{
+          fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)',
+          background: 'rgba(255,255,255,0.08)', borderRadius: 99,
+          padding: '2px 7px',
+        }}>
+          {count}
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -96,57 +132,118 @@ export default function StrideEvents() {
     !search || e.title.toLowerCase().includes(search.toLowerCase()) || e.location_name?.toLowerCase().includes(search.toLowerCase())
   );
 
+  // All stride events are "official" for now; community = none
+  const officialEvents = filtered;
+  const communityEvents = [];
+
   return (
-    <div className="min-h-screen text-white pb-28" style={{ backgroundColor: '#0A0A0A' }}>
+    <div className="min-h-screen text-white pb-32" style={{ backgroundColor: '#0D0D0D' }}>
+
       {/* Header */}
-      <div className="sticky top-0 z-50 px-6 pt-10 pb-4" style={{ backgroundColor: 'rgba(10,10,10,0.95)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <p className="text-xs uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.4)' }}>Stride</p>
-            <h1 className="text-2xl font-bold text-white">Events</h1>
-          </div>
+      <div style={{ padding: '52px 20px 16px' }}>
+        <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4 }}>
+          Discover
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <h1 style={{ fontSize: 32, fontWeight: 900, color: '#fff', margin: 0, lineHeight: 1.1 }}>Events</h1>
           <button
             onClick={() => navigate('/StrideMyEvents')}
-            className="text-xs font-bold px-3 py-1.5 rounded-xl"
-            style={{ background: 'rgba(191,255,0,0.1)', color: '#BFFF00', border: '1px solid rgba(191,255,0,0.2)' }}
+            style={{
+              background: 'rgba(255,255,255,0.07)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              color: 'rgba(255,255,255,0.75)',
+              fontSize: 13, fontWeight: 700,
+              padding: '8px 16px', borderRadius: 99,
+              minHeight: 36,
+            }}
           >
             My Events
           </button>
         </div>
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'rgba(255,255,255,0.3)' }} />
-          <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search events..."
-            className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm text-white placeholder-gray-500 outline-none"
-            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
-          />
-        </div>
       </div>
 
-      <div className="px-6 pt-5 space-y-4">
-        {isLoading && (
-          <div className="text-center py-16" style={{ color: 'rgba(255,255,255,0.35)' }}>Loading events...</div>
-        )}
-        {!isLoading && filtered.length === 0 && (
-          <div className="rounded-2xl p-10 text-center" style={{ background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.08)' }}>
-            <p className="text-3xl mb-3">🏃</p>
-            <p className="text-sm font-semibold text-white mb-1">No open events</p>
-            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>Check back soon for upcoming races</p>
-          </div>
-        )}
-        {filtered.map(event => (
-          <EventCard
-            key={event.id}
-            event={event}
-            myRegistration={myRegMap[event.id]}
-            onClick={() => navigate(`/StrideEventDetail?id=${event.id}`)}
-          />
-        ))}
+      {/* Search */}
+      <div style={{ padding: '0 20px 20px', position: 'relative' }}>
+        <Search style={{ position: 'absolute', left: 34, top: '50%', transform: 'translateY(-50%)', width: 15, height: 15, color: 'rgba(255,255,255,0.3)' }} />
+        <input
+          type="text"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search events..."
+          style={{
+            width: '100%', boxSizing: 'border-box',
+            background: 'rgba(255,255,255,0.06)',
+            border: '1px solid rgba(255,255,255,0.09)',
+            borderRadius: 14, padding: '11px 14px 11px 38px',
+            color: 'white', fontSize: 14, outline: 'none',
+          }}
+        />
       </div>
+
+      {/* Loading */}
+      {isLoading && (
+        <div style={{ textAlign: 'center', padding: '48px 20px', color: 'rgba(255,255,255,0.3)', fontSize: 14 }}>
+          Loading events...
+        </div>
+      )}
+
+      {!isLoading && (
+        <div style={{ padding: '0 20px' }}>
+
+          {/* Official Events */}
+          <div style={{ marginBottom: 32 }}>
+            <SectionHeader label="Official Events" count={officialEvents.length} />
+            {officialEvents.length === 0 ? (
+              <div style={{
+                borderRadius: 18, padding: '32px 20px', textAlign: 'center',
+                background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.08)',
+              }}>
+                <p style={{ fontSize: 28, marginBottom: 8 }}>🏃</p>
+                <p style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>No open events</p>
+                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>Check back soon for upcoming races</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {officialEvents.map(event => (
+                  <OfficialEventCard
+                    key={event.id}
+                    event={event}
+                    isRegistered={!!myRegMap[event.id]}
+                    onClick={() => navigate(`/StrideEventDetail?id=${event.id}`)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Community Events */}
+          <div style={{ marginBottom: 16 }}>
+            <SectionHeader label="Community Events" count={communityEvents.length} />
+            {communityEvents.length === 0 ? (
+              <div style={{
+                borderRadius: 18, padding: '40px 20px', textAlign: 'center',
+                background: '#1A1A1A', border: '1px solid rgba(255,255,255,0.07)',
+              }}>
+                <p style={{ fontSize: 34, marginBottom: 10 }}>🏃‍♂️</p>
+                <p style={{ fontSize: 16, fontWeight: 700, color: 'rgba(255,255,255,0.7)', marginBottom: 6 }}>No community events</p>
+                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)', lineHeight: 1.5 }}>Join a group to see community events</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {communityEvents.map(event => (
+                  <OfficialEventCard
+                    key={event.id}
+                    event={event}
+                    isRegistered={false}
+                    onClick={() => navigate(`/StrideEventDetail?id=${event.id}`)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+        </div>
+      )}
     </div>
   );
 }
