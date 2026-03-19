@@ -65,6 +65,7 @@ export default function StrideEventDetail() {
 
   const isOpen = event.status === 'open';
   const alreadyRegistered = !!myReg;
+  const isCommunityEvent = event.event_type === 'community';
 
   return (
     <div className="min-h-screen text-white pb-32" style={{ backgroundColor: '#0A0A0A' }}>
