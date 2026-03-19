@@ -17,7 +17,6 @@ export default function StrideEventDetail() {
 
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showForm, setShowForm] = useState(false);
-  const isCommunity = (event) => event?.event_type === 'community';
 
   const { data: user } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
 
