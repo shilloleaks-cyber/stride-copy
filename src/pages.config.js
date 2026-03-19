@@ -80,7 +80,7 @@ import Stats from './pages/Stats';
 import StrideAdminDashboard from './pages/StrideAdminDashboard';
 import StrideCheckin from './pages/StrideCheckin';
 import StrideEventDetail from './pages/StrideEventDetail';
-import StrideEvents from './pages/StrideEvents';
+import StrideEvents from './pages/StrideEvents.jsx';
 import StrideMyEvents from './pages/StrideMyEvents';
 import Training from './pages/Training';
 import Wallet from './pages/Wallet';
