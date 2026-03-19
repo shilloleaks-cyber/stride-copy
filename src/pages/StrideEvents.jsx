@@ -132,9 +132,8 @@ export default function StrideEvents() {
     !search || e.title.toLowerCase().includes(search.toLowerCase()) || e.location_name?.toLowerCase().includes(search.toLowerCase())
   );
 
-  // All stride events are "official" for now; community = none
-  const officialEvents = filtered;
-  const communityEvents = [];
+  const officialEvents = filtered.filter(e => e.event_type === 'official' || !e.event_type);
+  const communityEvents = filtered.filter(e => e.event_type === 'community');
 
   return (
     <div className="min-h-screen text-white pb-32" style={{ backgroundColor: '#0D0D0D' }}>

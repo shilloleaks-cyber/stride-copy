@@ -19,16 +19,22 @@ export default function CreateEventDialog({ open, onClose, groupId, user }) {
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      await base44.entities.GroupEvent.create({
+      await base44.entities.StrideEvent.create({
+        title: event.title,
+        description: event.description,
+        event_date: event.event_date.slice(0, 10),
+        start_time: event.event_date.slice(11, 16),
+        location_name: event.location,
+        max_participants: event.max_attendees || 0,
         group_id: groupId,
-        ...event,
         creator_email: user.email,
-        creator_name: user.full_name,
-        attendee_emails: [user.email],
+        organizer_name: user.full_name,
+        event_type: 'community',
+        status: 'open',
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['groupEvents']);
+      queryClient.invalidateQueries(['stride-events']);
       toast.success('Event created!');
       onClose();
       setEvent({
