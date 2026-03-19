@@ -140,8 +140,13 @@ export default function StrideEventDetail() {
           </div>
         )}
 
-        {/* Categories */}
-        {categories.length > 0 && (
+        {/* Community RSVP flow */}
+        {isCommunityEvent && user && (
+          <CommunityRSVP event={event} user={user} myReg={myReg} />
+        )}
+
+        {/* Official: Categories */}
+        {!isCommunityEvent && categories.length > 0 && (
           <div>
             <p className="text-xs uppercase tracking-widest mb-3" style={{ color: 'rgba(255,255,255,0.35)' }}>Categories</p>
             <div className="space-y-3">
@@ -187,8 +192,8 @@ export default function StrideEventDetail() {
           </div>
         )}
 
-        {/* Already registered info */}
-        {alreadyRegistered && (
+        {/* Official: Already registered info */}
+        {!isCommunityEvent && alreadyRegistered && (
           <div className="rounded-2xl p-4" style={{ background: 'rgba(191,255,0,0.06)', border: '1px solid rgba(191,255,0,0.2)' }}>
             <p className="text-sm font-bold text-white mb-1">You are registered!</p>
             <p className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
@@ -206,8 +211,8 @@ export default function StrideEventDetail() {
         )}
       </div>
 
-      {/* Bottom CTA */}
-      {!alreadyRegistered && isOpen && (
+      {/* Official: Bottom CTA */}
+      {!isCommunityEvent && !alreadyRegistered && isOpen && (
         <div className="fixed bottom-20 left-0 right-0 px-6 pb-2">
           <button
             onClick={() => selectedCategory && setShowForm(true)}
@@ -223,8 +228,8 @@ export default function StrideEventDetail() {
         </div>
       )}
 
-      {/* Registration Form Sheet */}
-      {showForm && selectedCategory && (
+      {/* Official: Registration Form Sheet */}
+      {!isCommunityEvent && showForm && selectedCategory && (
         <RegistrationForm
           event={event}
           category={selectedCategory}
