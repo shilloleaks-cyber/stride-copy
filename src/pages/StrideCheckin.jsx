@@ -399,6 +399,14 @@ export default function StrideCheckin() {
 
         </div>
       )}
+
+      {/* QR Camera Scanner overlay */}
+      {showScanner && (
+        <QRScanner
+          onScan={handleQRScan}
+          onClose={() => setShowScanner(false)}
+        />
+      )}
     </div>
   );
 }
