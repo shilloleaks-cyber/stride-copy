@@ -9,84 +9,91 @@ export default function QRScanner({ onScan, onClose }) {
   const scannerRef = useRef(null);
   const lastScannedRef = useRef(null);
   const mountedRef = useRef(true);
-  // Guard: prevent overlapping start calls
-  const startingRef = useRef(false);
+  const startingRef = useRef(false); // prevent overlapping start calls
 
   useEffect(() => {
     mountedRef.current = true;
-    startScanner();
+    // Defer by one tick so the DOM element (div#SCANNER_ID) is guaranteed painted
+    // before html5-qrcode tries to find it — critical on Safari/WKWebView
+    const t = setTimeout(() => startScanner(), 0);
     return () => {
+      clearTimeout(t);
       mountedRef.current = false;
       stopScanner();
     };
   }, []);
 
+  // Fully stop and release the camera stream
   const stopScanner = async () => {
     const s = scannerRef.current;
-    scannerRef.current = null; // clear ref immediately to prevent double-stop
+    scannerRef.current = null; // clear immediately — prevents double-stop races
     if (!s) return;
     try {
-      // isScanning() is a method on html5-qrcode, not a property
       if (s.isScanning()) await s.stop();
     } catch (_) {}
-    try {
-      s.clear();
-    } catch (_) {}
+    // clear() removes internal state and the injected video element.
+    // On Safari it can throw if the host DOM node was already removed — safe to ignore.
+    try { s.clear(); } catch (_) {}
   };
 
   const startScanner = async () => {
     if (startingRef.current) return;
+    if (!mountedRef.current) return;
     startingRef.current = true;
-
-    if (!mountedRef.current) { startingRef.current = false; return; }
     setStatus('starting');
 
     try {
-      const scanner = new Html5Qrcode(SCANNER_ID);
+      // On repeated open/close cycles the html5-qrcode library may have stale state
+      // tied to SCANNER_ID. Instantiating a fresh instance on each start is correct —
+      // but we must ensure any prior instance was fully stopped (handled by stopScanner).
+      const scanner = new Html5Qrcode(SCANNER_ID, { verbose: false });
       scannerRef.current = scanner;
 
       await scanner.start(
-        { facingMode: 'environment' },
+        { facingMode: 'environment' },          // rear camera preferred
         { fps: 10, qrbox: { width: 260, height: 260 } },
         (decodedText) => {
-          // Prevent rapid duplicate scans of the same code
+          // Prevent the same QR firing twice (html5-qrcode calls this on every decoded frame)
           if (decodedText === lastScannedRef.current) return;
           lastScannedRef.current = decodedText;
 
-          // Stop scanner, then notify parent — fully async-safe
+          // Stop fully before calling parent — ensures camera indicator turns off
           stopScanner().then(() => {
             if (mountedRef.current) onScan(decodedText);
           });
         },
-        () => {} // ignore per-frame decode errors
+        () => {} // per-frame decode errors are normal — ignore
       );
 
       if (mountedRef.current) setStatus('scanning');
     } catch (err) {
       if (!mountedRef.current) { startingRef.current = false; return; }
 
-      // Detect permission denial — covers Safari (NotAllowedError), Chrome, Firefox
-      const name = err?.name || '';
-      const msg = (err?.message || '').toLowerCase();
+      // Classify the error — Safari throws DOMException with .name, others use message strings
+      const errName = err?.name || '';
+      const errMsg = (err?.message || '').toLowerCase();
+
       const isDenied =
-        name === 'NotAllowedError' ||
-        msg.includes('permission') ||
-        msg.includes('notallowed') ||
-        msg.includes('denied');
+        errName === 'NotAllowedError' ||         // Safari, Chrome
+        errMsg.includes('permission') ||
+        errMsg.includes('notallowed') ||
+        errMsg.includes('denied');
 
       const isUnavailable =
-        name === 'NotFoundError' ||
-        msg.includes('notfound') ||
-        msg.includes('no camera') ||
-        msg.includes('device not found');
+        errName === 'NotFoundError' ||           // no camera hardware
+        errName === 'OverconstrainedError' ||    // rear cam not available (e.g. desktop)
+        errMsg.includes('notfound') ||
+        errMsg.includes('no camera') ||
+        errMsg.includes('device not found') ||
+        errMsg.includes('could not start');
 
       if (isDenied) {
         setStatus('denied');
-      } else if (isUnavailable) {
-        setStatus('unavailable');
       } else {
-        // Unknown error — treat as unavailable with retry
-        console.warn('[QRScanner] Unexpected error:', err);
+        // Treat everything else (including unknown) as unavailable — still shows retry
+        if (!isDenied && !isUnavailable) {
+          console.warn('[QRScanner] Unrecognised camera error:', errName, errMsg);
+        }
         setStatus('unavailable');
       }
     } finally {
@@ -100,9 +107,9 @@ export default function QRScanner({ onScan, onClose }) {
   };
 
   const handleRetry = async () => {
-    lastScannedRef.current = null;
-    await stopScanner(); // fully stop before restarting
-    startScanner();
+    lastScannedRef.current = null; // allow same code to be scanned again after retry
+    await stopScanner();
+    if (mountedRef.current) startScanner();
   };
 
   return (
@@ -111,7 +118,7 @@ export default function QRScanner({ onScan, onClose }) {
       style={{ backgroundColor: 'rgba(0,0,0,0.96)' }}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-5 pt-12 pb-4">
+      <div className="flex items-center justify-between px-5 pt-12 pb-4 flex-shrink-0">
         <div>
           <p className="text-white font-bold text-lg">Scan QR Code</p>
           <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
@@ -127,47 +134,53 @@ export default function QRScanner({ onScan, onClose }) {
         </button>
       </div>
 
-      {/* Camera viewport */}
-      <div className="flex-1 flex flex-col items-center justify-center px-5">
-        {(status === 'starting' || status === 'scanning') && (
-          <div className="relative w-full max-w-sm">
-            {/* html5-qrcode mounts the video element here */}
-            <div
-              id={SCANNER_ID}
-              className="w-full rounded-2xl overflow-hidden"
-              style={{ minHeight: 300 }}
-            />
-            {/* Corner frame overlay */}
-            <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-              <div className="relative w-64 h-64">
-                {[
-                  ['top-0 left-0', 'border-t-2 border-l-2 rounded-tl-xl'],
-                  ['top-0 right-0', 'border-t-2 border-r-2 rounded-tr-xl'],
-                  ['bottom-0 left-0', 'border-b-2 border-l-2 rounded-bl-xl'],
-                  ['bottom-0 right-0', 'border-b-2 border-r-2 rounded-br-xl'],
-                ].map(([pos, cls]) => (
-                  <div
-                    key={pos}
-                    className={`absolute w-8 h-8 ${pos} ${cls}`}
-                    style={{ borderColor: '#BFFF00' }}
-                  />
-                ))}
-              </div>
-            </div>
-            {/* Loading spinner while camera is initialising */}
-            {status === 'starting' && (
-              <div
-                className="absolute inset-0 flex items-center justify-center rounded-2xl"
-                style={{ background: 'rgba(0,0,0,0.6)' }}
-              >
+      {/* Camera viewport — always rendered so SCANNER_ID div exists in DOM */}
+      <div className="flex-1 flex flex-col items-center justify-center px-5 min-h-0">
+
+        {/* The scanner div must always be present in the DOM while the component is mounted
+            so that html5-qrcode can find it. We hide it via opacity/pointer-events
+            when showing error states rather than unmounting it. */}
+        <div
+          className="relative w-full max-w-sm"
+          style={{
+            display: (status === 'starting' || status === 'scanning') ? 'block' : 'none'
+          }}
+        >
+          <div
+            id={SCANNER_ID}
+            className="w-full rounded-2xl overflow-hidden"
+            style={{ minHeight: 300 }}
+          />
+          {/* Corner frame overlay */}
+          <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+            <div className="relative w-64 h-64">
+              {[
+                ['top-0 left-0',    'border-t-2 border-l-2 rounded-tl-xl'],
+                ['top-0 right-0',   'border-t-2 border-r-2 rounded-tr-xl'],
+                ['bottom-0 left-0', 'border-b-2 border-l-2 rounded-bl-xl'],
+                ['bottom-0 right-0','border-b-2 border-r-2 rounded-br-xl'],
+              ].map(([pos, cls]) => (
                 <div
-                  className="w-8 h-8 border-2 rounded-full animate-spin"
-                  style={{ borderColor: '#BFFF00', borderTopColor: 'transparent' }}
+                  key={pos}
+                  className={`absolute w-8 h-8 ${pos} ${cls}`}
+                  style={{ borderColor: '#BFFF00' }}
                 />
-              </div>
-            )}
+              ))}
+            </div>
           </div>
-        )}
+          {/* Spinner while camera is initialising */}
+          {status === 'starting' && (
+            <div
+              className="absolute inset-0 flex items-center justify-center rounded-2xl"
+              style={{ background: 'rgba(0,0,0,0.6)' }}
+            >
+              <div
+                className="w-8 h-8 border-2 rounded-full animate-spin"
+                style={{ borderColor: '#BFFF00', borderTopColor: 'transparent' }}
+              />
+            </div>
+          )}
+        </div>
 
         {/* Permission denied */}
         {status === 'denied' && (
@@ -180,8 +193,8 @@ export default function QRScanner({ onScan, onClose }) {
             </div>
             <p className="text-white font-bold text-lg">Camera Permission Denied</p>
             <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
-              Allow camera access in your browser or device settings, then tap Retry.
-              On iPhone, go to <strong>Settings → Safari → Camera → Allow</strong>.
+              Allow camera access in your browser settings, then tap Retry.{' '}
+              On iPhone: <strong>Settings → Safari → Camera → Allow</strong>.
             </p>
             <button
               onClick={handleRetry}
@@ -231,9 +244,9 @@ export default function QRScanner({ onScan, onClose }) {
         )}
       </div>
 
-      {/* Bottom scanning hint */}
+      {/* Bottom hint while scanning */}
       {status === 'scanning' && (
-        <div className="pb-12 text-center">
+        <div className="pb-12 text-center flex-shrink-0">
           <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
             Scanning automatically — hold steady
           </p>
