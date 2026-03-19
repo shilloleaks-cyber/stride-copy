@@ -49,6 +49,7 @@ export default function StrideCheckin() {
   const [foundReg, setFoundReg] = useState(null);
   const [foundEvent, setFoundEvent] = useState(null);
   const [foundCat, setFoundCat] = useState(null);
+  const [showScanner, setShowScanner] = useState(false);
 
   const { data: user, isLoading: loadingUser } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
 
