@@ -5,7 +5,7 @@ import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import QRModal from '@/components/stride/QRModal';
 import RaceTicket from '@/components/stride/RaceTicket.jsx';
-import RSVPCard from '@/components/stride/RSVPCard';
+import RSVPCard from '@/components/stride/RSVPCard.jsx';
 
 export default function StrideMyEvents() {
   const navigate = useNavigate();
