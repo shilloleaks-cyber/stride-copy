@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { CheckCircle2, Users, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -8,10 +8,19 @@ export default function CommunityRSVP({ event, user, myReg }) {
   const queryClient = useQueryClient();
   const [leaving, setLeaving] = useState(false);
 
+  const { data: rsvpCount = 0 } = useQuery({
+    queryKey: ['rsvp-count', event.id],
+    queryFn: async () => {
+      const r = await base44.entities.EventRegistration.filter({ event_id: event.id, status: 'confirmed' });
+      return r.length;
+    },
+    enabled: !!event.id,
+  });
+
   const rsvpMutation = useMutation({
     mutationFn: () => base44.entities.EventRegistration.create({
       event_id: event.id,
-      category_id: 'rsvp',          // sentinel — not a real category
+      category_id: 'rsvp',
       user_email: user.email,
       first_name: user.full_name?.split(' ')[0] || user.email,
       last_name: user.full_name?.split(' ').slice(1).join(' ') || '',
@@ -36,15 +45,6 @@ export default function CommunityRSVP({ event, user, myReg }) {
     },
   });
 
-  const { data: rsvpCount = 0 } = useQuery({
-    queryKey: ['rsvp-count', event.id],
-    queryFn: async () => {
-      const r = await base44.entities.EventRegistration.filter({ event_id: event.id, status: 'confirmed' });
-      return r.length;
-    },
-    enabled: !!event.id,
-  });
-
   const isGoing = myReg?.status === 'confirmed';
   const isCancelled = myReg?.status === 'cancelled';
 
@@ -60,7 +60,7 @@ export default function CommunityRSVP({ event, user, myReg }) {
 
       {/* Already going */}
       {isGoing && !leaving && (
-        <div className="rounded-2xl p-4 mb-4" style={{ background: 'rgba(191,255,0,0.07)', border: '1px solid rgba(191,255,0,0.22)' }}>
+        <div className="rounded-2xl p-4" style={{ background: 'rgba(191,255,0,0.07)', border: '1px solid rgba(191,255,0,0.22)' }}>
           <div className="flex items-center gap-2 mb-2">
             <CheckCircle2 className="w-4 h-4" style={{ color: '#BFFF00' }} />
             <p className="text-sm font-bold text-white">You're going!</p>
@@ -77,7 +77,7 @@ export default function CommunityRSVP({ event, user, myReg }) {
 
       {/* Confirm cancel */}
       {isGoing && leaving && (
-        <div className="rounded-2xl p-4 mb-4" style={{ background: 'rgba(255,80,80,0.07)', border: '1px solid rgba(255,80,80,0.2)' }}>
+        <div className="rounded-2xl p-4" style={{ background: 'rgba(255,80,80,0.07)', border: '1px solid rgba(255,80,80,0.2)' }}>
           <p className="text-sm font-bold text-white mb-3">Cancel your RSVP?</p>
           <div className="flex gap-2">
             <button
@@ -99,7 +99,7 @@ export default function CommunityRSVP({ event, user, myReg }) {
         </div>
       )}
 
-      {/* CTA button */}
+      {/* CTA button — shown when not yet going */}
       {event.status === 'open' && (!myReg || isCancelled) && (
         <div className="fixed bottom-20 left-0 right-0 px-6 pb-2">
           <button
@@ -118,6 +118,3 @@ export default function CommunityRSVP({ event, user, myReg }) {
     </div>
   );
 }
-
-// Need useQuery imported
-import { useQuery } from '@tanstack/react-query';
