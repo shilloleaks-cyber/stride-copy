@@ -4,9 +4,10 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft, ScanLine, Search, CheckCircle2, XCircle,
-  AlertCircle, Loader2, ShieldOff, User, Shirt, CreditCard, Hash, Calendar
+  AlertCircle, Loader2, ShieldOff, User, Shirt, CreditCard, Hash, Calendar, Camera
 } from 'lucide-react';
 import { format } from 'date-fns';
+import QRScanner from '@/components/stride/QRScanner';
 
 const S = { IDLE: 'idle', SEARCHING: 'searching', FOUND: 'found', SUCCESS: 'success', NOT_FOUND: 'not_found', ALREADY: 'already', PAYMENT: 'payment', NOT_CONFIRMED: 'not_confirmed' };
 
