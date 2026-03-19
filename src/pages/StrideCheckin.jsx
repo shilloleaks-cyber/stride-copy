@@ -159,6 +159,52 @@ export default function StrideCheckin() {
     setState(S.FOUND);
   };
 
+  const handleQRScan = (value) => {
+    setShowScanner(false);
+    setInput(value);
+    // auto-trigger lookup with the scanned value
+    handleSearchWithValue(value);
+  };
+
+  const handleSearchWithValue = async (q) => {
+    q = q.trim();
+    if (!q) return;
+    setState(S.SEARCHING);
+    setFoundReg(null);
+    setFoundEvent(null);
+    setFoundCat(null);
+
+    let regs = await base44.entities.EventRegistration.filter({ qr_code: q });
+    if (!regs.length) regs = await base44.entities.EventRegistration.filter({ bib_number: q.toUpperCase() });
+
+    if (!regs.length) { setState(S.NOT_FOUND); return; }
+
+    const reg = regs[0];
+    const [evs, cats] = await Promise.all([
+      base44.entities.StrideEvent.filter({ id: reg.event_id }),
+      reg.category_id && reg.category_id !== 'rsvp'
+        ? base44.entities.EventCategory.filter({ id: reg.category_id })
+        : Promise.resolve([]),
+    ]);
+
+    setFoundReg(reg);
+    setFoundEvent(evs[0] || null);
+    setFoundCat(cats[0] || null);
+
+    if (reg.checked_in) {
+      await base44.entities.EventCheckinLog.create({
+        event_id: reg.event_id, registration_id: reg.id, user_email: reg.user_email,
+        bib_number: reg.bib_number || '', scanned_by: user.email,
+        scanned_at: new Date().toISOString(), result: 'already_checked_in',
+      });
+      setState(S.ALREADY);
+      return;
+    }
+    if (reg.status !== 'confirmed') { setState(S.NOT_CONFIRMED); return; }
+    if (reg.payment_status !== 'approved' && reg.payment_status !== 'not_required') { setState(S.PAYMENT); return; }
+    setState(S.FOUND);
+  };
+
   const handleReset = () => {
     setInput('');
     setState(S.IDLE);
