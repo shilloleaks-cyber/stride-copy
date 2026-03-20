@@ -15,6 +15,7 @@ import StrideEventDetail from './pages/StrideEventDetail';
 import StrideMyEvents from './pages/StrideMyEvents';
 import StrideAdminDashboard from './pages/StrideAdminDashboard';
 import StrideCheckin from './pages/StrideCheckin';
+import SponsorClaim from './pages/SponsorClaim';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRef } from 'react';
