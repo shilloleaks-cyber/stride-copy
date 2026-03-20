@@ -99,47 +99,48 @@ export default function SponsorClaim() {
   };
 
   // ── Claim ────────────────────────────────────────────────────────────────────
+  // BUG FIX: capture refs at mutation time, not closure time, to guard against
+  // stale state if the user somehow triggers a second lookup during the in-flight request.
   const claimMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async ({ reg, reward, staffEmail }) => {
       const now = new Date().toISOString();
 
-      // Double-check: no existing claim (race-condition guard)
-      const existing = await base44.entities.RewardClaimLog.filter({ registration_id: foundReg.id });
-      if (foundReward && existing.find(l => l.reward_id === foundReward.id)) {
+      // Server-side race-condition guard: re-fetch before writing
+      const existing = await base44.entities.RewardClaimLog.filter({ registration_id: reg.id });
+      if (reward && existing.find(l => l.reward_id === reward.id)) {
         throw new Error('already_claimed');
       }
 
       await base44.entities.RewardClaimLog.create({
-        registration_id: foundReg.id,
-        reward_id: foundReward?.id || '',
-        event_id: foundReg.event_id,
-        user_email: foundReg.user_email,
-        first_name: foundReg.first_name,
-        last_name: foundReg.last_name,
-        bib_number: foundReg.bib_number || '',
-        reward_name: foundReward?.reward_name || 'Reward',
-        sponsor_name: foundReward?.sponsor_name || '',
+        registration_id: reg.id,
+        reward_id: reward?.id || '',
+        event_id: reg.event_id,
+        user_email: reg.user_email,
+        first_name: reg.first_name,
+        last_name: reg.last_name,
+        bib_number: reg.bib_number || '',
+        reward_name: reward?.reward_name || 'Reward',
+        sponsor_name: reward?.sponsor_name || '',
         claimed_at: now,
-        claimed_by_staff: user.email,
+        claimed_by_staff: staffEmail,
       });
 
       // Increment claimed_count on the reward
-      if (foundReward) {
-        await base44.entities.SponsorReward.update(foundReward.id, {
-          claimed_count: (foundReward.claimed_count || 0) + 1,
+      if (reward) {
+        await base44.entities.SponsorReward.update(reward.id, {
+          claimed_count: (reward.claimed_count || 0) + 1,
         });
       }
 
-      return now;
+      return { now, reg, reward };
     },
-    onSuccess: (claimedAt) => {
+    onSuccess: ({ now, reg, reward }) => {
       queryClient.invalidateQueries({ queryKey: ['reward-claim-logs-recent'] });
-      setSuccessData({ reg: foundReg, reward: foundReward, claimedAt });
+      setSuccessData({ reg, reward, claimedAt: now });
       setState(S.SUCCESS);
     },
     onError: (err) => {
       if (err.message === 'already_claimed') {
-        // Re-query to show updated state
         setFoundClaimLog({ claimed_at: new Date().toISOString() });
       }
     },
@@ -289,7 +290,7 @@ export default function SponsorClaim() {
               category={foundCat}
               reward={foundReward}
               claimLog={foundClaimLog}
-              onClaim={() => claimMutation.mutate()}
+              onClaim={() => claimMutation.mutate({ reg: foundReg, reward: foundReward, staffEmail: user.email })}
               isClaiming={claimMutation.isPending}
             />
           )}
