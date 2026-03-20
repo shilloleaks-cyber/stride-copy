@@ -127,6 +127,7 @@ const AuthenticatedApp = () => {
         <Route path="/StrideMyEvents" element={<LayoutWrapper currentPageName="StrideMyEvents"><StrideMyEvents /></LayoutWrapper>} />
         <Route path="/StrideAdminDashboard" element={<LayoutWrapper currentPageName="StrideAdminDashboard"><StrideAdminDashboard /></LayoutWrapper>} />
         <Route path="/StrideCheckin" element={<LayoutWrapper currentPageName="StrideCheckin"><StrideCheckin /></LayoutWrapper>} />
+        <Route path="/SponsorClaim" element={<LayoutWrapper currentPageName="SponsorClaim"><SponsorClaim /></LayoutWrapper>} />
         <Route path="*" element={<PageNotFound />} />
       </Routes>
     </AnimatedRoutes>
