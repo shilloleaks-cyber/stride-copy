@@ -62,6 +62,14 @@ export default function SponsorClaim() {
     if (!regs.length) { setState(S.NOT_FOUND); return; }
 
     const reg = regs[0];
+
+    // BUG FIX: block RSVP-only registrations — sponsor rewards are for official race participants
+    if (reg.category_id === 'rsvp') {
+      setFoundReg(reg);
+      setState(S.NOT_CONFIRMED);
+      return;
+    }
+
     if (reg.status !== 'confirmed') { setFoundReg(reg); setState(S.NOT_CONFIRMED); return; }
 
     // Parallel: fetch event, category, active sponsor rewards, existing claim log

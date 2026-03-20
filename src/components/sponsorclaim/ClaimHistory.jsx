@@ -7,7 +7,9 @@ import { format } from 'date-fns';
 export default function ClaimHistory() {
   const { data: logs = [], isLoading } = useQuery({
     queryKey: ['reward-claim-logs-recent'],
-    queryFn: () => base44.entities.RewardClaimLog.list('-claimed_at', 10),
+    // BUG FIX: sort by created_date (built-in) since claimed_at is a custom field
+    // the SDK's list() sort param only works on built-in fields reliably
+    queryFn: () => base44.entities.RewardClaimLog.list('-created_date', 50),
     refetchInterval: 15000, // auto-refresh every 15s on event day
   });
 
