@@ -281,10 +281,16 @@ export default function SponsorClaim() {
             <div className="rounded-2xl p-5 flex items-start gap-4" style={{ background: 'rgba(255,200,80,0.08)', border: '1px solid rgba(255,200,80,0.25)' }}>
               <AlertCircle className="w-8 h-8 flex-shrink-0 mt-0.5" style={{ color: 'rgba(255,200,80,1)' }} />
               <div>
-                <p className="font-bold text-white text-base">Registration Not Confirmed</p>
+                <p className="font-bold text-white text-base">
+                  {foundReg.category_id === 'rsvp' ? 'RSVP Only — Not Eligible' : 'Registration Not Confirmed'}
+                </p>
                 <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                  {foundReg.first_name} {foundReg.last_name}'s registration is{' '}
-                  <span className="font-bold capitalize">{foundReg.status}</span>. Only confirmed registrations can claim rewards.
+                  {foundReg.category_id === 'rsvp'
+                    ? `${foundReg.first_name} ${foundReg.last_name} is a community RSVP, not a race registrant. Sponsor rewards are for official race participants only.`
+                    : `${foundReg.first_name} ${foundReg.last_name}'s registration is `}
+                  {foundReg.category_id !== 'rsvp' && (
+                    <><span className="font-bold capitalize">{foundReg.status}</span>. Only confirmed registrations can claim rewards.</>
+                  )}
                 </p>
               </div>
             </div>
