@@ -372,7 +372,7 @@ export default function GroupDetail() {
         {/* Events Tab */}
         {tab === 'events' && (
           <div className="space-y-4">
-            <Button onClick={() => setCreateEventOpen(true)} className="w-full h-12" style={{ backgroundColor: '#BFFF00', color: '#0A0A0A' }}>
+            <Button onClick={() => navigate(`/CreateEvent?group_id=${groupId}`)} className="w-full h-12" style={{ backgroundColor: '#BFFF00', color: '#0A0A0A' }}>
               <Calendar className="w-4 h-4 mr-2" />
               Schedule Event
             </Button>
