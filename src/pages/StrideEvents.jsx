@@ -126,6 +126,13 @@ export default function StrideEvents() {
     enabled: !!user?.email,
   });
 
+  const { data: myMemberships = [] } = useQuery({
+    queryKey: ['my-group-memberships', user?.email],
+    queryFn: () => base44.entities.GroupMember.filter({ user_email: user.email, status: 'active' }),
+    enabled: !!user?.email,
+  });
+
+  const myGroupIds = new Set(myMemberships.map(m => m.group_id));
   const myRegMap = Object.fromEntries(myRegs.map(r => [r.event_id, r]));
 
   const filtered = events.filter(e =>
@@ -133,7 +140,12 @@ export default function StrideEvents() {
   );
 
   const officialEvents = filtered.filter(e => e.event_type === 'official' || !e.event_type);
-  const communityEvents = filtered.filter(e => e.event_type === 'community');
+
+  // Community: show if public OR user is in the group that created it
+  const communityEvents = filtered.filter(e =>
+    e.event_type === 'community' &&
+    (e.visibility === 'public' || myGroupIds.has(e.group_id))
+  );
 
   return (
     <div className="min-h-screen text-white pb-32" style={{ backgroundColor: '#0D0D0D' }}>
