@@ -231,6 +231,37 @@ export default function Home() {
 
 
 
+  // Trending group events
+  const { data: myMemberships = [] } = useQuery({
+    queryKey: ['my-group-memberships', user?.email],
+    queryFn: () => base44.entities.GroupMember.filter({ user_email: user.email, status: 'active' }),
+    enabled: !!user?.email,
+  });
+
+  const { data: communityEvents = [] } = useQuery({
+    queryKey: ['community-events-home'],
+    queryFn: () => base44.entities.StrideEvent.filter({ event_type: 'community', status: 'open' }, '-created_date', 50),
+  });
+
+  const myGroupIds = useMemo(() => new Set(myMemberships.map(m => m.group_id)), [myMemberships]);
+
+  const trendingEvents = useMemo(() => {
+    const now = new Date();
+    const visibleEvents = communityEvents.filter(e =>
+      e.visibility === 'public' || myGroupIds.has(e.group_id)
+    );
+    return visibleEvents
+      .map(e => {
+        const daysToEvent = (new Date(e.event_date) - now) / (1000 * 60 * 60 * 24);
+        const isSoon = daysToEvent >= 0 && daysToEvent <= 7 ? 15 : 0;
+        const isNew = (now - new Date(e.created_date)) < 3 * 24 * 60 * 60 * 1000 ? 20 : 0;
+        const score = (e.total_registered || 0) * 5 + isSoon + isNew;
+        return { ...e, score };
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5);
+  }, [communityEvents, myGroupIds]);
+
   // Game stats - derived from coin_balance (single source of truth)
   const coinBalance = user?.coin_balance ?? 0;
   const level = Math.floor(coinBalance / 100) + 1;
