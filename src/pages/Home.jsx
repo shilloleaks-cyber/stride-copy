@@ -4,6 +4,7 @@ import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import RunCard from '@/components/running/RunCard';
+import { Calendar, MapPin, Users } from 'lucide-react';
 
 // ===== Coin Pop Animation =====
 function CoinPopLayer({ pops }) {
