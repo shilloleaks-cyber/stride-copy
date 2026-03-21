@@ -1,22 +1,25 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Loader2, ImagePlus, X } from 'lucide-react';
 
 export default function CreateEvent() {
   const navigate = useNavigate();
+  const urlParams = new URLSearchParams(window.location.search);
+  const prefilledGroupId = urlParams.get('group_id') || '';
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bannerPreview, setBannerPreview] = useState(null);
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
   const [form, setForm] = useState({
-    group_id: '',
+    group_id: prefilledGroupId,
     title: '',
     description: '',
     location_name: '',
-    start_at: '',
-    max_attendees: '',
+    event_date: '',
+    start_time: '',
+    max_participants: '',
     visibility: 'group_only',
     banner_image: '',
   });
@@ -26,25 +29,29 @@ export default function CreateEvent() {
     queryFn: () => base44.auth.me(),
   });
 
+  // Only load group picker if no group prefilled
   const { data: memberships = [] } = useQuery({
     queryKey: ['group-memberships', user?.email],
     queryFn: () => base44.entities.GroupMember.filter({ user_email: user.email, status: 'active' }),
-    enabled: !!user?.email,
+    enabled: !!user?.email && !prefilledGroupId,
   });
-
-  const groupIds = memberships.map(m => m.group_id);
 
   const { data: allGroups = [] } = useQuery({
     queryKey: ['groups-create-event'],
     queryFn: () => base44.entities.Group.list('-created_date', 100),
-    enabled: groupIds.length > 0,
+    enabled: memberships.length > 0,
   });
 
-  const userGroups = allGroups.filter(g => groupIds.includes(g.id));
+  const userGroups = allGroups.filter(g => memberships.map(m => m.group_id).includes(g.id));
 
-  const handleChange = (field, value) => {
-    setForm(prev => ({ ...prev, [field]: value }));
-  };
+  // Fetch group name if prefilled
+  const { data: prefilledGroup } = useQuery({
+    queryKey: ['group', prefilledGroupId],
+    queryFn: () => base44.entities.Group.filter({ id: prefilledGroupId }).then(r => r[0]),
+    enabled: !!prefilledGroupId,
+  });
+
+  const handleChange = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
 
   const handleBannerUpload = async (e) => {
     const file = e.target.files[0];
@@ -63,31 +70,37 @@ export default function CreateEvent() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.group_id || !form.title || !form.start_at || !user) return;
+    if (!form.group_id || !form.title || !form.event_date || !user) return;
     setIsSubmitting(true);
 
-    const event = await base44.entities.Event.create({
-      group_id: form.group_id,
-      created_by_user_email: user.email,
-      created_by_user_name: user.full_name,
+    // Extract date and time from datetime-local value
+    const dtValue = form.event_date; // "2026-03-25T07:00"
+    const datePart = dtValue.split('T')[0];
+    const timePart = dtValue.split('T')[1]?.slice(0, 5) || '';
+
+    await base44.entities.StrideEvent.create({
       title: form.title,
       description: form.description,
       banner_image: form.banner_image,
       location_name: form.location_name,
-      start_at: new Date(form.start_at).toISOString(),
-      max_attendees: form.max_attendees ? parseInt(form.max_attendees) : 0,
+      event_date: datePart,
+      start_time: timePart,
+      max_participants: form.max_participants ? parseInt(form.max_participants) : 0,
       visibility: form.visibility,
-      status: 'published',
-      attendee_count: 1,
+      event_type: 'community',
+      group_id: form.group_id,
+      creator_email: user.email,
+      status: 'open',
     });
 
-    await Promise.all([
-      base44.entities.EventAdmin.create({ event_id: event.id, user_email: user.email, role: 'owner' }),
-      base44.entities.EventParticipant.create({ event_id: event.id, user_email: user.email, user_name: user.full_name, status: 'joined' }),
-    ]);
-
     setIsSubmitting(false);
-    navigate(createPageUrl('EventDetail') + '?id=' + event.id);
+
+    // Redirect back to group if we came from one, else to events
+    if (prefilledGroupId) {
+      navigate(`/GroupDetail?id=${prefilledGroupId}`);
+    } else {
+      navigate('/StrideEvents');
+    }
   };
 
   const inputStyle = {
@@ -99,6 +112,7 @@ export default function CreateEvent() {
     width: '100%',
     outline: 'none',
     fontSize: '15px',
+    boxSizing: 'border-box',
   };
 
   const labelStyle = {
@@ -110,7 +124,7 @@ export default function CreateEvent() {
     display: 'block',
   };
 
-  const isDisabled = isSubmitting || !form.group_id || !form.title || !form.start_at;
+  const isDisabled = isSubmitting || !form.group_id || !form.title || !form.event_date;
 
   return (
     <div className="min-h-screen text-white pb-24" style={{ backgroundColor: '#0A0A0A' }}>
@@ -126,25 +140,33 @@ export default function CreateEvent() {
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-lg font-bold">Create Group Event</h1>
+        <div>
+          <h1 className="text-lg font-bold">Schedule Event</h1>
+          {prefilledGroup && (
+            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>{prefilledGroup.name}</p>
+          )}
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="px-6 pt-6 space-y-5">
 
-        <div>
-          <label style={labelStyle}>Group *</label>
-          <select
-            value={form.group_id}
-            onChange={e => handleChange('group_id', e.target.value)}
-            required
-            style={{ ...inputStyle, appearance: 'none' }}
-          >
-            <option value="" style={{ background: '#1a1a1a' }}>Select a group</option>
-            {userGroups.map(g => (
-              <option key={g.id} value={g.id} style={{ background: '#1a1a1a' }}>{g.name}</option>
-            ))}
-          </select>
-        </div>
+        {/* Group selector — only shown if no group_id prefilled */}
+        {!prefilledGroupId && (
+          <div>
+            <label style={labelStyle}>Group *</label>
+            <select
+              value={form.group_id}
+              onChange={e => handleChange('group_id', e.target.value)}
+              required
+              style={{ ...inputStyle, appearance: 'none' }}
+            >
+              <option value="" style={{ background: '#1a1a1a' }}>Select a group</option>
+              {userGroups.map(g => (
+                <option key={g.id} value={g.id} style={{ background: '#1a1a1a' }}>{g.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div>
           <label style={labelStyle}>Event Title *</label>
@@ -169,21 +191,13 @@ export default function CreateEvent() {
                 </div>
               )}
               {!isUploadingBanner && (
-                <button
-                  type="button"
-                  onClick={clearBanner}
-                  className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center"
-                  style={{ background: 'rgba(0,0,0,0.7)' }}
-                >
+                <button type="button" onClick={clearBanner} className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.7)' }}>
                   <X className="w-4 h-4 text-white" />
                 </button>
               )}
             </div>
           ) : (
-            <label
-              className="flex flex-col items-center justify-center gap-2 rounded-xl cursor-pointer"
-              style={{ background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.15)', height: '100px' }}
-            >
+            <label className="flex flex-col items-center justify-center gap-2 rounded-xl cursor-pointer" style={{ background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.15)', height: '100px' }}>
               <ImagePlus className="w-6 h-6" style={{ color: 'rgba(255,255,255,0.3)' }} />
               <span className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>Tap to upload banner</span>
               <input type="file" accept="image/*" className="hidden" onChange={handleBannerUpload} />
@@ -214,22 +228,22 @@ export default function CreateEvent() {
         </div>
 
         <div>
-          <label style={labelStyle}>Start Date &amp; Time *</label>
+          <label style={labelStyle}>Date &amp; Time *</label>
           <input
             type="datetime-local"
-            value={form.start_at}
-            onChange={e => handleChange('start_at', e.target.value)}
+            value={form.event_date}
+            onChange={e => handleChange('event_date', e.target.value)}
             required
             style={{ ...inputStyle, colorScheme: 'dark' }}
           />
         </div>
 
         <div>
-          <label style={labelStyle}>Max Attendees (0 = unlimited)</label>
+          <label style={labelStyle}>Max Participants (0 = unlimited)</label>
           <input
             type="number"
-            value={form.max_attendees}
-            onChange={e => handleChange('max_attendees', e.target.value)}
+            value={form.max_participants}
+            onChange={e => handleChange('max_participants', e.target.value)}
             placeholder="0"
             min="0"
             style={inputStyle}
@@ -255,6 +269,9 @@ export default function CreateEvent() {
               </button>
             ))}
           </div>
+          <p className="text-xs mt-2" style={{ color: 'rgba(255,255,255,0.3)' }}>
+            Public events appear in the Community Events section for everyone.
+          </p>
         </div>
 
         <button
@@ -266,7 +283,6 @@ export default function CreateEvent() {
           {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
           {isSubmitting ? 'Creating...' : 'Create Event'}
         </button>
-
       </form>
     </div>
   );
