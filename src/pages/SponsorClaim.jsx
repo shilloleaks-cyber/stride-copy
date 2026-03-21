@@ -337,7 +337,7 @@ export default function SponsorClaim() {
           )}
 
           {/* Reset link for error states */}
-          {[S.NOT_FOUND, S.NOT_CONFIRMED, S.FOUND].includes(state) && (
+          {[S.NOT_FOUND, S.NOT_CONFIRMED, S.NO_REWARD, S.FOUND].includes(state) && (
             <button onClick={handleReset} className="w-full text-center text-sm font-semibold py-3" style={{ color: 'rgba(255,255,255,0.3)' }}>
               Try a different code
             </button>
