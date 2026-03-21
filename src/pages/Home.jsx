@@ -508,7 +508,12 @@ export default function Home() {
             <div className="sectionLabel">🔥 TRENDING EVENTS</div>
             <button className="seeAll" onClick={() => navigate('/StrideEvents')}>See all</button>
           </div>
-          <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 6, scrollbarWidth: 'none' }}>
+          <div style={{
+            display: 'flex', gap: 12,
+            overflowX: 'auto', paddingBottom: 8,
+            scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch',
+            marginLeft: -16, marginRight: -16, paddingLeft: 16, paddingRight: 16,
+          }}>
             {trendingEvents.map(event => (
               <TrendingEventCard key={event.id} event={event} onClick={() => navigate(`/StrideEventDetail?id=${event.id}`)} />
             ))}
