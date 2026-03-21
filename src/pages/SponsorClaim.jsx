@@ -87,15 +87,27 @@ export default function SponsorClaim() {
     setFoundEvent(evs[0] || null);
     setFoundCat(cats[0] || null);
 
-    // Pick first active reward (one reward per lookup for simplicity)
-    const reward = rewards[0] || null;
+    // Filter rewards by eligible_categories:
+    // empty/missing → all categories allowed; otherwise must include reg.category_id
+    const eligibleRewards = rewards.filter(r =>
+      !r.eligible_categories?.length ||
+      r.eligible_categories.includes(reg.category_id)
+    );
+
+    if (!eligibleRewards.length) {
+      setFoundReg(reg);
+      setFoundEvent(evs[0] || null);
+      setFoundCat(cats[0] || null);
+      setState(S.NO_REWARD);
+      return;
+    }
+
+    const reward = eligibleRewards[0];
     setFoundReward(reward);
 
     // Check if already claimed for this reward
-    const existing = reward
-      ? claimLogs.find(l => l.reward_id === reward.id)
-      : null;
-    setFoundClaimLog(existing || null);
+    const existing = claimLogs.find(l => l.reward_id === reward.id) || null;
+    setFoundClaimLog(existing);
 
     setState(S.FOUND);
   };
