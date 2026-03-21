@@ -16,6 +16,7 @@ const S = {
   IDLE: 'idle', SEARCHING: 'searching',
   FOUND: 'found',
   NOT_FOUND: 'not_found', NOT_CONFIRMED: 'not_confirmed',
+  NO_REWARD: 'no_reward',
   SUCCESS: 'success',
 };
 
