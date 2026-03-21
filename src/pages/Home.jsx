@@ -501,6 +501,21 @@ export default function Home() {
         </div>
       </section>
 
+      {/* TRENDING GROUP EVENTS */}
+      {trendingEvents.length > 0 && (
+        <section className="section">
+          <div className="rowBetween" style={{ marginBottom: 10 }}>
+            <div className="sectionLabel">🔥 TRENDING EVENTS</div>
+            <button className="seeAll" onClick={() => navigate('/StrideEvents')}>See all</button>
+          </div>
+          <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 6, scrollbarWidth: 'none' }}>
+            {trendingEvents.map(event => (
+              <TrendingEventCard key={event.id} event={event} onClick={() => navigate(`/StrideEventDetail?id=${event.id}`)} />
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* RECENT RUNS */}
       <section className="section">
         <div className="rowBetween">
