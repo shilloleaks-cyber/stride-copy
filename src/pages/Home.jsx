@@ -946,6 +946,8 @@ const homeStyles = `
   .title{ font-size: 36px; }
   .heroBig{ font-size: 26px; }
 }
+/* Hide scrollbar on trending row (webkit) */
+.trendingScroll::-webkit-scrollbar { display: none; }
 `;
 
 function TrendingEventCard({ event, onClick }) {
