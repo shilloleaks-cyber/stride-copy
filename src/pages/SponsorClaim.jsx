@@ -309,6 +309,20 @@ export default function SponsorClaim() {
             </div>
           )}
 
+          {/* ── No eligible reward for category ─────────────────────────── */}
+          {state === S.NO_REWARD && foundReg && (
+            <div className="rounded-2xl p-5 flex items-start gap-4" style={{ background: 'rgba(138,43,226,0.08)', border: '1px solid rgba(138,43,226,0.3)' }}>
+              <AlertCircle className="w-8 h-8 flex-shrink-0 mt-0.5" style={{ color: 'rgba(180,120,255,1)' }} />
+              <div>
+                <p className="font-bold text-white text-base">No Eligible Reward</p>
+                <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                  {foundReg.first_name} {foundReg.last_name}
+                  {foundCat ? ` (${foundCat.name})` : ''} has no sponsor rewards available for their category.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* ── Result card ──────────────────────────────────────────────── */}
           {state === S.FOUND && foundReg && (
             <ClaimResultCard
