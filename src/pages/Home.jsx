@@ -949,67 +949,100 @@ const homeStyles = `
 `;
 
 function TrendingEventCard({ event, onClick }) {
-  const dateStr = event.event_date
-    ? (() => { try { return new Date(event.event_date).toLocaleDateString('en', { month: 'short', day: 'numeric' }); } catch { return ''; } })()
-    : '';
+  let dateStr = '';
+  try {
+    if (event.event_date) {
+      const d = new Date(event.event_date);
+      dateStr = d.toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric' });
+      if (event.start_time) dateStr += ` · ${event.start_time}`;
+    }
+  } catch (_) {}
 
   return (
     <button
       onClick={onClick}
       style={{
-        minWidth: 220, maxWidth: 220,
-        background: 'rgba(20,20,20,0.9)',
-        border: '1px solid rgba(255,100,0,0.2)',
-        borderRadius: 18,
-        padding: 14,
-        textAlign: 'left',
         flexShrink: 0,
+        width: 240,
+        background: '#1A1A1A',
+        border: '1px solid rgba(255,255,255,0.08)',
+        borderRadius: 18,
+        padding: 16,
+        textAlign: 'left',
         cursor: 'pointer',
         display: 'flex',
         flexDirection: 'column',
-        gap: 10,
+        gap: 0,
       }}
     >
-      {/* Banner */}
-      <div style={{ width: '100%', height: 90, borderRadius: 12, overflow: 'hidden', background: 'rgba(138,43,226,0.15)', flexShrink: 0 }}>
+      {/* Banner — fixed aspect ratio, consistent crop */}
+      <div style={{
+        width: '100%', height: 120, borderRadius: 12,
+        overflow: 'hidden', flexShrink: 0, marginBottom: 12,
+        background: 'linear-gradient(135deg, rgba(138,43,226,0.3), rgba(191,255,0,0.15))',
+      }}>
         {event.banner_image
-          ? <img src={event.banner_image} alt={event.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>🏃‍♂️</div>
+          ? <img
+              src={event.banner_image}
+              alt={event.title}
+              style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
+            />
+          : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>
+              🏃‍♂️
+            </div>
         }
       </div>
 
       {/* Badges */}
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 99, background: 'rgba(138,43,226,0.15)', color: 'rgba(180,120,255,1)', border: '1px solid rgba(138,43,226,0.25)' }}>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
+        <span style={{
+          display: 'inline-flex', alignItems: 'center', gap: 4,
+          background: 'rgba(138,43,226,0.15)', border: '1px solid rgba(138,43,226,0.3)',
+          color: 'rgba(180,120,255,1)', fontSize: 11, fontWeight: 700,
+          padding: '4px 10px', borderRadius: 99,
+        }}>
           Group
         </span>
-        <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 99, background: 'rgba(255,100,0,0.1)', color: 'rgba(255,160,80,1)', border: '1px solid rgba(255,100,0,0.2)' }}>
+        <span style={{
+          display: 'inline-flex', alignItems: 'center',
+          background: 'rgba(255,100,0,0.1)', border: '1px solid rgba(255,100,0,0.25)',
+          color: 'rgba(255,160,80,1)', fontSize: 11, fontWeight: 700,
+          padding: '4px 10px', borderRadius: 99,
+        }}>
           🔥 Trending
         </span>
       </div>
 
       {/* Title */}
-      <p style={{ fontSize: 14, fontWeight: 800, color: 'white', margin: 0, lineHeight: 1.3, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+      <p style={{
+        fontSize: 15, fontWeight: 800, color: '#fff',
+        margin: '0 0 10px', lineHeight: 1.25,
+        overflow: 'hidden', display: '-webkit-box',
+        WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+      }}>
         {event.title}
       </p>
 
       {/* Meta */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {dateStr && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <Calendar style={{ width: 11, height: 11, color: '#BFFF00', flexShrink: 0 }} />
-            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>{dateStr}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+            <Calendar style={{ width: 13, height: 13, color: '#BFFF00', flexShrink: 0 }} />
+            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{dateStr}</span>
           </div>
         )}
         {event.location_name && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <MapPin style={{ width: 11, height: 11, color: 'rgba(255,255,255,0.3)', flexShrink: 0 }} />
-            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{event.location_name}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+            <MapPin style={{ width: 13, height: 13, color: 'rgba(255,255,255,0.3)', flexShrink: 0 }} />
+            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{event.location_name}</span>
           </div>
         )}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-          <Users style={{ width: 11, height: 11, color: 'rgba(255,255,255,0.3)', flexShrink: 0 }} />
-          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>{event.total_registered || 0} registered</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          <Users style={{ width: 13, height: 13, color: 'rgba(255,255,255,0.3)', flexShrink: 0 }} />
+          <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>
+            {event.total_registered || 0} registered
+            {event.max_participants > 0 ? ` · max ${event.max_participants}` : ''}
+          </span>
         </div>
       </div>
     </button>
