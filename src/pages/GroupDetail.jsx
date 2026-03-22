@@ -372,13 +372,13 @@ export default function GroupDetail() {
 
         {/* Events Tab */}
         {tab === 'events' && (
-          <div className="space-y-4">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <Button onClick={() => navigate(`/CreateEvent?group_id=${groupId}`)} className="w-full h-12" style={{ backgroundColor: '#BFFF00', color: '#0A0A0A' }}>
               <Calendar className="w-4 h-4 mr-2" />
               Schedule Event
             </Button>
-            {upcomingEvents.length > 0 ? (
-              upcomingEvents.map(event => (
+            {events.length > 0 ? (
+              events.map(event => (
                 <EventCard key={event.id} event={event} />
               ))
             ) : (
