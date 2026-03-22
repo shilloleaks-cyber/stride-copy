@@ -379,29 +379,7 @@ export default function GroupDetail() {
             </Button>
             {upcomingEvents.length > 0 ? (
               upcomingEvents.map(event => (
-                <motion.div key={event.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-gradient-to-r from-emerald-500/10 to-transparent border border-emerald-500/20 rounded-2xl p-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <h4 className="text-white font-medium">{event.title}</h4>
-                      <p className="text-xs text-gray-400 mt-1">{event.description}</p>
-                    </div>
-                    <Calendar className="w-5 h-5 text-emerald-400" />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Calendar className="w-4 h-4 text-gray-500" />
-                      <span className="text-white">{format(new Date(event.event_date), 'MMM d, yyyy • h:mm a')}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <MapPin className="w-4 h-4 text-gray-500" />
-                      <span className="text-white">{event.location_name || '—'}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Users className="w-4 h-4 text-gray-500" />
-                      <span className="text-white">{event.total_registered || 0} registered</span>
-                    </div>
-                  </div>
-                </motion.div>
+                <EventCard key={event.id} event={event} />
               ))
             ) : (
               <div className="text-center py-12 bg-white/5 rounded-2xl border border-white/10">
