@@ -382,9 +382,10 @@ export default function GroupDetail() {
                 <EventCard key={event.id} event={event} />
               ))
             ) : (
-              <div className="text-center py-12 bg-white/5 rounded-2xl border border-white/10">
-                <Calendar className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-                <p className="text-gray-400 text-sm">No upcoming events</p>
+              <div style={{ borderRadius: 18, padding: '40px 20px', textAlign: 'center', background: '#1A1A1A', border: '1px solid rgba(255,255,255,0.07)' }}>
+                <p style={{ fontSize: 34, marginBottom: 10 }}>🏃‍♂️</p>
+                <p style={{ fontSize: 16, fontWeight: 700, color: 'rgba(255,255,255,0.7)', marginBottom: 6 }}>No events yet</p>
+                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)' }}>Schedule the first group event</p>
               </div>
             )}
           </div>
