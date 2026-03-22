@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { UserPlus, Check, Loader2, X, Users, Search } from 'lucide-react';
@@ -7,7 +7,9 @@ import { toast } from 'sonner';
 export default function EventInviteSheet({ event, user, onClose }) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
-  // Track locally-sent invites so UI is instant even before refetch
+  // useRef for in-flight dedup (survives across async boundaries without waiting for re-render)
+  const inFlightRef = useRef(new Set());
+  // useState for UI re-render when optimistic invite is added
   const [localSent, setLocalSent] = useState(new Set());
 
   const { data: allUsers = [] } = useQuery({
@@ -36,12 +38,14 @@ export default function EventInviteSheet({ event, user, onClose }) {
     enabled: myMemberships.length > 0,
   });
 
+  // Always fetch fresh on mount so "Invited" state is correct after close/reopen
   const { data: existingInvites = [] } = useQuery({
     queryKey: ['event-invites', event.id],
     queryFn: () => base44.entities.EventInvite.filter({ event_id: event.id }),
+    staleTime: 0,
   });
 
-  // Combine server-known invites + locally sent ones for immediate UI feedback
+  // Combine: server-confirmed + locally sent (optimistic) — both persist across renders
   const alreadyInvited = useMemo(() => {
     const set = new Set(existingInvites.map(i => i.invited_user_email));
     localSent.forEach(e => set.add(e));
@@ -52,14 +56,11 @@ export default function EventInviteSheet({ event, user, onClose }) {
     const gmEmails = new Set(groupMembers.map(m => m.user_email));
     const seen = new Set([user?.email]);
     const list = [];
-
     allUsers.forEach(u => {
       if (seen.has(u.email)) return;
       seen.add(u.email);
       list.push({ email: u.email, name: u.full_name || u.email, isGroupMember: gmEmails.has(u.email) });
     });
-
-    // Group members first
     return list.sort((a, b) => (b.isGroupMember ? 1 : 0) - (a.isGroupMember ? 1 : 0));
   }, [allUsers, groupMembers, user?.email]);
 
@@ -71,8 +72,12 @@ export default function EventInviteSheet({ event, user, onClose }) {
 
   const inviteMutation = useMutation({
     mutationFn: async (email) => {
-      // Server-side duplicate guard: check before writing
-      if (alreadyInvited.has(email)) throw new Error('already_invited');
+      // useRef-based guard: blocks duplicate calls even on slow network
+      // before the React re-render from onMutate has a chance to fire
+      if (inFlightRef.current.has(email) || alreadyInvited.has(email)) {
+        throw new Error('already_invited');
+      }
+      inFlightRef.current.add(email);
       return base44.entities.EventInvite.create({
         event_id: event.id,
         invited_user_email: email,
@@ -82,16 +87,18 @@ export default function EventInviteSheet({ event, user, onClose }) {
       });
     },
     onMutate: (email) => {
-      // Optimistic: mark invited immediately so button switches state
+      // Optimistic UI update
       setLocalSent(prev => new Set(prev).add(email));
     },
-    onSuccess: () => {
+    onSuccess: (_, email) => {
+      inFlightRef.current.delete(email);
       queryClient.invalidateQueries({ queryKey: ['event-invites', event.id] });
       toast.success('Invite sent!');
     },
     onError: (err, email) => {
-      if (err.message === 'already_invited') return; // silent — button already shows Invited
-      // Rollback optimistic update on real failure
+      inFlightRef.current.delete(email);
+      if (err.message === 'already_invited') return; // silent — UI already correct
+      // Roll back optimistic on unexpected errors
       setLocalSent(prev => { const next = new Set(prev); next.delete(email); return next; });
       toast.error('Failed to send invite');
     },
@@ -162,7 +169,6 @@ export default function EventInviteSheet({ event, user, onClose }) {
             const isPending = inviteMutation.isPending && inviteMutation.variables === c.email;
             return (
               <div key={c.email} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                {/* Avatar */}
                 <div style={{ width: 40, height: 40, borderRadius: 20, background: 'rgba(138,43,226,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <span style={{ fontSize: 16, fontWeight: 700, color: '#BFFF00' }}>
                     {(c.name || c.email)[0].toUpperCase()}
@@ -179,7 +185,6 @@ export default function EventInviteSheet({ event, user, onClose }) {
                 <button
                   onClick={() => !invited && !isPending && inviteMutation.mutate(c.email)}
                   disabled={invited || isPending}
-                  className={isPending ? 'animate-spin' : ''}
                   style={{
                     flexShrink: 0,
                     padding: '8px 14px',
