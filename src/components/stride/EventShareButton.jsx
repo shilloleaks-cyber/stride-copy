@@ -18,8 +18,12 @@ export default function EventShareButton({ event, user }) {
     });
   };
 
+  // Only use native share on actual mobile/touch devices.
+  // On desktop Chrome, navigator.share exists but opens a broken system dialog in iframes.
+  const canNativeShare = !!navigator.share && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+
   const handleShare = async () => {
-    if (navigator.share) {
+    if (canNativeShare) {
       // Native share — OS sheet prevents re-entry naturally
       try {
         await navigator.share({ title: event.title, text: shareText, url: shareUrl });
