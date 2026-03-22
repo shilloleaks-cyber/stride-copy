@@ -7,6 +7,7 @@ import EventCard from '@/components/stride/EventCard';
 
 
 
+
 function SectionHeader({ label, count }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
