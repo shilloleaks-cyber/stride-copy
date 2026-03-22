@@ -262,6 +262,15 @@ export default function StrideEventDetail() {
           onSuccess={handleRegisterSuccess}
         />
       )}
+
+      {/* Invite Sheet */}
+      {showInvite && user && (
+        <EventInviteSheet
+          event={event}
+          user={user}
+          onClose={() => setShowInvite(false)}
+        />
+      )}
     </div>
   );
 }
