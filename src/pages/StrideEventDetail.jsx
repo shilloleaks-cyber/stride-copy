@@ -6,6 +6,8 @@ import { ArrowLeft, Calendar, MapPin, Users, Loader2, CheckCircle2, ChevronRight
 import { format } from 'date-fns';
 import RegistrationForm from '@/components/stride/RegistrationForm';
 import CommunityRSVP from '@/components/stride/CommunityRSVP';
+import EventShareButton from '@/components/stride/EventShareButton';
+import EventInviteSheet from '@/components/stride/EventInviteSheet';
 
 const CAT_COLORS = ['#BFFF00', '#8A2BE2', 'rgb(0,200,180)', 'rgb(255,180,0)', 'rgb(255,80,130)'];
 
