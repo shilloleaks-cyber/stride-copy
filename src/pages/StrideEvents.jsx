@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { Calendar, MapPin, Users, Star, Search } from 'lucide-react';
-import { format } from 'date-fns';
+import { Search } from 'lucide-react';
+import EventCard from '@/components/stride/EventCard';
 
 function OfficialEventCard({ event, isRegistered, onClick }) {
   return (
