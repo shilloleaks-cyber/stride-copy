@@ -133,12 +133,7 @@ export default function StrideEvents() {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {officialEvents.map(event => (
-                  <OfficialEventCard
-                    key={event.id}
-                    event={event}
-                    isRegistered={!!myRegMap[event.id]}
-                    onClick={() => navigate(`/StrideEventDetail?id=${event.id}`)}
-                  />
+                  <EventCard key={event.id} event={event} isRegistered={!!myRegMap[event.id]} />
                 ))}
               </div>
             )}
@@ -159,12 +154,7 @@ export default function StrideEvents() {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {communityEvents.map(event => (
-                  <OfficialEventCard
-                    key={event.id}
-                    event={event}
-                    isRegistered={false}
-                    onClick={() => navigate(`/StrideEventDetail?id=${event.id}`)}
-                  />
+                  <EventCard key={event.id} event={event} />
                 ))}
               </div>
             )}
