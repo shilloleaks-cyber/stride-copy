@@ -1,10 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { Share2, Check } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
 export default function EventShareButton({ event, user }) {
-  const [state, setState] = useState('idle'); // 'idle' | 'copied'
-  const isHandling = useRef(false); // prevent re-entrant calls
+  const [copied, setCopied] = useState(false);
 
   const shareUrl = `${window.location.origin}/StrideEventDetail?id=${event.id}`;
   const shareText = `Check out ${event.title}! Join me for this event 🏃`;
@@ -20,44 +19,35 @@ export default function EventShareButton({ event, user }) {
   };
 
   const handleShare = async () => {
-    // Prevent re-entrant calls (rapid taps, double-clicks)
-    if (isHandling.current) return;
-    isHandling.current = true;
-
-    try {
-      if (navigator.share) {
-        // Native share (iOS Safari, Android Chrome) — must be called synchronously
-        // within the user gesture, so no awaits before this point
+    if (navigator.share) {
+      // Native share — OS sheet prevents re-entry naturally
+      try {
         await navigator.share({ title: event.title, text: shareText, url: shareUrl });
         logShare('native');
-      } else {
-        // Clipboard path
-        try {
-          await navigator.clipboard.writeText(shareUrl);
-        } catch (_) {
-          // Fallback for non-HTTPS or permission denied
-          const el = document.createElement('input');
-          el.value = shareUrl;
-          el.style.position = 'fixed';
-          el.style.opacity = '0';
-          document.body.appendChild(el);
-          el.focus();
-          el.select();
-          document.execCommand('copy');
-          document.body.removeChild(el);
-        }
-        logShare('copy_link');
-        setState('copied');
-        setTimeout(() => setState('idle'), 2000);
+      } catch (_) {
+        // AbortError = user dismissed — no-op
       }
-    } catch (_) {
-      // AbortError (user dismissed native share) or any other error — no-op
-    } finally {
-      isHandling.current = false;
+    } else {
+      // Clipboard — use `copied` state as idempotency lock (already true = already handled)
+      if (copied) return;
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+      } catch (_) {
+        // Fallback for iframe / permission-denied contexts
+        const el = document.createElement('input');
+        el.value = shareUrl;
+        el.style.cssText = 'position:fixed;opacity:0';
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+      }
+      logShare('copy_link');
     }
   };
-
-  const copied = state === 'copied';
 
   return (
     <button
