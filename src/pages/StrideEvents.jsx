@@ -78,7 +78,7 @@ function OfficialEventCard({ event, isRegistered, onClick }) {
       </div>
 
       {/* Right: thumbnail */}
-      <div style={{ flexShrink: 0, width: 90, height: 90, borderRadius: 14, overflow: 'hidden', background: 'rgba(255,255,255,0.05)' }}>
+      <div style={{ flexShrink: 0, width: 110, height: 110, borderRadius: 14, overflow: 'hidden', background: 'rgba(255,255,255,0.05)' }}>
         {event.banner_image
           ? <img src={event.banner_image} alt={event.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           : <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, rgba(138,43,226,0.3), rgba(191,255,0,0.15))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
