@@ -7,8 +7,9 @@ import { toast } from 'sonner';
 export default function EventInviteSheet({ event, user, onClose }) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
+  // Track locally-sent invites so UI is instant even before refetch
+  const [localSent, setLocalSent] = useState(new Set());
 
-  // Fetch all users, user's group memberships, and existing invites for dedup
   const { data: allUsers = [] } = useQuery({
     queryKey: ['all-users-invite'],
     queryFn: () => base44.entities.User.list(),
@@ -20,8 +21,10 @@ export default function EventInviteSheet({ event, user, onClose }) {
     enabled: !!user?.email,
   });
 
+  const groupMembershipIds = myMemberships.map(m => m.group_id).join(',');
+
   const { data: groupMembers = [] } = useQuery({
-    queryKey: ['group-members-for-invite', myMemberships.map(m => m.group_id).join(',')],
+    queryKey: ['group-members-for-invite', groupMembershipIds],
     queryFn: async () => {
       const groupIds = myMemberships.map(m => m.group_id);
       if (!groupIds.length) return [];
@@ -38,44 +41,60 @@ export default function EventInviteSheet({ event, user, onClose }) {
     queryFn: () => base44.entities.EventInvite.filter({ event_id: event.id }),
   });
 
-  const alreadyInvited = useMemo(
-    () => new Set(existingInvites.map(i => i.invited_user_email)),
-    [existingInvites]
-  );
+  // Combine server-known invites + locally sent ones for immediate UI feedback
+  const alreadyInvited = useMemo(() => {
+    const set = new Set(existingInvites.map(i => i.invited_user_email));
+    localSent.forEach(e => set.add(e));
+    return set;
+  }, [existingInvites, localSent]);
 
-  // Build candidate list: group members + all users, excluding self, deduped by email
   const candidates = useMemo(() => {
     const gmEmails = new Set(groupMembers.map(m => m.user_email));
     const seen = new Set([user?.email]);
     const list = [];
 
-    // Group members first (they likely know the user)
     allUsers.forEach(u => {
       if (seen.has(u.email)) return;
       seen.add(u.email);
       list.push({ email: u.email, name: u.full_name || u.email, isGroupMember: gmEmails.has(u.email) });
     });
 
+    // Group members first
     return list.sort((a, b) => (b.isGroupMember ? 1 : 0) - (a.isGroupMember ? 1 : 0));
   }, [allUsers, groupMembers, user?.email]);
 
   const filtered = candidates.filter(c =>
-    !search || c.name.toLowerCase().includes(search.toLowerCase()) || c.email.toLowerCase().includes(search.toLowerCase())
+    !search ||
+    c.name.toLowerCase().includes(search.toLowerCase()) ||
+    c.email.toLowerCase().includes(search.toLowerCase())
   );
 
   const inviteMutation = useMutation({
-    mutationFn: (email) => base44.entities.EventInvite.create({
-      event_id: event.id,
-      invited_user_email: email,
-      invited_by: user.email,
-      status: 'pending',
-      created_at: new Date().toISOString(),
-    }),
+    mutationFn: async (email) => {
+      // Server-side duplicate guard: check before writing
+      if (alreadyInvited.has(email)) throw new Error('already_invited');
+      return base44.entities.EventInvite.create({
+        event_id: event.id,
+        invited_user_email: email,
+        invited_by: user.email,
+        status: 'pending',
+        created_at: new Date().toISOString(),
+      });
+    },
+    onMutate: (email) => {
+      // Optimistic: mark invited immediately so button switches state
+      setLocalSent(prev => new Set(prev).add(email));
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['event-invites', event.id] });
       toast.success('Invite sent!');
     },
-    onError: () => toast.error('Failed to send invite'),
+    onError: (err, email) => {
+      if (err.message === 'already_invited') return; // silent — button already shows Invited
+      // Rollback optimistic update on real failure
+      setLocalSent(prev => { const next = new Set(prev); next.delete(email); return next; });
+      toast.error('Failed to send invite');
+    },
   });
 
   return (
@@ -85,7 +104,7 @@ export default function EventInviteSheet({ event, user, onClose }) {
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md flex flex-col"
+        className="w-full max-w-md flex flex-col overflow-hidden"
         style={{
           background: 'rgba(16,16,16,0.98)',
           border: '1px solid rgba(255,255,255,0.1)',
@@ -96,18 +115,26 @@ export default function EventInviteSheet({ event, user, onClose }) {
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div style={{ padding: '20px 20px 12px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{
+          padding: '20px 20px 12px',
+          borderBottom: '1px solid rgba(255,255,255,0.07)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          flexShrink: 0,
+        }}>
           <div>
             <p style={{ fontSize: 18, fontWeight: 800, color: '#fff' }}>Invite Friends</p>
             <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{event.title}</p>
           </div>
-          <button onClick={onClose} style={{ width: 36, height: 36, borderRadius: 18, background: 'rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <button
+            onClick={onClose}
+            style={{ width: 36, height: 36, borderRadius: 18, background: 'rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+          >
             <X style={{ width: 18, height: 18, color: 'rgba(255,255,255,0.6)' }} />
           </button>
         </div>
 
         {/* Search */}
-        <div style={{ padding: '12px 20px', position: 'relative' }}>
+        <div style={{ padding: '12px 20px', position: 'relative', flexShrink: 0 }}>
           <Search style={{ position: 'absolute', left: 34, top: '50%', transform: 'translateY(-50%)', width: 15, height: 15, color: 'rgba(255,255,255,0.3)' }} />
           <input
             type="text"
@@ -150,8 +177,9 @@ export default function EventInviteSheet({ event, user, onClose }) {
                   )}
                 </div>
                 <button
-                  onClick={() => !invited && inviteMutation.mutate(c.email)}
+                  onClick={() => !invited && !isPending && inviteMutation.mutate(c.email)}
                   disabled={invited || isPending}
+                  className={isPending ? 'animate-spin' : ''}
                   style={{
                     flexShrink: 0,
                     padding: '8px 14px',
@@ -167,7 +195,7 @@ export default function EventInviteSheet({ event, user, onClose }) {
                   }}
                 >
                   {isPending
-                    ? <Loader2 style={{ width: 14, height: 14, animation: 'spin 1s linear infinite' }} />
+                    ? <Loader2 className="animate-spin" style={{ width: 14, height: 14 }} />
                     : invited
                       ? <><Check style={{ width: 13, height: 13 }} /> Invited</>
                       : <><UserPlus style={{ width: 13, height: 13 }} /> Invite</>
