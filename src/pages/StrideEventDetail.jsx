@@ -81,6 +81,28 @@ export default function StrideEventDetail() {
         <button onClick={() => navigate(-1)} className="absolute top-10 left-4 w-9 h-9 rounded-full flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)' }}>
           <ArrowLeft className="w-5 h-5 text-white" />
         </button>
+        {/* Share + Invite actions */}
+        {user && (
+          <div className="absolute top-10 right-4 flex items-center gap-2">
+            <EventShareButton event={event} user={user} />
+            <button
+              onClick={() => setShowInvite(true)}
+              className="flex items-center justify-center gap-2 transition-all active:scale-95"
+              style={{
+                background: '#BFFF00',
+                border: 'none',
+                borderRadius: 14,
+                padding: '10px 16px',
+                color: '#0A0A0A',
+                fontSize: 13,
+                fontWeight: 700,
+                minHeight: 44,
+              }}
+            >
+              <Users style={{ width: 15, height: 15 }} /> Invite
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="px-6 pt-4 space-y-6">
