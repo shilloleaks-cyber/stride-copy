@@ -103,9 +103,9 @@ export default function Discover() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white pb-24">
+    <div className="min-h-screen text-white pb-24" style={{ backgroundColor: '#0A0A0A' }}>
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-gray-950/95 backdrop-blur-lg border-b border-white/5">
+      <div className="sticky top-0 z-10 backdrop-blur-lg border-b border-white/5" style={{ backgroundColor: 'rgba(10,10,10,0.95)' }}>
         <div className="px-6 pt-6 pb-4">
           <div className="flex items-center gap-4 mb-4">
             <button 
