@@ -199,28 +199,34 @@ export default function Feed() {
                 setActiveTab('groups');
                 navigate(createPageUrl('Feed?tab=groups'), { replace: true });
               }}
-              className={`flex-1 px-3 py-2 rounded-xl flex items-center justify-center gap-2 text-sm ${
-                activeTab === 'groups' 
-                  ? 'bg-purple-500/20 border-2 border-purple-500/50' 
-                  : 'bg-purple-500/10 border border-purple-500/30'
-              }`}
+              style={{
+                flex: 1, padding: '8px 12px', borderRadius: 12,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 14,
+                background: activeTab === 'groups' ? 'rgba(191,255,0,0.12)' : 'rgba(255,255,255,0.05)',
+                border: activeTab === 'groups' ? '1.5px solid rgba(191,255,0,0.4)' : '1px solid rgba(255,255,255,0.10)',
+                color: activeTab === 'groups' ? '#BFFF00' : 'rgba(255,255,255,0.5)',
+                cursor: 'pointer',
+              }}
             >
-              <Users className="w-4 h-4 text-purple-400" />
-              <span className="text-purple-400">Groups</span>
+              <Users className="w-4 h-4" />
+              <span>Groups</span>
             </button>
             <button
               onClick={() => {
                 setActiveTab('challenges');
                 navigate(createPageUrl('Feed?tab=challenges'), { replace: true });
               }}
-              className={`flex-1 px-3 py-2 rounded-xl flex items-center justify-center gap-2 text-sm ${
-                activeTab === 'challenges' 
-                  ? 'bg-yellow-500/20 border-2 border-yellow-500/50' 
-                  : 'bg-yellow-500/10 border border-yellow-500/30'
-              }`}
+              style={{
+                flex: 1, padding: '8px 12px', borderRadius: 12,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 14,
+                background: activeTab === 'challenges' ? 'rgba(191,255,0,0.12)' : 'rgba(255,255,255,0.05)',
+                border: activeTab === 'challenges' ? '1.5px solid rgba(191,255,0,0.4)' : '1px solid rgba(255,255,255,0.10)',
+                color: activeTab === 'challenges' ? '#BFFF00' : 'rgba(255,255,255,0.5)',
+                cursor: 'pointer',
+              }}
             >
-              <TrendingUp className="w-4 h-4 text-yellow-400" />
-              <span className="text-yellow-400">Challenges</span>
+              <TrendingUp className="w-4 h-4" />
+              <span>Challenges</span>
             </button>
           </div>
 
