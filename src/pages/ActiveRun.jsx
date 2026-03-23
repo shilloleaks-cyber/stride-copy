@@ -616,7 +616,8 @@ export default function ActiveRun() {
                 <div className="w-12 h-6 rounded-full transition-colors" style={{ background: ghostEnabled ? '#BFFF00' : 'rgba(255,255,255,0.15)' }}>
                   <motion.div
                     animate={{ x: ghostEnabled ? 24 : 2 }}
-                    className="w-5 h-5 bg-white rounded-full mt-0.5"
+                    className="w-5 h-5 rounded-full mt-0.5"
+                    style={{ background: ghostEnabled ? '#0A0A0A' : 'rgba(255,255,255,0.5)' }}
                   />
                 </div>
               </div>
