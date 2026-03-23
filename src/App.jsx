@@ -149,6 +149,7 @@ function App() {
         <Toaster />
       </QueryClientProvider>
     </AuthProvider>
+    </LanguageProvider>
   )
 }
 
