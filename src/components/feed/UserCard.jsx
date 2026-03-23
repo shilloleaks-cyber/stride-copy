@@ -38,7 +38,7 @@ export default function UserCard({ user, isFollowing, onFollow, onUnfollow, stat
                 {stats.totalDistance?.toFixed(1) || 0} กม.
               </span>
               <span className="flex items-center gap-1">
-                <Activity className="w-3 h-3 text-blue-400" />
+                <Activity className="w-3 h-3" style={{ color: 'rgba(255,255,255,0.4)' }} />
                 {stats.totalRuns || 0} ครั้ง
               </span>
               {user.token_balance > 0 && (
