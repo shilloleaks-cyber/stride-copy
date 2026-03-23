@@ -190,6 +190,50 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
 
               <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '2px 0' }} />
 
+              {/* Language */}
+              <div style={{
+                padding: '16px 18px', borderRadius: 16,
+                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                  <Globe style={{ width: 16, height: 16, color: 'rgba(255,255,255,0.4)', flexShrink: 0 }} />
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    Language
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {LANGUAGES.map(lang => {
+                    const isActive = language === lang.code;
+                    return (
+                      <button
+                        key={lang.code}
+                        onClick={() => setLanguage(lang.code)}
+                        style={{
+                          flex: 1, padding: '11px 0', borderRadius: 12,
+                          fontSize: 14, fontWeight: 700,
+                          cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
+                          transition: 'all 0.18s ease',
+                          ...(isActive ? {
+                            background: 'rgba(191,255,0,0.14)',
+                            border: '1.5px solid rgba(191,255,0,0.5)',
+                            color: '#BFFF00',
+                            boxShadow: '0 0 14px rgba(191,255,0,0.18)',
+                          } : {
+                            background: 'rgba(255,255,255,0.05)',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            color: 'rgba(255,255,255,0.5)',
+                          }),
+                        }}
+                      >
+                        {lang.native}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '2px 0' }} />
+
               <button
                 onClick={onLogout}
                 style={{
