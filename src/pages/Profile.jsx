@@ -489,7 +489,7 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
             </div>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-emerald-400" />
+                <MapPin className="w-4 h-4" style={{ color: '#BFFF00' }} />
                 <span className="text-gray-400">ระยะทาง:</span>
                 <span className="text-white">{stats.totalDistance.toFixed(1)} กม.</span>
               </div>
