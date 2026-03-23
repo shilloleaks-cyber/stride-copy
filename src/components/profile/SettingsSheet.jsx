@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogOut, Trash2, X, User, Mail, Shield, ChevronRight, Loader2, CheckCircle2 } from 'lucide-react';
+import { LogOut, Trash2, X, User, Mail, Shield, ChevronRight, Loader2, CheckCircle2, Globe } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import { useLanguage, LANGUAGES } from '@/lib/LanguageContext';
 
 // Detect if user just returned from a successful login
 // The platform redirects back to the same URL after login
