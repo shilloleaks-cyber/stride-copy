@@ -666,7 +666,7 @@ export default function ActiveRun() {
               style={{ background: 'rgba(191,255,0,0.05)', border: '1px solid rgba(191,255,0,0.15)' }}
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'rgba(191,255,0,0.12)' }}>
                   <span className="text-xl">👥</span>
                 </div>
                 <div>
