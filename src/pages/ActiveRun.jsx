@@ -629,7 +629,8 @@ export default function ActiveRun() {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-blue-500/20 border border-blue-500/30 rounded-2xl p-4"
+              className="rounded-2xl p-4"
+              style={{ background: 'rgba(191,255,0,0.08)', border: '1px solid rgba(191,255,0,0.2)' }}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
