@@ -53,24 +53,29 @@ export default function UserCard({ user, isFollowing, onFollow, onUnfollow, stat
       </div>
       
       {isFollowing ? (
-        <Button 
+        <button
           onClick={() => onUnfollow(user.email)}
-          variant="outline" 
-          size="sm"
-          className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10"
+          style={{
+            padding: '6px 14px', borderRadius: 10, fontSize: 13, fontWeight: 700,
+            background: 'rgba(191,255,0,0.08)', border: '1px solid rgba(191,255,0,0.25)',
+            color: '#BFFF00', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
+          }}
         >
-          <UserMinus className="w-4 h-4 mr-1" />
+          <UserMinus className="w-4 h-4" />
           เลิกติดตาม
-        </Button>
+        </button>
       ) : (
-        <Button 
+        <button
           onClick={() => onFollow(user.email)}
-          size="sm"
-          className="bg-emerald-600 hover:bg-emerald-700 neon-glow"
+          style={{
+            padding: '6px 14px', borderRadius: 10, fontSize: 13, fontWeight: 700,
+            background: '#BFFF00', border: 'none',
+            color: '#0A0A0A', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
+          }}
         >
-          <UserPlus className="w-4 h-4 mr-1" />
+          <UserPlus className="w-4 h-4" />
           ติดตาม
-        </Button>
+        </button>
       )}
     </motion.div>
   );
