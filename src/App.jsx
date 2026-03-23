@@ -139,6 +139,7 @@ const AuthenticatedApp = () => {
 function App() {
 
   return (
+    <LanguageProvider>
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
         <Router>
