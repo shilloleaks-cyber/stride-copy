@@ -731,7 +731,7 @@ export default function ActiveRun() {
         {/* Ghost Status */}
         {ghostEnabled && runStatus === 'RUNNING' && timeDifference !== 0 && (
           <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black/70 backdrop-blur-sm px-4 py-2 rounded-full z-[1000]">
-            <p className={`text-sm font-medium ${timeDifference < 0 ? 'text-emerald-400' : 'text-orange-400'}`}>
+            <p className="text-sm font-medium" style={{ color: timeDifference < 0 ? '#BFFF00' : 'rgba(255,160,60,0.9)' }}>
               {timeDifference < 0 ? (ghostFriend ? '🏆 Ahead' : '👻 Ahead') : (ghostFriend ? '😅 Behind' : '👻 Behind')} {Math.abs(Math.round(timeDifference))}s
             </p>
           </div>
