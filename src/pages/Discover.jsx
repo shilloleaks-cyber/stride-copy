@@ -163,19 +163,22 @@ export default function Discover() {
             <TabsList className="w-full bg-white/5 p-1 mb-4">
               <TabsTrigger 
                 value="suggested" 
-                className="flex-1 data-[state=active]:bg-emerald-600 data-[state=active]:text-white text-xs"
+                className="flex-1 text-xs data-[state=active]:text-black"
+                style={{ backgroundColor: activeTab === 'suggested' ? '#BFFF00' : 'transparent' }}
               >
                 แนะนำ
               </TabsTrigger>
               <TabsTrigger 
                 value="following" 
-                className="flex-1 data-[state=active]:bg-emerald-600 data-[state=active]:text-white text-xs"
+                className="flex-1 text-xs data-[state=active]:text-black"
+                style={{ backgroundColor: activeTab === 'following' ? '#BFFF00' : 'transparent' }}
               >
                 กำลังติดตาม ({followingUsers.length})
               </TabsTrigger>
               <TabsTrigger 
                 value="followers" 
-                className="flex-1 data-[state=active]:bg-emerald-600 data-[state=active]:text-white text-xs"
+                className="flex-1 text-xs data-[state=active]:text-black"
+                style={{ backgroundColor: activeTab === 'followers' ? '#BFFF00' : 'transparent' }}
               >
                 ผู้ติดตาม ({followerUsers.length})
               </TabsTrigger>
