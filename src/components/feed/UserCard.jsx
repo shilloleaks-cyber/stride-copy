@@ -14,7 +14,8 @@ export default function UserCard({ user, isFollowing, onFollow, onUnfollow, stat
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="bg-white/5 border border-emerald-500/20 rounded-2xl p-4 flex items-center justify-between hover:border-emerald-500/40 transition-colors"
+      className="rounded-2xl p-4 flex items-center justify-between transition-colors"
+      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(191,255,0,0.15)' }}
     >
       <div className="flex items-center gap-3">
         <Avatar className="w-12 h-12 bg-gradient-to-br from-emerald-400 to-emerald-600 neon-border">
