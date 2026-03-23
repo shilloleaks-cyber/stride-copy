@@ -18,11 +18,11 @@ export default function UserCard({ user, isFollowing, onFollow, onUnfollow, stat
       style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(191,255,0,0.15)' }}
     >
       <div className="flex items-center gap-3">
-        <Avatar className="w-12 h-12 bg-gradient-to-br from-emerald-400 to-emerald-600 neon-border">
+        <Avatar className="w-12 h-12">
           {user.profile_image ? (
             <AvatarImage src={user.profile_image} alt={user.full_name} className="object-cover" />
           ) : null}
-          <AvatarFallback className="text-sm bg-gradient-to-br from-emerald-400 to-emerald-600 text-white">
+          <AvatarFallback className="text-sm font-bold" style={{ background: 'rgba(138,43,226,0.3)', color: '#BFFF00' }}>
             {getInitials(user.full_name)}
           </AvatarFallback>
         </Avatar>
