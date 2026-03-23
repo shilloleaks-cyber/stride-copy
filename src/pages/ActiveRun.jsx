@@ -639,7 +639,7 @@ export default function ActiveRun() {
                   </div>
                   <div className="text-left">
                     <p className="text-white font-medium">Racing {ghostFriend.full_name}</p>
-                    <p className="text-xs text-blue-400">
+                    <p className="text-xs" style={{ color: '#BFFF00' }}>
                       {ghostRun.distance_km.toFixed(2)}km • {Math.floor(ghostRun.duration_seconds / 60)}min
                     </p>
                   </div>
