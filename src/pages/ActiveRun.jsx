@@ -671,7 +671,7 @@ export default function ActiveRun() {
                 </div>
                 <div>
                   <p className="text-white font-medium">Race Friend Ghost</p>
-                  <p className="text-xs text-blue-400">Challenge your friends</p>
+                  <p className="text-xs" style={{ color: 'rgba(191,255,0,0.7)' }}>Challenge your friends</p>
                 </div>
               </div>
             </button>
