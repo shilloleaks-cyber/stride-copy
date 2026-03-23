@@ -34,7 +34,7 @@ export default function UserCard({ user, isFollowing, onFollow, onUnfollow, stat
           {stats && (
             <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
               <span className="flex items-center gap-1">
-                <MapPin className="w-3 h-3 text-emerald-400" />
+                <MapPin className="w-3 h-3" style={{ color: '#BFFF00' }} />
                 {stats.totalDistance?.toFixed(1) || 0} กม.
               </span>
               <span className="flex items-center gap-1">
