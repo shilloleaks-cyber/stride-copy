@@ -66,7 +66,7 @@ export default function GroupCard({ group, variant = 'my', onClick, onJoin, isJo
         <p className="text-xs text-gray-500 line-clamp-1 mb-1">{group.description || 'No description'}</p>
         <div className="flex items-center gap-3">
           <span className="text-xs text-gray-600">{memberCount} members</span>
-          <span className="text-xs text-emerald-400">{categoryLabel}</span>
+          <span className="text-xs" style={{ color: '#BFFF00' }}>{categoryLabel}</span>
         </div>
       </div>
       <Button
