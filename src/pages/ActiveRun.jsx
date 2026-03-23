@@ -662,7 +662,8 @@ export default function ActiveRun() {
           {!ghostFriend && (
             <button
               onClick={() => setShowFriendSelector(true)}
-              className="w-full p-4 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-2xl transition-all text-left"
+              className="w-full p-4 rounded-2xl transition-all text-left"
+              style={{ background: 'rgba(191,255,0,0.05)', border: '1px solid rgba(191,255,0,0.15)' }}
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
