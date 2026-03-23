@@ -306,7 +306,8 @@ export default function Feed() {
                 <p className="text-sm text-gray-600 mt-2">ติดตามนักวิ่งคนอื่นเพื่อดูกิจกรรมของพวกเขา</p>
                 <Button 
                   onClick={() => navigate(createPageUrl('Discover'))}
-                  className="mt-4 bg-emerald-600 hover:bg-emerald-700"
+                  className="mt-4"
+                  style={{ backgroundColor: '#BFFF00', color: '#0A0A0A' }}
                 >
                   <Users className="w-4 h-4 mr-2" />
                   ค้นหานักวิ่ง
