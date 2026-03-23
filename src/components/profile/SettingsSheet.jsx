@@ -66,6 +66,7 @@ function RedirectingOverlay() {
 export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest }) {
   const isAuthenticated = !!user;
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const { language, setLanguage } = useLanguage();
   useJustLoggedIn(user);
 
   const handleSignIn = () => {
