@@ -202,7 +202,7 @@ export default function ActiveRun() {
   useEffect(() => {
     if (runStatus === 'RUNNING' && seconds > 0) {
       const avgSpd = calculateAvgSpeed(seconds, distance);
-      const userWeight = user?.weight_kg ?? 70;
+      const userWeight = 70; // User entity has no weight field — fixed default
       setCalories(calculateCalories(seconds, avgSpd, userWeight));
     }
   }, [seconds, distance, runStatus, user]);
