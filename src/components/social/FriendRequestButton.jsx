@@ -72,45 +72,61 @@ export default function FriendRequestButton({ targetUser, currentUser }) {
     return null;
   }
 
+  const btnBase = {
+    display: 'flex', alignItems: 'center', gap: 4,
+    padding: '5px 11px', borderRadius: 9,
+    fontSize: 11, fontWeight: 700, cursor: 'pointer',
+    transition: 'all 0.15s ease',
+  };
+
   if (isFollowing) {
     return (
-      <Button
+      <button
         onClick={() => unfollowMutation.mutate()}
-        variant="outline"
-        size="sm"
-        className="border-2"
-        style={{ borderColor: '#8A2BE2', color: '#8A2BE2' }}
+        style={{
+          ...btnBase,
+          background: 'rgba(138,43,226,0.10)',
+          border: '1px solid rgba(138,43,226,0.35)',
+          color: 'rgba(138,43,226,0.9)',
+        }}
       >
-        <UserCheck className="w-4 h-4 mr-1" />
+        <UserCheck style={{ width: 12, height: 12 }} />
         Following
-      </Button>
+      </button>
     );
   }
 
   if (pendingRequest) {
     return (
-      <Button
-        variant="outline"
-        size="sm"
+      <button
         disabled
-        className="border-2"
-        style={{ borderColor: '#8A2BE2', color: '#8A2BE2' }}
+        style={{
+          ...btnBase,
+          background: 'rgba(255,255,255,0.04)',
+          border: '1px solid rgba(255,255,255,0.12)',
+          color: 'rgba(255,255,255,0.3)',
+          cursor: 'default',
+        }}
       >
-        <Clock className="w-4 h-4 mr-1" />
+        <Clock style={{ width: 12, height: 12 }} />
         Pending
-      </Button>
+      </button>
     );
   }
 
   return (
-    <Button
+    <button
       onClick={() => sendRequestMutation.mutate()}
-      size="sm"
-      className="border-0"
-      style={{ backgroundColor: '#BFFF00', color: '#0A0A0A' }}
+      style={{
+        ...btnBase,
+        background: 'rgba(191,255,0,0.08)',
+        border: '1px solid rgba(191,255,0,0.35)',
+        color: '#BFFF00',
+        boxShadow: '0 0 10px rgba(191,255,0,0.10)',
+      }}
     >
-      <UserPlus className="w-4 h-4 mr-1" />
+      <UserPlus style={{ width: 12, height: 12 }} />
       Add Friend
-    </Button>
+    </button>
   );
 }

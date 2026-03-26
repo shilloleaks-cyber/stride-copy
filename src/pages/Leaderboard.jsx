@@ -6,7 +6,6 @@ import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Trophy, MapPin, Activity, Coins, Crown, Medal } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import FriendRequestButton from '@/components/social/FriendRequestButton';
 
 export default function Leaderboard() {
@@ -25,14 +24,10 @@ export default function Leaderboard() {
 
   const sortedUsers = [...users].sort((a, b) => {
     switch (sortBy) {
-      case 'distance':
-        return (b.total_distance_km || 0) - (a.total_distance_km || 0);
-      case 'runs':
-        return (b.total_runs || 0) - (a.total_runs || 0);
-      case 'tokens':
-        return (b.token_balance || 0) - (a.token_balance || 0);
-      default:
-        return 0;
+      case 'distance': return (b.total_distance_km || 0) - (a.total_distance_km || 0);
+      case 'runs': return (b.total_runs || 0) - (a.total_runs || 0);
+      case 'tokens': return (b.token_balance || 0) - (a.token_balance || 0);
+      default: return 0;
     }
   });
 
@@ -41,153 +36,236 @@ export default function Leaderboard() {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  const getRankBadge = (rank) => {
-    if (rank === 1) return <Crown className="w-6 h-6 text-yellow-400" />;
-    if (rank === 2) return <Medal className="w-5 h-5 text-gray-300" />;
-    if (rank === 3) return <Medal className="w-5 h-5 text-amber-600" />;
-    return <span className="text-lg font-medium text-gray-500">{rank}</span>;
-  };
-
-  const getRankColor = (rank) => {
-    if (rank === 1) return 'from-yellow-500/30 to-yellow-600/10 border-yellow-500/50';
-    if (rank === 2) return 'from-gray-400/20 to-gray-500/10 border-gray-400/30';
-    if (rank === 3) return 'from-amber-600/20 to-amber-700/10 border-amber-600/30';
-    return 'from-white/5 to-transparent border-white/10';
-  };
-
   const getValue = (user) => {
     switch (sortBy) {
-      case 'distance':
-        return `${(user.total_distance_km || 0).toFixed(1)} กม.`;
-      case 'runs':
-        return `${user.total_runs || 0} ครั้ง`;
-      case 'tokens':
-        return `${(user.token_balance || 0).toFixed(1)} RUN`;
-      default:
-        return '';
+      case 'distance': return `${(user.total_distance_km || 0).toFixed(1)} กม.`;
+      case 'runs': return `${user.total_runs || 0} ครั้ง`;
+      case 'tokens': return `${Math.floor(user.token_balance || 0)} BX`;
+      default: return '';
     }
+  };
+
+  // Subtle rank styles — border + glow only, no fills
+  const getRankStyle = (rank) => {
+    if (rank === 1) return {
+      border: '1px solid rgba(212,175,55,0.35)',
+      boxShadow: '0 0 18px rgba(212,175,55,0.10)',
+      background: 'rgba(212,175,55,0.04)',
+    };
+    if (rank === 2) return {
+      border: '1px solid rgba(180,180,190,0.25)',
+      boxShadow: '0 0 14px rgba(180,180,190,0.07)',
+      background: 'rgba(180,180,190,0.03)',
+    };
+    if (rank === 3) return {
+      border: '1px solid rgba(180,100,30,0.30)',
+      boxShadow: '0 0 14px rgba(180,100,30,0.08)',
+      background: 'rgba(180,100,30,0.04)',
+    };
+    return {
+      border: '1px solid rgba(255,255,255,0.07)',
+      boxShadow: 'none',
+      background: 'rgba(255,255,255,0.03)',
+    };
+  };
+
+  const getRankIcon = (rank) => {
+    if (rank === 1) return <Crown style={{ width: 18, height: 18, color: 'rgba(212,175,55,0.9)' }} />;
+    if (rank === 2) return <Medal style={{ width: 16, height: 16, color: 'rgba(180,180,190,0.85)' }} />;
+    if (rank === 3) return <Medal style={{ width: 16, height: 16, color: 'rgba(180,100,30,0.9)' }} />;
+    return <span style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.35)' }}>{rank}</span>;
+  };
+
+  const getRankValueColor = (rank) => {
+    if (rank === 1) return 'rgba(212,175,55,0.95)';
+    if (rank === 2) return 'rgba(200,200,210,0.85)';
+    if (rank === 3) return 'rgba(200,130,60,0.9)';
+    return 'rgba(191,255,0,0.9)';
   };
 
   const currentUserRank = sortedUsers.findIndex(u => u.email === currentUser?.email) + 1;
 
+  const tabs = [
+    { key: 'distance', label: 'ระยะทาง', icon: MapPin },
+    { key: 'runs', label: 'ครั้งวิ่ง', icon: Activity },
+    { key: 'tokens', label: 'โทเค็น', icon: Coins },
+  ];
+
   return (
-    <div className="min-h-screen text-white pb-24" style={{ backgroundColor: '#0A0A0A' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#0A0A0A', color: '#fff', paddingBottom: 96 }}>
+
       {/* Header */}
-      <div className="px-6 pt-6 flex items-center justify-between">
-        <button 
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 20px 0' }}>
+        <button
           onClick={() => navigate(createPageUrl('Home'))}
-          className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center"
+          style={{
+            width: 40, height: 40, borderRadius: 14,
+            border: '1px solid rgba(255,255,255,0.10)',
+            background: 'rgba(255,255,255,0.04)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', color: 'rgba(255,255,255,0.8)',
+          }}
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft style={{ width: 18, height: 18 }} />
         </button>
-        <h1 className="text-lg font-medium">อันดับ</h1>
-        <div className="w-10" />
+        <span style={{ fontSize: 16, fontWeight: 700, color: '#fff', letterSpacing: '-0.01em' }}>อันดับ</span>
+        <div style={{ width: 40 }} />
       </div>
 
-      {/* User's Rank */}
+      {/* Your Rank Card */}
       {currentUserRank > 0 && (
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mx-6 mt-6"
+          style={{ margin: '20px 20px 0' }}
         >
-          <div className="bg-gradient-to-r from-emerald-500/20 to-emerald-600/10 border border-emerald-500/30 rounded-2xl p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-emerald-500/30 flex items-center justify-center">
-                <Trophy className="w-6 h-6 text-emerald-400" />
+          <div style={{
+            borderRadius: 18,
+            border: '1px solid rgba(191,255,0,0.15)',
+            background: 'rgba(191,255,0,0.04)',
+            boxShadow: '0 0 24px rgba(191,255,0,0.06)',
+            padding: '16px 20px',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{
+                width: 44, height: 44, borderRadius: 14,
+                border: '1px solid rgba(191,255,0,0.2)',
+                background: 'rgba(191,255,0,0.07)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Trophy style={{ width: 20, height: 20, color: '#BFFF00' }} />
               </div>
               <div>
-                <p className="text-sm text-emerald-300">อันดับของคุณ</p>
-                <p className="text-2xl font-light text-white">#{currentUserRank}</p>
+                <p style={{ fontSize: 11, color: 'rgba(191,255,0,0.65)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
+                  อันดับของคุณ
+                </p>
+                <p style={{ fontSize: 28, fontWeight: 800, color: '#fff', margin: '2px 0 0', lineHeight: 1 }}>
+                  #{currentUserRank}
+                </p>
               </div>
             </div>
-            <div className="text-right">
-              <p className="text-emerald-400 text-lg font-medium">{getValue(currentUser || {})}</p>
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ fontSize: 18, fontWeight: 700, color: '#BFFF00', margin: 0 }}>
+                {getValue(currentUser || {})}
+              </p>
+              <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: '3px 0 0' }}>
+                {sortBy === 'distance' ? 'ระยะทางรวม' : sortBy === 'runs' ? 'จำนวนวิ่ง' : 'เหรียญ BX'}
+              </p>
             </div>
           </div>
         </motion.div>
       )}
 
-      {/* Sort Tabs */}
-      <div className="px-6 mt-6">
-        <Tabs value={sortBy} onValueChange={setSortBy}>
-          <TabsList className="w-full bg-white/5 p-1">
-            <TabsTrigger 
-              value="distance" 
-              className="flex-1 data-[state=active]:text-black text-xs gap-1"
-              style={{ backgroundColor: sortBy === 'distance' ? '#BFFF00' : 'transparent' }}
-            >
-              <MapPin className="w-3 h-3" />
-              ระยะทาง
-            </TabsTrigger>
-            <TabsTrigger 
-              value="runs" 
-              className="flex-1 data-[state=active]:text-black text-xs gap-1"
-              style={{ backgroundColor: sortBy === 'runs' ? '#BFFF00' : 'transparent' }}
-            >
-              <Activity className="w-3 h-3" />
-              ครั้งวิ่ง
-            </TabsTrigger>
-            <TabsTrigger 
-              value="tokens" 
-              className="flex-1 data-[state=active]:text-black text-xs gap-1"
-              style={{ backgroundColor: sortBy === 'tokens' ? '#BFFF00' : 'transparent' }}
-            >
-              <Coins className="w-3 h-3" />
-              โทเค็น
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+      {/* Filter Tabs */}
+      <div style={{ margin: '16px 20px 0' }}>
+        <div style={{
+          display: 'flex', gap: 6, padding: 5,
+          borderRadius: 14,
+          background: 'rgba(255,255,255,0.05)',
+          border: '1px solid rgba(255,255,255,0.07)',
+        }}>
+          {tabs.map(({ key, label, icon: Icon }) => {
+            const active = sortBy === key;
+            return (
+              <button
+                key={key}
+                onClick={() => setSortBy(key)}
+                style={{
+                  flex: 1, padding: '8px 0', borderRadius: 10,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                  fontSize: 12, fontWeight: active ? 700 : 500,
+                  cursor: 'pointer',
+                  transition: 'all 0.18s ease',
+                  ...(active ? {
+                    background: 'rgba(191,255,0,0.12)',
+                    border: '1px solid rgba(191,255,0,0.35)',
+                    color: '#BFFF00',
+                    boxShadow: '0 0 12px rgba(191,255,0,0.12)',
+                  } : {
+                    background: 'transparent',
+                    border: '1px solid transparent',
+                    color: 'rgba(255,255,255,0.4)',
+                  }),
+                }}
+              >
+                <Icon style={{ width: 13, height: 13 }} />
+                {label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Leaderboard List */}
-      <div className="px-6 mt-6 space-y-3">
+      <div style={{ padding: '16px 20px 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
         {isLoading ? (
-          [...Array(5)].map((_, i) => (
-            <div key={i} className="h-20 bg-white/5 rounded-2xl animate-pulse" />
+          [...Array(6)].map((_, i) => (
+            <div key={i} style={{ height: 76, borderRadius: 16, background: 'rgba(255,255,255,0.04)', animation: 'pulse 1.5s ease-in-out infinite' }} />
           ))
         ) : sortedUsers.length > 0 ? (
           sortedUsers.map((user, index) => {
             const rank = index + 1;
             const isCurrentUser = user.email === currentUser?.email;
-            
+            const rankStyle = getRankStyle(rank);
+
             return (
               <motion.div
                 key={user.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05 }}
-                className={`bg-gradient-to-r ${getRankColor(rank)} border rounded-2xl p-4 flex items-center gap-4 ${
-                  isCurrentUser ? 'ring-2 ring-emerald-500/50' : ''
-                }`}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.04 }}
+                style={{
+                  borderRadius: 16,
+                  padding: '14px 16px',
+                  display: 'flex', alignItems: 'center', gap: 14,
+                  ...rankStyle,
+                  ...(isCurrentUser ? {
+                    border: '1px solid rgba(191,255,0,0.30)',
+                    boxShadow: '0 0 20px rgba(191,255,0,0.08)',
+                    background: 'rgba(191,255,0,0.04)',
+                  } : {}),
+                }}
               >
-                <div className="w-10 flex items-center justify-center">
-                  {getRankBadge(rank)}
+                {/* Rank */}
+                <div style={{ width: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  {getRankIcon(rank)}
                 </div>
-                
-                <Avatar className={`w-12 h-12 ${rank <= 3 ? 'ring-2 ring-offset-2 ring-offset-gray-950' : ''} ${
-                  rank === 1 ? 'ring-yellow-400 neon-glow' : rank === 2 ? 'ring-gray-300' : rank === 3 ? 'ring-amber-600' : ''
-                }`}>
+
+                {/* Avatar */}
+                <Avatar style={{
+                  width: 44, height: 44, flexShrink: 0,
+                  ...(rank <= 3 ? {
+                    outline: `2px solid ${rank === 1 ? 'rgba(212,175,55,0.5)' : rank === 2 ? 'rgba(180,180,190,0.4)' : 'rgba(180,100,30,0.45)'}`,
+                    outlineOffset: 2,
+                  } : {}),
+                }}>
                   {user.profile_image ? (
                     <AvatarImage src={user.profile_image} alt={user.full_name} className="object-cover" />
                   ) : null}
-                  <AvatarFallback className="bg-gradient-to-br from-emerald-400 to-emerald-600 text-white">
+                  <AvatarFallback style={{
+                    background: 'rgba(255,255,255,0.07)',
+                    color: 'rgba(255,255,255,0.8)',
+                    fontSize: 13, fontWeight: 700,
+                  }}>
                     {getInitials(user.full_name)}
                   </AvatarFallback>
                 </Avatar>
-                
-                <div className="flex-1">
-                  <p className="font-medium text-white">
+
+                {/* Name & sub-stats */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {user.full_name || 'Runner'}
-                    {isCurrentUser && <span className="text-emerald-400 text-xs ml-2">(คุณ)</span>}
+                    {isCurrentUser && <span style={{ fontSize: 10, color: '#BFFF00', marginLeft: 6, fontWeight: 700 }}>YOU</span>}
                   </p>
-                  <p className="text-sm text-gray-500">
-                    {(user.total_distance_km || 0).toFixed(1)} กม. • {user.total_runs || 0} ครั้ง
+                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '3px 0 0' }}>
+                    {(user.total_distance_km || 0).toFixed(1)} กม. · {user.total_runs || 0} ครั้ง
                   </p>
                 </div>
-                
-                <div className="flex flex-col items-end gap-2">
-                  <p className={`text-lg font-medium ${rank <= 3 ? 'text-white' : 'text-gray-300'}`}>
+
+                {/* Value + action */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
+                  <p style={{ fontSize: 15, fontWeight: 700, color: getRankValueColor(rank), margin: 0 }}>
                     {getValue(user)}
                   </p>
                   {!isCurrentUser && (
@@ -198,9 +276,9 @@ export default function Leaderboard() {
             );
           })
         ) : (
-          <div className="text-center py-12">
-            <Trophy className="w-12 h-12 text-gray-700 mx-auto mb-4" />
-            <p className="text-gray-500">ยังไม่มีข้อมูล</p>
+          <div style={{ textAlign: 'center', padding: '48px 0' }}>
+            <Trophy style={{ width: 40, height: 40, color: 'rgba(255,255,255,0.15)', margin: '0 auto 12px' }} />
+            <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 14 }}>ยังไม่มีข้อมูล</p>
           </div>
         )}
       </div>
