@@ -1,0 +1,104 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "total_distance_km": {
+      "type": "number",
+      "default": 0,
+      "description": "Total distance run"
+    },
+    "total_runs": {
+      "type": "number",
+      "default": 0,
+      "description": "Total number of runs"
+    },
+    "coin_balance": {
+      "type": "number",
+      "default": 0,
+      "description": "RUN coin balance - single source of truth"
+    },
+    "token_balance": {
+      "type": "number",
+      "default": 0,
+      "description": "Token balance alias"
+    },
+    "current_level": {
+      "type": "number",
+      "default": 0,
+      "description": "Current level"
+    },
+    "current_streak": {
+      "type": "number",
+      "default": 0,
+      "description": "Current run streak in days"
+    },
+    "last_run_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Last run date"
+    },
+    "profile_image": {
+      "type": "string",
+      "description": "Profile image URL"
+    },
+    "bio": {
+      "type": "string",
+      "description": "User bio"
+    },
+    "weight_kg": {
+      "type": "number",
+      "description": "User weight in kilograms for calorie calculation"
+    },
+    "health_platform_connected": {
+      "type": "string",
+      "enum": [
+        "none",
+        "apple_health",
+        "google_fit"
+      ],
+      "default": "none",
+      "description": "Connected health platform"
+    },
+    "health_sync_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether health data sync is enabled"
+    },
+    "last_health_sync": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last health data sync timestamp"
+    },
+    "daily_rewarded_coins": {
+      "type": "number",
+      "default": 0,
+      "description": "Total coins earned today (for daily cap tracking)"
+    },
+    "daily_reset_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Last date daily rewards were reset"
+    },
+    "loginPrompt10kShownAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When 10K login prompt was shown"
+    },
+    "loginPromptLevel2ShownAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When Level 2 login prompt was shown"
+    },
+    "loginPromptSnoozedUntil": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Snooze login prompts until this time"
+    },
+    "has_seen_welcome": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the user has seen the welcome screen"
+    }
+  },
+  "required": []
+}

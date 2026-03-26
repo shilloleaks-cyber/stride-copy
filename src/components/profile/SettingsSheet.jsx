@@ -67,7 +67,18 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
   const isAuthenticated = !!user;
   const [isRedirecting, setIsRedirecting] = useState(false);
   const { language, setLanguage } = useLanguage();
+  const [weightInput, setWeightInput] = useState(user?.weight_kg != null ? String(user.weight_kg) : '');
+  const [weightSaving, setWeightSaving] = useState(false);
   useJustLoggedIn(user);
+
+  const handleWeightSave = async () => {
+    const val = weightInput.trim() === '' ? null : parseFloat(weightInput);
+    if (weightInput.trim() !== '' && (isNaN(val) || val <= 0)) return;
+    setWeightSaving(true);
+    await base44.auth.updateMe({ weight_kg: val });
+    setWeightSaving(false);
+    toast.success('Weight saved');
+  };
 
   const handleSignIn = () => {
     // Mark that we're mid-login so we can show success on return
@@ -229,6 +240,45 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
                       </button>
                     );
                   })}
+                </div>
+              </div>
+
+              <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '2px 0' }} />
+
+              {/* Weight */}
+              <div style={{
+                padding: '16px 18px', borderRadius: 16,
+                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+              }}>
+                <label style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 12 }}>
+                  Weight (kg)
+                </label>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="1"
+                    placeholder="e.g. 65.5"
+                    value={weightInput}
+                    onChange={e => setWeightInput(e.target.value)}
+                    style={{
+                      flex: 1, padding: '10px 14px', borderRadius: 12,
+                      background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
+                      color: '#fff', fontSize: 15, fontWeight: 600, outline: 'none',
+                    }}
+                  />
+                  <button
+                    onClick={handleWeightSave}
+                    disabled={weightSaving}
+                    style={{
+                      padding: '10px 18px', borderRadius: 12, fontWeight: 700, fontSize: 14,
+                      background: 'rgba(191,255,0,0.15)', border: '1px solid rgba(191,255,0,0.35)',
+                      color: '#BFFF00', cursor: 'pointer', flexShrink: 0,
+                      opacity: weightSaving ? 0.6 : 1,
+                    }}
+                  >
+                    {weightSaving ? '…' : 'Save'}
+                  </button>
                 </div>
               </div>
 
