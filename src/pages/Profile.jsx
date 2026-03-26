@@ -311,7 +311,7 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
           />
         </div>
 
-        <h2 className="heroName">{user?.full_name || 'Runner'}</h2>
+        <h2 className="heroName">{user?.display_name || user?.full_name || 'Runner'}</h2>
 
         <div className="heroFollowRow">
           <button onClick={() => { setActiveFollowTab('following'); setFollowSheetOpen(true); }} className="heroPill">

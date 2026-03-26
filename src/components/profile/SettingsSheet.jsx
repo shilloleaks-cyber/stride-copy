@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogOut, Trash2, X, User, Mail, Shield, ChevronRight, Loader2, CheckCircle2, Globe } from 'lucide-react';
+import { LogOut, Trash2, X, User, Mail, Shield, ChevronRight, Loader2, CheckCircle2, Globe, Pencil, Clock } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { useLanguage, LANGUAGES } from '@/lib/LanguageContext';
+import { differenceInDays } from 'date-fns';
 
 // Detect if user just returned from a successful login
 // The platform redirects back to the same URL after login
@@ -69,7 +70,37 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
   const { language, setLanguage } = useLanguage();
   const [weightInput, setWeightInput] = useState(user?.weight_kg != null ? String(user.weight_kg) : '');
   const [weightSaving, setWeightSaving] = useState(false);
+
+  // Display name editing
+  const [nameInput, setNameInput] = useState(user?.display_name || user?.full_name || '');
+  const [nameSaving, setNameSaving] = useState(false);
+  const [nameEditOpen, setNameEditOpen] = useState(false);
+
   useJustLoggedIn(user);
+
+  // Cooldown helpers
+  const getCooldownDaysLeft = () => {
+    if (!user?.display_name_updated_at) return 0;
+    const daysSince = differenceInDays(new Date(), new Date(user.display_name_updated_at));
+    const remaining = 30 - daysSince;
+    return remaining > 0 ? remaining : 0;
+  };
+  const cooldownDaysLeft = getCooldownDaysLeft();
+  const canChangeName = cooldownDaysLeft === 0;
+
+  const handleNameSave = async () => {
+    const trimmed = nameInput.trim();
+    if (!trimmed) { toast.error('กรุณาใส่ชื่อ'); return; }
+    if (trimmed.length < 2 || trimmed.length > 30) { toast.error('ชื่อต้องมี 2–30 ตัวอักษร'); return; }
+    setNameSaving(true);
+    await base44.auth.updateMe({
+      display_name: trimmed,
+      display_name_updated_at: new Date().toISOString(),
+    });
+    setNameSaving(false);
+    setNameEditOpen(false);
+    toast.success('เปลี่ยนชื่อสำเร็จ ✓');
+  };
 
   const handleWeightSave = async () => {
     const val = weightInput.trim() === '' ? null : parseFloat(weightInput);
@@ -202,6 +233,94 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
                     Signed In
                   </span>
                 </div>
+              </div>
+
+              <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '2px 0' }} />
+
+              {/* Display Name */}
+              <div style={{
+                padding: '16px 18px', borderRadius: 16,
+                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: nameEditOpen ? 14 : 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <User style={{ width: 15, height: 15, color: 'rgba(255,255,255,0.35)', flexShrink: 0 }} />
+                    <div>
+                      <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Display Name</p>
+                      <p style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.85)', margin: '3px 0 0' }}>
+                        {user?.display_name || user?.full_name || 'Runner'}
+                      </p>
+                    </div>
+                  </div>
+                  {canChangeName ? (
+                    <button
+                      onClick={() => { setNameInput(user?.display_name || user?.full_name || ''); setNameEditOpen(v => !v); }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 5,
+                        padding: '5px 11px', borderRadius: 8, fontSize: 11, fontWeight: 700,
+                        background: 'rgba(191,255,0,0.08)', border: '1px solid rgba(191,255,0,0.25)',
+                        color: '#BFFF00', cursor: 'pointer', flexShrink: 0,
+                      }}
+                    >
+                      <Pencil style={{ width: 11, height: 11 }} />
+                      แก้ไข
+                    </button>
+                  ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                      <Clock style={{ width: 12, height: 12, color: 'rgba(255,255,255,0.3)' }} />
+                      <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>
+                        อีก {cooldownDaysLeft} วัน
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {!canChangeName && (
+                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', margin: '8px 0 0', lineHeight: 1.5 }}>
+                    คุณสามารถเปลี่ยนชื่อได้อีกครั้งใน {cooldownDaysLeft} วัน
+                  </p>
+                )}
+
+                <AnimatePresence>
+                  {nameEditOpen && canChangeName && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      style={{ overflow: 'hidden' }}
+                    >
+                      <div style={{ display: 'flex', gap: 8, marginTop: 2 }}>
+                        <input
+                          type="text"
+                          maxLength={30}
+                          placeholder="ชื่อใหม่ (2–30 ตัวอักษร)"
+                          value={nameInput}
+                          onChange={e => setNameInput(e.target.value)}
+                          style={{
+                            flex: 1, padding: '10px 14px', borderRadius: 12,
+                            background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
+                            color: '#fff', fontSize: 14, fontWeight: 500, outline: 'none',
+                          }}
+                        />
+                        <button
+                          onClick={handleNameSave}
+                          disabled={nameSaving}
+                          style={{
+                            padding: '10px 16px', borderRadius: 12, fontWeight: 700, fontSize: 13,
+                            background: 'rgba(191,255,0,0.13)', border: '1px solid rgba(191,255,0,0.35)',
+                            color: '#BFFF00', cursor: 'pointer', flexShrink: 0,
+                            opacity: nameSaving ? 0.6 : 1,
+                          }}
+                        >
+                          {nameSaving ? '…' : 'ยืนยัน'}
+                        </button>
+                      </div>
+                      <p style={{ margin: '7px 0 0', fontSize: 10, color: 'rgba(255,255,255,0.22)', lineHeight: 1.5 }}>
+                        หลังจากยืนยัน คุณจะเปลี่ยนชื่อได้อีกครั้งหลังจาก 30 วัน
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '2px 0' }} />
