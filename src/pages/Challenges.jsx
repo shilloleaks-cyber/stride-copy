@@ -6,13 +6,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, isWithinInterval, parseISO } from 'date-fns';
 import { th } from 'date-fns/locale';
-import { 
-  ArrowLeft, Target, Trophy, Calendar, Coins, Check, 
+import {
+  ArrowLeft, Target, Trophy, Calendar, Coins, Check,
   MapPin, Activity, Flame, ChevronRight, Sparkles, Gift
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 
 export default function Challenges() {
@@ -52,11 +50,7 @@ export default function Challenges() {
         is_completed: false,
         reward_claimed: false,
       });
-
-      // Award coins for joining challenge
-      await base44.functions.invoke('awardActivityCoins', {
-        activityType: 'challenge_joined',
-      });
+      await base44.functions.invoke('awardActivityCoins', { activityType: 'challenge_joined' });
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['myParticipations']);
@@ -67,19 +61,12 @@ export default function Challenges() {
 
   const claimRewardMutation = useMutation({
     mutationFn: async ({ participationId, tokens }) => {
-      // Update participation
-      await base44.entities.ChallengeParticipant.update(participationId, {
-        reward_claimed: true,
-      });
-      
-      // Update user tokens
+      await base44.entities.ChallengeParticipant.update(participationId, { reward_claimed: true });
       const newBalance = (currentUser?.token_balance || 0) + tokens;
       await base44.auth.updateMe({
         token_balance: newBalance,
         total_tokens_earned: (currentUser?.total_tokens_earned || 0) + tokens,
       });
-      
-      // Create wallet log
       await base44.entities.WalletLog.create({
         user: currentUser?.email,
         amount: tokens,
@@ -95,43 +82,35 @@ export default function Challenges() {
   });
 
   const today = new Date();
-  
+
   const activeChallenges = challenges.filter(c => {
     const endDate = parseISO(c.end_date);
     return c.is_active && endDate >= today;
   });
 
-  const getParticipation = (challengeId) => {
-    return participations.find(p => p.challenge_id === challengeId);
-  };
+  const getParticipation = (challengeId) => participations.find(p => p.challenge_id === challengeId);
 
   const calculateProgress = (challenge) => {
     const startDate = parseISO(challenge.start_date);
     const endDate = parseISO(challenge.end_date);
-    
     const relevantRuns = myRuns.filter(run => {
       const runDate = new Date(run.created_date);
       return isWithinInterval(runDate, { start: startDate, end: endDate });
     });
-
     switch (challenge.goal_type) {
-      case 'distance':
-        return relevantRuns.reduce((sum, r) => sum + (r.distance_km || 0), 0);
-      case 'runs':
-        return relevantRuns.length;
-      case 'calories':
-        return relevantRuns.reduce((sum, r) => sum + (r.calories_burned || 0), 0);
-      default:
-        return 0;
+      case 'distance': return relevantRuns.reduce((sum, r) => sum + (r.distance_km || 0), 0);
+      case 'runs': return relevantRuns.length;
+      case 'calories': return relevantRuns.reduce((sum, r) => sum + (r.calories_burned || 0), 0);
+      default: return 0;
     }
   };
 
   const getGoalIcon = (type) => {
     switch (type) {
-      case 'distance': return <MapPin className="w-4 h-4" />;
-      case 'runs': return <Activity className="w-4 h-4" />;
-      case 'calories': return <Flame className="w-4 h-4" />;
-      default: return <Target className="w-4 h-4" />;
+      case 'distance': return <MapPin style={{ width: 14, height: 14 }} />;
+      case 'runs': return <Activity style={{ width: 14, height: 14 }} />;
+      case 'calories': return <Flame style={{ width: 14, height: 14 }} />;
+      default: return <Target style={{ width: 14, height: 14 }} />;
     }
   };
 
@@ -147,51 +126,82 @@ export default function Challenges() {
   const myJoinedChallenges = activeChallenges.filter(c => getParticipation(c.id));
   const availableChallenges = activeChallenges.filter(c => !getParticipation(c.id));
 
+  const tabs = [
+    { key: 'active', label: `กำลังเข้าร่วม`, count: myJoinedChallenges.length },
+    { key: 'available', label: `Challenge ใหม่`, count: availableChallenges.length },
+  ];
+
   return (
-    <div className="min-h-screen text-white pb-24" style={{ backgroundColor: '#0A0A0A' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#0A0A0A', color: '#fff', paddingBottom: 96 }}>
+
       {/* Header */}
-      <div className="px-6 pt-6 flex items-center justify-between">
-        <button 
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 20px 0' }}>
+        <button
           onClick={() => navigate(createPageUrl('Home'))}
-          className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center"
+          style={{
+            width: 40, height: 40, borderRadius: 14,
+            border: '1px solid rgba(255,255,255,0.10)',
+            background: 'rgba(255,255,255,0.04)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', color: 'rgba(255,255,255,0.8)',
+          }}
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft style={{ width: 18, height: 18 }} />
         </button>
-        <h1 className="text-lg font-medium">Challenges</h1>
-        <div className="w-10" />
+        <span style={{ fontSize: 16, fontWeight: 700, color: '#fff', letterSpacing: '-0.01em' }}>Challenges</span>
+        <div style={{ width: 40 }} />
       </div>
 
       {/* Tabs */}
-      <div className="px-6 mt-6">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full bg-white/5 p-1">
-            <TabsTrigger 
-              value="active" 
-              className="flex-1 data-[state=active]:text-black"
-              style={{ 
-                backgroundColor: activeTab === 'active' ? '#BFFF00' : 'transparent'
-              }}
-            >
-              กำลังเข้าร่วม ({myJoinedChallenges.length})
-            </TabsTrigger>
-            <TabsTrigger 
-              value="available" 
-              className="flex-1 data-[state=active]:text-black"
-              style={{ 
-                backgroundColor: activeTab === 'available' ? '#BFFF00' : 'transparent'
-              }}
-            >
-              Challenge ใหม่ ({availableChallenges.length})
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+      <div style={{ margin: '18px 20px 0' }}>
+        <div style={{
+          display: 'flex', gap: 4, padding: 4,
+          borderRadius: 12,
+          background: 'rgba(255,255,255,0.04)',
+          border: '1px solid rgba(255,255,255,0.06)',
+        }}>
+          {tabs.map(({ key, label, count }) => {
+            const active = activeTab === key;
+            return (
+              <button
+                key={key}
+                onClick={() => setActiveTab(key)}
+                style={{
+                  flex: 1, padding: '7px 0', borderRadius: 8,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  fontSize: 12, fontWeight: active ? 700 : 500,
+                  cursor: 'pointer', transition: 'all 0.15s ease',
+                  ...(active ? {
+                    background: 'rgba(191,255,0,0.10)',
+                    border: '1px solid rgba(191,255,0,0.28)',
+                    color: '#BFFF00',
+                  } : {
+                    background: 'transparent',
+                    border: '1px solid transparent',
+                    color: 'rgba(255,255,255,0.35)',
+                  }),
+                }}
+              >
+                {label}
+                <span style={{
+                  fontSize: 10, fontWeight: 700,
+                  padding: '1px 6px', borderRadius: 99,
+                  background: active ? 'rgba(191,255,0,0.15)' : 'rgba(255,255,255,0.06)',
+                  color: active ? '#BFFF00' : 'rgba(255,255,255,0.3)',
+                }}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Content */}
-      <div className="px-6 mt-6 space-y-4">
+      <div style={{ padding: '16px 20px 0', display: 'flex', flexDirection: 'column', gap: 12 }}>
         {isLoading ? (
           [...Array(3)].map((_, i) => (
-            <div key={i} className="h-40 bg-white/5 rounded-2xl animate-pulse" />
+            <div key={i} style={{ height: 140, borderRadius: 16, background: 'rgba(255,255,255,0.04)' }} />
           ))
         ) : activeTab === 'active' ? (
           myJoinedChallenges.length > 0 ? (
@@ -206,70 +216,96 @@ export default function Challenges() {
                 return (
                   <motion.div
                     key={challenge.id}
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
                     onClick={() => navigate(createPageUrl(`ChallengeDetail?id=${challenge.id}`))}
-                    className={`bg-gradient-to-br ${
-                      isCompleted ? 'from-emerald-500/20 to-emerald-600/10 border-emerald-500/30 neon-border' : 'from-white/5 to-transparent border-emerald-500/20 hover:border-emerald-500/40'
-                    } border rounded-2xl p-5 transition-colors cursor-pointer`}
+                    style={{
+                      borderRadius: 16, padding: '16px 18px', cursor: 'pointer',
+                      border: isCompleted
+                        ? '1px solid rgba(191,255,0,0.25)'
+                        : '1px solid rgba(255,255,255,0.08)',
+                      background: isCompleted
+                        ? 'rgba(191,255,0,0.04)'
+                        : 'rgba(255,255,255,0.03)',
+                      boxShadow: isCompleted ? '0 0 18px rgba(191,255,0,0.07)' : 'none',
+                      transition: 'all 0.18s ease',
+                    }}
                   >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <span className={`px-2 py-0.5 rounded-full text-xs ${
-                          challenge.type === 'weekly' ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400'
-                        }`}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{
+                          padding: '2px 8px', borderRadius: 99, fontSize: 10, fontWeight: 600,
+                          background: challenge.type === 'weekly' ? 'rgba(100,150,255,0.12)' : 'rgba(138,43,226,0.15)',
+                          color: challenge.type === 'weekly' ? 'rgba(130,170,255,0.85)' : 'rgba(180,120,255,0.85)',
+                          border: challenge.type === 'weekly' ? '1px solid rgba(100,150,255,0.2)' : '1px solid rgba(138,43,226,0.25)',
+                        }}>
                           {challenge.type === 'weekly' ? 'รายสัปดาห์' : 'รายเดือน'}
                         </span>
                         {isCompleted && (
-                          <span className="px-2 py-0.5 rounded-full text-xs bg-emerald-500/20 text-emerald-400 flex items-center gap-1">
-                            <Check className="w-3 h-3" /> สำเร็จ
+                          <span style={{
+                            padding: '2px 8px', borderRadius: 99, fontSize: 10, fontWeight: 700,
+                            background: 'rgba(191,255,0,0.10)', color: '#BFFF00',
+                            border: '1px solid rgba(191,255,0,0.25)',
+                            display: 'flex', alignItems: 'center', gap: 3,
+                          }}>
+                            <Check style={{ width: 10, height: 10 }} /> สำเร็จ
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-1 text-yellow-400">
-                        <Coins className="w-4 h-4" />
-                        <span className="font-medium">{challenge.reward_tokens}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'rgba(212,175,55,0.85)' }}>
+                        <Coins style={{ width: 14, height: 14 }} />
+                        <span style={{ fontSize: 13, fontWeight: 700 }}>{challenge.reward_tokens}</span>
                       </div>
                     </div>
 
-                    <h3 className="text-lg font-medium text-white mb-1">{challenge.title}</h3>
-                    <p className="text-sm text-gray-400 mb-4">{challenge.description}</p>
+                    <p style={{ fontSize: 15, fontWeight: 600, color: '#fff', margin: '0 0 4px' }}>{challenge.title}</p>
+                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', margin: '0 0 14px', lineHeight: 1.5 }}>{challenge.description}</p>
 
-                    <div className="mb-3">
-                      <div className="flex items-center justify-between text-sm mb-2">
-                        <div className="flex items-center gap-2 text-gray-400">
+                    <div style={{ marginBottom: 12 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>
                           {getGoalIcon(challenge.goal_type)}
                           <span>{progress.toFixed(1)} / {challenge.goal_value} {getGoalUnit(challenge.goal_type)}</span>
                         </div>
-                        <span className="text-white">{progressPercent.toFixed(0)}%</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: isCompleted ? '#BFFF00' : 'rgba(255,255,255,0.6)' }}>
+                          {progressPercent.toFixed(0)}%
+                        </span>
                       </div>
-                      <Progress value={progressPercent} className="h-2 bg-white/10" />
+                      <div style={{ height: 4, borderRadius: 99, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+                        <div style={{
+                          height: '100%', borderRadius: 99,
+                          width: `${progressPercent}%`,
+                          background: isCompleted ? '#BFFF00' : 'linear-gradient(90deg, rgba(138,43,226,0.8), rgba(191,255,0,0.8))',
+                          transition: 'width 0.6s ease',
+                        }} />
+                      </div>
                     </div>
 
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1 text-xs text-gray-500">
-                        <Calendar className="w-3 h-3" />
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'rgba(255,255,255,0.28)' }}>
+                        <Calendar style={{ width: 11, height: 11 }} />
                         <span>สิ้นสุด {format(parseISO(challenge.end_date), 'd MMM yyyy', { locale: th })}</span>
                       </div>
-                      
+
                       {canClaim && (
-                        <Button 
-                          onClick={() => claimRewardMutation.mutate({ 
-                            participationId: participation.id, 
-                            tokens: challenge.reward_tokens 
-                          })}
-                          size="sm"
-                          className="bg-yellow-500 hover:bg-yellow-600 text-black"
+                        <button
+                          onClick={(e) => { e.stopPropagation(); claimRewardMutation.mutate({ participationId: participation.id, tokens: challenge.reward_tokens }); }}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 5,
+                            padding: '6px 12px', borderRadius: 9, fontSize: 12, fontWeight: 700,
+                            background: 'rgba(212,175,55,0.12)', border: '1px solid rgba(212,175,55,0.35)',
+                            color: 'rgba(212,175,55,0.95)', cursor: 'pointer',
+                          }}
                         >
-                          <Gift className="w-4 h-4 mr-1" />
+                          <Gift style={{ width: 13, height: 13 }} />
                           รับรางวัล
-                        </Button>
+                        </button>
                       )}
-                      
+
                       {participation?.reward_claimed && (
-                        <span className="text-xs text-emerald-400 flex items-center gap-1">
-                          <Check className="w-3 h-3" /> รับรางวัลแล้ว
+                        <span style={{ fontSize: 11, color: 'rgba(191,255,0,0.6)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <Check style={{ width: 11, height: 11 }} /> รับรางวัลแล้ว
                         </span>
                       )}
                     </div>
@@ -278,16 +314,13 @@ export default function Challenges() {
               })}
             </AnimatePresence>
           ) : (
-            <div className="text-center py-12">
-              <Target className="w-12 h-12 text-gray-700 mx-auto mb-4" />
-              <p className="text-gray-400">คุณยังไม่ได้เข้าร่วม Challenge</p>
-              <Button 
-                onClick={() => setActiveTab('available')}
-                className="mt-4 bg-emerald-600 hover:bg-emerald-700"
-              >
-                ดู Challenge ที่มี
-              </Button>
-            </div>
+            <EmptyState
+              icon={Target}
+              title="ยังไม่ได้เข้าร่วม Challenge"
+              subtitle="เข้าร่วม Challenge เพื่อสะสมคะแนนและรับรางวัล"
+              ctaLabel="ดู Challenge ที่มี"
+              onCta={() => setActiveTab('available')}
+            />
           )
         ) : (
           availableChallenges.length > 0 ? (
@@ -295,61 +328,123 @@ export default function Challenges() {
               {availableChallenges.map((challenge, index) => (
                 <motion.div
                   key={challenge.id}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
                   onClick={() => navigate(createPageUrl(`ChallengeDetail?id=${challenge.id}`))}
-                  className="bg-white/5 border border-white/10 rounded-2xl p-5 cursor-pointer hover:bg-white/10 transition-colors"
+                  style={{
+                    borderRadius: 16, padding: '16px 18px', cursor: 'pointer',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    background: 'rgba(255,255,255,0.03)',
+                    transition: 'all 0.18s ease',
+                  }}
                 >
-                  <div className="flex items-start justify-between mb-3">
-                    <span className={`px-2 py-0.5 rounded-full text-xs ${
-                      challenge.type === 'weekly' ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400'
-                    }`}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 }}>
+                    <span style={{
+                      padding: '2px 8px', borderRadius: 99, fontSize: 10, fontWeight: 600,
+                      background: challenge.type === 'weekly' ? 'rgba(100,150,255,0.12)' : 'rgba(138,43,226,0.15)',
+                      color: challenge.type === 'weekly' ? 'rgba(130,170,255,0.85)' : 'rgba(180,120,255,0.85)',
+                      border: challenge.type === 'weekly' ? '1px solid rgba(100,150,255,0.2)' : '1px solid rgba(138,43,226,0.25)',
+                    }}>
                       {challenge.type === 'weekly' ? 'รายสัปดาห์' : 'รายเดือน'}
                     </span>
-                    <div className="flex items-center gap-1 text-yellow-400">
-                      <Sparkles className="w-4 h-4" />
-                      <span className="font-medium">+{challenge.reward_tokens} RUN</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'rgba(191,255,0,0.75)' }}>
+                      <Sparkles style={{ width: 13, height: 13 }} />
+                      <span style={{ fontSize: 12, fontWeight: 700 }}>+{challenge.reward_tokens} BX</span>
                     </div>
                   </div>
 
-                  <h3 className="text-lg font-medium text-white mb-1">{challenge.title}</h3>
-                  <p className="text-sm text-gray-400 mb-4">{challenge.description}</p>
+                  <p style={{ fontSize: 15, fontWeight: 600, color: '#fff', margin: '0 0 4px' }}>{challenge.title}</p>
+                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', margin: '0 0 14px', lineHeight: 1.5 }}>{challenge.description}</p>
 
-                  <div className="flex items-center gap-4 mb-4 text-sm">
-                    <div className="flex items-center gap-2 text-gray-400">
-                      {getGoalIcon(challenge.goal_type)}
-                      <span>เป้าหมาย: {challenge.goal_value} {getGoalUnit(challenge.goal_type)}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'rgba(255,255,255,0.28)' }}>
+                      <Calendar style={{ width: 11, height: 11 }} />
+                      <span>{format(parseISO(challenge.start_date), 'd MMM', { locale: th })} – {format(parseISO(challenge.end_date), 'd MMM yyyy', { locale: th })}</span>
                     </div>
-                  </div>
 
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1 text-xs text-gray-500">
-                      <Calendar className="w-3 h-3" />
-                      <span>{format(parseISO(challenge.start_date), 'd MMM', { locale: th })} - {format(parseISO(challenge.end_date), 'd MMM yyyy', { locale: th })}</span>
-                    </div>
-                    
-                    <Button 
-                      onClick={() => joinMutation.mutate(challenge)}
-                      size="sm"
-                      className="bg-emerald-600 hover:bg-emerald-700"
+                    <button
+                      onClick={(e) => { e.stopPropagation(); joinMutation.mutate(challenge); }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 4,
+                        padding: '6px 12px', borderRadius: 9, fontSize: 12, fontWeight: 700,
+                        background: 'rgba(191,255,0,0.08)', border: '1px solid rgba(191,255,0,0.28)',
+                        color: '#BFFF00', cursor: 'pointer',
+                        boxShadow: '0 0 10px rgba(191,255,0,0.08)',
+                      }}
                     >
                       เข้าร่วม
-                      <ChevronRight className="w-4 h-4 ml-1" />
-                    </Button>
+                      <ChevronRight style={{ width: 13, height: 13 }} />
+                    </button>
                   </div>
                 </motion.div>
               ))}
             </AnimatePresence>
           ) : (
-            <div className="text-center py-12">
-              <Trophy className="w-12 h-12 text-gray-700 mx-auto mb-4" />
-              <p className="text-gray-400">ไม่มี Challenge ใหม่ในขณะนี้</p>
-              <p className="text-sm text-gray-600 mt-1">กลับมาเช็คใหม่ในภายหลัง</p>
-            </div>
+            <EmptyState
+              icon={Trophy}
+              title="ไม่มี Challenge ใหม่"
+              subtitle="กลับมาเช็คใหม่เร็วๆ นี้"
+            />
           )
         )}
       </div>
     </div>
+  );
+}
+
+function EmptyState({ icon: Icon, title, subtitle, ctaLabel, onCta }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        padding: '60px 24px 40px', textAlign: 'center',
+        position: 'relative',
+      }}
+    >
+      {/* Subtle radial glow behind icon */}
+      <div style={{
+        position: 'absolute', top: 40, left: '50%', transform: 'translateX(-50%)',
+        width: 160, height: 160, borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(138,43,226,0.10) 0%, transparent 70%)',
+        pointerEvents: 'none',
+      }} />
+
+      <div style={{
+        width: 56, height: 56, borderRadius: 18,
+        border: '1px solid rgba(255,255,255,0.08)',
+        background: 'rgba(255,255,255,0.03)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        marginBottom: 20, position: 'relative',
+      }}>
+        <Icon style={{ width: 22, height: 22, color: 'rgba(255,255,255,0.25)' }} />
+      </div>
+
+      <p style={{ fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.75)', margin: '0 0 8px' }}>
+        {title}
+      </p>
+      {subtitle && (
+        <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.28)', margin: 0, lineHeight: 1.6, maxWidth: 220 }}>
+          {subtitle}
+        </p>
+      )}
+
+      {ctaLabel && onCta && (
+        <button
+          onClick={onCta}
+          style={{
+            marginTop: 24,
+            padding: '9px 22px', borderRadius: 10, fontSize: 13, fontWeight: 700,
+            background: 'rgba(191,255,0,0.08)', border: '1px solid rgba(191,255,0,0.28)',
+            color: '#BFFF00', cursor: 'pointer',
+            boxShadow: '0 0 14px rgba(191,255,0,0.08)',
+          }}
+        >
+          {ctaLabel}
+        </button>
+      )}
+    </motion.div>
   );
 }
