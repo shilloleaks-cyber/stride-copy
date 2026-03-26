@@ -4,6 +4,17 @@ import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, MapPin, Zap, Heart, Flame, Timer } from 'lucide-react';
+import {
+  haversineDistance,
+  getValidDistanceKm,
+  calculatePace,
+  formatPace,
+  calculateAvgSpeed,
+  calculateCalories,
+  simulateHeartRate,
+  calculateCoins,
+  calculateLevel,
+} from '@/utils/runCalculations';
 import RunTimer from '@/components/running/RunTimer';
 import StravaRunControls from '@/components/running/StravaRunControls';
 import MetricDisplay from '@/components/running/MetricDisplay';
@@ -169,22 +180,16 @@ export default function ActiveRun() {
     };
   }, []);
 
-  // Simulated heart rate
+  // Simulated heart rate (smoother, effort-based)
   useEffect(() => {
     if (runStatus === 'RUNNING') {
       const hrInterval = setInterval(() => {
-        const baseHR = 72;
-        const activityBonus = Math.min(seconds / 10, 80);
-        const variation = Math.random() * 10 - 5;
-        const newHR = Math.round(baseHR + activityBonus + variation);
-        setHeartRate(prev => {
-          const smoothed = Math.round((prev * 0.7) + (newHR * 0.3));
-          return Math.max(60, Math.min(200, smoothed));
-        });
+        const avgSpd = calculateAvgSpeed(seconds, distance);
+        setHeartRate(prev => simulateHeartRate(prev, avgSpd, seconds));
       }, 1000);
       return () => clearInterval(hrInterval);
     }
-  }, [runStatus, seconds]);
+  }, [runStatus, seconds, distance]);
 
   // Update max heart rate
   useEffect(() => {
@@ -193,15 +198,14 @@ export default function ActiveRun() {
     }
   }, [heartRate, maxHeartRate]);
 
-  // Calculate calories
+  // Calculate calories (avg-speed based, uses user weight if available)
   useEffect(() => {
     if (runStatus === 'RUNNING' && seconds > 0) {
-      const met = 8 + (currentSpeed / 5);
-      const weight = 70;
-      const caloriesPerMinute = (met * weight * 3.5) / 200;
-      setCalories(Math.round(caloriesPerMinute * (seconds / 60)));
+      const avgSpd = calculateAvgSpeed(seconds, distance);
+      const userWeight = user?.weight_kg ?? 70;
+      setCalories(calculateCalories(seconds, avgSpd, userWeight));
     }
-  }, [seconds, currentSpeed, runStatus]);
+  }, [seconds, distance, runStatus, user]);
 
   // Calculate ghost time difference
   useEffect(() => {
@@ -219,7 +223,8 @@ export default function ActiveRun() {
       const prevPoint = ghostRun.route_points[i - 1];
       const currPoint = ghostRun.route_points[i];
       
-      const segmentDist = calculateDistance(
+      // Ghost route points have no accuracy/timestamp — use raw haversine
+      const segmentDist = haversineDistance(
         prevPoint.lat, prevPoint.lng,
         currPoint.lat, currPoint.lng
       );
@@ -266,29 +271,28 @@ export default function ActiveRun() {
         setMapCenter([latitude, longitude]);
 
         // Capture route point every 3 seconds
-        if (now - lastCaptureTimeRef.current >= 3000) {
-          const routePoint = {
-            lat: latitude,
-            lng: longitude,
-            time: new Date().toISOString()
-          };
+          if (now - lastCaptureTimeRef.current >= 3000) {
+            const routePoint = {
+              lat: latitude,
+              lng: longitude,
+              time: new Date().toISOString(),
+              timestamp: now,
+              accuracy: position.coords.accuracy,
+            };
 
-          setRoutePoints(prev => [...prev, routePoint]);
-          lastCaptureTimeRef.current = now;
+            setRoutePoints(prev => [...prev, routePoint]);
+            lastCaptureTimeRef.current = now;
 
-          // Calculate distance
-          if (lastPositionRef.current) {
-            const dist = calculateDistance(
-              lastPositionRef.current.lat,
-              lastPositionRef.current.lng,
-              latitude,
-              longitude
-            );
-            setDistance(d => d + dist);
+            // Calculate distance with GPS noise filtering
+            if (lastPositionRef.current) {
+              const validDist = getValidDistanceKm(lastPositionRef.current, routePoint);
+              if (validDist > 0) {
+                setDistance(d => d + validDist);
+              }
+            }
+
+            lastPositionRef.current = routePoint;
           }
-
-          lastPositionRef.current = { lat: latitude, lng: longitude };
-        }
 
         // Update speed (m/s to km/h)
         const speedKmh = speed ? speed * 3.6 : 0;
@@ -302,17 +306,7 @@ export default function ActiveRun() {
     );
   }, [maxSpeed]);
 
-  const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371; // Earth's radius in km
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-  };
+
 
   // Re-center button handler
   const handleRecenter = () => {
@@ -372,9 +366,9 @@ export default function ActiveRun() {
     }
     if (timerRef.current) clearInterval(timerRef.current);
 
-    const pace = distance > 0 ? (seconds / 60) / distance : 0;
-    const avgSpeed = seconds > 0 ? (distance / seconds) * 3600 : 0;
-    const avgHR = Math.round((72 + maxHeartRate) / 2);
+    const pace = calculatePace(seconds, distance);
+    const avgSpeed = calculateAvgSpeed(seconds, distance);
+    const avgHR = Math.round((75 + maxHeartRate) / 2);
 
     const startPoint = routePoints.length > 0 ? routePoints[0] : null;
     const endPoint = routePoints.length > 0 ? routePoints[routePoints.length - 1] : null;
@@ -392,7 +386,7 @@ export default function ActiveRun() {
         avg_heart_rate: avgHR,
         max_heart_rate: maxHeartRate,
         pace_min_per_km: parseFloat(pace.toFixed(2)),
-        avg_pace: `${Math.floor(pace)}:${Math.round((pace % 1) * 60).toString().padStart(2, '0')}`,
+        avg_pace: formatPace(pace),
         status: 'completed',
         route_points: routePoints,
         start_lat: startPoint?.lat,
@@ -402,18 +396,18 @@ export default function ActiveRun() {
       });
     }
 
-    // Calculate coins earned (1 coin per km)
-    const coinsEarned = Math.floor(distance);
+    // Calculate coins earned (0.1 coin per 0.1 km)
+    const coinsEarned = calculateCoins(distance);
     
     if (coinsEarned > 0) {
       try {
-        const user = await base44.auth.me();
-        const prevCoin = user.coin_balance ?? 0;
-        const newCoin = prevCoin + coinsEarned;
+        const freshUser = await base44.auth.me();
+        const prevCoin = freshUser.coin_balance ?? 0;
+        const newCoin = parseFloat((prevCoin + coinsEarned).toFixed(2));
         
         // Calculate levels from coin_balance
-        const prevLevel = Math.floor(prevCoin / 100) + 1;
-        const newLevel = Math.floor(newCoin / 100) + 1;
+        const prevLevel = calculateLevel(prevCoin);
+        const newLevel = calculateLevel(newCoin);
         const leveledUp = newLevel > prevLevel;
         
         // Update user with new coin balance
@@ -431,7 +425,7 @@ export default function ActiveRun() {
         
         // Log to wallet
         await base44.entities.WalletLog.create({
-          user: user.email,
+          user: freshUser.email,
           amount: coinsEarned,
           source_type: 'run',
           run_id: runId,
@@ -473,14 +467,7 @@ export default function ActiveRun() {
     navigate(createPageUrl(`RunDetails?id=${runId}`));
   };
 
-  const pace = distance > 0 ? (seconds / 60) / distance : 0;
-  const formatPace = (pace) => {
-    // Show "--:--" for very short distances
-    if (!pace || pace === Infinity || pace === 0 || distance < 0.05) return '--:--';
-    const mins = Math.floor(pace);
-    const secs = Math.round((pace - mins) * 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+  const pace = calculatePace(seconds, distance);
   
   // Stop button hold logic
   const [stopHoldProgress, setStopHoldProgress] = useState(0);
@@ -771,14 +758,14 @@ export default function ActiveRun() {
           <div className="metricUnit">km/h</div>
         </div>
         <div className="metricCard centeredCard">
-          <div className="metricLabel">CALORIES</div>
+          <div className="metricLabel">EST. CALORIES</div>
           <div className="metricValue">{calories}</div>
           <div className="metricUnit">kcal</div>
         </div>
         <div className="metricCard heartCard">
           <div className="heartTop">
             <Heart className="heartIcon" fill="currentColor" />
-            <div className="metricLabel">HEART RATE</div>
+            <div className="metricLabel">EST. HEART RATE</div>
           </div>
           <div className="metricValue">{heartRate} <span className="metricUnit">bpm</span></div>
           <div className="heartPulseBar">
