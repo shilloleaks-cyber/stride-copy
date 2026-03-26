@@ -18,6 +18,7 @@ export default function ProfileAvatar({
     sm: 'w-10 h-10',
     md: 'w-14 h-14',
     lg: 'w-24 h-24',
+    lg2: 'w-28 h-28',
     xl: 'w-32 h-32',
   };
 
@@ -62,11 +63,13 @@ export default function ProfileAvatar({
             whileTap={{ scale: 0.9 }}
             onClick={() => inputRef.current?.click()}
             disabled={isUploading}
-            className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full flex items-center justify-center shadow-lg"
+            className="absolute w-8 h-8 rounded-full flex items-center justify-center"
             style={{
+              bottom: '-4px',
+              right: '-4px',
               background: 'linear-gradient(135deg, #B6FF00 0%, #8A2BE2 100%)',
-              border: 'none',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+              border: '2px solid #0A0A0A',
+              boxShadow: '0 4px 14px rgba(0,0,0,0.5)',
             }}
           >
             {isUploading ? (

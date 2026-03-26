@@ -305,7 +305,7 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
         <div className="heroAvatarWrap">
           <ProfileAvatar
             user={user}
-            size="md"
+            size="lg2"
             editable
             onImageUpdate={() => refetchUser()}
           />
