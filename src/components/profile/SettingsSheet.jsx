@@ -73,11 +73,16 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
 
   const handleWeightSave = async () => {
     const val = weightInput.trim() === '' ? null : parseFloat(weightInput);
-    if (weightInput.trim() !== '' && (isNaN(val) || val <= 0)) return;
+    if (weightInput.trim() !== '') {
+      if (isNaN(val) || val < 20 || val > 300) {
+        toast.error('Enter a weight between 20 and 300 kg');
+        return;
+      }
+    }
     setWeightSaving(true);
     await base44.auth.updateMe({ weight_kg: val });
     setWeightSaving(false);
-    toast.success('Weight saved');
+    toast.success('Weight saved ✓');
   };
 
   const handleSignIn = () => {
@@ -280,6 +285,9 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
                     {weightSaving ? '…' : 'Save'}
                   </button>
                 </div>
+                <p style={{ margin: '8px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>
+                  Used for calorie estimation only.
+                </p>
               </div>
 
               <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '2px 0' }} />
