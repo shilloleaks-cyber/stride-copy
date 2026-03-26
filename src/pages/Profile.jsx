@@ -305,7 +305,7 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
         <div className="heroAvatarWrap">
           <ProfileAvatar
             user={user}
-            size="lg"
+            size="md"
             editable
             onImageUpdate={() => refetchUser()}
           />
@@ -383,17 +383,12 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
       <div className="section">
         <div className="sectionLabel">GAME</div>
         <div className="coinCard">
-          <div className="coinLeft">
-            <div className="coinLabelRow">
-              <span className="coinEmoji">🪙</span>
-              <span className="coinTitle">COIN BALANCE</span>
-            </div>
-            <div className="coinBalance">{currentCoins.toFixed(0)}</div>
-            <div className="coinSub">Run → Earn → Redeem</div>
+          <div className="coinLabelRow">
+            <span className="coinEmoji">🪙</span>
+            <span className="coinTitle">COIN BALANCE</span>
           </div>
-          <div className="coinRight">
-            <div className="coinLevelBadge">Lv.{currentLevel}</div>
-          </div>
+          <div className="coinBalance">{Math.floor(currentCoins)}</div>
+          <div className="coinSub">Run → Earn → Redeem</div>
         </div>
       </div>
 
@@ -795,59 +790,59 @@ const profileStyles = `
   /* ── Hero Section ── */
   .heroSection {
     text-align: center;
-    padding: 24px 16px 16px;
+    padding: 16px 16px 12px;
   }
   .heroAvatarWrap {
     display: inline-block;
-    margin-bottom: 14px;
-    padding: 3px;
+    margin-bottom: 10px;
+    padding: 2px;
     border-radius: 50%;
-    background: linear-gradient(135deg, rgba(138,43,226,0.4), rgba(191,255,0,0.3));
-    box-shadow: 0 0 24px rgba(138,43,226,0.3);
+    background: linear-gradient(135deg, rgba(138,43,226,0.35), rgba(191,255,0,0.25));
+    box-shadow: 0 0 18px rgba(138,43,226,0.25);
   }
   .heroName {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 900;
     color: var(--text);
-    margin: 0 0 14px;
+    margin: 0 0 10px;
   }
   .heroFollowRow {
     display: inline-flex;
     align-items: center;
     gap: 0;
-    margin-bottom: 18px;
-    background: var(--card);
-    border: 1px solid var(--line);
+    margin-bottom: 14px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
     border-radius: 999px;
-    padding: 0 4px;
+    padding: 0 2px;
   }
   .heroPill {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 10px 20px;
+    padding: 7px 16px;
     cursor: pointer;
     background: transparent;
     border: none;
     color: var(--text);
   }
   .heroPillVal {
-    font-size: 18px;
-    font-weight: 900;
-    color: var(--lime);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--muted);
     line-height: 1;
   }
   .heroPillLbl {
-    font-size: 10px;
+    font-size: 9px;
     color: var(--muted2);
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
     margin-top: 2px;
   }
   .heroPillDivider {
     width: 1px;
-    height: 28px;
-    background: var(--line);
+    height: 22px;
+    background: rgba(255,255,255,0.07);
   }
 
   /* Hero Level Card — mirrors Home .levelCard */
@@ -966,12 +961,12 @@ const profileStyles = `
 
   /* Performance summary sub-card */
   .perfSummaryCard {
-    background: var(--card);
-    border: 1px solid var(--line);
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(191,255,0,0.10);
     border-radius: 18px;
-    padding: 18px 20px;
+    padding: 20px 24px;
     margin-bottom: 4px;
-    box-shadow: 0 10px 26px rgba(0,0,0,.45);
+    box-shadow: 0 0 0 1px rgba(191,255,0,0.06) inset, 0 14px 36px rgba(0,0,0,.55);
   }
   .perfRow {
     display: flex;
@@ -987,78 +982,63 @@ const profileStyles = `
     letter-spacing: .10em;
     color: var(--muted2);
     text-transform: uppercase;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
   }
   .perfValue {
-    font-size: 26px;
+    font-size: 32px;
     font-weight: 900;
     color: var(--lime);
-    text-shadow: 0 0 16px rgba(191,255,0,0.3);
+    text-shadow: 0 0 20px rgba(191,255,0,0.35);
+    line-height: 1;
   }
   .perfUnit {
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 700;
     color: var(--muted);
-    margin-left: 2px;
+    margin-left: 3px;
   }
   .perfDivider {
     width: 1px;
-    height: 44px;
-    background: var(--line);
+    height: 48px;
+    background: rgba(255,255,255,0.08);
   }
 
-  /* Coin card — matches Home game card style */
+  /* Coin card */
   .coinCard {
-    background: radial-gradient(120% 140% at 10% 10%, rgba(191,255,0,0.12) 0%, rgba(10,10,10,0.90) 55%);
-    border: 1px solid var(--line);
+    background: radial-gradient(120% 140% at 10% 10%, rgba(191,255,0,0.10) 0%, rgba(10,10,10,0.90) 55%);
+    border: 1px solid rgba(191,255,0,0.12);
     border-radius: 18px;
-    padding: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    box-shadow: 0 10px 26px rgba(0,0,0,.45);
+    padding: 22px 20px;
+    text-align: center;
+    box-shadow: 0 0 0 1px rgba(191,255,0,0.06) inset, 0 14px 36px rgba(0,0,0,.5);
     margin-bottom: 4px;
-  }
-  .coinLeft {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
   }
   .coinLabelRow {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 7px;
-    margin-bottom: 4px;
+    margin-bottom: 10px;
   }
   .coinEmoji { font-size: 16px; }
   .coinTitle {
-    font-size: 12px;
-    letter-spacing: .12em;
+    font-size: 11px;
+    letter-spacing: .14em;
     color: var(--muted2);
     font-weight: 700;
+    text-transform: uppercase;
   }
   .coinBalance {
-    font-size: 40px;
+    font-size: 48px;
     font-weight: 900;
     color: var(--lime);
     line-height: 1;
-    text-shadow: 0 0 22px rgba(191,255,0,0.35);
+    text-shadow: 0 0 28px rgba(191,255,0,0.40);
+    margin-bottom: 6px;
   }
   .coinSub {
     font-size: 12px;
     color: var(--muted);
-    margin-top: 4px;
-  }
-  .coinRight {}
-  .coinLevelBadge {
-    padding: 8px 14px;
-    border-radius: 12px;
-    background: rgba(138,43,226,0.25);
-    border: 1px solid rgba(138,43,226,0.35);
-    color: rgba(200,160,255,1);
-    font-size: 14px;
-    font-weight: 900;
-    box-shadow: 0 0 16px rgba(138,43,226,0.25);
   }
 
   /* Achievements section */
@@ -1402,10 +1382,10 @@ const profileStyles = `
   }
 
   @media (max-width: 420px) {
-    .heroName { font-size: 24px; }
+    .heroName { font-size: 22px; }
     .statValue { font-size: 26px; }
-    .perfValue { font-size: 22px; }
-    .coinBalance { font-size: 34px; }
+    .perfValue { font-size: 26px; }
+    .coinBalance { font-size: 40px; }
     .heroLevelValue { font-size: 28px; }
     .achBadge { border-radius: 12px; }
     .achEmoji { font-size: 22px; }
