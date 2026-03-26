@@ -296,151 +296,129 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
         </button>
       </div>
 
-      {/* Identity + Level Header */}
+      {/* ── HERO SECTION ── */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        className="identityHeader"
+        className="heroSection"
       >
-        <div className="avatarContainer">
-          <div className="avatarGlow">
-            <ProfileAvatar 
-              user={user} 
-              size="lg" 
-              editable 
-              onImageUpdate={() => refetchUser()}
-            />
-          </div>
+        <div className="heroAvatarWrap">
+          <ProfileAvatar
+            user={user}
+            size="lg"
+            editable
+            onImageUpdate={() => refetchUser()}
+          />
         </div>
 
-        <h2 className="userNameLarge">{user?.full_name || 'Runner'}</h2>
+        <h2 className="heroName">{user?.full_name || 'Runner'}</h2>
 
-        <div className="followPillsRow">
-          <button 
-            onClick={() => { setActiveFollowTab('following'); setFollowSheetOpen(true); }}
-            className="followPill"
-          >
-            กำลังติดตาม {followingUsers.length}
+        <div className="heroFollowRow">
+          <button onClick={() => { setActiveFollowTab('following'); setFollowSheetOpen(true); }} className="heroPill">
+            <span className="heroPillVal">{followingUsers.length}</span>
+            <span className="heroPillLbl">Following</span>
           </button>
-          <button 
-            onClick={() => { setActiveFollowTab('followers'); setFollowSheetOpen(true); }}
-            className="followPill"
-          >
-            ผู้ติดตาม {followerUsers.length}
+          <div className="heroPillDivider" />
+          <button onClick={() => { setActiveFollowTab('followers'); setFollowSheetOpen(true); }} className="heroPill">
+            <span className="heroPillVal">{followerUsers.length}</span>
+            <span className="heroPillLbl">Followers</span>
           </button>
         </div>
 
-        <div className="levelBadge">
-          <Trophy className="w-3.5 h-3.5" />
-          <span>Lv.{currentLevel} Runner</span>
-        </div>
-
-        <div className="levelProgressSection">
-          <div className="levelProgressBar">
-            <div className="levelProgressFill" style={{ width: `${levelProgressPercent}%` }} />
+        {/* Level card — matches Home levelCard */}
+        <div className="heroLevelCard">
+          <div className="heroLevelTop">
+            <div className="heroLevelIcon">⚡</div>
+            <div>
+              <div className="heroLevelLabel">LEVEL</div>
+              <div className="heroLevelValue">{currentLevel}</div>
+            </div>
           </div>
-          <p className="levelProgressText">{levelProgressPercent}%</p>
+          <div className="heroProgressWrap">
+            <div className="heroProgressFill" style={{ width: `${levelProgressPercent}%` }} />
+          </div>
+          <div className="heroProgressNote">{progress.toFixed(0)} / 100 coins to Level {currentLevel + 1}</div>
         </div>
       </motion.div>
 
-      {/* Quick Stats Mini Cards */}
-      <div className="quickStatsRow">
-        <div className="quickStatCard">
-          <MapPin className="w-5 h-5 quickIcon" />
-          <div className="quickValue">{stats.totalDistance.toFixed(1)}</div>
-          <div className="quickLabel">KM</div>
+      {/* ── SECTION: PERFORMANCE ── */}
+      <div className="section">
+        <div className="sectionLabel">PERFORMANCE</div>
+        <div className="grid2">
+          <div className="statCard activeGlow">
+            <div className="statTop"><div className="statLabel">DISTANCE</div><div className="statBadge">📍</div></div>
+            <div className="statValue">{stats.totalDistance.toFixed(1)}<span className="unit"> km</span></div>
+          </div>
+          <div className="statCard">
+            <div className="statTop"><div className="statLabel">RUNS</div><div className="statBadge">🏃</div></div>
+            <div className="statValue">{stats.totalRuns}<span className="unit"> runs</span></div>
+          </div>
+          <div className="statCard">
+            <div className="statTop"><div className="statLabel">AVG PACE</div><div className="statBadge">⚡</div></div>
+            <div className="statValue">{formatPace(stats.avgPace)}<span className="unit"> /km</span></div>
+          </div>
+          <div className="statCard activeGlow">
+            <div className="statTop"><div className="statLabel">STREAK</div><div className="statBadge">🔥</div></div>
+            <div className="statValue">{currentStreak}<span className="unit"> days</span></div>
+          </div>
         </div>
-        <div className="quickStatCard">
-          <Calendar className="w-5 h-5 quickIcon" />
-          <div className="quickValue">{stats.totalRuns}</div>
-          <div className="quickLabel">Runs</div>
-        </div>
-        <div className="quickStatCard">
-          <TrendingUp className="w-5 h-5 quickIcon" />
-          <div className="quickValue">{formatPace(stats.avgPace)}</div>
-          <div className="quickLabel">Pace</div>
-        </div>
-        <div className="quickStatCard">
-          <Flame className="w-5 h-5 quickIcon" />
-          <div className="quickValue">{currentStreak}</div>
-          <div className="quickLabel">Streak</div>
-        </div>
-      </div>
 
-      {/* Performance Summary Big Card */}
-      <div className="performanceCard">
-        <div className="perfGrid">
-          <div className="perfItem">
-            <div className="perfLabel">TOTAL DISTANCE</div>
-            <div className="perfValue">{stats.totalDistance.toFixed(1)} km</div>
-          </div>
-          <div className="perfItem">
-            <div className="perfLabel">TOTAL TIME</div>
-            <div className="perfValue">{Math.floor(stats.totalTime / 3600)} hrs</div>
-          </div>
-          <div className="perfItem">
-            <div className="perfLabel">TOTAL CALORIES</div>
-            <div className="perfValue">{(stats.totalCalories / 1000).toFixed(1)}k kcal</div>
-          </div>
-          <div className="perfItem">
-            <div className="perfLabel">AVG PACE</div>
-            <div className="perfValue">{formatPace(stats.avgPace)}</div>
+        {/* Performance summary sub-card */}
+        <div className="perfSummaryCard">
+          <div className="perfRow">
+            <div className="perfItem">
+              <div className="perfLabel">TOTAL TIME</div>
+              <div className="perfValue">{Math.floor(stats.totalTime / 3600)}<span className="perfUnit"> hrs</span></div>
+            </div>
+            <div className="perfDivider" />
+            <div className="perfItem">
+              <div className="perfLabel">CALORIES</div>
+              <div className="perfValue">{(stats.totalCalories / 1000).toFixed(1)}<span className="perfUnit">k kcal</span></div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Coin + Economy Card */}
-      <div className="coinWalletCard">
-        <div className="coinHeader">
-          <span className="coinEmoji">🪙</span>
-          <span className="coinTitle">COIN WALLET</span>
+      {/* ── SECTION: GAME ── */}
+      <div className="section">
+        <div className="sectionLabel">GAME</div>
+        <div className="coinCard">
+          <div className="coinLeft">
+            <div className="coinLabelRow">
+              <span className="coinEmoji">🪙</span>
+              <span className="coinTitle">COIN BALANCE</span>
+            </div>
+            <div className="coinBalance">{currentCoins.toFixed(0)}</div>
+            <div className="coinSub">Run → Earn → Redeem</div>
+          </div>
+          <div className="coinRight">
+            <div className="coinLevelBadge">Lv.{currentLevel}</div>
+          </div>
         </div>
-        <div className="coinBalance">{currentCoins.toFixed(2)}</div>
-        <div className="coinBalanceLabel">Balance</div>
-        {lastRunCoins > 0 && (
-          <div className="coinLastRun">+{lastRunCoins.toFixed(2)} from last run</div>
-        )}
       </div>
 
-      {/* Achievements */}
-      <div className="achievementsSection">
-        <div className="achievementsHeader">
-          <div className="achievementsHeaderLeft">
-            <Trophy className="achievementsIcon" />
-            <span className="achievementsTitle">Achievement Badges</span>
+      {/* ── SECTION: ACHIEVEMENTS ── */}
+      <div className="section">
+        <div className="achievementsHeaderRow">
+          <div className="sectionLabel" style={{ margin: 0 }}>ACHIEVEMENTS</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span className="achCount">{unlockedAchievements.length}/8</span>
+            <button onClick={() => setIsAchievementsOpen(true)} className="achDetailsBtn">Details</button>
           </div>
-          <span className="achievementsCount">{unlockedAchievements.length}/8</span>
-          <button 
-            onClick={() => setIsAchievementsOpen(true)}
-            className="achievementsDetailsBtn"
-          >
-            Details
-          </button>
-
         </div>
-        
-        <div className="achievementsDivider" />
-        
+
         <div className="achievementsGrid">
           {achievementsWithStatus.map((achievement, index) => (
             <motion.div
               key={achievement.id}
               initial={{ scale: 0, opacity: 0 }}
-              animate={{ 
-                scale: achievement.unlocked ? 1 : 0.9, 
-                opacity: achievement.unlocked ? 1 : 0.4 
-              }}
-              transition={{ delay: index * 0.05 }}
-              whileHover={achievement.unlocked ? { scale: 1.08 } : { scale: 0.92 }}
-              className={`achievementBadge ${achievement.unlocked ? 'unlocked' : 'locked'}`}
+              animate={{ scale: achievement.unlocked ? 1 : 0.9, opacity: achievement.unlocked ? 1 : 0.38 }}
+              transition={{ delay: index * 0.04 }}
+              className={`achBadge ${achievement.unlocked ? 'achUnlocked' : 'achLocked'}`}
             >
-              {!achievement.unlocked && (
-                <div className="achievementLockOverlay">
-                  <span className="text-2xl">🔒</span>
-                </div>
-              )}
-              <span className="achievementEmoji">{achievement.emoji}</span>
-              <p className="achievementName">{achievement.name}</p>
+              {!achievement.unlocked && <div className="achLockLayer"><span style={{ fontSize: 18 }}>🔒</span></div>}
+              <span className="achEmoji">{achievement.emoji}</span>
+              <p className="achName">{achievement.name}</p>
             </motion.div>
           ))}
         </div>
@@ -789,356 +767,380 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
 }
 
 const profileStyles = `
+  /* ── Same token set as Home ── */
+  :root {
+    --bg: #0A0A0A;
+    --lime: #BFFF00;
+    --purple: #8A2BE2;
+    --text: rgba(255,255,255,.92);
+    --muted: rgba(255,255,255,.60);
+    --muted2: rgba(255,255,255,.40);
+    --line: rgba(255,255,255,.10);
+    --card: rgba(255,255,255,.05);
+    --r: 22px;
+    --shadow: 0 14px 40px rgba(0,0,0,.55);
+  }
+
   .profileRoot {
     min-height: 100vh;
-    background: radial-gradient(900px 500px at 50% 0%, rgba(123,77,255,0.05), transparent 60%),
-                #050508;
-    color: rgba(255,255,255,0.95);
-    padding: 0 0 100px;
+    background:
+      radial-gradient(1200px 600px at 50% -10%, rgba(138,43,226,.15), transparent 55%),
+      radial-gradient(900px 500px at 15% 10%, rgba(191,255,0,.07), transparent 60%),
+      var(--bg);
+    color: var(--text);
+    padding: 0 0 110px;
     font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
   }
 
-  /* Identity + Level Header */
-  .identityHeader {
+  /* ── Hero Section ── */
+  .heroSection {
     text-align: center;
-    padding: 28px 24px 32px;
+    padding: 24px 16px 16px;
   }
-
-  .avatarContainer {
-    margin-bottom: 16px;
-  }
-
-  .avatarGlow {
+  .heroAvatarWrap {
     display: inline-block;
-    position: relative;
-    padding: 6px;
+    margin-bottom: 14px;
+    padding: 3px;
     border-radius: 50%;
-    background: #050508;
-    border: 1px solid rgba(255,255,255,0.06);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    background: linear-gradient(135deg, rgba(138,43,226,0.4), rgba(191,255,0,0.3));
+    box-shadow: 0 0 24px rgba(138,43,226,0.3);
   }
-
-  @keyframes avatarRingPulse {
-    0%, 100% { box-shadow: 0 0 12px rgba(182,255,0,0.15), 0 0 0 1px rgba(0,0,0,0.6) inset; }
-    50% { box-shadow: 0 0 16px rgba(182,255,0,0.25), 0 0 0 1px rgba(0,0,0,0.5) inset; }
-  }
-
-  .userNameLarge {
+  .heroName {
     font-size: 28px;
-    font-weight: 700;
-    color: #fff;
-    margin-bottom: 12px;
+    font-weight: 900;
+    color: var(--text);
+    margin: 0 0 14px;
   }
-
-  .levelBadge {
+  .heroFollowRow {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 8px 18px;
+    gap: 0;
+    margin-bottom: 18px;
+    background: var(--card);
+    border: 1px solid var(--line);
     border-radius: 999px;
-    background: rgba(10,10,10,0.6);
-    border: 1px solid #B6FF00;
-    color: #B6FF00;
-    font-size: 13px;
-    font-weight: 700;
-    box-shadow: 0 0 20px rgba(182,255,0,0.25);
-    margin-bottom: 20px;
+    padding: 0 4px;
+  }
+  .heroPill {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 20px;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    color: var(--text);
+  }
+  .heroPillVal {
+    font-size: 18px;
+    font-weight: 900;
+    color: var(--lime);
+    line-height: 1;
+  }
+  .heroPillLbl {
+    font-size: 10px;
+    color: var(--muted2);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 2px;
+  }
+  .heroPillDivider {
+    width: 1px;
+    height: 28px;
+    background: var(--line);
   }
 
-  .levelProgressSection {
-    max-width: 280px;
-    margin: 0 auto;
+  /* Hero Level Card — mirrors Home .levelCard */
+  .heroLevelCard {
+    background: radial-gradient(120% 140% at 10% 10%, rgba(138,43,226,0.35) 0%, rgba(10,10,10,0.85) 58%, rgba(10,10,10,1) 100%);
+    border: 1px solid rgba(138,43,226,0.22);
+    border-radius: 18px;
+    padding: 16px 18px;
+    margin: 0 16px;
+    box-shadow: var(--shadow);
+    text-align: left;
   }
-
-  .levelProgressBar {
+  .heroLevelTop {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .heroLevelIcon {
+    width: 44px; height: 44px; border-radius: 16px;
+    background: rgba(138,43,226,0.25);
+    border: 1px solid var(--line);
+    display: grid; place-items: center;
+    font-size: 18px;
+    box-shadow: 0 0 0 1px rgba(191,255,0,0.10) inset;
+  }
+  .heroLevelLabel {
+    font-size: 12px;
+    letter-spacing: .12em;
+    color: var(--muted2);
+    margin-bottom: 2px;
+  }
+  .heroLevelValue {
+    font-size: 34px;
+    font-weight: 900;
+    color: var(--text);
+    line-height: 1;
+  }
+  .heroProgressWrap {
     height: 10px;
     border-radius: 999px;
-    background: rgba(60,60,60,0.6);
+    background: var(--line);
     overflow: hidden;
     margin-bottom: 8px;
   }
-
-  .levelProgressFill {
+  .heroProgressFill {
     height: 100%;
-    background: #B6FF00;
+    background: var(--lime);
+    box-shadow: 0 0 18px rgba(191,255,0,0.35);
     border-radius: 999px;
-    box-shadow: 0 0 16px rgba(182,255,0,0.6);
     transition: width 0.4s ease;
   }
-
-  .levelProgressText {
-    font-size: 13px;
-    font-weight: 700;
-    color: rgba(255,255,255,0.6);
-    text-align: center;
-    margin: 0;
+  .heroProgressNote {
+    font-size: 12px;
+    color: var(--muted);
   }
 
-  /* Quick Stats Mini Cards */
-  .quickStatsRow {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-    padding: 0 20px 28px;
+  /* ── Section ── mirrors Home .section */
+  .section {
+    padding: 16px 16px 0;
   }
-
-  .quickStatCard {
-    background: rgba(20,20,20,0.5);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 16px;
-    padding: 14px 8px;
-    text-align: center;
+  .sectionLabel {
+    letter-spacing: .18em;
+    font-size: 12px;
+    color: var(--muted2);
+    margin: 0 2px 10px;
   }
-
-  .quickIcon {
-    color: #B6FF00;
-    margin: 0 auto 8px;
-  }
-
-  .quickValue {
-    font-size: 20px;
-    font-weight: 900;
-    color: #B6FF00;
-    margin-bottom: 4px;
-  }
-
-  .quickLabel {
-    font-size: 10px;
-    color: rgba(255,255,255,0.5);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  /* Performance Summary Big Card */
-  .performanceCard {
-    margin: 0 20px 28px;
-    padding: 24px 20px;
-    background: rgba(20,20,20,0.5);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 20px;
-    box-shadow: 0 0 16px rgba(182,255,0,0.08);
-  }
-
-  .perfGrid {
+  .grid2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 24px;
-  }
-
-  .perfItem {
-    text-align: center;
-  }
-
-  .perfLabel {
-    font-size: 10px;
-    color: rgba(255,255,255,0.45);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-bottom: 8px;
-    font-weight: 600;
-  }
-
-  .perfValue {
-    font-size: 26px;
-    font-weight: 900;
-    color: #B6FF00;
-  }
-
-  /* Coin Wallet Card */
-  .coinWalletCard {
-    margin: 0 20px 28px;
-    padding: 24px;
-    background: rgba(20,20,20,0.5);
-    border: 1px solid rgba(182,255,0,0.2);
-    border-radius: 20px;
-    box-shadow: 0 0 20px rgba(182,255,0,0.15);
-    text-align: center;
-  }
-
-  .coinHeader {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    margin-bottom: 16px;
-  }
-
-  .coinEmoji {
-    font-size: 20px;
-  }
-
-  .coinTitle {
-    font-size: 11px;
-    color: rgba(255,255,255,0.5);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    font-weight: 700;
-  }
-
-  .coinBalance {
-    font-size: 48px;
-    font-weight: 900;
-    color: #B6FF00;
-    text-shadow: 0 0 24px rgba(182,255,0,0.5);
-    margin-bottom: 4px;
-  }
-
-  .coinBalanceLabel {
-    font-size: 13px;
-    color: rgba(255,255,255,0.5);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    gap: 12px;
     margin-bottom: 12px;
   }
 
-  .coinLastRun {
+  /* Stat cards — identical to Home */
+  .statCard {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 14px;
+    text-align: left;
+    box-shadow: 0 10px 26px rgba(0,0,0,.45);
+  }
+  .activeGlow {
+    box-shadow: 0 18px 40px rgba(0,0,0,0.55), 0 0 0 1px rgba(191,255,0,0.12) inset;
+  }
+  .statTop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .statLabel {
+    font-size: 12px;
+    letter-spacing: .12em;
+    color: var(--muted2);
+  }
+  .statBadge {
+    width: 34px; height: 34px; border-radius: 12px;
+    background: rgba(10,10,10,0.25);
+    border: 1px solid var(--line);
+    display: grid; place-items: center;
+  }
+  .statValue {
+    font-size: 30px;
+    font-weight: 900;
+    color: var(--lime);
+    margin-top: 8px;
+    line-height: 1;
+    text-shadow: 0 0 18px rgba(191,255,0,0.3);
+  }
+  .unit {
     font-size: 13px;
-    color: rgba(255,255,255,0.6);
-    padding: 8px 16px;
-    background: rgba(182,255,0,0.08);
-    border-radius: 999px;
-    display: inline-block;
+    font-weight: 700;
+    color: var(--muted);
   }
 
-  /* Achievements Section */
-  .achievementsSection {
-    margin-bottom: 28px;
-    padding: 0 20px;
+  /* Performance summary sub-card */
+  .perfSummaryCard {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 18px 20px;
+    margin-bottom: 4px;
+    box-shadow: 0 10px 26px rgba(0,0,0,.45);
   }
-
-  .achievementsHeader {
+  .perfRow {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 14px;
+    gap: 0;
   }
-
-  .achievementsHeaderLeft {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  .perfItem {
     flex: 1;
+    text-align: center;
   }
-
-  .achievementsIcon {
-    width: 18px;
-    height: 18px;
-    color: #BFFF00;
-    filter: drop-shadow(0 0 6px rgba(191, 255, 0, 0.5));
+  .perfLabel {
+    font-size: 11px;
+    letter-spacing: .10em;
+    color: var(--muted2);
+    text-transform: uppercase;
+    margin-bottom: 6px;
   }
-
-  .achievementsTitle {
-    font-size: 15px;
-    color: #FFFFFF;
+  .perfValue {
+    font-size: 26px;
+    font-weight: 900;
+    color: var(--lime);
+    text-shadow: 0 0 16px rgba(191,255,0,0.3);
+  }
+  .perfUnit {
+    font-size: 12px;
     font-weight: 700;
+    color: var(--muted);
+    margin-left: 2px;
+  }
+  .perfDivider {
+    width: 1px;
+    height: 44px;
+    background: var(--line);
   }
 
-  .achievementsCount {
-    font-size: 14px;
-    font-weight: 700;
-    color: #BFFF00;
-    padding: 4px 12px;
-    border-radius: 999px;
-    background: rgba(191, 255, 0, 0.12);
-    border: 1px solid rgba(191, 255, 0, 0.2);
-  }
-
-  .achievementsDetailsBtn {
+  /* Coin card — matches Home game card style */
+  .coinCard {
+    background: radial-gradient(120% 140% at 10% 10%, rgba(191,255,0,0.12) 0%, rgba(10,10,10,0.90) 55%);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 18px;
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
+    justify-content: space-between;
+    box-shadow: 0 10px 26px rgba(0,0,0,.45);
+    margin-bottom: 4px;
+  }
+  .coinLeft {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .coinLabelRow {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 4px;
+  }
+  .coinEmoji { font-size: 16px; }
+  .coinTitle {
+    font-size: 12px;
+    letter-spacing: .12em;
+    color: var(--muted2);
+    font-weight: 700;
+  }
+  .coinBalance {
+    font-size: 40px;
+    font-weight: 900;
+    color: var(--lime);
+    line-height: 1;
+    text-shadow: 0 0 22px rgba(191,255,0,0.35);
+  }
+  .coinSub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .coinRight {}
+  .coinLevelBadge {
+    padding: 8px 14px;
+    border-radius: 12px;
+    background: rgba(138,43,226,0.25);
+    border: 1px solid rgba(138,43,226,0.35);
+    color: rgba(200,160,255,1);
+    font-size: 14px;
+    font-weight: 900;
+    box-shadow: 0 0 16px rgba(138,43,226,0.25);
+  }
+
+  /* Achievements section */
+  .achievementsHeaderRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .achCount {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--lime);
+    padding: 3px 10px;
     border-radius: 999px;
-    background: rgba(191, 255, 0, 0.12);
-    border: 1px solid rgba(191, 255, 0, 0.3);
-    color: #BFFF00;
+    background: rgba(191,255,0,0.10);
+    border: 1px solid rgba(191,255,0,0.2);
+  }
+  .achDetailsBtn {
+    padding: 5px 13px;
+    border-radius: 999px;
+    background: rgba(191,255,0,0.08);
+    border: 1px solid rgba(191,255,0,0.22);
+    color: var(--lime);
     font-size: 12px;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.2s;
-    box-shadow: 0 0 10px rgba(191, 255, 0, 0.2);
+    margin-left: 6px;
   }
-
-  .achievementsDetailsBtn:hover {
-    background: rgba(191, 255, 0, 0.18);
-    box-shadow: 0 0 15px rgba(191, 255, 0, 0.3);
-    transform: translateY(-1px);
-  }
-
-  .achievementsDivider {
-    height: 1px;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(138, 43, 226, 0.4) 20%,
-      rgba(191, 255, 0, 0.3) 50%,
-      rgba(138, 43, 226, 0.4) 80%,
-      transparent
-    );
-    margin-bottom: 16px;
-  }
-
   .achievementsGrid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
+    gap: 10px;
+    margin-bottom: 4px;
   }
-
-  .achievementBadge {
+  .achBadge {
     aspect-ratio: 1;
     border-radius: 16px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 12px 8px;
+    padding: 10px 6px;
     position: relative;
     overflow: hidden;
-    border: 2px solid;
+    border: 1px solid;
     cursor: pointer;
     transition: all 0.2s;
   }
-
-  .achievementBadge.unlocked {
-    background: radial-gradient(circle at top, rgba(138, 43, 226, 0.25), rgba(10, 10, 10, 0.4));
-    border-color: rgba(191, 255, 0, 0.4);
-    box-shadow: 0 0 20px rgba(138, 43, 226, 0.3), 0 0 0 1px rgba(191, 255, 0, 0.15) inset;
+  .achUnlocked {
+    background: radial-gradient(circle at top, rgba(138,43,226,0.22), rgba(10,10,10,0.6));
+    border-color: rgba(191,255,0,0.3);
+    box-shadow: 0 0 16px rgba(138,43,226,0.2), 0 0 0 1px rgba(191,255,0,0.10) inset;
   }
-
-  .achievementBadge.locked {
-    background: rgba(255, 255, 255, 0.03);
-    border-color: rgba(255, 255, 255, 0.1);
+  .achLocked {
+    background: rgba(255,255,255,0.03);
+    border-color: rgba(255,255,255,0.08);
   }
-
-  .achievementLockOverlay {
+  .achLockLayer {
     position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(0,0,0,0.55);
     display: flex;
     align-items: center;
     justify-content: center;
   }
-
-  .achievementEmoji {
-    font-size: 28px;
-    margin-bottom: 6px;
-    filter: drop-shadow(0 0 6px rgba(191, 255, 0, 0.3));
+  .achEmoji {
+    font-size: 26px;
+    margin-bottom: 5px;
   }
-
-  .achievementBadge.locked .achievementEmoji {
-    filter: none;
+  .achUnlocked .achEmoji {
+    filter: drop-shadow(0 0 6px rgba(191,255,0,0.25));
   }
-
-  .achievementName {
-    font-size: 10px;
+  .achName {
+    font-size: 9px;
     text-align: center;
     line-height: 1.3;
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--muted);
     margin: 0;
   }
-
-  .achievementBadge.locked .achievementName {
-    color: rgba(255, 255, 255, 0.4);
+  .achUnlocked .achName {
+    color: rgba(255,255,255,0.8);
   }
 
   /* Achievements Modal */
@@ -1178,36 +1180,30 @@ const profileStyles = `
     align-items: center;
     justify-content: space-between;
     padding: calc(env(safe-area-inset-top) + 10px) 18px 10px;
-    background: rgba(5, 5, 8, 0.85);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    background: rgba(10,10,10,0.88);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--line);
   }
-
   .profilePageTitle {
     font-size: 17px;
-    font-weight: 700;
-    color: rgba(255,255,255,0.9);
-    letter-spacing: -0.2px;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: 0.04em;
   }
-
   .profileSettingsBtn {
-    width: 44px;
-    height: 44px;
+    width: 42px; height: 42px;
     border-radius: 14px;
-    background: rgba(255,255,255,0.07);
-    border: 1px solid rgba(255,255,255,0.12);
-    color: rgba(255,255,255,0.6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--line);
+    color: var(--muted);
+    display: flex; align-items: center; justify-content: center;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
     flex-shrink: 0;
   }
-
   .profileSettingsBtn:active {
-    background: rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.10);
     transform: scale(0.94);
   }
 
@@ -1406,10 +1402,12 @@ const profileStyles = `
   }
 
   @media (max-width: 420px) {
-    .quickStatsRow { gap: 8px; padding: 0 16px 24px; }
-    .quickStatCard { padding: 12px 6px; }
-    .quickValue { font-size: 18px; }
-    .perfValue { font-size: 24px; }
-    .coinBalance { font-size: 42px; }
+    .heroName { font-size: 24px; }
+    .statValue { font-size: 26px; }
+    .perfValue { font-size: 22px; }
+    .coinBalance { font-size: 34px; }
+    .heroLevelValue { font-size: 28px; }
+    .achBadge { border-radius: 12px; }
+    .achEmoji { font-size: 22px; }
   }
 `;
