@@ -159,7 +159,7 @@ export default function StrideEventDetail() {
         {/* Admin: no-categories nudge */}
         {user?.role === 'admin' && !isCommunityEvent && categories.length === 0 && (
           <button
-            onClick={() => navigate('/StrideAdminDashboard')}
+            onClick={() => navigate(`/ManageCategories?event_id=${event.id}`)}
             style={{
               width: '100%', textAlign: 'left',
               padding: '14px 16px', borderRadius: 16,

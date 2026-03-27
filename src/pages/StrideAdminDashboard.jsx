@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Users, CheckCircle2, Clock, XCircle, ScanLine, Search, Filter, ChevronDown, CreditCard } from 'lucide-react';
+import { ArrowLeft, Users, CheckCircle2, Clock, XCircle, ScanLine, Search, Filter, ChevronDown, CreditCard, Tag } from 'lucide-react';
 import { format } from 'date-fns';
 import PaymentReviewPanel from '@/components/stride/PaymentReviewPanel';
 
@@ -154,8 +154,8 @@ export default function StrideAdminDashboard() {
         <div className="flex gap-2 mb-3">
           {[
             { key: 'registrations', label: 'Registrations', icon: Users },
-            { key: 'payments', label: 'Payments', icon: CreditCard,
-              badge: allPayments.filter(p => p.status === 'pending').length },
+            { key: 'payments', label: 'Payments', icon: CreditCard, badge: allPayments.filter(p => p.status === 'pending').length },
+            { key: 'categories', label: 'Categories', icon: Tag },
           ].map(({ key, label, icon: Icon, badge }) => (
             <button
               key={key}
@@ -225,6 +225,50 @@ export default function StrideAdminDashboard() {
           </>
         )}
       </div>
+
+      {/* Categories Tab */}
+      {activeTab === 'categories' && (
+        <div className="px-6 pt-4 space-y-3">
+          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
+            Select an event to manage its race categories
+          </p>
+          {events.filter(e => e.event_type === 'official').map(ev => {
+            const evCats = allCategories.filter(c => c.event_id === ev.id);
+            return (
+              <button
+                key={ev.id}
+                onClick={() => navigate(`/ManageCategories?event_id=${ev.id}`)}
+                className="w-full text-left rounded-2xl p-4 flex items-center gap-3"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}
+              >
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p className="font-bold text-white text-sm truncate">{ev.title}</p>
+                  <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                    {evCats.length === 0
+                      ? '⚠️ No categories — registration hidden'
+                      : `${evCats.length} ${evCats.length === 1 ? 'category' : 'categories'}`}
+                  </p>
+                </div>
+                <span style={{
+                  fontSize: 11, fontWeight: 700, padding: '5px 11px', borderRadius: 9, flexShrink: 0,
+                  ...(evCats.length === 0
+                    ? { background: 'rgba(255,180,0,0.1)', border: '1px solid rgba(255,180,0,0.25)', color: 'rgba(255,180,0,0.9)' }
+                    : { background: 'rgba(191,255,0,0.08)', border: '1px solid rgba(191,255,0,0.2)', color: '#BFFF00' }
+                  ),
+                }}>
+                  {evCats.length === 0 ? 'Add →' : 'Manage →'}
+                </span>
+              </button>
+            );
+          })}
+          {events.filter(e => e.event_type === 'official').length === 0 && (
+            <div className="rounded-2xl p-8 text-center" style={{ background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.08)' }}>
+              <p className="text-2xl mb-2">🏁</p>
+              <p className="text-sm text-white font-semibold">No official events yet</p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Payments Tab */}
       {activeTab === 'payments' && (
