@@ -17,6 +17,7 @@ import StrideMyEvents from './pages/StrideMyEvents';
 import StrideAdminDashboard from './pages/StrideAdminDashboard';
 import StrideCheckin from './pages/StrideCheckin';
 import SponsorClaim from './pages/SponsorClaim';
+import CreateOfficialEvent from './pages/CreateOfficialEvent';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRef } from 'react';
@@ -129,6 +130,7 @@ const AuthenticatedApp = () => {
         <Route path="/StrideAdminDashboard" element={<LayoutWrapper currentPageName="StrideAdminDashboard"><StrideAdminDashboard /></LayoutWrapper>} />
         <Route path="/StrideCheckin" element={<LayoutWrapper currentPageName="StrideCheckin"><StrideCheckin /></LayoutWrapper>} />
         <Route path="/SponsorClaim" element={<LayoutWrapper currentPageName="SponsorClaim"><SponsorClaim /></LayoutWrapper>} />
+        <Route path="/CreateOfficialEvent" element={<LayoutWrapper currentPageName="CreateOfficialEvent"><CreateOfficialEvent /></LayoutWrapper>} />
         <Route path="*" element={<PageNotFound />} />
       </Routes>
     </AnimatedRoutes>

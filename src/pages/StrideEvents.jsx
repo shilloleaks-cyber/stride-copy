@@ -57,6 +57,7 @@ export default function StrideEvents() {
     !search || e.title.toLowerCase().includes(search.toLowerCase()) || e.location_name?.toLowerCase().includes(search.toLowerCase())
   );
 
+  const isAdmin = user?.role === 'admin';
   const officialEvents = filtered.filter(e => e.event_type === 'official' || !e.event_type);
 
   // Community: show if public OR user is in the group that created it
@@ -121,7 +122,38 @@ export default function StrideEvents() {
 
           {/* Official Events */}
           <div style={{ marginBottom: 32 }}>
-            <SectionHeader label="Official Events" count={officialEvents.length} />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                  Official Events
+                </span>
+                {officialEvents.length > 0 && (
+                  <span style={{
+                    fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)',
+                    background: 'rgba(255,255,255,0.08)', borderRadius: 99, padding: '2px 7px',
+                  }}>
+                    {officialEvents.length}
+                  </span>
+                )}
+              </div>
+              {isAdmin && (
+                <button
+                  onClick={() => navigate('/CreateOfficialEvent')}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    fontSize: 12, fontWeight: 700,
+                    padding: '7px 13px', borderRadius: 10,
+                    background: 'rgba(191,255,0,0.08)',
+                    border: '1px solid rgba(191,255,0,0.25)',
+                    color: '#BFFF00',
+                    cursor: 'pointer',
+                    WebkitTapHighlightColor: 'transparent',
+                  }}
+                >
+                  <span style={{ fontSize: 14, lineHeight: 1 }}>+</span> New Official
+                </button>
+              )}
+            </div>
             {officialEvents.length === 0 ? (
               <div style={{
                 borderRadius: 18, padding: '32px 20px', textAlign: 'center',
