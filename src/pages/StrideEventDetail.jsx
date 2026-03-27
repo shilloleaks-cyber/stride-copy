@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, MapPin, Users, Loader2, CheckCircle2, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, Loader2, CheckCircle2, ChevronRight, Settings } from 'lucide-react';
 import { format } from 'date-fns';
 import RegistrationForm from '@/components/stride/RegistrationForm';
 import CommunityRSVP from '@/components/stride/CommunityRSVP';
@@ -155,6 +155,32 @@ export default function StrideEventDetail() {
             </div>
           )}
         </div>
+
+        {/* Admin: no-categories nudge */}
+        {user?.role === 'admin' && !isCommunityEvent && categories.length === 0 && (
+          <button
+            onClick={() => navigate('/StrideAdminDashboard')}
+            style={{
+              width: '100%', textAlign: 'left',
+              padding: '14px 16px', borderRadius: 16,
+              background: 'rgba(255,180,0,0.05)',
+              border: '1px solid rgba(255,180,0,0.22)',
+              display: 'flex', alignItems: 'center', gap: 12,
+              cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
+            }}
+          >
+            <Settings style={{ width: 16, height: 16, color: 'rgba(255,180,0,0.85)', flexShrink: 0 }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.85)', margin: 0 }}>
+                No race categories yet
+              </p>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', margin: '3px 0 0' }}>
+                Registration opens once categories are added — tap to manage
+              </p>
+            </div>
+            <ChevronRight style={{ width: 14, height: 14, color: 'rgba(255,255,255,0.2)', flexShrink: 0 }} />
+          </button>
+        )}
 
         {/* Description */}
         {event.description && (
