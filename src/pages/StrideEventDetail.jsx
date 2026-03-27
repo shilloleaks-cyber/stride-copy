@@ -171,14 +171,20 @@ export default function StrideEventDetail() {
           >
             <Settings style={{ width: 16, height: 16, color: 'rgba(255,180,0,0.85)', flexShrink: 0 }} />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.85)', margin: 0 }}>
-                No race categories yet
+              <p style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,180,0,0.9)', margin: 0 }}>
+                Add Race Categories
               </p>
               <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', margin: '3px 0 0' }}>
-                Registration opens once categories are added — tap to manage
+                Registration is hidden until at least one category is configured
               </p>
             </div>
-            <ChevronRight style={{ width: 14, height: 14, color: 'rgba(255,255,255,0.2)', flexShrink: 0 }} />
+            <span style={{
+              fontSize: 11, fontWeight: 700, color: 'rgba(255,180,0,0.85)',
+              background: 'rgba(255,180,0,0.1)', border: '1px solid rgba(255,180,0,0.25)',
+              borderRadius: 8, padding: '4px 9px', flexShrink: 0,
+            }}>
+              Manage →
+            </span>
           </button>
         )}
 
@@ -261,8 +267,8 @@ export default function StrideEventDetail() {
         )}
       </div>
 
-      {/* Official: Bottom CTA */}
-      {!isCommunityEvent && !alreadyRegistered && isOpen && (
+      {/* Official: Bottom CTA — only shown when categories exist */}
+      {!isCommunityEvent && !alreadyRegistered && isOpen && categories.length > 0 && (
         <div className="fixed bottom-20 left-0 right-0 px-6 pb-2">
           <button
             onClick={() => selectedCategory && setShowForm(true)}
