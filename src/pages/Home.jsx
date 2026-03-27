@@ -592,14 +592,16 @@ function WeeklyBarChart({ data }) {
   return (
     <div>
       {/* Tap tooltip */}
-      <div style={{ minHeight: 22, marginBottom: 6, textAlign: 'center' }}>
+      <div style={{ minHeight: 26, marginBottom: 6, textAlign: 'center' }}>
         {tapped !== null && (
           <span style={{
-            fontSize: 13, fontWeight: 700,
-            color: data[tapped] > 0 ? '#BFFF00' : 'rgba(255,255,255,0.35)',
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.10)',
-            borderRadius: 99, padding: '3px 12px',
+            fontSize: 13, fontWeight: 800,
+            color: data[tapped] > 0 ? '#0A0A0A' : 'rgba(255,255,255,0.65)',
+            background: data[tapped] > 0 ? '#BFFF00' : 'rgba(255,255,255,0.10)',
+            border: data[tapped] > 0 ? 'none' : '1px solid rgba(255,255,255,0.18)',
+            borderRadius: 99, padding: '4px 14px',
+            boxShadow: data[tapped] > 0 ? '0 0 12px rgba(191,255,0,0.35)' : 'none',
+            display: 'inline-block',
           }}>
             {labels[tapped]} — {data[tapped] > 0 ? `${data[tapped].toFixed(1)} km` : '0.0 km'}
           </span>
@@ -624,12 +626,15 @@ function WeeklyBarChart({ data }) {
               <div
                 className="barTrack"
                 style={{
+                  transition: 'border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease',
                   ...(isToday ? {
                     border: '1px solid rgba(191,255,0,0.45)',
                     boxShadow: '0 0 10px rgba(191,255,0,0.15)',
                     background: 'rgba(191,255,0,0.07)',
                   } : isSelected ? {
-                    border: '1px solid rgba(255,255,255,0.20)',
+                    border: '1px solid rgba(255,255,255,0.35)',
+                    boxShadow: '0 0 8px rgba(255,255,255,0.08)',
+                    background: 'rgba(255,255,255,0.09)',
                   } : {}),
                 }}
               >
