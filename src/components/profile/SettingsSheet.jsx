@@ -252,31 +252,35 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
                       </p>
                     </div>
                   </div>
-                  {canChangeName ? (
-                    <button
-                      onClick={() => { setNameInput(user?.display_name || user?.full_name || ''); setNameEditOpen(v => !v); }}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 5,
-                        padding: '5px 11px', borderRadius: 8, fontSize: 11, fontWeight: 700,
+                  <button
+                    onClick={() => {
+                      if (!canChangeName) return;
+                      setNameInput(user?.display_name || user?.full_name || '');
+                      setNameEditOpen(v => !v);
+                    }}
+                    disabled={!canChangeName}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 5,
+                      padding: '5px 11px', borderRadius: 8, fontSize: 11, fontWeight: 700,
+                      flexShrink: 0, cursor: canChangeName ? 'pointer' : 'not-allowed',
+                      transition: 'all 0.15s ease',
+                      ...(canChangeName ? {
                         background: 'rgba(191,255,0,0.08)', border: '1px solid rgba(191,255,0,0.25)',
-                        color: '#BFFF00', cursor: 'pointer', flexShrink: 0,
-                      }}
-                    >
-                      <Pencil style={{ width: 11, height: 11 }} />
-                      แก้ไข
-                    </button>
-                  ) : (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-                      <Clock style={{ width: 12, height: 12, color: 'rgba(255,255,255,0.3)' }} />
-                      <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>
-                        อีก {cooldownDaysLeft} วัน
-                      </span>
-                    </div>
-                  )}
+                        color: '#BFFF00',
+                      } : {
+                        background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)',
+                        color: 'rgba(255,255,255,0.25)',
+                      }),
+                    }}
+                  >
+                    <Pencil style={{ width: 11, height: 11 }} />
+                    แก้ไข
+                  </button>
                 </div>
 
                 {!canChangeName && (
-                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', margin: '8px 0 0', lineHeight: 1.5 }}>
+                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.28)', margin: '10px 0 0', lineHeight: 1.6, display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <Clock style={{ width: 11, height: 11, flexShrink: 0, opacity: 0.5 }} />
                     คุณสามารถเปลี่ยนชื่อได้อีกครั้งใน {cooldownDaysLeft} วัน
                   </p>
                 )}
@@ -302,21 +306,34 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
                             color: '#fff', fontSize: 14, fontWeight: 500, outline: 'none',
                           }}
                         />
-                        <button
-                          onClick={handleNameSave}
-                          disabled={nameSaving}
-                          style={{
-                            padding: '10px 16px', borderRadius: 12, fontWeight: 700, fontSize: 13,
-                            background: 'rgba(191,255,0,0.13)', border: '1px solid rgba(191,255,0,0.35)',
-                            color: '#BFFF00', cursor: 'pointer', flexShrink: 0,
-                            opacity: nameSaving ? 0.6 : 1,
-                          }}
-                        >
-                          {nameSaving ? '…' : 'ยืนยัน'}
-                        </button>
+                        {(() => {
+                          const trimmed = nameInput.trim();
+                          const currentName = user?.display_name || user?.full_name || '';
+                          const isDisabled = nameSaving || !trimmed || trimmed === currentName;
+                          return (
+                            <button
+                              onClick={handleNameSave}
+                              disabled={isDisabled}
+                              style={{
+                                padding: '10px 16px', borderRadius: 12, fontWeight: 700, fontSize: 13,
+                                flexShrink: 0, cursor: isDisabled ? 'not-allowed' : 'pointer',
+                                transition: 'all 0.15s ease',
+                                ...(isDisabled ? {
+                                  background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)',
+                                  color: 'rgba(255,255,255,0.25)',
+                                } : {
+                                  background: 'rgba(191,255,0,0.13)', border: '1px solid rgba(191,255,0,0.35)',
+                                  color: '#BFFF00',
+                                }),
+                              }}
+                            >
+                              {nameSaving ? '…' : 'ยืนยัน'}
+                            </button>
+                          );
+                        })()}
                       </div>
                       <p style={{ margin: '7px 0 0', fontSize: 10, color: 'rgba(255,255,255,0.22)', lineHeight: 1.5 }}>
-                        หลังจากยืนยัน คุณจะเปลี่ยนชื่อได้อีกครั้งหลังจาก 30 วัน
+                        หลังยืนยันแล้ว คุณจะเปลี่ยนชื่อได้อีกครั้งใน 30 วัน
                       </p>
                     </motion.div>
                   )}
