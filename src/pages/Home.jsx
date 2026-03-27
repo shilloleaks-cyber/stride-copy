@@ -496,7 +496,12 @@ export default function Home() {
       {/* WEEKLY DISTANCE */}
       <section className="section">
         <div className="chartCard">
-          <div className="sectionLabel">WEEKLY DISTANCE</div>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
+            <div className="sectionLabel" style={{ margin: 0 }}>WEEKLY DISTANCE</div>
+            <span style={{ fontSize: 16, fontWeight: 800, color: '#BFFF00' }}>
+              {weekly.reduce((s, v) => s + v, 0).toFixed(1)} <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.45)' }}>km this week</span>
+            </span>
+          </div>
           <WeeklyBarChart data={weekly} />
         </div>
       </section>
@@ -576,23 +581,85 @@ function Modal({ title, children, onClose }) {
 }
 
 function WeeklyBarChart({ data }) {
+  const [tapped, setTapped] = React.useState(null);
   const max = Math.max(...data, 1);
   const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  // Today's index: Mon=0 … Sun=6
+  const todayIdx = (new Date().getDay() + 6) % 7;
+
+  const handleTap = (i) => setTapped(tapped === i ? null : i);
 
   return (
-    <div className="bars">
-      {data.map((v, i) => {
-        const h = Math.max(6, Math.round((v / max) * 100));
-        return (
-          <div className="barCol" key={i}>
-            <div className="barTrack">
-              <div className="barFill" style={{ height: `${h}%` }} />
-            </div>
-            <div className="barLbl">{labels[i]}</div>
-          </div>
-        );
-      })}
-      <div className="goalLine" aria-hidden="true" />
+    <div>
+      {/* Tap tooltip */}
+      <div style={{ minHeight: 22, marginBottom: 6, textAlign: 'center' }}>
+        {tapped !== null && (
+          <span style={{
+            fontSize: 13, fontWeight: 700,
+            color: data[tapped] > 0 ? '#BFFF00' : 'rgba(255,255,255,0.35)',
+            background: 'rgba(255,255,255,0.06)',
+            border: '1px solid rgba(255,255,255,0.10)',
+            borderRadius: 99, padding: '3px 12px',
+          }}>
+            {labels[tapped]} — {data[tapped] > 0 ? `${data[tapped].toFixed(1)} km` : '0.0 km'}
+          </span>
+        )}
+      </div>
+
+      <div className="bars">
+        {data.map((v, i) => {
+          const isToday = i === todayIdx;
+          const isZero = v === 0;
+          // Zero bars get a fixed minimum visual height so they're clearly "empty" not missing
+          const h = isZero ? 0 : Math.max(8, Math.round((v / max) * 100));
+          const isSelected = tapped === i;
+
+          return (
+            <button
+              key={i}
+              className="barCol"
+              onClick={() => handleTap(i)}
+              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+            >
+              <div
+                className="barTrack"
+                style={{
+                  ...(isToday ? {
+                    border: '1px solid rgba(191,255,0,0.45)',
+                    boxShadow: '0 0 10px rgba(191,255,0,0.15)',
+                    background: 'rgba(191,255,0,0.07)',
+                  } : isSelected ? {
+                    border: '1px solid rgba(255,255,255,0.20)',
+                  } : {}),
+                }}
+              >
+                {isZero ? (
+                  /* Zero: show a subtle dashed empty indicator */
+                  <div style={{
+                    width: '60%', height: 3, borderRadius: 99,
+                    background: 'rgba(255,255,255,0.12)',
+                    margin: '0 auto',
+                  }} />
+                ) : (
+                  <div
+                    className="barFill"
+                    style={{
+                      height: `${h}%`,
+                      ...(isToday ? {
+                        background: '#BFFF00',
+                        boxShadow: '0 0 22px rgba(191,255,0,0.55)',
+                      } : {}),
+                    }}
+                  />
+                )}
+              </div>
+              <div className="barLbl" style={isToday ? { color: '#BFFF00', fontWeight: 700 } : {}}>
+                {labels[i]}
+              </div>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -861,13 +928,11 @@ const homeStyles = `
   padding: 14px;
 }
 .bars{
-  position: relative;
-  margin-top: 10px;
   display:flex;
   gap: 10px;
   align-items:flex-end;
   height: 130px;
-  padding: 8px 6px 2px;
+  padding: 0 2px 2px;
 }
 .barCol{ flex:1; display:flex; flex-direction:column; align-items:center; gap: 6px; }
 .barTrack{
@@ -888,15 +953,7 @@ const homeStyles = `
   box-shadow: 0 0 18px rgba(191,255,0,0.25);
 }
 .barLbl{ font-size: 11px; color:var(--muted); letter-spacing:.08em; }
-.goalLine{
-  position:absolute;
-  left: 8px; right: 8px;
-  top: 44%;
-  height: 2px;
-  background: rgba(138,43,226,0.35);
-  border-radius: 999px;
-  pointer-events:none;
-}
+
 .rowBetween{ display:flex; align-items:center; justify-content:space-between; }
 .seeAll{
   border:none;
