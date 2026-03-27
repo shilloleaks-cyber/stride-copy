@@ -83,11 +83,11 @@ export default function CreateOfficialEvent() {
   };
 
   const inputStyle = {
-    background: 'rgba(255,255,255,0.06)',
-    border: '1px solid rgba(255,255,255,0.10)',
-    borderRadius: '12px',
+    background: 'rgba(255,255,255,0.05)',
+    border: '1px solid rgba(255,255,255,0.09)',
+    borderRadius: '14px',
     color: 'white',
-    padding: '12px 14px',
+    padding: '13px 16px',
     width: '100%',
     outline: 'none',
     fontSize: '15px',
@@ -95,38 +95,44 @@ export default function CreateOfficialEvent() {
   };
 
   const labelStyle = {
-    fontSize: '12px',
-    color: 'rgba(255,255,255,0.45)',
+    fontSize: '11px',
+    color: 'rgba(255,255,255,0.38)',
     textTransform: 'uppercase',
-    letterSpacing: '0.08em',
-    marginBottom: '6px',
+    letterSpacing: '0.10em',
+    marginBottom: '8px',
     display: 'block',
+    fontWeight: 700,
   };
 
   const isDisabled = isSubmitting || !form.title || !form.event_date;
 
   return (
-    <div className="min-h-screen text-white pb-24" style={{ backgroundColor: '#0A0A0A' }}>
+    <div className="min-h-screen text-white pb-32" style={{ backgroundColor: '#0A0A0A' }}>
       {/* Header */}
       <div
-        className="sticky top-0 z-50 px-6 pt-10 pb-4 flex items-center gap-4"
-        style={{ backgroundColor: 'rgba(10,10,10,0.95)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+        className="sticky top-0 z-50 px-5 pb-4 flex items-center gap-4"
+        style={{
+          paddingTop: 'calc(env(safe-area-inset-top) + 12px)',
+          backgroundColor: 'rgba(10,10,10,0.96)',
+          borderBottom: '1px solid rgba(255,255,255,0.05)',
+          backdropFilter: 'blur(14px)',
+        }}
       >
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="w-9 h-9 rounded-full flex items-center justify-center"
-          style={{ background: 'rgba(255,255,255,0.08)' }}
+          className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+          style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.09)' }}
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-4 h-4" />
         </button>
         <div>
-          <p className="text-xs uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.35)' }}>Admin · Official</p>
-          <h1 className="text-lg font-bold">Create Official Event</h1>
+          <p style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0 }}>Admin · Official</p>
+          <h1 style={{ fontSize: 17, fontWeight: 800, color: '#fff', margin: 0, marginTop: 1 }}>Create Official Event</h1>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="px-6 pt-6 space-y-5">
+      <form onSubmit={handleSubmit} style={{ padding: '28px 20px 0', display: 'flex', flexDirection: 'column', gap: 22 }}>
 
         {/* Title */}
         <div>
@@ -145,27 +151,46 @@ export default function CreateOfficialEvent() {
         <div>
           <label style={labelStyle}>Banner Image</label>
           {bannerPreview ? (
-            <div className="relative rounded-xl overflow-hidden" style={{ height: '140px' }}>
+            <div className="relative rounded-2xl overflow-hidden" style={{ height: '160px' }}>
               <img src={bannerPreview} alt="Banner preview" className="w-full h-full object-cover" />
               {isUploadingBanner && (
-                <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)' }}>
+                <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.65)' }}>
                   <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#BFFF00' }} />
                 </div>
               )}
               {!isUploadingBanner && (
-                <button type="button" onClick={clearBanner} className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.7)' }}>
-                  <X className="w-4 h-4 text-white" />
+                <button type="button" onClick={clearBanner} className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)' }}>
+                  <X className="w-3.5 h-3.5 text-white" />
                 </button>
               )}
             </div>
           ) : (
-            <label className="flex flex-col items-center justify-center gap-2 rounded-xl cursor-pointer" style={{ background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.15)', height: '100px' }}>
-              <ImagePlus className="w-6 h-6" style={{ color: 'rgba(255,255,255,0.3)' }} />
-              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>Tap to upload banner</span>
+            <label
+              className="flex flex-col items-center justify-center gap-3 rounded-2xl cursor-pointer transition-all"
+              style={{
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px dashed rgba(255,255,255,0.12)',
+                height: '110px',
+              }}
+            >
+              <div style={{
+                width: 36, height: 36, borderRadius: 10,
+                background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.09)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <ImagePlus style={{ width: 16, height: 16, color: 'rgba(255,255,255,0.35)' }} />
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: 0 }}>Upload banner image</p>
+                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.22)', margin: '3px 0 0' }}>Recommended: 1200 × 600 px</p>
+              </div>
               <input type="file" accept="image/*" className="hidden" onChange={handleBannerUpload} />
             </label>
           )}
         </div>
+
+        {/* Divider */}
+        <div style={{ height: 1, background: 'rgba(255,255,255,0.05)' }} />
 
         {/* Description */}
         <div>
@@ -173,7 +198,7 @@ export default function CreateOfficialEvent() {
           <textarea
             value={form.description}
             onChange={e => handleChange('description', e.target.value)}
-            placeholder="Tell participants about this official event..."
+            placeholder="Tell participants about this event…"
             rows={3}
             style={{ ...inputStyle, resize: 'none' }}
           />
@@ -191,6 +216,9 @@ export default function CreateOfficialEvent() {
           />
         </div>
 
+        {/* Divider */}
+        <div style={{ height: 1, background: 'rgba(255,255,255,0.05)' }} />
+
         {/* Date & Time */}
         <div>
           <label style={labelStyle}>Date &amp; Time *</label>
@@ -205,36 +233,58 @@ export default function CreateOfficialEvent() {
 
         {/* Max participants */}
         <div>
-          <label style={labelStyle}>Max Participants (0 = unlimited)</label>
+          <label style={labelStyle}>Max Participants</label>
           <input
             type="number"
             value={form.max_participants}
             onChange={e => handleChange('max_participants', e.target.value)}
-            placeholder="0"
+            placeholder="Leave blank or 0 for unlimited"
             min="0"
             style={inputStyle}
           />
         </div>
 
-        {/* Official badge notice */}
+        {/* Status notice */}
         <div style={{
-          padding: '12px 14px', borderRadius: 12,
-          background: 'rgba(191,255,0,0.06)', border: '1px solid rgba(191,255,0,0.18)',
+          padding: '13px 16px', borderRadius: 14,
+          background: 'rgba(191,255,0,0.04)',
+          border: '1px solid rgba(191,255,0,0.14)',
+          display: 'flex', alignItems: 'center', gap: 10,
         }}>
-          <p className="text-xs font-semibold" style={{ color: '#BFFF00' }}>
-            ✓ Official Event — will appear publicly in the Official Events section
+          <span style={{ fontSize: 15, flexShrink: 0 }}>🏅</span>
+          <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(191,255,0,0.8)', margin: 0, lineHeight: 1.5 }}>
+            Publishes immediately as an Official Event, visible to all users
           </p>
         </div>
 
-        <button
-          type="submit"
-          disabled={isDisabled}
-          className="w-full py-4 rounded-2xl font-bold text-base mt-4 flex items-center justify-center gap-2 transition-all"
-          style={{ background: isDisabled ? 'rgba(191,255,0,0.25)' : '#BFFF00', color: '#0A0A0A' }}
-        >
-          {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
-          {isSubmitting ? 'Creating...' : 'Publish Official Event'}
-        </button>
+        {/* Submit */}
+        <div style={{ paddingTop: 4, paddingBottom: 16 }}>
+          <button
+            type="submit"
+            disabled={isDisabled}
+            style={{
+              width: '100%', padding: '15px 0',
+              borderRadius: 16,
+              border: 'none',
+              fontSize: 15, fontWeight: 800, letterSpacing: '0.02em',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              cursor: isDisabled ? 'not-allowed' : 'pointer',
+              transition: 'all 0.18s ease',
+              ...(isDisabled ? {
+                background: 'rgba(255,255,255,0.07)',
+                color: 'rgba(255,255,255,0.25)',
+              } : {
+                background: 'rgba(191,255,0,0.12)',
+                border: '1px solid rgba(191,255,0,0.35)',
+                color: '#BFFF00',
+                boxShadow: '0 0 24px rgba(191,255,0,0.1)',
+              }),
+            }}
+          >
+            {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+            {isSubmitting ? 'Publishing…' : 'Publish Official Event'}
+          </button>
+        </div>
       </form>
     </div>
   );
