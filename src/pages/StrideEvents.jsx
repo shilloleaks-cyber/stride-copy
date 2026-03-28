@@ -38,6 +38,12 @@ export default function StrideEvents() {
     queryFn: () => base44.entities.StrideEvent.filter({ status: 'open' }, '-event_date', 50),
   });
 
+  const { data: draftEvents = [] } = useQuery({
+    queryKey: ['stride-events-drafts'],
+    queryFn: () => base44.entities.StrideEvent.filter({ status: 'draft' }, '-created_date', 50),
+    enabled: !!user && user.role === 'admin',
+  });
+
   const { data: myRegs = [] } = useQuery({
     queryKey: ['my-stride-regs', user?.email],
     queryFn: () => base44.entities.EventRegistration.filter({ user_email: user.email }),
@@ -171,6 +177,42 @@ export default function StrideEvents() {
               </div>
             )}
           </div>
+
+          {/* Admin: Draft Events */}
+          {isAdmin && draftEvents.length > 0 && (
+            <div style={{ marginBottom: 32 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,180,0,0.7)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                  Drafts
+                </span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,180,0,0.7)', background: 'rgba(255,180,0,0.1)', borderRadius: 99, padding: '2px 7px' }}>
+                  {draftEvents.length}
+                </span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {draftEvents.map(ev => (
+                  <button
+                    key={ev.id}
+                    onClick={() => navigate(`/StrideEventDetail?id=${ev.id}`)}
+                    style={{
+                      width: '100%', textAlign: 'left', padding: '14px 16px', borderRadius: 16,
+                      background: 'rgba(255,180,0,0.04)', border: '1px solid rgba(255,180,0,0.18)',
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12,
+                    }}
+                  >
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                        <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 6, background: 'rgba(255,180,0,0.12)', color: 'rgba(255,180,0,0.9)', border: '1px solid rgba(255,180,0,0.25)' }}>DRAFT</span>
+                      </div>
+                      <p style={{ fontSize: 14, fontWeight: 800, color: '#fff', margin: 0 }}>{ev.title}</p>
+                      {ev.event_date && <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '3px 0 0' }}>{ev.event_date}</p>}
+                    </div>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,180,0,0.8)', flexShrink: 0 }}>Continue →</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Community Events */}
           <div style={{ marginBottom: 16 }}>

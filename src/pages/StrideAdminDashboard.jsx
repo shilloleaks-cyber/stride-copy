@@ -232,7 +232,12 @@ export default function StrideAdminDashboard() {
           <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
             Select an event to manage its race categories
           </p>
-          {events.filter(e => e.event_type === 'official').map(ev => {
+          {events.filter(e => e.event_type === 'official').sort((a, b) => {
+            // drafts first
+            if (a.status === 'draft' && b.status !== 'draft') return -1;
+            if (a.status !== 'draft' && b.status === 'draft') return 1;
+            return 0;
+          }).map(ev => {
             const evCats = allCategories.filter(c => c.event_id === ev.id);
             return (
               <button
@@ -242,7 +247,12 @@ export default function StrideAdminDashboard() {
                 style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}
               >
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p className="font-bold text-white text-sm truncate">{ev.title}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-bold text-white text-sm truncate">{ev.title}</p>
+                    {ev.status === 'draft' && (
+                      <span style={{ fontSize: 9, fontWeight: 800, padding: '2px 6px', borderRadius: 5, background: 'rgba(255,180,0,0.12)', color: 'rgba(255,180,0,0.9)', border: '1px solid rgba(255,180,0,0.25)', flexShrink: 0 }}>DRAFT</span>
+                    )}
+                  </div>
                   <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>
                     {evCats.length === 0
                       ? '⚠️ No categories — registration hidden'
