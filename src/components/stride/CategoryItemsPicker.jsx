@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Eye, X, CheckCircle2 } from 'lucide-react';
@@ -11,6 +11,11 @@ const ITEM_TYPE_EMOJI = {
 // Returns selections object: { [itemId]: selectedVariant | 'included' }
 export default function CategoryItemsPicker({ categoryId, selections, onChange, onValidation }) {
   const [viewingImage, setViewingImage] = useState(null);
+  // Keep a ref to always read fresh selections inside the items-load effect
+  const selectionsRef = useRef(selections);
+  selectionsRef.current = selections;
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ['category-items', categoryId],
@@ -19,19 +24,20 @@ export default function CategoryItemsPicker({ categoryId, selections, onChange, 
     select: data => data.filter(i => i.is_active !== false).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)),
   });
 
-  // Auto-populate non-variant items as 'included' when items load
+  // Auto-populate non-variant items as 'included' when items load (works on first load AND edit/reopen)
   useEffect(() => {
     if (items.length === 0) return;
+    const currentSelections = selectionsRef.current;
     const updates = {};
     items.forEach(item => {
-      if (!item.has_variant && !selections[item.id]) {
+      if (!item.has_variant && !currentSelections[item.id]) {
         updates[item.id] = 'included';
       }
     });
     if (Object.keys(updates).length > 0) {
-      onChange({ ...selections, ...updates });
+      onChangeRef.current({ ...currentSelections, ...updates });
     }
-  }, [items]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [items]);
 
   // Notify parent whether any required variant items are unselected
   useEffect(() => {

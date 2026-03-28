@@ -52,7 +52,9 @@ function ItemForm({ categoryId, initial, editingId, sortOrderNext, onSaved, onCa
 
   const addVariantOption = () => {
     const trimmed = variantInput.trim();
-    if (!trimmed || form.variant_options.includes(trimmed)) return;
+    if (!trimmed) return;
+    const isDuplicate = form.variant_options.some(o => o.toLowerCase() === trimmed.toLowerCase());
+    if (isDuplicate) return;
     set('variant_options', [...form.variant_options, trimmed]);
     setVariantInput('');
   };
