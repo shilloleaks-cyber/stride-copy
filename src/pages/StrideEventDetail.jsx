@@ -132,7 +132,7 @@ export default function StrideEventDetail() {
             <Calendar className="w-5 h-5 flex-shrink-0" style={{ color: '#BFFF00' }} />
             <div>
               <p className="text-xs mb-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Race Day</p>
-              <p className="text-white font-semibold">{format(new Date(event.event_date), 'EEEE, MMMM d, yyyy')}{event.start_time ? ` · ${event.start_time}` : ''}</p>
+              <p className="text-white font-semibold">{event.event_date ? format(new Date(event.event_date), 'EEEE, MMMM d, yyyy') : '—'}{event.start_time ? ` · ${event.start_time}` : ''}</p>
             </div>
           </div>
           {event.location_name && (
@@ -150,7 +150,7 @@ export default function StrideEventDetail() {
               <Users className="w-5 h-5 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.4)' }} />
               <div>
                 <p className="text-xs mb-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Registration Closes</p>
-                <p className="text-white font-semibold">{format(new Date(event.registration_close), 'MMM d, yyyy')}</p>
+                <p className="text-white font-semibold">{event.registration_close ? format(new Date(event.registration_close), 'MMM d, yyyy') : '—'}</p>
               </div>
             </div>
           )}
