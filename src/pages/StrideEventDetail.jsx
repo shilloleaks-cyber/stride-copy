@@ -156,6 +156,21 @@ export default function StrideEventDetail() {
           )}
         </div>
 
+        {/* User-facing: published but no categories yet */}
+        {!isCommunityEvent && !alreadyRegistered && isOpen && categories.length === 0 && user?.role !== 'admin' && (
+          <div style={{
+            padding: '14px 16px', borderRadius: 16,
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            display: 'flex', alignItems: 'center', gap: 12,
+          }}>
+            <span style={{ fontSize: 20, flexShrink: 0 }}>🏷️</span>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', margin: 0, lineHeight: 1.6 }}>
+              Registration will open after race categories are added.
+            </p>
+          </div>
+        )}
+
         {/* Admin: no-categories nudge */}
         {user?.role === 'admin' && !isCommunityEvent && categories.length === 0 && (
           <button
@@ -267,7 +282,7 @@ export default function StrideEventDetail() {
         )}
       </div>
 
-      {/* Official: Bottom CTA — only shown when categories exist */}
+      {/* Official: Bottom CTA — only shown when canRegister (open + has categories) */}
       {!isCommunityEvent && !alreadyRegistered && isOpen && categories.length > 0 && (
         <div className="fixed bottom-20 left-0 right-0 px-6 pb-2">
           <button
