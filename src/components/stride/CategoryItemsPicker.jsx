@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Eye, X, CheckCircle2 } from 'lucide-react';
@@ -9,7 +9,7 @@ const ITEM_TYPE_EMOJI = {
 
 // Used inside RegistrationForm to show items and collect variant selections
 // Returns selections object: { [itemId]: selectedVariant | 'included' }
-export default function CategoryItemsPicker({ categoryId, selections, onChange }) {
+export default function CategoryItemsPicker({ categoryId, selections, onChange, onValidation }) {
   const [viewingImage, setViewingImage] = useState(null);
 
   const { data: items = [], isLoading } = useQuery({
@@ -18,6 +18,29 @@ export default function CategoryItemsPicker({ categoryId, selections, onChange }
     enabled: !!categoryId,
     select: data => data.filter(i => i.is_active !== false).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)),
   });
+
+  // Auto-populate non-variant items as 'included' when items load
+  useEffect(() => {
+    if (items.length === 0) return;
+    const updates = {};
+    items.forEach(item => {
+      if (!item.has_variant && !selections[item.id]) {
+        updates[item.id] = 'included';
+      }
+    });
+    if (Object.keys(updates).length > 0) {
+      onChange({ ...selections, ...updates });
+    }
+  }, [items]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Notify parent whether any required variant items are unselected
+  useEffect(() => {
+    if (!onValidation) return;
+    const missing = items.some(
+      item => item.has_variant && item.is_required && item.variant_options?.length > 0 && !selections[item.id]
+    );
+    onValidation(missing);
+  }, [items, selections, onValidation]);
 
   if (isLoading || items.length === 0) return null;
 

@@ -23,6 +23,7 @@ export default function RegistrationForm({ event, category, user, onClose, onSuc
     emergency_contact_phone: '',
   });
   const [itemSelections, setItemSelections] = useState({});
+  const [requiredItemsMissing, setRequiredItemsMissing] = useState(false);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const [blockReason, setBlockReason] = useState(null);
@@ -94,7 +95,7 @@ export default function RegistrationForm({ event, category, user, onClose, onSuc
     display: 'block',
   };
 
-  const canSubmit = form.first_name && form.last_name && form.phone;
+  const canSubmit = form.first_name && form.last_name && form.phone && !requiredItemsMissing;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col" style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)' }}>
@@ -192,6 +193,7 @@ export default function RegistrationForm({ event, category, user, onClose, onSuc
               categoryId={category.id}
               selections={itemSelections}
               onChange={setItemSelections}
+              onValidation={setRequiredItemsMissing}
             />
           </div>
 
