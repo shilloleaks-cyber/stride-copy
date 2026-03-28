@@ -1,0 +1,80 @@
+{
+  "name": "CategoryItem",
+  "type": "object",
+  "properties": {
+    "event_category_id": {
+      "type": "string",
+      "description": "ID of the EventCategory this item belongs to"
+    },
+    "name": {
+      "type": "string",
+      "description": "Item name, e.g. Shirt, Hat, Voucher"
+    },
+    "item_type": {
+      "type": "string",
+      "enum": [
+        "apparel",
+        "gear",
+        "consumable",
+        "voucher",
+        "benefit",
+        "other"
+      ],
+      "description": "Item category type"
+    },
+    "description": {
+      "type": "string",
+      "description": "Short description of the item"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Main item image URL"
+    },
+    "detail_image_url": {
+      "type": "string",
+      "description": "Optional supporting image: size guide, product preview, voucher image, etc."
+    },
+    "has_variant": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the user needs to pick a variant (size, option, etc.)"
+    },
+    "variant_type": {
+      "type": "string",
+      "enum": [
+        "size",
+        "option",
+        "none"
+      ],
+      "default": "none",
+      "description": "Type of variant selection"
+    },
+    "variant_options": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of options, e.g. ['S','M','L','XL'] or ['Red','Blue']"
+    },
+    "is_required": {
+      "type": "boolean",
+      "default": true,
+      "description": "If true, user must select a variant to proceed"
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 0,
+      "description": "Display order within the category"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this item is shown to users"
+    }
+  },
+  "required": [
+    "event_category_id",
+    "name",
+    "item_type"
+  ]
+}

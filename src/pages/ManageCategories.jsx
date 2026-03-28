@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Plus, Trash2, Loader2, Pencil, X, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Loader2, Pencil, X, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
+import CategoryItemsManager from '@/components/stride/CategoryItemsManager';
 
 const SHIRT_SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
@@ -322,9 +323,10 @@ export default function ManageCategories() {
   const eventId = urlParams.get('event_id');
 
   const [showForm, setShowForm] = useState(false);
-  const [editingCat, setEditingCat] = useState(null); // cat object being edited
-  const [pendingDelete, setPendingDelete] = useState(null); // cat to delete
+  const [editingCat, setEditingCat] = useState(null);
+  const [pendingDelete, setPendingDelete] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [expandedCatId, setExpandedCatId] = useState(null); // which category shows items
 
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['me'],
@@ -566,6 +568,25 @@ export default function ManageCategories() {
                   </button>
                 )}
               </div>
+
+              {/* Expand/collapse items section */}
+              {!isEditingThis && (
+                <button
+                  onClick={() => setExpandedCatId(expandedCatId === cat.id ? null : cat.id)}
+                  style={{ marginTop: 10, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 0', borderRadius: 9, fontSize: 11, fontWeight: 700, cursor: 'pointer', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.4)' }}>
+                  {expandedCatId === cat.id
+                    ? <><ChevronUp style={{ width: 13, height: 13 }} /> Hide Items</>
+                    : <><ChevronDown style={{ width: 13, height: 13 }} /> Manage Included Items</>
+                  }
+                </button>
+              )}
+
+              {/* Items manager */}
+              {expandedCatId === cat.id && !isEditingThis && (
+                <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                  <CategoryItemsManager categoryId={cat.id} />
+                </div>
+              )}
             </div>
           );
         })}

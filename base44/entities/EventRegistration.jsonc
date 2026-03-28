@@ -1,0 +1,155 @@
+{
+  "name": "EventRegistration",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "description": "StrideEvent ID"
+    },
+    "category_id": {
+      "type": "string",
+      "description": "EventCategory ID"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Registrant email"
+    },
+    "user_id": {
+      "type": "string",
+      "description": "Registrant user ID"
+    },
+    "first_name": {
+      "type": "string"
+    },
+    "last_name": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "date_of_birth": {
+      "type": "string",
+      "format": "date"
+    },
+    "gender": {
+      "type": "string",
+      "enum": [
+        "male",
+        "female",
+        "other"
+      ]
+    },
+    "nationality": {
+      "type": "string"
+    },
+    "blood_type": {
+      "type": "string",
+      "enum": [
+        "A",
+        "B",
+        "AB",
+        "O",
+        "unknown"
+      ],
+      "default": "unknown"
+    },
+    "emergency_contact_name": {
+      "type": "string"
+    },
+    "emergency_contact_phone": {
+      "type": "string"
+    },
+    "shirt_size": {
+      "type": "string",
+      "description": "Legacy field \u2014 kept for backwards compatibility"
+    },
+    "item_selections": {
+      "type": "object",
+      "description": "Map of categoryItemId \u2192 selected variant (e.g. { 'item123': 'M', 'item456': 'included' })"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "confirmed",
+        "cancelled",
+        "rejected"
+      ],
+      "default": "pending"
+    },
+    "bib_number": {
+      "type": "string"
+    },
+    "qr_code": {
+      "type": "string"
+    },
+    "checked_in": {
+      "type": "boolean",
+      "default": false
+    },
+    "checked_in_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "checked_in_by": {
+      "type": "string"
+    },
+    "payment_status": {
+      "type": "string",
+      "enum": [
+        "not_required",
+        "pending",
+        "paid",
+        "refunded"
+      ],
+      "default": "not_required"
+    },
+    "payment_reference": {
+      "type": "string"
+    },
+    "admin_notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "event_id",
+    "category_id",
+    "user_email",
+    "first_name",
+    "last_name"
+  ],
+  "rls": {
+    "create": {
+      "user_email": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

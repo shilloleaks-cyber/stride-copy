@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useMutation } from '@tanstack/react-query';
 import { X, Loader2, AlertCircle } from 'lucide-react';
+import CategoryItemsPicker from '@/components/stride/CategoryItemsPicker';
 
-const SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
 const BLOOD_TYPES = ['A', 'B', 'AB', 'O', 'unknown'];
 
 function generateQR() {
@@ -11,8 +11,6 @@ function generateQR() {
 }
 
 export default function RegistrationForm({ event, category, user, onClose, onSuccess }) {
-  const availableSizes = category.shirt_sizes?.length ? category.shirt_sizes : SHIRT_SIZES;
-
   const [form, setForm] = useState({
     first_name: user?.full_name?.split(' ')[0] || '',
     last_name: user?.full_name?.split(' ').slice(1).join(' ') || '',
@@ -23,8 +21,8 @@ export default function RegistrationForm({ event, category, user, onClose, onSuc
     blood_type: 'unknown',
     emergency_contact_name: '',
     emergency_contact_phone: '',
-    shirt_size: availableSizes[2] || 'M',
   });
+  const [itemSelections, setItemSelections] = useState({});
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const [blockReason, setBlockReason] = useState(null);
@@ -52,6 +50,7 @@ export default function RegistrationForm({ event, category, user, onClose, onSuc
         user_email: user.email,
         user_id: user.id || user.email,
         ...form,
+        item_selections: itemSelections,
         status: 'pending',
         qr_code: qr,
         checked_in: false,
@@ -95,7 +94,7 @@ export default function RegistrationForm({ event, category, user, onClose, onSuc
     display: 'block',
   };
 
-  const canSubmit = form.first_name && form.last_name && form.phone && form.shirt_size;
+  const canSubmit = form.first_name && form.last_name && form.phone;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col" style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)' }}>
@@ -187,25 +186,13 @@ export default function RegistrationForm({ event, category, user, onClose, onSuc
             </div>
           </div>
 
-          {/* Shirt size */}
-          <div>
-            <label style={labelStyle}>Shirt Size *</label>
-            <div className="flex flex-wrap gap-2">
-              {availableSizes.map(sz => (
-                <button
-                  key={sz}
-                  type="button"
-                  onClick={() => set('shirt_size', sz)}
-                  className="px-4 py-2 rounded-xl text-sm font-bold transition-all"
-                  style={form.shirt_size === sz
-                    ? { background: '#BFFF00', color: '#0A0A0A' }
-                    : { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.1)' }
-                  }
-                >
-                  {sz}
-                </button>
-              ))}
-            </div>
+          {/* Category items */}
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 16 }}>
+            <CategoryItemsPicker
+              categoryId={category.id}
+              selections={itemSelections}
+              onChange={setItemSelections}
+            />
           </div>
 
           <div style={{ height: 8 }} />
