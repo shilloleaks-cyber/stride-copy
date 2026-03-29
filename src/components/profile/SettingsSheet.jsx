@@ -68,11 +68,10 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
   const isAuthenticated = !!user;
   const [isRedirecting, setIsRedirecting] = useState(false);
   const { language, setLanguage } = useLanguage();
-  const [weightInput, setWeightInput] = useState(user?.weight_kg != null ? String(user.weight_kg) : '');
-  const [weightSaving, setWeightSaving] = useState(false);
-
-  // Personal info (optional)
+  // Personal info (includes height + weight for unified save)
   const [personalInfo, setPersonalInfo] = useState({
+    height_cm: user?.height_cm != null ? String(user.height_cm) : '',
+    weight_kg: user?.weight_kg != null ? String(user.weight_kg) : '',
     first_name: user?.first_name || '',
     last_name: user?.last_name || '',
     phone: user?.phone || '',
@@ -83,8 +82,18 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
   const [personalSaving, setPersonalSaving] = useState(false);
 
   const handlePersonalSave = async () => {
+    const heightVal = personalInfo.height_cm.trim() === '' ? null : parseFloat(personalInfo.height_cm);
+    const weightVal = personalInfo.weight_kg.trim() === '' ? null : parseFloat(personalInfo.weight_kg);
+    if (personalInfo.height_cm.trim() !== '' && (isNaN(heightVal) || heightVal < 50 || heightVal > 300)) {
+      toast.error('Enter a height between 50 and 300 cm'); return;
+    }
+    if (personalInfo.weight_kg.trim() !== '' && (isNaN(weightVal) || weightVal < 20 || weightVal > 300)) {
+      toast.error('Enter a weight between 20 and 300 kg'); return;
+    }
     setPersonalSaving(true);
     await base44.auth.updateMe({
+      height_cm: heightVal,
+      weight_kg: weightVal,
       first_name: personalInfo.first_name.trim() || null,
       last_name: personalInfo.last_name.trim() || null,
       phone: personalInfo.phone.trim() || null,
@@ -411,48 +420,6 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
 
               <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '2px 0' }} />
 
-              {/* Weight */}
-              <div style={{
-                padding: '16px 18px', borderRadius: 16,
-                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-              }}>
-                <label style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 12 }}>
-                  Weight (kg)
-                </label>
-                <div style={{ display: 'flex', gap: 10 }}>
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="1"
-                    placeholder="e.g. 65.5"
-                    value={weightInput}
-                    onChange={e => setWeightInput(e.target.value)}
-                    style={{
-                      flex: 1, padding: '10px 14px', borderRadius: 12,
-                      background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
-                      color: '#fff', fontSize: 15, fontWeight: 600, outline: 'none',
-                    }}
-                  />
-                  <button
-                    onClick={handleWeightSave}
-                    disabled={weightSaving}
-                    style={{
-                      padding: '10px 18px', borderRadius: 12, fontWeight: 700, fontSize: 14,
-                      background: 'rgba(191,255,0,0.15)', border: '1px solid rgba(191,255,0,0.35)',
-                      color: '#BFFF00', cursor: 'pointer', flexShrink: 0,
-                      opacity: weightSaving ? 0.6 : 1,
-                    }}
-                  >
-                    {weightSaving ? '…' : 'Save'}
-                  </button>
-                </div>
-                <p style={{ margin: '8px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>
-                  Used for calorie estimation only.
-                </p>
-              </div>
-
-              <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '2px 0' }} />
-
               {/* Personal Info (optional) */}
               <div style={{
                 padding: '16px 18px', borderRadius: 16, boxSizing: 'border-box',
@@ -482,6 +449,24 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
                   }
                 `}</style>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%', boxSizing: 'border-box' }}>
+
+                  {/* Height / Weight */}
+                  <div className="pi-row">
+                    <div className="pi-field">
+                      <label className="pi-label">Height (cm)</label>
+                      <input className="pi-input" type="number" step="1" placeholder="e.g. 170"
+                        value={personalInfo.height_cm}
+                        onChange={e => setPersonalInfo(p => ({ ...p, height_cm: e.target.value }))} />
+                      <p style={{ margin: '4px 0 0', fontSize: 10, color: 'rgba(255,255,255,0.22)' }}>Optional — for future training/profile use</p>
+                    </div>
+                    <div className="pi-field">
+                      <label className="pi-label">Weight (kg)</label>
+                      <input className="pi-input" type="number" step="0.1" placeholder="e.g. 65.5"
+                        value={personalInfo.weight_kg}
+                        onChange={e => setPersonalInfo(p => ({ ...p, weight_kg: e.target.value }))} />
+                      <p style={{ margin: '4px 0 0', fontSize: 10, color: 'rgba(255,255,255,0.22)' }}>Used for calorie estimation only</p>
+                    </div>
+                  </div>
 
                   {/* First / Last name */}
                   <div className="pi-row">

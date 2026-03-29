@@ -54,6 +54,10 @@
       "format": "date-time",
       "description": "Last time display_name was changed (for 30-day cooldown)"
     },
+    "height_cm": {
+      "type": "number",
+      "description": "User height in centimetres (optional, for future training/profile use)"
+    },
     "weight_kg": {
       "type": "number",
       "description": "User weight in kilograms for calorie calculation"
