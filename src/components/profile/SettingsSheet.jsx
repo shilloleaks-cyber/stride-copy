@@ -489,29 +489,29 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
                       value={personalInfo.phone} onChange={e => setPersonalInfo(p => ({ ...p, phone: e.target.value }))} />
                   </div>
 
-                  {/* Birth date */}
-                  <div>
-                    <label className="pi-label">Birth Date</label>
-                    <input className="pi-input" type="date"
-                      value={personalInfo.birth_date}
-                      onChange={e => setPersonalInfo(p => ({ ...p, birth_date: e.target.value }))}
-                      style={{ colorScheme: 'dark', color: personalInfo.birth_date ? '#fff' : 'rgba(255,255,255,0.3)' }}
-                    />
-                  </div>
-
-                  {/* Gender */}
-                  <div>
-                    <label className="pi-label">Gender</label>
-                    <select className="pi-input"
-                      value={personalInfo.gender}
-                      onChange={e => setPersonalInfo(p => ({ ...p, gender: e.target.value }))}
-                      style={{ color: personalInfo.gender ? '#fff' : 'rgba(255,255,255,0.3)' }}
-                    >
-                      <option value="">Select…</option>
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                      <option value="other">Other</option>
-                    </select>
+                  {/* Birth date / Gender */}
+                  <div className="pi-row">
+                    <div className="pi-field">
+                      <label className="pi-label">Birth Date</label>
+                      <input className="pi-input" type="date"
+                        value={personalInfo.birth_date}
+                        onChange={e => setPersonalInfo(p => ({ ...p, birth_date: e.target.value }))}
+                        style={{ colorScheme: 'dark', color: personalInfo.birth_date ? '#fff' : 'rgba(255,255,255,0.3)' }}
+                      />
+                    </div>
+                    <div className="pi-field">
+                      <label className="pi-label">Gender</label>
+                      <select className="pi-input"
+                        value={personalInfo.gender}
+                        onChange={e => setPersonalInfo(p => ({ ...p, gender: e.target.value }))}
+                        style={{ color: personalInfo.gender ? '#fff' : 'rgba(255,255,255,0.3)' }}
+                      >
+                        <option value="">Select…</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
                   </div>
 
                   {/* Nationality */}
