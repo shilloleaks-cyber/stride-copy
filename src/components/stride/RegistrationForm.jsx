@@ -83,14 +83,6 @@ export default function RegistrationForm({ event, category, user, onClose, onSuc
 
       const reg = await base44.entities.EventRegistration.create(payload);
 
-      await base44.entities.EventCategory.update(category.id, {
-        registered_count: (freshCat?.registered_count || category.registered_count || 0) + 1,
-      });
-
-      await base44.entities.StrideEvent.update(event.id, {
-        total_registered: (event.total_registered || 0) + 1,
-      });
-
       return reg;
     },
 
