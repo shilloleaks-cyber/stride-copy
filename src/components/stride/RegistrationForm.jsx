@@ -15,55 +15,101 @@ export default function RegistrationForm({ event, category, user, onClose, onSuc
 
   const registerMutation = useMutation({
     mutationFn: async () => {
-      // Prevent duplicate registration
-      const existing = await base44.entities.EventRegistration.filter({ event_id: event.id, user_email: user.email });
-      const activeExisting = existing.filter(r => r.status !== 'cancelled' && r.status !== 'rejected');
+      const existing = await base44.entities.EventRegistration.filter({
+        event_id: event.id,
+        user_email: user.email,
+      });
+
+      const activeExisting = existing.filter(
+        (r) => r.status !== 'cancelled' && r.status !== 'rejected'
+      );
+
       if (activeExisting.length > 0) throw new Error('DUPLICATE');
 
-      // Re-verify capacity
       const freshCats = await base44.entities.EventCategory.filter({ id: category.id });
       const freshCat = freshCats[0];
+
       if (freshCat && freshCat.max_slots > 0 && freshCat.registered_count >= freshCat.max_slots) {
         throw new Error('FULL');
       }
 
       const qr = generateQR();
 
-      // Pull any profile fields the user may already have saved
-      const reg = await base44.entities.EventRegistration.create({
+      const displayName =
+        user.first_name ||
+        user.display_name ||
+        user.full_name ||
+        user.email?.split('@')[0] ||
+        'User';
+
+      const nameParts = String(displayName).trim().split(/\s+/).filter(Boolean);
+
+      const firstName =
+        user.first_name ||
+        nameParts[0] ||
+        user.email?.split('@')[0] ||
+        'User';
+
+      const lastName =
+        user.last_name ||
+        (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '—');
+
+      const payload = {
         event_id: event.id,
         category_id: category.id,
         user_email: user.email,
         user_id: user.id || user.email,
-        first_name: user.first_name || user.full_name?.split(' ')[0] || '',
-        last_name: user.last_name || user.full_name?.split(' ').slice(1).join(' ') || '',
-        phone: user.phone || '',
-        date_of_birth: user.birth_date || '',
-        gender: user.gender || '',
-        nationality: user.nationality || '',
-        item_selections: itemSelections,
+        first_name: firstName,
+        last_name: lastName,
         status: 'pending',
         qr_code: qr,
         checked_in: false,
+        blood_type: 'unknown',
         payment_status: category.price > 0 ? 'pending' : 'not_required',
-      });
+      };
+
+      if (user.phone) payload.phone = user.phone;
+      if (user.birth_date) payload.date_of_birth = user.birth_date;
+      if (user.gender && ['male', 'female', 'other'].includes(user.gender)) {
+        payload.gender = user.gender;
+      }
+      if (user.nationality) payload.nationality = user.nationality;
+
+      if (itemSelections && typeof itemSelections === 'object' && Object.keys(itemSelections).length > 0) {
+        payload.item_selections = itemSelections;
+      }
+
+      console.log('REGISTER PAYLOAD', payload);
+
+      const reg = await base44.entities.EventRegistration.create(payload);
 
       await base44.entities.EventCategory.update(category.id, {
         registered_count: (freshCat?.registered_count || category.registered_count || 0) + 1,
       });
+
       await base44.entities.StrideEvent.update(event.id, {
         total_registered: (event.total_registered || 0) + 1,
       });
+
       return reg;
     },
+
     onSuccess: () => {
       setBlockReason(null);
       onSuccess();
     },
+
     onError: (err) => {
-      if (err.message === 'DUPLICATE') setBlockReason('You are already registered for this event.');
-      else if (err.message === 'FULL') setBlockReason('Sorry, this category just filled up.');
-      else setBlockReason('Registration failed. Please try again.');
+      console.error('REGISTRATION ERROR', err);
+      const msg = err?.message || JSON.stringify(err);
+
+      if (msg === 'DUPLICATE') {
+        setBlockReason('You are already registered for this event.');
+      } else if (msg === 'FULL') {
+        setBlockReason('Sorry, this category just filled up.');
+      } else {
+        setBlockReason(msg);
+      }
     },
   });
 
