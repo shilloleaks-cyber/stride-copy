@@ -45,6 +45,15 @@
       "type": "string",
       "description": "User bio"
     },
+    "display_name": {
+      "type": "string",
+      "description": "User's editable display name (overrides full_name)"
+    },
+    "display_name_updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last time display_name was changed (for 30-day cooldown)"
+    },
     "weight_kg": {
       "type": "number",
       "description": "User weight in kilograms for calorie calculation"
@@ -98,6 +107,36 @@
       "type": "boolean",
       "default": false,
       "description": "Whether the user has seen the welcome screen"
+    },
+    "first_name": {
+      "type": "string",
+      "description": "User's first name (optional, for race registration)"
+    },
+    "last_name": {
+      "type": "string",
+      "description": "User's last name (optional, for race registration)"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Phone number (optional, for race registration)"
+    },
+    "birth_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of birth (optional, for race registration)"
+    },
+    "gender": {
+      "type": "string",
+      "enum": [
+        "male",
+        "female",
+        "other"
+      ],
+      "description": "Gender (optional, for race registration)"
+    },
+    "nationality": {
+      "type": "string",
+      "description": "Nationality (optional, for race registration)"
     }
   },
   "required": []
