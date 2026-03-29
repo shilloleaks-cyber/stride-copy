@@ -433,22 +433,20 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
                 </p>
                 <style>{`
                   .pi-row {
-                    display: flex; flex-wrap: wrap; gap: 10px;
+                    display: flex; gap: 12px;
                     width: 100%; box-sizing: border-box;
                   }
                   .pi-field {
-                    flex: 1 1 120px; min-width: 0; box-sizing: border-box;
+                    flex: 1 1 0; min-width: 0; box-sizing: border-box;
                   }
-                  @media (max-width: 480px) {
-                    .pi-row { flex-direction: column; }
-                    .pi-field { flex: none; width: 100%; }
+                  @media (max-width: 440px) {
+                    .pi-row { flex-direction: column; gap: 10px; }
                   }
                   .pi-input {
                     display: block; width: 100%; box-sizing: border-box;
                     padding: 10px 12px; border-radius: 12px;
                     background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
                     color: #fff; font-size: 14px; outline: none;
-                    -webkit-appearance: none; appearance: none;
                   }
                   .pi-input::placeholder { color: rgba(255,255,255,0.3); }
                   .pi-label {
