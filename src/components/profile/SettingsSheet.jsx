@@ -432,14 +432,23 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
                   Optional — used to pre-fill race registrations
                 </p>
                 <style>{`
-                  .pi-row { display: flex; gap: 8px; width: 100%; box-sizing: border-box; }
-                  .pi-row .pi-field { flex: 1; min-width: 0; }
-                  @media (max-width: 360px) { .pi-row { flex-direction: column; } }
-                  .pi-input {
+                  .pi-row {
+                    display: flex; flex-wrap: wrap; gap: 10px;
                     width: 100%; box-sizing: border-box;
+                  }
+                  .pi-field {
+                    flex: 1 1 120px; min-width: 0; box-sizing: border-box;
+                  }
+                  @media (max-width: 480px) {
+                    .pi-row { flex-direction: column; }
+                    .pi-field { flex: none; width: 100%; }
+                  }
+                  .pi-input {
+                    display: block; width: 100%; box-sizing: border-box;
                     padding: 10px 12px; border-radius: 12px;
                     background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
                     color: #fff; font-size: 14px; outline: none;
+                    -webkit-appearance: none; appearance: none;
                   }
                   .pi-input::placeholder { color: rgba(255,255,255,0.3); }
                   .pi-label {
@@ -457,14 +466,14 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
                       <input className="pi-input" type="number" step="1" placeholder="e.g. 170"
                         value={personalInfo.height_cm}
                         onChange={e => setPersonalInfo(p => ({ ...p, height_cm: e.target.value }))} />
-                      <p style={{ margin: '4px 0 0', fontSize: 10, color: 'rgba(255,255,255,0.22)' }}>Optional — for future training/profile use</p>
+                      <p style={{ margin: '4px 0 0', fontSize: 10, color: 'rgba(255,255,255,0.22)' }}>Optional — for future use</p>
                     </div>
                     <div className="pi-field">
                       <label className="pi-label">Weight (kg)</label>
                       <input className="pi-input" type="number" step="0.1" placeholder="e.g. 65.5"
                         value={personalInfo.weight_kg}
                         onChange={e => setPersonalInfo(p => ({ ...p, weight_kg: e.target.value }))} />
-                      <p style={{ margin: '4px 0 0', fontSize: 10, color: 'rgba(255,255,255,0.22)' }}>Used for calorie estimation only</p>
+                      <p style={{ margin: '4px 0 0', fontSize: 10, color: 'rgba(255,255,255,0.22)' }}>Used for calorie estimation</p>
                     </div>
                   </div>
 
