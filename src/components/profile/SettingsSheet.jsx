@@ -490,8 +490,18 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
                   </div>
 
                   {/* Birth date / Gender */}
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, width: '100%', boxSizing: 'border-box' }}>
-                    <div style={{ flex: '1 1 0', minWidth: 0, width: '100%', boxSizing: 'border-box' }}>
+                  <style>{`
+                    .bd-gender-row { display: flex; gap: 12px; align-items: flex-end; width: 100%; }
+                    .bd-gender-field { flex: 1 1 0; min-width: 0; width: 0; }
+                    .bd-gender-field input[type="date"],
+                    .bd-gender-field select {
+                      display: block; width: 100%; min-width: 0; max-width: 100%;
+                      box-sizing: border-box; -webkit-appearance: none; appearance: none;
+                    }
+                    @media (max-width: 480px) { .bd-gender-row { flex-direction: column; } .bd-gender-field { width: 100%; } }
+                  `}</style>
+                  <div className="bd-gender-row">
+                    <div className="bd-gender-field">
                       <label className="pi-label">Birth Date</label>
                       <input className="pi-input" type="date"
                         value={personalInfo.birth_date}
@@ -499,7 +509,7 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
                         style={{ colorScheme: 'dark', color: personalInfo.birth_date ? '#fff' : 'rgba(255,255,255,0.3)' }}
                       />
                     </div>
-                    <div style={{ flex: '1 1 0', minWidth: 0, width: '100%', boxSizing: 'border-box' }}>
+                    <div className="bd-gender-field">
                       <label className="pi-label">Gender</label>
                       <select className="pi-input"
                         value={personalInfo.gender}
