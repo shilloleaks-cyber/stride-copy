@@ -455,7 +455,7 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
 
               {/* Personal Info (optional) */}
               <div style={{
-                padding: '16px 18px', borderRadius: 16,
+                padding: '16px 18px', borderRadius: 16, boxSizing: 'border-box',
                 background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
               }}>
                 <p style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 4px' }}>
@@ -464,60 +464,86 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
                 <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', margin: '0 0 14px' }}>
                   Optional — used to pre-fill race registrations
                 </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                    <input
-                      placeholder="First name"
-                      value={personalInfo.first_name}
-                      onChange={e => setPersonalInfo(p => ({ ...p, first_name: e.target.value }))}
-                      style={{ padding: '10px 12px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: 14, outline: 'none' }}
-                    />
-                    <input
-                      placeholder="Last name"
-                      value={personalInfo.last_name}
-                      onChange={e => setPersonalInfo(p => ({ ...p, last_name: e.target.value }))}
-                      style={{ padding: '10px 12px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: 14, outline: 'none' }}
-                    />
+                <style>{`
+                  .pi-row { display: flex; gap: 8px; width: 100%; box-sizing: border-box; }
+                  .pi-row .pi-field { flex: 1; min-width: 0; }
+                  @media (max-width: 360px) { .pi-row { flex-direction: column; } }
+                  .pi-input {
+                    width: 100%; box-sizing: border-box;
+                    padding: 10px 12px; border-radius: 12px;
+                    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+                    color: #fff; font-size: 14px; outline: none;
+                  }
+                  .pi-input::placeholder { color: rgba(255,255,255,0.3); }
+                  .pi-label {
+                    display: block; font-size: 10px; font-weight: 700;
+                    color: rgba(255,255,255,0.3); text-transform: uppercase;
+                    letter-spacing: 0.08em; margin-bottom: 5px;
+                  }
+                `}</style>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%', boxSizing: 'border-box' }}>
+
+                  {/* First / Last name */}
+                  <div className="pi-row">
+                    <div className="pi-field">
+                      <label className="pi-label">First Name</label>
+                      <input className="pi-input" placeholder="e.g. John" value={personalInfo.first_name}
+                        onChange={e => setPersonalInfo(p => ({ ...p, first_name: e.target.value }))} />
+                    </div>
+                    <div className="pi-field">
+                      <label className="pi-label">Last Name</label>
+                      <input className="pi-input" placeholder="e.g. Doe" value={personalInfo.last_name}
+                        onChange={e => setPersonalInfo(p => ({ ...p, last_name: e.target.value }))} />
+                    </div>
                   </div>
-                  <input
-                    placeholder="Phone"
-                    type="tel"
-                    value={personalInfo.phone}
-                    onChange={e => setPersonalInfo(p => ({ ...p, phone: e.target.value }))}
-                    style={{ padding: '10px 12px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: 14, outline: 'none' }}
-                  />
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                    <input
-                      placeholder="Birth date"
-                      type="date"
-                      value={personalInfo.birth_date}
-                      onChange={e => setPersonalInfo(p => ({ ...p, birth_date: e.target.value }))}
-                      style={{ padding: '10px 12px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: personalInfo.birth_date ? '#fff' : 'rgba(255,255,255,0.35)', fontSize: 14, outline: 'none', colorScheme: 'dark' }}
-                    />
-                    <select
-                      value={personalInfo.gender}
-                      onChange={e => setPersonalInfo(p => ({ ...p, gender: e.target.value }))}
-                      style={{ padding: '10px 12px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: personalInfo.gender ? '#fff' : 'rgba(255,255,255,0.35)', fontSize: 14, outline: 'none' }}
-                    >
-                      <option value="">Gender</option>
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                      <option value="other">Other</option>
-                    </select>
+
+                  {/* Phone */}
+                  <div>
+                    <label className="pi-label">Phone</label>
+                    <input className="pi-input" placeholder="e.g. 0812345678" type="tel"
+                      value={personalInfo.phone} onChange={e => setPersonalInfo(p => ({ ...p, phone: e.target.value }))} />
                   </div>
-                  <input
-                    placeholder="Nationality (e.g. Thai)"
-                    value={personalInfo.nationality}
-                    onChange={e => setPersonalInfo(p => ({ ...p, nationality: e.target.value }))}
-                    style={{ padding: '10px 12px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: 14, outline: 'none' }}
-                  />
+
+                  {/* Birth date / Gender */}
+                  <div className="pi-row">
+                    <div className="pi-field">
+                      <label className="pi-label">Birth Date</label>
+                      <input className="pi-input" type="date"
+                        value={personalInfo.birth_date}
+                        onChange={e => setPersonalInfo(p => ({ ...p, birth_date: e.target.value }))}
+                        style={{ colorScheme: 'dark', color: personalInfo.birth_date ? '#fff' : 'rgba(255,255,255,0.3)' }}
+                      />
+                    </div>
+                    <div className="pi-field">
+                      <label className="pi-label">Gender</label>
+                      <select className="pi-input"
+                        value={personalInfo.gender}
+                        onChange={e => setPersonalInfo(p => ({ ...p, gender: e.target.value }))}
+                        style={{ color: personalInfo.gender ? '#fff' : 'rgba(255,255,255,0.3)' }}
+                      >
+                        <option value="">Select…</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Nationality */}
+                  <div>
+                    <label className="pi-label">Nationality</label>
+                    <input className="pi-input" placeholder="e.g. Thai"
+                      value={personalInfo.nationality} onChange={e => setPersonalInfo(p => ({ ...p, nationality: e.target.value }))} />
+                  </div>
+
                   <button
                     onClick={handlePersonalSave}
                     disabled={personalSaving}
                     style={{
-                      padding: '10px 0', borderRadius: 12, fontWeight: 700, fontSize: 13,
+                      width: '100%', padding: '11px 0', borderRadius: 12, fontWeight: 700, fontSize: 13,
                       background: 'rgba(191,255,0,0.1)', border: '1px solid rgba(191,255,0,0.28)',
-                      color: '#BFFF00', cursor: 'pointer', opacity: personalSaving ? 0.6 : 1,
+                      color: '#BFFF00', cursor: personalSaving ? 'not-allowed' : 'pointer',
+                      opacity: personalSaving ? 0.6 : 1, boxSizing: 'border-box',
                     }}
                   >
                     {personalSaving ? 'Saving…' : 'Save Personal Info'}
