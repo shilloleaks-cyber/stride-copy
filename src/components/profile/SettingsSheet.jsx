@@ -71,6 +71,31 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
   const [weightInput, setWeightInput] = useState(user?.weight_kg != null ? String(user.weight_kg) : '');
   const [weightSaving, setWeightSaving] = useState(false);
 
+  // Personal info (optional)
+  const [personalInfo, setPersonalInfo] = useState({
+    first_name: user?.first_name || '',
+    last_name: user?.last_name || '',
+    phone: user?.phone || '',
+    birth_date: user?.birth_date || '',
+    gender: user?.gender || '',
+    nationality: user?.nationality || '',
+  });
+  const [personalSaving, setPersonalSaving] = useState(false);
+
+  const handlePersonalSave = async () => {
+    setPersonalSaving(true);
+    await base44.auth.updateMe({
+      first_name: personalInfo.first_name.trim() || null,
+      last_name: personalInfo.last_name.trim() || null,
+      phone: personalInfo.phone.trim() || null,
+      birth_date: personalInfo.birth_date || null,
+      gender: personalInfo.gender || null,
+      nationality: personalInfo.nationality.trim() || null,
+    });
+    setPersonalSaving(false);
+    toast.success('Personal info saved ✓');
+  };
+
   // Display name editing
   const [nameInput, setNameInput] = useState(user?.display_name || user?.full_name || '');
   const [nameSaving, setNameSaving] = useState(false);
@@ -424,6 +449,80 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
                 <p style={{ margin: '8px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>
                   Used for calorie estimation only.
                 </p>
+              </div>
+
+              <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '2px 0' }} />
+
+              {/* Personal Info (optional) */}
+              <div style={{
+                padding: '16px 18px', borderRadius: 16,
+                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+              }}>
+                <p style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 4px' }}>
+                  Personal Info
+                </p>
+                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', margin: '0 0 14px' }}>
+                  Optional — used to pre-fill race registrations
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    <input
+                      placeholder="First name"
+                      value={personalInfo.first_name}
+                      onChange={e => setPersonalInfo(p => ({ ...p, first_name: e.target.value }))}
+                      style={{ padding: '10px 12px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: 14, outline: 'none' }}
+                    />
+                    <input
+                      placeholder="Last name"
+                      value={personalInfo.last_name}
+                      onChange={e => setPersonalInfo(p => ({ ...p, last_name: e.target.value }))}
+                      style={{ padding: '10px 12px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: 14, outline: 'none' }}
+                    />
+                  </div>
+                  <input
+                    placeholder="Phone"
+                    type="tel"
+                    value={personalInfo.phone}
+                    onChange={e => setPersonalInfo(p => ({ ...p, phone: e.target.value }))}
+                    style={{ padding: '10px 12px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: 14, outline: 'none' }}
+                  />
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    <input
+                      placeholder="Birth date"
+                      type="date"
+                      value={personalInfo.birth_date}
+                      onChange={e => setPersonalInfo(p => ({ ...p, birth_date: e.target.value }))}
+                      style={{ padding: '10px 12px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: personalInfo.birth_date ? '#fff' : 'rgba(255,255,255,0.35)', fontSize: 14, outline: 'none', colorScheme: 'dark' }}
+                    />
+                    <select
+                      value={personalInfo.gender}
+                      onChange={e => setPersonalInfo(p => ({ ...p, gender: e.target.value }))}
+                      style={{ padding: '10px 12px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: personalInfo.gender ? '#fff' : 'rgba(255,255,255,0.35)', fontSize: 14, outline: 'none' }}
+                    >
+                      <option value="">Gender</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  <input
+                    placeholder="Nationality (e.g. Thai)"
+                    value={personalInfo.nationality}
+                    onChange={e => setPersonalInfo(p => ({ ...p, nationality: e.target.value }))}
+                    style={{ padding: '10px 12px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: 14, outline: 'none' }}
+                  />
+                  <button
+                    onClick={handlePersonalSave}
+                    disabled={personalSaving}
+                    style={{
+                      padding: '10px 0', borderRadius: 12, fontWeight: 700, fontSize: 13,
+                      background: 'rgba(191,255,0,0.1)', border: '1px solid rgba(191,255,0,0.28)',
+                      color: '#BFFF00', cursor: 'pointer', opacity: personalSaving ? 0.6 : 1,
+                    }}
+                  >
+                    {personalSaving ? 'Saving…' : 'Save Personal Info'}
+                  </button>
+                </div>
               </div>
 
               <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '2px 0' }} />
