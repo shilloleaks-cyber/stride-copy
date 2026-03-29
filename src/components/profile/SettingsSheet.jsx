@@ -490,8 +490,8 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
                   </div>
 
                   {/* Birth date / Gender */}
-                  <div className="pi-row">
-                    <div className="pi-field">
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, width: '100%', boxSizing: 'border-box' }}>
+                    <div style={{ flex: '1 1 0', minWidth: 0, width: '100%', boxSizing: 'border-box' }}>
                       <label className="pi-label">Birth Date</label>
                       <input className="pi-input" type="date"
                         value={personalInfo.birth_date}
@@ -499,7 +499,7 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
                         style={{ colorScheme: 'dark', color: personalInfo.birth_date ? '#fff' : 'rgba(255,255,255,0.3)' }}
                       />
                     </div>
-                    <div className="pi-field">
+                    <div style={{ flex: '1 1 0', minWidth: 0, width: '100%', boxSizing: 'border-box' }}>
                       <label className="pi-label">Gender</label>
                       <select className="pi-input"
                         value={personalInfo.gender}
