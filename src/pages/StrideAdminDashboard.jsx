@@ -25,6 +25,7 @@ export default function StrideAdminDashboard() {
   const [search, setSearch] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [detailReg, setDetailReg] = useState(null);
+  const [activeQuickFilter, setActiveQuickFilter] = useState('all');
 
   const { data: user } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
 
@@ -91,6 +92,9 @@ export default function StrideAdminDashboard() {
       const q = search.toLowerCase();
       if (!`${r.first_name} ${r.last_name} ${r.user_email} ${r.bib_number}`.toLowerCase().includes(q)) return false;
     }
+    if (activeQuickFilter === 'pending'    && r.status !== 'pending')   return false;
+    if (activeQuickFilter === 'confirmed'  && r.status !== 'confirmed') return false;
+    if (activeQuickFilter === 'checked_in' && !r.checked_in)            return false;
     return true;
   });
 
@@ -332,23 +336,49 @@ export default function StrideAdminDashboard() {
 
       {/* Registrations Tab */}
       {activeTab === 'registrations' && <div className="px-6 pt-4 space-y-4">
-        {/* Stats row */}
-        <div className="grid grid-cols-4 gap-2">
-          {[
-            { label: 'Total', value: stats.total, color: 'rgba(255,255,255,0.7)' },
-            { label: 'Pending', value: stats.pending, color: 'rgba(255,200,80,1)' },
-            { label: 'Confirmed', value: stats.confirmed, color: 'rgb(0,210,110)' },
-            { label: 'Checked In', value: stats.checkedIn, color: '#BFFF00' },
-          ].map(s => (
-            <div key={s.label} className="rounded-xl p-3 text-center" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
-              <p className="text-lg font-black" style={{ color: s.color }}>{s.value}</p>
-              <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>{s.label}</p>
+        {/* Stats row — clickable quick filters */}
+        {(() => {
+          const cards = [
+            { key: 'all',        label: 'Total',      value: stats.total,     color: 'rgba(255,255,255,0.75)', glowColor: 'rgba(255,255,255,0.08)' },
+            { key: 'pending',    label: 'Pending',    value: stats.pending,   color: 'rgba(255,200,80,1)',     glowColor: 'rgba(255,200,80,0.15)' },
+            { key: 'confirmed',  label: 'Confirmed',  value: stats.confirmed, color: 'rgb(0,210,110)',         glowColor: 'rgba(0,210,110,0.15)' },
+            { key: 'checked_in', label: 'Checked In', value: stats.checkedIn, color: '#BFFF00',               glowColor: 'rgba(191,255,0,0.15)' },
+          ];
+          return (
+            <div className="grid grid-cols-4 gap-2">
+              {cards.map(c => {
+                const isActive = activeQuickFilter === c.key;
+                return (
+                  <button
+                    key={c.key}
+                    onClick={() => setActiveQuickFilter(prev => prev === c.key ? 'all' : c.key)}
+                    className="rounded-xl p-3 text-center transition-all"
+                    style={isActive ? {
+                      background: c.glowColor,
+                      border: `1px solid ${c.color}60`,
+                      boxShadow: `0 0 12px ${c.glowColor}`,
+                      transform: 'translateY(-1px)',
+                    } : {
+                      background: 'rgba(255,255,255,0.04)',
+                      border: '1px solid rgba(255,255,255,0.07)',
+                    }}
+                  >
+                    <p className="text-lg font-black" style={{ color: isActive ? c.color : 'rgba(255,255,255,0.5)' }}>{c.value}</p>
+                    <p className="text-xs mt-0.5" style={{ color: isActive ? c.color : 'rgba(255,255,255,0.3)', opacity: isActive ? 0.85 : 1 }}>{c.label}</p>
+                  </button>
+                );
+              })}
             </div>
-          ))}
-        </div>
+          );
+        })()}
 
         {/* Count */}
-        <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>Showing {filtered.length} registrations</p>
+        <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          {activeQuickFilter === 'all'        && `Showing ${filtered.length} registrations`}
+          {activeQuickFilter === 'pending'    && `Showing ${filtered.length} pending registration${filtered.length !== 1 ? 's' : ''}`}
+          {activeQuickFilter === 'confirmed'  && `Showing ${filtered.length} confirmed registration${filtered.length !== 1 ? 's' : ''}`}
+          {activeQuickFilter === 'checked_in' && `Showing ${filtered.length} checked-in registration${filtered.length !== 1 ? 's' : ''}`}
+        </p>
 
         {isLoading && <div className="text-center py-10" style={{ color: 'rgba(255,255,255,0.35)' }}>Loading...</div>}
 
