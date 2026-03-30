@@ -48,6 +48,11 @@ Deno.serve(async (req) => {
 
     const INACTIVE = new Set(['cancelled', 'rejected']);
 
+    console.log('[sync] Affected category IDs:', [...categoryIds]);
+    console.log('[sync] Affected event IDs:   ', [...eventIds]);
+
+    const results = { categories: {}, events: {} };
+
     // ── 1. Sync each affected category ──────────────────────────────────────
     for (const catId of categoryIds) {
       if (!catId || catId === 'rsvp') continue;
@@ -56,6 +61,8 @@ Deno.serve(async (req) => {
       const count = regs.filter(r => !INACTIVE.has(r.status)).length;
 
       await sr.entities.EventCategory.update(catId, { registered_count: count });
+      results.categories[catId] = count;
+      console.log(`[sync] category ${catId} → registered_count = ${count}`);
     }
 
     // ── 2. Sync each affected event ──────────────────────────────────────────
@@ -66,12 +73,17 @@ Deno.serve(async (req) => {
       const count = regs.filter(r => !INACTIVE.has(r.status)).length;
 
       await sr.entities.StrideEvent.update(evId, { total_registered: count });
+      results.events[evId] = count;
+      console.log(`[sync] event ${evId} → total_registered = ${count}`);
     }
+
+    console.log('[sync] Done.', JSON.stringify(results));
 
     return Response.json({
       ok: true,
       synced_categories: [...categoryIds],
       synced_events: [...eventIds],
+      results,
     });
 
   } catch (error) {
