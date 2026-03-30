@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Users, CheckCircle2, Clock, XCircle, ScanLine, Search, Filter, ChevronDown, CreditCard, Tag } from 'lucide-react';
 import { format } from 'date-fns';
 import PaymentReviewPanel from '@/components/stride/PaymentReviewPanel';
+import RegistrationDetailSheet from '@/components/stride/RegistrationDetailSheet';
 
 const STATUS_CFG = {
   pending:   { label: 'Pending',   color: 'rgba(255,200,80,1)',  bg: 'rgba(255,200,80,0.1)' },
@@ -23,6 +24,7 @@ export default function StrideAdminDashboard() {
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [search, setSearch] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [detailReg, setDetailReg] = useState(null);
 
   const { data: user } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
 
@@ -316,6 +318,18 @@ export default function StrideAdminDashboard() {
         </div>
       )}
 
+      {/* Registration Detail Sheet */}
+      {detailReg && (
+        <RegistrationDetailSheet
+          reg={detailReg}
+          eventMap={eventMap}
+          catMap={catMap}
+          registrations={registrations}
+          onClose={() => setDetailReg(null)}
+          onUpdated={() => setDetailReg(null)}
+        />
+      )}
+
       {/* Registrations Tab */}
       {activeTab === 'registrations' && <div className="px-6 pt-4 space-y-4">
         {/* Stats row */}
@@ -344,7 +358,12 @@ export default function StrideAdminDashboard() {
           const cfg = STATUS_CFG[reg.status] || STATUS_CFG.pending;
 
           return (
-            <div key={reg.id} className="rounded-2xl p-4 space-y-3" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <button
+              key={reg.id}
+              onClick={() => setDetailReg(reg)}
+              className="w-full text-left rounded-2xl p-4 space-y-3 transition-all active:scale-[0.99]"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}
+            >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-white">{reg.first_name} {reg.last_name}</p>
@@ -358,35 +377,12 @@ export default function StrideAdminDashboard() {
                   {cat && <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(191,255,0,0.1)', color: '#BFFF00' }}>{cat.name}</span>}
                 </div>
               </div>
-
               <div className="flex items-center gap-4 text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>
                 <span>Bib: <strong className="text-white">{reg.bib_number || '—'}</strong></span>
-                <span>Shirt: <strong className="text-white">{reg.shirt_size || '—'}</strong></span>
                 {reg.checked_in && <span className="font-bold" style={{ color: 'rgb(0,210,110)' }}>✓ Checked In</span>}
                 <span className="ml-auto">{format(new Date(reg.created_date), 'MMM d')}</span>
               </div>
-
-              {reg.status === 'pending' && (
-                <div className="flex gap-2 pt-1">
-                  <button
-                    onClick={() => approveMutation.mutate({ id: reg.id, bibNumber: generateBib(reg) })}
-                    disabled={approveMutation.isPending}
-                    className="flex-1 py-2 rounded-xl text-xs font-bold"
-                    style={{ background: 'rgba(0,210,110,0.15)', color: 'rgb(0,210,110)', border: '1px solid rgba(0,210,110,0.25)' }}
-                  >
-                    ✓ Approve
-                  </button>
-                  <button
-                    onClick={() => rejectMutation.mutate(reg.id)}
-                    disabled={rejectMutation.isPending}
-                    className="flex-1 py-2 rounded-xl text-xs font-bold"
-                    style={{ background: 'rgba(255,80,80,0.1)', color: 'rgba(255,100,100,1)', border: '1px solid rgba(255,80,80,0.2)' }}
-                  >
-                    ✗ Reject
-                  </button>
-                </div>
-              )}
-            </div>
+            </button>
           );
         })}
       </div>}
