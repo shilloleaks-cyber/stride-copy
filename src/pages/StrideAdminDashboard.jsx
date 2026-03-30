@@ -335,14 +335,68 @@ export default function StrideAdminDashboard() {
       )}
 
       {/* Registrations Tab */}
-      {activeTab === 'registrations' && <div className="px-6 pt-4 space-y-4">
+      {activeTab === 'registrations' && <div className="px-6 pt-5 space-y-5">
         {/* Stats row — clickable quick filters */}
         {(() => {
           const cards = [
-            { key: 'all',        label: 'Total',      value: stats.total,     color: 'rgba(255,255,255,0.75)', glowColor: 'rgba(255,255,255,0.08)' },
-            { key: 'pending',    label: 'Pending',    value: stats.pending,   color: 'rgba(255,200,80,1)',     glowColor: 'rgba(255,200,80,0.15)' },
-            { key: 'confirmed',  label: 'Confirmed',  value: stats.confirmed, color: 'rgb(0,210,110)',         glowColor: 'rgba(0,210,110,0.15)' },
-            { key: 'checked_in', label: 'Checked In', value: stats.checkedIn, color: '#BFFF00',               glowColor: 'rgba(191,255,0,0.15)' },
+            {
+              key: 'all',
+              label: 'Total',
+              value: stats.total,
+              // inactive: neutral white tint
+              inactiveNum:    'rgba(255,255,255,0.55)',
+              inactiveLabel:  'rgba(255,255,255,0.28)',
+              inactiveBg:     'rgba(255,255,255,0.04)',
+              inactiveBorder: 'rgba(255,255,255,0.08)',
+              // active: soft lime
+              activeNum:    '#BFFF00',
+              activeLabel:  'rgba(191,255,0,0.7)',
+              activeBg:     'rgba(191,255,0,0.10)',
+              activeBorder: 'rgba(191,255,0,0.55)',
+              activeGlow:   '0 0 16px rgba(191,255,0,0.18)',
+            },
+            {
+              key: 'pending',
+              label: 'Pending',
+              value: stats.pending,
+              inactiveNum:    'rgba(255,200,80,0.65)',
+              inactiveLabel:  'rgba(255,200,80,0.3)',
+              inactiveBg:     'rgba(255,200,80,0.03)',
+              inactiveBorder: 'rgba(255,200,80,0.12)',
+              activeNum:    'rgba(255,200,80,1)',
+              activeLabel:  'rgba(255,200,80,0.75)',
+              activeBg:     'rgba(255,200,80,0.12)',
+              activeBorder: 'rgba(255,200,80,0.6)',
+              activeGlow:   '0 0 16px rgba(255,200,80,0.20)',
+            },
+            {
+              key: 'confirmed',
+              label: 'Confirmed',
+              value: stats.confirmed,
+              inactiveNum:    'rgba(0,210,110,0.65)',
+              inactiveLabel:  'rgba(0,210,110,0.3)',
+              inactiveBg:     'rgba(0,210,110,0.03)',
+              inactiveBorder: 'rgba(0,210,110,0.12)',
+              activeNum:    'rgb(0,220,115)',
+              activeLabel:  'rgba(0,210,110,0.75)',
+              activeBg:     'rgba(0,210,110,0.12)',
+              activeBorder: 'rgba(0,210,110,0.55)',
+              activeGlow:   '0 0 16px rgba(0,210,110,0.20)',
+            },
+            {
+              key: 'checked_in',
+              label: 'Checked In',
+              value: stats.checkedIn,
+              inactiveNum:    'rgba(100,220,255,0.6)',
+              inactiveLabel:  'rgba(100,220,255,0.28)',
+              inactiveBg:     'rgba(100,220,255,0.03)',
+              inactiveBorder: 'rgba(100,220,255,0.10)',
+              activeNum:    'rgb(100,220,255)',
+              activeLabel:  'rgba(100,220,255,0.75)',
+              activeBg:     'rgba(100,220,255,0.11)',
+              activeBorder: 'rgba(100,220,255,0.55)',
+              activeGlow:   '0 0 16px rgba(100,220,255,0.20)',
+            },
           ];
           return (
             <div className="grid grid-cols-4 gap-2">
@@ -352,19 +406,17 @@ export default function StrideAdminDashboard() {
                   <button
                     key={c.key}
                     onClick={() => setActiveQuickFilter(prev => prev === c.key ? 'all' : c.key)}
-                    className="rounded-xl p-3 text-center transition-all"
-                    style={isActive ? {
-                      background: c.glowColor,
-                      border: `1px solid ${c.color}60`,
-                      boxShadow: `0 0 12px ${c.glowColor}`,
-                      transform: 'translateY(-1px)',
-                    } : {
-                      background: 'rgba(255,255,255,0.04)',
-                      border: '1px solid rgba(255,255,255,0.07)',
+                    className="rounded-xl text-center transition-all active:scale-[0.97]"
+                    style={{
+                      padding: '10px 4px 9px',
+                      background:   isActive ? c.activeBg     : c.inactiveBg,
+                      border:       `1px solid ${isActive ? c.activeBorder : c.inactiveBorder}`,
+                      boxShadow:    isActive ? c.activeGlow   : 'none',
+                      transform:    isActive ? 'translateY(-2px)' : 'none',
                     }}
                   >
-                    <p className="text-lg font-black" style={{ color: isActive ? c.color : 'rgba(255,255,255,0.5)' }}>{c.value}</p>
-                    <p className="text-xs mt-0.5" style={{ color: isActive ? c.color : 'rgba(255,255,255,0.3)', opacity: isActive ? 0.85 : 1 }}>{c.label}</p>
+                    <p className="font-black leading-none" style={{ fontSize: 20, color: isActive ? c.activeNum : c.inactiveNum }}>{c.value}</p>
+                    <p style={{ fontSize: 10, marginTop: 4, fontWeight: 700, letterSpacing: '0.03em', color: isActive ? c.activeLabel : c.inactiveLabel }}>{c.label}</p>
                   </button>
                 );
               })}
@@ -373,7 +425,7 @@ export default function StrideAdminDashboard() {
         })()}
 
         {/* Count */}
-        <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
+        <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)', marginTop: -4 }}>
           {activeQuickFilter === 'all'        && `Showing ${filtered.length} registrations`}
           {activeQuickFilter === 'pending'    && `Showing ${filtered.length} pending registration${filtered.length !== 1 ? 's' : ''}`}
           {activeQuickFilter === 'confirmed'  && `Showing ${filtered.length} confirmed registration${filtered.length !== 1 ? 's' : ''}`}
