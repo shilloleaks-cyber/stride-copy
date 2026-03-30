@@ -42,7 +42,9 @@ export default function StrideEventDetail() {
     queryKey: ['my-reg', eventId, user?.email],
     queryFn: async () => {
       const r = await base44.entities.EventRegistration.filter({ event_id: eventId, user_email: user.email });
-      return r[0] || null;
+      // Only count active registrations (ignore cancelled/rejected)
+      const active = r.filter(reg => reg.status !== 'cancelled' && reg.status !== 'rejected');
+      return active[0] || null;
     },
     enabled: !!eventId && !!user?.email,
   });
@@ -263,39 +265,67 @@ export default function StrideEventDetail() {
           </div>
         )}
 
-        {/* Official: Already registered info */}
-        {!isCommunityEvent && alreadyRegistered && (
-          <div className="rounded-2xl p-4" style={{ background: 'rgba(191,255,0,0.06)', border: '1px solid rgba(191,255,0,0.2)' }}>
-            <p className="text-sm font-bold text-white mb-1">You are registered!</p>
-            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
-              Bib: <span className="font-black" style={{ color: '#BFFF00' }}>{myReg.bib_number || 'Pending'}</span>
-              {' · '}Status: <span className="capitalize">{myReg.status}</span>
-            </p>
-            <button
-              onClick={() => navigate('/StrideMyEvents')}
-              className="mt-3 text-xs font-bold flex items-center gap-1"
-              style={{ color: '#BFFF00' }}
-            >
-              View my registration <ChevronRight className="w-3 h-3" />
-            </button>
-          </div>
-        )}
+        {/* Official: Already registered — status card */}
+        {!isCommunityEvent && alreadyRegistered && myReg && (() => {
+          const checkedIn = myReg.checked_in;
+          const confirmed = myReg.status === 'confirmed';
+          const paid = myReg.payment_status === 'paid' || myReg.payment_status === 'not_required';
+
+          let label, accent, bg, border;
+          if (checkedIn) {
+            label = '✓ Checked In'; accent = '#BFFF00';
+            bg = 'rgba(191,255,0,0.08)'; border = 'rgba(191,255,0,0.3)';
+          } else if (confirmed && paid) {
+            label = '✓ Confirmed'; accent = '#BFFF00';
+            bg = 'rgba(191,255,0,0.06)'; border = 'rgba(191,255,0,0.22)';
+          } else if (confirmed && !paid) {
+            label = '⏳ Awaiting Payment'; accent = 'rgb(255,180,0)';
+            bg = 'rgba(255,180,0,0.06)'; border = 'rgba(255,180,0,0.25)';
+          } else {
+            label = '📋 Registration Submitted'; accent = 'rgba(255,255,255,0.6)';
+            bg = 'rgba(255,255,255,0.04)'; border = 'rgba(255,255,255,0.1)';
+          }
+
+          return (
+            <div style={{ padding: '14px 16px', borderRadius: 16, background: bg, border: `1px solid ${border}`, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: 13, fontWeight: 800, color: accent, margin: 0 }}>{label}</p>
+                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '4px 0 0' }}>
+                  {myReg.bib_number ? `Bib #${myReg.bib_number}` : 'Bib pending'}
+                  {myReg.category_id && categories.find(c => c.id === myReg.category_id)
+                    ? ` · ${categories.find(c => c.id === myReg.category_id).name}`
+                    : ''}
+                </p>
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
-      {/* Official: Bottom CTA — only shown when canRegister (open + has categories) */}
-      {!isCommunityEvent && !alreadyRegistered && isOpen && categories.length > 0 && (
+      {/* Official: Bottom CTA */}
+      {!isCommunityEvent && (
         <div className="fixed bottom-20 left-0 right-0 px-6 pb-2">
-          <button
-            onClick={() => selectedCategory && setShowForm(true)}
-            disabled={!selectedCategory}
-            className="w-full py-4 rounded-2xl font-bold text-base transition-all"
-            style={selectedCategory
-              ? { background: '#BFFF00', color: '#0A0A0A' }
-              : { background: 'rgba(191,255,0,0.15)', color: 'rgba(191,255,0,0.4)' }
-            }
-          >
-            {selectedCategory ? `Register for ${selectedCategory.name}` : 'Select a Category'}
-          </button>
+          {alreadyRegistered && myReg ? (
+            <button
+              onClick={() => navigate(`/StrideMyEvents?reg_id=${myReg.id}`)}
+              className="w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+              style={{ background: 'rgba(191,255,0,0.12)', border: '1px solid rgba(191,255,0,0.35)', color: '#BFFF00' }}
+            >
+              View My Ticket <ChevronRight className="w-5 h-5" />
+            </button>
+          ) : isOpen && categories.length > 0 ? (
+            <button
+              onClick={() => selectedCategory && setShowForm(true)}
+              disabled={!selectedCategory}
+              className="w-full py-4 rounded-2xl font-bold text-base transition-all"
+              style={selectedCategory
+                ? { background: '#BFFF00', color: '#0A0A0A' }
+                : { background: 'rgba(191,255,0,0.15)', color: 'rgba(191,255,0,0.4)' }
+              }
+            >
+              {selectedCategory ? `Register for ${selectedCategory.name}` : 'Select a Category'}
+            </button>
+          ) : null}
         </div>
       )}
 
