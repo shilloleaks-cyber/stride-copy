@@ -3,52 +3,103 @@ import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  ArrowLeft, ScanLine, Search, CheckCircle2, XCircle,
-  AlertCircle, Loader2, ShieldOff, User, Shirt, CreditCard, Hash, Calendar, Camera
+  ArrowLeft, Search, CheckCircle2, XCircle,
+  AlertCircle, Loader2, ShieldOff, CreditCard, Hash, Calendar, Camera, ScanLine, Clock, UserX
 } from 'lucide-react';
 import { format } from 'date-fns';
 import QRScanner from '@/components/stride/QRScanner';
 
-const S = { IDLE: 'idle', SEARCHING: 'searching', FOUND: 'found', SUCCESS: 'success', NOT_FOUND: 'not_found', ALREADY: 'already', PAYMENT: 'payment', NOT_CONFIRMED: 'not_confirmed' };
+// ─── State keys ───────────────────────────────────────────────────────────────
+const S = {
+  IDLE:          'idle',
+  SEARCHING:     'searching',
+  READY:         'ready',          // confirmed + payment ok + not yet checked in
+  ALREADY:       'already',        // checked_in === true
+  PAYMENT:       'payment',        // confirmed but payment not approved
+  BLOCKED:       'blocked',        // rejected / cancelled / pending (not confirmed)
+  NOT_FOUND:     'not_found',
+  SUCCESS:       'success',
+};
 
+// ─── Payment label helper ─────────────────────────────────────────────────────
+function getPayLabel(payment_status) {
+  return {
+    paid:         { label: 'Payment Approved',           color: 'rgb(0,210,110)',       bg: 'rgba(0,210,110,0.12)',   border: 'rgba(0,210,110,0.3)' },
+    not_required: { label: 'No Payment Required',        color: '#BFFF00',              bg: 'rgba(191,255,0,0.12)',   border: 'rgba(191,255,0,0.3)' },
+    pending:      { label: 'Awaiting Payment',           color: 'rgba(255,200,80,1)',   bg: 'rgba(255,200,80,0.12)', border: 'rgba(255,200,80,0.3)' },
+    refunded:     { label: 'Refunded',                   color: 'rgba(255,255,255,0.5)', bg: 'rgba(255,255,255,0.06)', border: 'rgba(255,255,255,0.12)' },
+  }[payment_status] || { label: payment_status || '—', color: 'rgba(255,255,255,0.4)', bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.1)' };
+}
+
+// ─── Info row ─────────────────────────────────────────────────────────────────
 function InfoRow({ icon: Icon, label, value, valueColor }) {
   return (
-    <div className="flex items-center gap-3 py-2.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-      <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(255,255,255,0.06)' }}>
-        <Icon className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.4)' }} />
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+      <div style={{ width: 32, height: 32, borderRadius: 10, background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <Icon style={{ width: 15, height: 15, color: 'rgba(255,255,255,0.35)' }} />
       </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>{label}</p>
-        <p className="font-bold text-sm text-white" style={valueColor ? { color: valueColor } : {}}>{value || '—'}</p>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>{label}</p>
+        <p style={{ fontSize: 14, fontWeight: 700, color: valueColor || 'rgba(255,255,255,0.9)', margin: '2px 0 0', wordBreak: 'break-all' }}>{value || '—'}</p>
       </div>
     </div>
   );
 }
 
-function PaymentBadge({ status }) {
-  const map = {
-    paid:         { label: 'Payment Approved',    color: 'rgb(0,210,110)',      bg: 'rgba(0,210,110,0.1)',  border: 'rgba(0,210,110,0.25)' },
-    not_required: { label: 'No Payment Required', color: '#BFFF00',             bg: 'rgba(191,255,0,0.1)', border: 'rgba(191,255,0,0.2)' },
-    pending:      { label: 'Awaiting Payment',    color: 'rgba(255,200,80,1)',  bg: 'rgba(255,200,80,0.1)', border: 'rgba(255,200,80,0.25)' },
-    refunded:     { label: 'Refunded',            color: 'rgba(255,255,255,0.5)', bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.1)' },
-  };
-  const s = map[status] || { label: status || 'Unknown', color: 'rgba(255,255,255,0.5)', bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.1)' };
+// ─── Scan/Search controls — always visible ────────────────────────────────────
+function ScanControls({ state, input, setInput, onSearch, onScanClick, inputRef }) {
+  const isSearching = state === S.SEARCHING;
   return (
-    <span className="text-xs font-bold px-3 py-1.5 rounded-full" style={{ color: s.color, background: s.bg, border: `1px solid ${s.border}` }}>
-      {s.label}
-    </span>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <button
+        onClick={onScanClick}
+        style={{ width: '100%', padding: '14px 0', borderRadius: 16, fontWeight: 800, fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer', transition: 'all 0.15s ease', background: '#BFFF00', color: '#0A0A0A', border: 'none' }}
+      >
+        <Camera style={{ width: 20, height: 20 }} /> Scan QR with Camera
+      </button>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <input
+          ref={inputRef}
+          type="text"
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && !isSearching && onSearch()}
+          placeholder="QR code or Bib number…"
+          style={{ flex: 1, padding: '12px 16px', borderRadius: 14, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff', fontSize: 14, fontWeight: 600, outline: 'none', letterSpacing: '0.06em' }}
+        />
+        <button
+          onClick={onSearch}
+          disabled={isSearching || !input.trim()}
+          style={{
+            padding: '12px 18px', borderRadius: 14, fontWeight: 800, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, cursor: isSearching || !input.trim() ? 'not-allowed' : 'pointer', transition: 'all 0.15s ease',
+            ...(input.trim() && !isSearching
+              ? { background: 'rgba(191,255,0,0.12)', border: '1px solid rgba(191,255,0,0.3)', color: '#BFFF00' }
+              : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.25)' }),
+          }}
+        >
+          {isSearching
+            ? <Loader2 style={{ width: 16, height: 16, animation: 'spin 1s linear infinite' }} />
+            : <Search style={{ width: 16, height: 16 }} />
+          }
+          {isSearching ? 'Searching…' : 'Find'}
+        </button>
+      </div>
+    </div>
   );
 }
 
+// ─── Main component ───────────────────────────────────────────────────────────
 export default function StrideCheckin() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const inputRef = useRef(null);
-  const [input, setInput] = useState('');
-  const [state, setState] = useState(S.IDLE);
-  const [foundReg, setFoundReg] = useState(null);
+
+  const [input, setInput]           = useState('');
+  const [state, setState]           = useState(S.IDLE);
+  const [foundReg, setFoundReg]     = useState(null);
   const [foundEvent, setFoundEvent] = useState(null);
-  const [foundCat, setFoundCat] = useState(null);
+  const [foundCat, setFoundCat]     = useState(null);
+  const [hasSlip, setHasSlip]       = useState(false);
   const [showScanner, setShowScanner] = useState(false);
 
   const { data: user, isLoading: loadingUser } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
@@ -63,6 +114,7 @@ export default function StrideCheckin() {
   const isLoadingAccess = loadingUser || (!isAdmin && loadingStaff);
   const hasAccess = isAdmin || boothStaff.length > 0;
 
+  // ── Check-in mutation ──────────────────────────────────────────────────────
   const checkinMutation = useMutation({
     mutationFn: async () => {
       const now = new Date().toISOString();
@@ -80,29 +132,21 @@ export default function StrideCheckin() {
         scanned_at: now,
         result: 'success',
       });
-      // Unlock rewards only once
+      // Unlock rewards (idempotent)
       const existingRewards = await base44.entities.EventRewardUnlock.filter({ registration_id: foundReg.id });
       if (existingRewards.length === 0) {
         await base44.entities.EventRewardUnlock.create({
-          registration_id: foundReg.id,
-          event_id: foundReg.event_id,
-          user_email: foundReg.user_email,
-          reward_type: 'badge',
-          reward_label: 'Finisher Badge',
-          status: 'unlocked',
-          unlocked_at: now,
+          registration_id: foundReg.id, event_id: foundReg.event_id,
+          user_email: foundReg.user_email, reward_type: 'badge',
+          reward_label: 'Finisher Badge', status: 'unlocked', unlocked_at: now,
         });
         const eventCoupons = await base44.entities.Coupon.filter({ event_id: foundReg.event_id });
         for (const coupon of eventCoupons) {
           await base44.entities.EventRewardUnlock.create({
-            registration_id: foundReg.id,
-            event_id: foundReg.event_id,
-            user_email: foundReg.user_email,
-            reward_type: 'coupon',
-            reward_id: coupon.id,
-            reward_label: coupon.title,
-            status: 'unlocked',
-            unlocked_at: now,
+            registration_id: foundReg.id, event_id: foundReg.event_id,
+            user_email: foundReg.user_email, reward_type: 'coupon',
+            reward_id: coupon.id, reward_label: coupon.title,
+            status: 'unlocked', unlocked_at: now,
           });
         }
       }
@@ -113,22 +157,12 @@ export default function StrideCheckin() {
     },
   });
 
-  const handleSearch = () => handleSearchWithValue(input);
-
-  const handleQRScan = (value) => {
-    setShowScanner(false);
-    setInput(value);
-    // auto-trigger lookup with the scanned value
-    handleSearchWithValue(value);
-  };
-
+  // ── Lookup ─────────────────────────────────────────────────────────────────
   const handleSearchWithValue = async (q) => {
-    q = q.trim();
+    q = (q || '').trim();
     if (!q) return;
     setState(S.SEARCHING);
-    setFoundReg(null);
-    setFoundEvent(null);
-    setFoundCat(null);
+    setFoundReg(null); setFoundEvent(null); setFoundCat(null); setHasSlip(false);
 
     let regs = await base44.entities.EventRegistration.filter({ qr_code: q });
     if (!regs.length) regs = await base44.entities.EventRegistration.filter({ bib_number: q.toUpperCase() });
@@ -136,17 +170,23 @@ export default function StrideCheckin() {
     if (!regs.length) { setState(S.NOT_FOUND); return; }
 
     const reg = regs[0];
-    const [evs, cats] = await Promise.all([
+
+    const [evs, cats, payments] = await Promise.all([
       base44.entities.StrideEvent.filter({ id: reg.event_id }),
       reg.category_id && reg.category_id !== 'rsvp'
         ? base44.entities.EventCategory.filter({ id: reg.category_id })
+        : Promise.resolve([]),
+      reg.payment_status === 'pending'
+        ? base44.entities.EventPayment.filter({ registration_id: reg.id })
         : Promise.resolve([]),
     ]);
 
     setFoundReg(reg);
     setFoundEvent(evs[0] || null);
     setFoundCat(cats[0] || null);
+    setHasSlip(payments.length > 0 && !!payments[0]?.slip_image_url);
 
+    // Determine result state
     if (reg.checked_in) {
       await base44.entities.EventCheckinLog.create({
         event_id: reg.event_id, registration_id: reg.id, user_email: reg.user_email,
@@ -156,17 +196,17 @@ export default function StrideCheckin() {
       setState(S.ALREADY);
       return;
     }
-    if (reg.status !== 'confirmed') { setState(S.NOT_CONFIRMED); return; }
+    if (reg.status === 'rejected' || reg.status === 'cancelled') { setState(S.BLOCKED); return; }
+    if (reg.status !== 'confirmed') { setState(S.BLOCKED); return; }
     if (reg.payment_status !== 'paid' && reg.payment_status !== 'not_required') { setState(S.PAYMENT); return; }
-    setState(S.FOUND);
+    setState(S.READY);
   };
 
-  const handleReset = () => {
-    setInput('');
-    setState(S.IDLE);
-    setFoundReg(null);
-    setFoundEvent(null);
-    setFoundCat(null);
+  const handleSearch   = ()  => handleSearchWithValue(input);
+  const handleQRScan   = (v) => { setShowScanner(false); setInput(v); handleSearchWithValue(v); };
+  const handleReset    = ()  => {
+    setInput(''); setState(S.IDLE);
+    setFoundReg(null); setFoundEvent(null); setFoundCat(null);
     setTimeout(() => inputRef.current?.focus(), 100);
   };
 
@@ -176,179 +216,221 @@ export default function StrideCheckin() {
     </div>
   );
 
+  const payInfo = foundReg ? getPayLabel(foundReg.payment_status) : null;
+  // Override pending label if slip detected
+  const payLabelDisplay = (payInfo && foundReg?.payment_status === 'pending' && hasSlip)
+    ? { ...payInfo, label: 'Awaiting Payment Approval', color: 'rgb(255,140,0)', bg: 'rgba(255,140,0,0.12)', border: 'rgba(255,140,0,0.3)' }
+    : payInfo;
+
   return (
     <div className="min-h-screen text-white pb-28" style={{ backgroundColor: '#0A0A0A' }}>
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+
       {/* Header */}
-      <div className="sticky top-0 z-50 px-6 pt-10 pb-4 flex items-center gap-4" style={{ backgroundColor: 'rgba(10,10,10,0.95)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.08)' }}>
-          <ArrowLeft className="w-5 h-5" />
+      <div className="sticky top-0 z-50 px-5 pt-10 pb-4 flex items-center gap-4" style={{ backgroundColor: 'rgba(10,10,10,0.95)', borderBottom: '1px solid rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)' }}>
+        <button onClick={() => navigate(-1)} style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+          <ArrowLeft style={{ width: 18, height: 18 }} />
         </button>
-        <div>
-          <p className="text-xs uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.4)' }}>Stride</p>
-          <h1 className="text-xl font-bold">Check-In Scanner</h1>
+        <div style={{ flex: 1 }}>
+          <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>Stride</p>
+          <h1 style={{ fontSize: 20, fontWeight: 800, color: '#fff', margin: 0 }}>Check-In Scanner</h1>
         </div>
+        {state !== S.IDLE && state !== S.SUCCESS && (
+          <button
+            onClick={handleReset}
+            style={{ padding: '6px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.55)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+          >
+            Clear
+          </button>
+        )}
       </div>
 
-      {/* No access */}
+      {/* Access denied */}
       {!hasAccess && (
-        <div className="flex flex-col items-center justify-center pt-24 px-8 text-center space-y-4">
-          <ShieldOff className="w-14 h-14" style={{ color: 'rgba(255,80,80,0.5)' }} />
-          <p className="text-xl font-bold">Access Denied</p>
-          <p className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>You need staff or admin access to use check-in.</p>
-          <button onClick={() => navigate(-1)} className="mt-4 py-3 px-8 rounded-2xl font-bold text-sm" style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)' }}>
-            Go Back
-          </button>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', paddingTop: 96, paddingLeft: 32, paddingRight: 32, textAlign: 'center', gap: 16 }}>
+          <ShieldOff style={{ width: 56, height: 56, color: 'rgba(255,80,80,0.5)' }} />
+          <p style={{ fontSize: 20, fontWeight: 800, color: '#fff', margin: 0 }}>Access Denied</p>
+          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', margin: 0 }}>You need staff or admin access to use check-in.</p>
+          <button onClick={() => navigate(-1)} style={{ marginTop: 8, padding: '12px 32px', borderRadius: 16, background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', fontWeight: 700, fontSize: 14, cursor: 'pointer', border: 'none' }}>Go Back</button>
         </div>
       )}
 
       {hasAccess && (
-        <div className="px-5 pt-6 space-y-4">
+        <div style={{ padding: '20px 20px 0', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-          {/* Camera scan CTA — primary action */}
-          {state === S.IDLE && (
-            <button
-              onClick={() => setShowScanner(true)}
-              className="w-full py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-3 transition-all active:scale-[0.98]"
-              style={{ background: '#BFFF00', color: '#0A0A0A' }}
-            >
-              <Camera className="w-6 h-6" /> Scan QR with Camera
-            </button>
+          {/* ── Always-visible scan / search controls (hidden only on SUCCESS) ── */}
+          {state !== S.SUCCESS && (
+            <ScanControls
+              state={state}
+              input={input}
+              setInput={setInput}
+              onSearch={handleSearch}
+              onScanClick={() => setShowScanner(true)}
+              inputRef={inputRef}
+            />
           )}
 
-          {/* Input + search — always visible unless success */}
-          {state !== S.SUCCESS && (
-            <div className="space-y-3">
-              {state !== S.IDLE && (
-                <button
-                  onClick={() => setShowScanner(true)}
-                  className="w-full py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2"
-                  style={{ background: 'rgba(191,255,0,0.08)', color: '#BFFF00', border: '1px solid rgba(191,255,0,0.2)' }}
-                >
-                  <Camera className="w-4 h-4" /> Scan Again
-                </button>
-              )}
-              <input
-                ref={inputRef}
-                type="text"
-                value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && state !== S.SEARCHING && handleSearch()}
-                placeholder="QR code or Bib number..."
-                autoFocus
-                className="w-full px-5 py-4 rounded-2xl text-center text-white font-bold text-xl tracking-wider outline-none"
-                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', letterSpacing: '0.1em' }}
-              />
-              <button
-                onClick={handleSearch}
-                disabled={state === S.SEARCHING || !input.trim()}
-                className="w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all"
-                style={input.trim() && state !== S.SEARCHING
-                  ? { background: '#BFFF00', color: '#0A0A0A' }
-                  : { background: 'rgba(191,255,0,0.15)', color: 'rgba(255,255,255,0.3)' }
-                }
-              >
-                {state === S.SEARCHING
-                  ? <><Loader2 className="w-5 h-5 animate-spin" /> Searching...</>
-                  : <><Search className="w-5 h-5" /> Find Participant</>
-                }
-              </button>
+          {/* ─────────────────────────────────────────────────────────────────── */}
+          {/* RESULT STATES                                                        */}
+          {/* ─────────────────────────────────────────────────────────────────── */}
+
+          {/* ── IDLE ── */}
+          {state === S.IDLE && (
+            <div style={{ textAlign: 'center', padding: '32px 16px', borderRadius: 20, background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.08)' }}>
+              <ScanLine style={{ width: 40, height: 40, color: 'rgba(255,255,255,0.12)', margin: '0 auto 12px' }} />
+              <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.3)', margin: 0 }}>Scan a QR code or enter a bib number to look up a participant</p>
             </div>
           )}
 
           {/* ── NOT FOUND ── */}
           {state === S.NOT_FOUND && (
-            <div className="rounded-2xl p-5 flex items-start gap-4" style={{ background: 'rgba(255,80,80,0.08)', border: '1px solid rgba(255,80,80,0.25)' }}>
-              <XCircle className="w-8 h-8 flex-shrink-0 mt-0.5" style={{ color: 'rgba(255,100,100,1)' }} />
+            <div style={{ borderRadius: 20, padding: 20, background: 'rgba(255,60,60,0.07)', border: '1px solid rgba(255,80,80,0.25)', display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(255,80,80,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <XCircle style={{ width: 20, height: 20, color: 'rgba(255,100,100,1)' }} />
+              </div>
               <div>
-                <p className="font-bold text-white text-base">Not Found</p>
-                <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.5)' }}>No registration matches this QR code or bib number. Double-check and try again.</p>
+                <p style={{ fontSize: 16, fontWeight: 800, color: '#fff', margin: '0 0 4px' }}>No Participant Found</p>
+                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: 1.6 }}>No registration matches this QR code or bib number. Double-check and try again.</p>
               </div>
             </div>
           )}
 
-          {/* ── NOT CONFIRMED ── */}
-          {state === S.NOT_CONFIRMED && foundReg && (
-            <div className="rounded-2xl p-5 flex items-start gap-4" style={{ background: 'rgba(255,200,80,0.08)', border: '1px solid rgba(255,200,80,0.25)' }}>
-              <AlertCircle className="w-8 h-8 flex-shrink-0 mt-0.5" style={{ color: 'rgba(255,200,80,1)' }} />
-              <div>
-                <p className="font-bold text-white text-base">Registration Not Confirmed</p>
-                <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                  {foundReg.first_name} {foundReg.last_name}'s registration status is <span className="font-bold capitalize">{foundReg.status}</span>. Only <span className="font-bold">confirmed</span> registrations can check in.
-                </p>
+          {/* ── BLOCKED (rejected / cancelled / pending) ── */}
+          {state === S.BLOCKED && foundReg && (
+            <div style={{ borderRadius: 20, overflow: 'hidden', border: '1px solid rgba(255,80,80,0.3)', background: 'rgba(255,60,60,0.06)' }}>
+              <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <UserX style={{ width: 22, height: 22, color: 'rgba(255,100,100,1)', flexShrink: 0 }} />
+                <div>
+                  <p style={{ fontSize: 16, fontWeight: 800, color: '#fff', margin: 0 }}>Registration Not Eligible</p>
+                  <p style={{ fontSize: 12, color: 'rgba(255,100,100,0.7)', margin: '3px 0 0' }}>
+                    Status: <span style={{ fontWeight: 800, textTransform: 'capitalize' }}>{foundReg.status}</span> — This registration is not eligible for check-in.
+                  </p>
+                </div>
+              </div>
+              <div style={{ padding: '8px 20px 16px' }}>
+                <InfoRow icon={Hash} label="Name"       value={`${foundReg.first_name} ${foundReg.last_name}`} />
+                <InfoRow icon={Hash} label="Bib Number" value={foundReg.bib_number} valueColor="rgba(255,255,255,0.5)" />
+                {foundEvent && <InfoRow icon={Calendar} label="Event" value={foundEvent.title} />}
               </div>
             </div>
           )}
 
-          {/* ── PAYMENT PENDING ── */}
+          {/* ── AWAITING PAYMENT ── */}
           {state === S.PAYMENT && foundReg && (
-            <div className="rounded-2xl p-5 flex items-start gap-4" style={{ background: 'rgba(255,200,80,0.08)', border: '1px solid rgba(255,200,80,0.25)' }}>
-              <CreditCard className="w-8 h-8 flex-shrink-0 mt-0.5" style={{ color: 'rgba(255,200,80,1)' }} />
-              <div>
-                <p className="font-bold text-white text-base">Payment Not Approved</p>
-                <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                  {foundReg.first_name} {foundReg.last_name}'s payment is <span className="font-bold capitalize">{foundReg.payment_status}</span>. Payment must be approved before check-in.
-                </p>
+            <div style={{ borderRadius: 20, overflow: 'hidden', border: '1px solid rgba(255,180,0,0.3)', background: 'rgba(255,160,0,0.05)' }}>
+              <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <CreditCard style={{ width: 22, height: 22, color: 'rgba(255,200,80,1)', flexShrink: 0 }} />
+                <div>
+                  <p style={{ fontSize: 16, fontWeight: 800, color: '#fff', margin: 0 }}>
+                    {hasSlip ? 'Awaiting Payment Approval' : 'Awaiting Payment'}
+                  </p>
+                  <p style={{ fontSize: 12, color: 'rgba(255,200,80,0.7)', margin: '3px 0 0' }}>
+                    Payment must be approved before check-in.
+                  </p>
+                </div>
+              </div>
+              <div style={{ padding: '8px 20px 16px' }}>
+                <InfoRow icon={Hash}     label="Name"       value={`${foundReg.first_name} ${foundReg.last_name}`} />
+                <InfoRow icon={Hash}     label="Bib Number" value={foundReg.bib_number} valueColor="#BFFF00" />
+                {foundEvent && <InfoRow icon={Calendar} label="Event" value={foundEvent.title} />}
+                {foundCat  && <InfoRow icon={ScanLine} label="Category" value={foundCat.name} />}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0' }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 10, background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <CreditCard style={{ width: 15, height: 15, color: 'rgba(255,255,255,0.35)' }} />
+                  </div>
+                  <div>
+                    <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>Payment</p>
+                    <span style={{ fontSize: 12, fontWeight: 800, padding: '3px 10px', borderRadius: 6, background: payLabelDisplay?.bg, color: payLabelDisplay?.color, marginTop: 3, display: 'inline-block' }}>
+                      {payLabelDisplay?.label}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           )}
 
           {/* ── ALREADY CHECKED IN ── */}
           {state === S.ALREADY && foundReg && (
-            <div className="rounded-2xl overflow-hidden" style={{ background: 'rgba(255,200,80,0.06)', border: '1px solid rgba(255,200,80,0.25)' }}>
-              <div className="px-5 py-4 flex items-center gap-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                <AlertCircle className="w-7 h-7 flex-shrink-0" style={{ color: 'rgba(255,200,80,1)' }} />
+            <div style={{ borderRadius: 20, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.03)' }}>
+              <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <CheckCircle2 style={{ width: 22, height: 22, color: 'rgba(255,255,255,0.4)', flexShrink: 0 }} />
                 <div>
-                  <p className="font-bold text-white">Already Checked In</p>
-                  <p className="text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                    {foundReg.checked_in_at ? `at ${format(new Date(foundReg.checked_in_at), 'h:mm a · MMM d')}` : ''}
-                  </p>
+                  <p style={{ fontSize: 16, fontWeight: 800, color: 'rgba(255,255,255,0.6)', margin: 0 }}>Already Checked In</p>
+                  {foundReg.checked_in_at && (
+                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', margin: '3px 0 0', display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <Clock style={{ width: 11, height: 11 }} />
+                      {format(new Date(foundReg.checked_in_at), 'h:mm a · MMM d, yyyy')}
+                    </p>
+                  )}
                 </div>
               </div>
-              <div className="px-5 py-3 space-y-0.5">
-                <InfoRow icon={User} label="Name" value={`${foundReg.first_name} ${foundReg.last_name}`} />
-                <InfoRow icon={Hash} label="Bib Number" value={foundReg.bib_number} valueColor="#BFFF00" />
+              <div style={{ padding: '8px 20px 4px' }}>
+                <InfoRow icon={Hash}     label="Name"       value={`${foundReg.first_name} ${foundReg.last_name}`} />
+                <InfoRow icon={Hash}     label="Bib Number" value={foundReg.bib_number} valueColor="rgba(255,255,255,0.5)" />
                 {foundEvent && <InfoRow icon={Calendar} label="Event" value={foundEvent.title} />}
+                {foundCat  && <InfoRow icon={ScanLine} label="Category" value={foundCat.name} />}
+                {foundReg.checked_in_by && <InfoRow icon={Hash} label="Checked In By" value={foundReg.checked_in_by} />}
+              </div>
+              <div style={{ padding: '8px 20px 16px' }}>
+                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', textAlign: 'center', padding: '10px 0', background: 'rgba(255,255,255,0.03)', borderRadius: 12, margin: 0 }}>
+                  This participant has already checked in.
+                </p>
               </div>
             </div>
           )}
 
-          {/* ── FOUND — ready to check in ── */}
-          {state === S.FOUND && foundReg && (
-            <div className="rounded-2xl overflow-hidden" style={{ background: 'rgba(0,210,110,0.05)', border: '1px solid rgba(0,210,110,0.25)' }}>
+          {/* ── READY TO CHECK IN ── */}
+          {state === S.READY && foundReg && (
+            <div style={{ borderRadius: 20, overflow: 'hidden', border: '1px solid rgba(0,210,110,0.3)', background: 'rgba(0,210,110,0.04)' }}>
               {/* Runner header */}
-              <div className="px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                <p className="text-xl font-black text-white">{foundReg.first_name} {foundReg.last_name}</p>
-                <p className="text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>{foundReg.user_email}</p>
+              <div style={{ padding: '18px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)', background: 'rgba(0,210,110,0.06)' }}>
+                <p style={{ fontSize: 22, fontWeight: 900, color: '#fff', margin: 0 }}>{foundReg.first_name} {foundReg.last_name}</p>
+                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', margin: '4px 0 0' }}>{foundReg.user_email}</p>
               </div>
 
               {/* Details */}
-              <div className="px-5 py-1">
-                {foundEvent && <InfoRow icon={Calendar} label="Event" value={foundEvent.title} />}
-                {foundCat && <InfoRow icon={ScanLine} label="Category" value={foundCat.name} />}
+              <div style={{ padding: '4px 20px 8px' }}>
+                {foundEvent && <InfoRow icon={Calendar} label="Event"       value={foundEvent.title} />}
+                {foundCat  && <InfoRow icon={ScanLine}  label="Category"    value={foundCat.name} />}
                 <InfoRow icon={Hash} label="Bib Number" value={foundReg.bib_number || 'Pending'} valueColor={foundReg.bib_number ? '#BFFF00' : undefined} />
-                <InfoRow icon={Shirt} label="Shirt Size" value={foundReg.shirt_size} />
-                <div className="flex items-center gap-3 py-3">
-                  <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(255,255,255,0.06)' }}>
-                    <CreditCard className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.4)' }} />
+
+                {/* Payment badge */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 10, background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <CreditCard style={{ width: 15, height: 15, color: 'rgba(255,255,255,0.35)' }} />
                   </div>
                   <div>
-                    <p className="text-xs mb-1" style={{ color: 'rgba(255,255,255,0.35)' }}>Payment</p>
-                    <PaymentBadge status={foundReg.payment_status} />
+                    <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>Payment</p>
+                    <span style={{ fontSize: 12, fontWeight: 800, padding: '3px 10px', borderRadius: 6, background: payLabelDisplay?.bg, color: payLabelDisplay?.color, marginTop: 3, display: 'inline-block' }}>
+                      {payLabelDisplay?.label}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Status badge */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0' }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 10, background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <CheckCircle2 style={{ width: 15, height: 15, color: 'rgba(255,255,255,0.35)' }} />
+                  </div>
+                  <div>
+                    <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>Registration</p>
+                    <span style={{ fontSize: 12, fontWeight: 800, padding: '3px 10px', borderRadius: 6, background: 'rgba(0,210,110,0.12)', color: 'rgb(0,210,110)', marginTop: 3, display: 'inline-block' }}>
+                      Confirmed
+                    </span>
                   </div>
                 </div>
               </div>
 
               {/* CTA */}
-              <div className="px-5 pb-5 pt-2">
+              <div style={{ padding: '4px 20px 20px' }}>
                 <button
                   onClick={() => checkinMutation.mutate()}
                   disabled={checkinMutation.isPending}
-                  className="w-full py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-3 transition-all active:scale-[0.98]"
-                  style={{ background: 'rgb(0,210,110)', color: '#0A0A0A' }}
+                  style={{ width: '100%', padding: '18px 0', borderRadius: 16, fontWeight: 900, fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, cursor: checkinMutation.isPending ? 'not-allowed' : 'pointer', transition: 'all 0.15s ease', background: '#BFFF00', color: '#0A0A0A', border: 'none', opacity: checkinMutation.isPending ? 0.7 : 1 }}
                 >
                   {checkinMutation.isPending
-                    ? <><Loader2 className="w-6 h-6 animate-spin" /> Checking in...</>
-                    : <><CheckCircle2 className="w-6 h-6" /> Confirm Check-In</>
+                    ? <><Loader2 style={{ width: 22, height: 22, animation: 'spin 1s linear infinite' }} /> Checking in…</>
+                    : <><CheckCircle2 style={{ width: 22, height: 22 }} /> Confirm Check-In</>
                   }
                 </button>
               </div>
@@ -357,44 +439,28 @@ export default function StrideCheckin() {
 
           {/* ── SUCCESS ── */}
           {state === S.SUCCESS && foundReg && (
-            <div className="rounded-2xl p-6 text-center space-y-4" style={{ background: 'rgba(191,255,0,0.06)', border: '1px solid rgba(191,255,0,0.25)' }}>
-              <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto" style={{ background: 'rgba(191,255,0,0.12)' }}>
-                <CheckCircle2 className="w-10 h-10" style={{ color: '#BFFF00' }} />
-              </div>
-              <div>
-                <p className="text-2xl font-black text-white">Check-In Complete!</p>
-                <p className="text-base font-bold mt-1" style={{ color: '#BFFF00' }}>
-                  {foundReg.first_name} {foundReg.last_name}
-                </p>
-                {foundReg.bib_number && (
-                  <p className="text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.5)' }}>Bib #{foundReg.bib_number}</p>
-                )}
-                {foundEvent && (
-                  <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>{foundEvent.title}</p>
-                )}
-              </div>
-              <div className="py-3 px-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
-                <p className="text-xs" style={{ color: 'rgba(191,255,0,0.7)' }}>🎁 Finisher rewards unlocked in their account</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ borderRadius: 20, padding: 28, textAlign: 'center', background: 'rgba(191,255,0,0.06)', border: '1px solid rgba(191,255,0,0.25)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+                <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(191,255,0,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <CheckCircle2 style={{ width: 40, height: 40, color: '#BFFF00' }} />
+                </div>
+                <div>
+                  <p style={{ fontSize: 24, fontWeight: 900, color: '#fff', margin: 0 }}>Check-In Complete!</p>
+                  <p style={{ fontSize: 17, fontWeight: 800, color: '#BFFF00', margin: '6px 0 0' }}>{foundReg.first_name} {foundReg.last_name}</p>
+                  {foundReg.bib_number && <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', margin: '4px 0 0' }}>Bib #{foundReg.bib_number}</p>}
+                  {foundEvent && <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', margin: '4px 0 0' }}>{foundEvent.title}</p>}
+                </div>
+                <div style={{ width: '100%', padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                  <p style={{ fontSize: 12, color: 'rgba(191,255,0,0.7)', margin: 0 }}>🎁 Finisher rewards unlocked in their account</p>
+                </div>
               </div>
               <button
                 onClick={handleReset}
-                className="w-full py-5 rounded-2xl font-black text-lg transition-all active:scale-[0.98]"
-                style={{ background: '#BFFF00', color: '#0A0A0A' }}
+                style={{ width: '100%', padding: '18px 0', borderRadius: 16, fontWeight: 900, fontSize: 17, background: '#BFFF00', color: '#0A0A0A', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
               >
-                Scan Next Runner
+                <Camera style={{ width: 20, height: 20 }} /> Scan Next Runner
               </button>
             </div>
-          )}
-
-          {/* Reset link for error states */}
-          {[S.NOT_FOUND, S.NOT_CONFIRMED, S.PAYMENT, S.ALREADY].includes(state) && (
-            <button
-              onClick={handleReset}
-              className="w-full text-center text-sm font-semibold py-3"
-              style={{ color: 'rgba(255,255,255,0.35)' }}
-            >
-              Try a different code
-            </button>
           )}
 
         </div>
