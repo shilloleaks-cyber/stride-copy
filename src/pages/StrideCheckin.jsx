@@ -4,31 +4,33 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft, Search, CheckCircle2, XCircle,
-  AlertCircle, Loader2, ShieldOff, CreditCard, Hash, Calendar, Camera, ScanLine, Clock, UserX
+  AlertCircle, Loader2, ShieldOff, CreditCard, Hash, Calendar, Camera, ScanLine, Clock, UserX, ChevronRight
 } from 'lucide-react';
 import { format } from 'date-fns';
 import QRScanner from '@/components/stride/QRScanner';
 
 // ─── State keys ───────────────────────────────────────────────────────────────
 const S = {
-  IDLE:          'idle',
-  SEARCHING:     'searching',
-  READY:         'ready',          // confirmed + payment ok + not yet checked in
-  ALREADY:       'already',        // checked_in === true
-  PAYMENT:       'payment',        // confirmed but payment not approved
-  BLOCKED:       'blocked',        // rejected / cancelled / pending (not confirmed)
-  NOT_FOUND:     'not_found',
-  SUCCESS:       'success',
+  IDLE:      'idle',
+  SEARCHING: 'searching',
+  RESULTS:   'results',    // multiple matches — show list to pick from
+  READY:     'ready',      // confirmed + payment ok + not yet checked in
+  ALREADY:   'already',    // checked_in === true
+  PAYMENT:   'payment',    // confirmed but payment not approved
+  BLOCKED:   'blocked',    // rejected / cancelled / not confirmed
+  NOT_FOUND: 'not_found',
+  SUCCESS:   'success',
 };
 
 // ─── Payment label helper ─────────────────────────────────────────────────────
-function getPayLabel(payment_status) {
-  return {
-    paid:         { label: 'Payment Approved',           color: 'rgb(0,210,110)',       bg: 'rgba(0,210,110,0.12)',   border: 'rgba(0,210,110,0.3)' },
-    not_required: { label: 'No Payment Required',        color: '#BFFF00',              bg: 'rgba(191,255,0,0.12)',   border: 'rgba(191,255,0,0.3)' },
-    pending:      { label: 'Awaiting Payment',           color: 'rgba(255,200,80,1)',   bg: 'rgba(255,200,80,0.12)', border: 'rgba(255,200,80,0.3)' },
-    refunded:     { label: 'Refunded',                   color: 'rgba(255,255,255,0.5)', bg: 'rgba(255,255,255,0.06)', border: 'rgba(255,255,255,0.12)' },
-  }[payment_status] || { label: payment_status || '—', color: 'rgba(255,255,255,0.4)', bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.1)' };
+function getPayLabel(payment_status, hasSlip) {
+  if (payment_status === 'paid')         return { label: 'Payment Approved',          color: 'rgb(0,210,110)',       bg: 'rgba(0,210,110,0.12)',   border: 'rgba(0,210,110,0.3)' };
+  if (payment_status === 'not_required') return { label: 'No Payment Required',       color: '#BFFF00',              bg: 'rgba(191,255,0,0.12)',   border: 'rgba(191,255,0,0.3)' };
+  if (payment_status === 'pending' && hasSlip)
+                                         return { label: 'Awaiting Payment Approval', color: 'rgb(255,140,0)',       bg: 'rgba(255,140,0,0.12)',   border: 'rgba(255,140,0,0.3)' };
+  if (payment_status === 'pending')      return { label: 'Awaiting Payment',          color: 'rgba(255,200,80,1)',   bg: 'rgba(255,200,80,0.12)', border: 'rgba(255,200,80,0.3)' };
+  if (payment_status === 'refunded')     return { label: 'Refunded',                  color: 'rgba(255,255,255,0.5)', bg: 'rgba(255,255,255,0.06)', border: 'rgba(255,255,255,0.12)' };
+  return                                        { label: payment_status || '—',       color: 'rgba(255,255,255,0.4)', bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.1)' };
 }
 
 // ─── Info row ─────────────────────────────────────────────────────────────────
@@ -46,14 +48,82 @@ function InfoRow({ icon: Icon, label, value, valueColor }) {
   );
 }
 
-// ─── Scan/Search controls — always visible ────────────────────────────────────
+// ─── Search score — higher = better match ─────────────────────────────────────
+function scoreReg(reg, q) {
+  const ql = q.toLowerCase();
+  if (reg.bib_number?.toLowerCase() === ql)   return 100;
+  if (reg.user_email?.toLowerCase() === ql)   return 80;
+  const fullName = `${reg.first_name} ${reg.last_name}`.toLowerCase();
+  if (fullName === ql)                         return 60;
+  if (fullName.includes(ql))                  return 40;
+  if (reg.user_email?.toLowerCase().includes(ql)) return 20;
+  return 0;
+}
+
+// ─── Result row card ──────────────────────────────────────────────────────────
+function ResultRow({ reg, catMap, onClick }) {
+  const cat = catMap[reg.category_id];
+  const payInfo = getPayLabel(reg.payment_status, false);
+
+  const statusStyle = {
+    confirmed:  { color: 'rgb(0,210,110)',       bg: 'rgba(0,210,110,0.1)' },
+    pending:    { color: 'rgba(255,200,80,1)',   bg: 'rgba(255,200,80,0.1)' },
+    rejected:   { color: 'rgba(255,100,100,1)', bg: 'rgba(255,80,80,0.1)' },
+    cancelled:  { color: 'rgba(255,100,100,1)', bg: 'rgba(255,80,80,0.1)' },
+  }[reg.status] || { color: 'rgba(255,255,255,0.4)', bg: 'rgba(255,255,255,0.06)' };
+
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        width: '100%', textAlign: 'left', padding: '12px 14px', borderRadius: 14, cursor: 'pointer',
+        background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+        display: 'flex', alignItems: 'center', gap: 12, transition: 'all 0.12s ease',
+      }}
+    >
+      {/* Bib */}
+      <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(191,255,0,0.08)', border: '1px solid rgba(191,255,0,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <span style={{ fontSize: 11, fontWeight: 900, color: reg.bib_number ? '#BFFF00' : 'rgba(255,255,255,0.2)' }}>
+          {reg.bib_number || '—'}
+        </span>
+      </div>
+
+      {/* Main info */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          <p style={{ fontSize: 14, fontWeight: 800, color: '#fff', margin: 0 }}>
+            {reg.first_name} {reg.last_name}
+          </p>
+          {reg.checked_in && (
+            <span style={{ fontSize: 10, fontWeight: 800, padding: '2px 7px', borderRadius: 6, background: 'rgba(191,255,0,0.1)', color: '#BFFF00' }}>✓ In</span>
+          )}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
+          {cat && (
+            <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.45)' }}>{cat.name}</span>
+          )}
+          <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 5, background: statusStyle.bg, color: statusStyle.color, textTransform: 'capitalize' }}>
+            {reg.status}
+          </span>
+          <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 5, background: payInfo.bg, color: payInfo.color }}>
+            {payInfo.label}
+          </span>
+        </div>
+      </div>
+
+      <ChevronRight style={{ width: 16, height: 16, color: 'rgba(255,255,255,0.2)', flexShrink: 0 }} />
+    </button>
+  );
+}
+
+// ─── Scan/Search controls — always visible (except SUCCESS) ──────────────────
 function ScanControls({ state, input, setInput, onSearch, onScanClick, inputRef }) {
   const isSearching = state === S.SEARCHING;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <button
         onClick={onScanClick}
-        style={{ width: '100%', padding: '14px 0', borderRadius: 16, fontWeight: 800, fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer', transition: 'all 0.15s ease', background: '#BFFF00', color: '#0A0A0A', border: 'none' }}
+        style={{ width: '100%', padding: '14px 0', borderRadius: 16, fontWeight: 800, fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer', background: '#BFFF00', color: '#0A0A0A', border: 'none' }}
       >
         <Camera style={{ width: 20, height: 20 }} /> Scan QR with Camera
       </button>
@@ -64,14 +134,17 @@ function ScanControls({ state, input, setInput, onSearch, onScanClick, inputRef 
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && !isSearching && onSearch()}
-          placeholder="QR code or Bib number…"
-          style={{ flex: 1, padding: '12px 16px', borderRadius: 14, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff', fontSize: 14, fontWeight: 600, outline: 'none', letterSpacing: '0.06em' }}
+          placeholder="Bib, name, or email…"
+          autoComplete="off"
+          style={{ flex: 1, padding: '12px 16px', borderRadius: 14, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff', fontSize: 14, fontWeight: 600, outline: 'none' }}
         />
         <button
           onClick={onSearch}
           disabled={isSearching || !input.trim()}
           style={{
-            padding: '12px 18px', borderRadius: 14, fontWeight: 800, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, cursor: isSearching || !input.trim() ? 'not-allowed' : 'pointer', transition: 'all 0.15s ease',
+            padding: '12px 18px', borderRadius: 14, fontWeight: 800, fontSize: 13,
+            display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0,
+            cursor: isSearching || !input.trim() ? 'not-allowed' : 'pointer',
             ...(input.trim() && !isSearching
               ? { background: 'rgba(191,255,0,0.12)', border: '1px solid rgba(191,255,0,0.3)', color: '#BFFF00' }
               : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.25)' }),
@@ -81,7 +154,7 @@ function ScanControls({ state, input, setInput, onSearch, onScanClick, inputRef 
             ? <Loader2 style={{ width: 16, height: 16, animation: 'spin 1s linear infinite' }} />
             : <Search style={{ width: 16, height: 16 }} />
           }
-          {isSearching ? 'Searching…' : 'Find'}
+          {isSearching ? '…' : 'Find'}
         </button>
       </div>
     </div>
@@ -94,12 +167,14 @@ export default function StrideCheckin() {
   const queryClient = useQueryClient();
   const inputRef = useRef(null);
 
-  const [input, setInput]           = useState('');
-  const [state, setState]           = useState(S.IDLE);
-  const [foundReg, setFoundReg]     = useState(null);
-  const [foundEvent, setFoundEvent] = useState(null);
-  const [foundCat, setFoundCat]     = useState(null);
-  const [hasSlip, setHasSlip]       = useState(false);
+  const [input, setInput]             = useState('');
+  const [state, setState]             = useState(S.IDLE);
+  const [results, setResults]         = useState([]);   // list for RESULTS state
+  const [catMap, setCatMap]           = useState({});   // id → category for list
+  const [foundReg, setFoundReg]       = useState(null);
+  const [foundEvent, setFoundEvent]   = useState(null);
+  const [foundCat, setFoundCat]       = useState(null);
+  const [hasSlip, setHasSlip]         = useState(false);
   const [showScanner, setShowScanner] = useState(false);
 
   const { data: user, isLoading: loadingUser } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
@@ -132,7 +207,6 @@ export default function StrideCheckin() {
         scanned_at: now,
         result: 'success',
       });
-      // Unlock rewards (idempotent)
       const existingRewards = await base44.entities.EventRewardUnlock.filter({ registration_id: foundReg.id });
       if (existingRewards.length === 0) {
         await base44.entities.EventRewardUnlock.create({
@@ -157,20 +231,8 @@ export default function StrideCheckin() {
     },
   });
 
-  // ── Lookup ─────────────────────────────────────────────────────────────────
-  const handleSearchWithValue = async (q) => {
-    q = (q || '').trim();
-    if (!q) return;
-    setState(S.SEARCHING);
-    setFoundReg(null); setFoundEvent(null); setFoundCat(null); setHasSlip(false);
-
-    let regs = await base44.entities.EventRegistration.filter({ qr_code: q });
-    if (!regs.length) regs = await base44.entities.EventRegistration.filter({ bib_number: q.toUpperCase() });
-
-    if (!regs.length) { setState(S.NOT_FOUND); return; }
-
-    const reg = regs[0];
-
+  // ── Resolve a single registration into the correct result state ────────────
+  const resolveReg = async (reg) => {
     const [evs, cats, payments] = await Promise.all([
       base44.entities.StrideEvent.filter({ id: reg.event_id }),
       reg.category_id && reg.category_id !== 'rsvp'
@@ -184,9 +246,9 @@ export default function StrideCheckin() {
     setFoundReg(reg);
     setFoundEvent(evs[0] || null);
     setFoundCat(cats[0] || null);
-    setHasSlip(payments.length > 0 && !!payments[0]?.slip_image_url);
+    const slip = payments.length > 0 && !!payments[0]?.slip_image_url;
+    setHasSlip(slip);
 
-    // Determine result state
     if (reg.checked_in) {
       await base44.entities.EventCheckinLog.create({
         event_id: reg.event_id, registration_id: reg.id, user_email: reg.user_email,
@@ -196,17 +258,67 @@ export default function StrideCheckin() {
       setState(S.ALREADY);
       return;
     }
-    if (reg.status === 'rejected' || reg.status === 'cancelled') { setState(S.BLOCKED); return; }
-    if (reg.status !== 'confirmed') { setState(S.BLOCKED); return; }
-    if (reg.payment_status !== 'paid' && reg.payment_status !== 'not_required') { setState(S.PAYMENT); return; }
+    if (reg.status === 'rejected' || reg.status === 'cancelled' || reg.status !== 'confirmed') {
+      setState(S.BLOCKED); return;
+    }
+    if (reg.payment_status !== 'paid' && reg.payment_status !== 'not_required') {
+      setState(S.PAYMENT); return;
+    }
     setState(S.READY);
   };
 
-  const handleSearch   = ()  => handleSearchWithValue(input);
-  const handleQRScan   = (v) => { setShowScanner(false); setInput(v); handleSearchWithValue(v); };
-  const handleReset    = ()  => {
+  // ── Main search — QR exact → bib exact → multi-field fuzzy ────────────────
+  const handleSearchWithValue = async (q) => {
+    q = (q || '').trim();
+    if (!q) return;
+    setState(S.SEARCHING);
+    setFoundReg(null); setFoundEvent(null); setFoundCat(null);
+    setHasSlip(false); setResults([]);
+
+    // 1. QR code exact
+    let regs = await base44.entities.EventRegistration.filter({ qr_code: q });
+
+    // 2. Bib exact
+    if (!regs.length) regs = await base44.entities.EventRegistration.filter({ bib_number: q.toUpperCase() });
+
+    // 3. Broad fetch + client-side filter by name / email
+    if (!regs.length) {
+      const all = await base44.entities.EventRegistration.list('-created_date', 500);
+      const ql = q.toLowerCase();
+      regs = all.filter(r =>
+        `${r.first_name} ${r.last_name}`.toLowerCase().includes(ql) ||
+        r.user_email?.toLowerCase().includes(ql)
+      );
+    }
+
+    if (!regs.length) { setState(S.NOT_FOUND); return; }
+
+    // If single exact result, go straight to resolve
+    if (regs.length === 1) {
+      await resolveReg(regs[0]);
+      return;
+    }
+
+    // Sort by score descending
+    const sorted = [...regs].sort((a, b) => scoreReg(b, q) - scoreReg(a, q));
+
+    // Build a catMap for the result rows
+    const catIds = [...new Set(sorted.map(r => r.category_id).filter(Boolean))];
+    const cats = await Promise.all(catIds.map(id => base44.entities.EventCategory.filter({ id })));
+    const newCatMap = {};
+    cats.flat().forEach(c => { newCatMap[c.id] = c; });
+
+    setResults(sorted);
+    setCatMap(newCatMap);
+    setState(S.RESULTS);
+  };
+
+  const handleSearch = ()  => handleSearchWithValue(input);
+  const handleQRScan = (v) => { setShowScanner(false); setInput(v); handleSearchWithValue(v); };
+  const handleReset  = ()  => {
     setInput(''); setState(S.IDLE);
     setFoundReg(null); setFoundEvent(null); setFoundCat(null);
+    setResults([]);
     setTimeout(() => inputRef.current?.focus(), 100);
   };
 
@@ -216,11 +328,7 @@ export default function StrideCheckin() {
     </div>
   );
 
-  const payInfo = foundReg ? getPayLabel(foundReg.payment_status) : null;
-  // Override pending label if slip detected
-  const payLabelDisplay = (payInfo && foundReg?.payment_status === 'pending' && hasSlip)
-    ? { ...payInfo, label: 'Awaiting Payment Approval', color: 'rgb(255,140,0)', bg: 'rgba(255,140,0,0.12)', border: 'rgba(255,140,0,0.3)' }
-    : payInfo;
+  const payLabelDisplay = foundReg ? getPayLabel(foundReg.payment_status, hasSlip) : null;
 
   return (
     <div className="min-h-screen text-white pb-28" style={{ backgroundColor: '#0A0A0A' }}>
@@ -236,10 +344,7 @@ export default function StrideCheckin() {
           <h1 style={{ fontSize: 20, fontWeight: 800, color: '#fff', margin: 0 }}>Check-In Scanner</h1>
         </div>
         {state !== S.IDLE && state !== S.SUCCESS && (
-          <button
-            onClick={handleReset}
-            style={{ padding: '6px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.55)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
-          >
+          <button onClick={handleReset} style={{ padding: '6px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.55)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
             Clear
           </button>
         )}
@@ -258,7 +363,7 @@ export default function StrideCheckin() {
       {hasAccess && (
         <div style={{ padding: '20px 20px 0', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-          {/* ── Always-visible scan / search controls (hidden only on SUCCESS) ── */}
+          {/* Always-visible scan/search controls */}
           {state !== S.SUCCESS && (
             <ScanControls
               state={state}
@@ -270,15 +375,11 @@ export default function StrideCheckin() {
             />
           )}
 
-          {/* ─────────────────────────────────────────────────────────────────── */}
-          {/* RESULT STATES                                                        */}
-          {/* ─────────────────────────────────────────────────────────────────── */}
-
           {/* ── IDLE ── */}
           {state === S.IDLE && (
             <div style={{ textAlign: 'center', padding: '32px 16px', borderRadius: 20, background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.08)' }}>
               <ScanLine style={{ width: 40, height: 40, color: 'rgba(255,255,255,0.12)', margin: '0 auto 12px' }} />
-              <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.3)', margin: 0 }}>Scan a QR code or enter a bib number to look up a participant</p>
+              <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.3)', margin: 0 }}>Scan a QR code or search by bib, name, or email</p>
             </div>
           )}
 
@@ -290,12 +391,32 @@ export default function StrideCheckin() {
               </div>
               <div>
                 <p style={{ fontSize: 16, fontWeight: 800, color: '#fff', margin: '0 0 4px' }}>No Participant Found</p>
-                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: 1.6 }}>No registration matches this QR code or bib number. Double-check and try again.</p>
+                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: 1.6 }}>No registration matches this bib, name, or email. Double-check and try again.</p>
               </div>
             </div>
           )}
 
-          {/* ── BLOCKED (rejected / cancelled / pending) ── */}
+          {/* ── RESULTS LIST ── */}
+          {state === S.RESULTS && results.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
+                {results.length} result{results.length !== 1 ? 's' : ''} — tap to select
+              </p>
+              {results.map(reg => (
+                <ResultRow
+                  key={reg.id}
+                  reg={reg}
+                  catMap={catMap}
+                  onClick={async () => {
+                    setState(S.SEARCHING);
+                    await resolveReg(reg);
+                  }}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* ── BLOCKED ── */}
           {state === S.BLOCKED && foundReg && (
             <div style={{ borderRadius: 20, overflow: 'hidden', border: '1px solid rgba(255,80,80,0.3)', background: 'rgba(255,60,60,0.06)' }}>
               <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -303,13 +424,13 @@ export default function StrideCheckin() {
                 <div>
                   <p style={{ fontSize: 16, fontWeight: 800, color: '#fff', margin: 0 }}>Registration Not Eligible</p>
                   <p style={{ fontSize: 12, color: 'rgba(255,100,100,0.7)', margin: '3px 0 0' }}>
-                    Status: <span style={{ fontWeight: 800, textTransform: 'capitalize' }}>{foundReg.status}</span> — This registration is not eligible for check-in.
+                    Status: <span style={{ fontWeight: 800, textTransform: 'capitalize' }}>{foundReg.status}</span> — not eligible for check-in.
                   </p>
                 </div>
               </div>
               <div style={{ padding: '8px 20px 16px' }}>
-                <InfoRow icon={Hash} label="Name"       value={`${foundReg.first_name} ${foundReg.last_name}`} />
-                <InfoRow icon={Hash} label="Bib Number" value={foundReg.bib_number} valueColor="rgba(255,255,255,0.5)" />
+                <InfoRow icon={Hash}     label="Name"       value={`${foundReg.first_name} ${foundReg.last_name}`} />
+                <InfoRow icon={Hash}     label="Bib Number" value={foundReg.bib_number} valueColor="rgba(255,255,255,0.5)" />
                 {foundEvent && <InfoRow icon={Calendar} label="Event" value={foundEvent.title} />}
               </div>
             </div>
@@ -321,28 +442,22 @@ export default function StrideCheckin() {
               <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 12 }}>
                 <CreditCard style={{ width: 22, height: 22, color: 'rgba(255,200,80,1)', flexShrink: 0 }} />
                 <div>
-                  <p style={{ fontSize: 16, fontWeight: 800, color: '#fff', margin: 0 }}>
-                    {hasSlip ? 'Awaiting Payment Approval' : 'Awaiting Payment'}
-                  </p>
-                  <p style={{ fontSize: 12, color: 'rgba(255,200,80,0.7)', margin: '3px 0 0' }}>
-                    Payment must be approved before check-in.
-                  </p>
+                  <p style={{ fontSize: 16, fontWeight: 800, color: '#fff', margin: 0 }}>{payLabelDisplay?.label}</p>
+                  <p style={{ fontSize: 12, color: 'rgba(255,200,80,0.7)', margin: '3px 0 0' }}>Payment must be approved before check-in.</p>
                 </div>
               </div>
               <div style={{ padding: '8px 20px 16px' }}>
                 <InfoRow icon={Hash}     label="Name"       value={`${foundReg.first_name} ${foundReg.last_name}`} />
                 <InfoRow icon={Hash}     label="Bib Number" value={foundReg.bib_number} valueColor="#BFFF00" />
-                {foundEvent && <InfoRow icon={Calendar} label="Event" value={foundEvent.title} />}
-                {foundCat  && <InfoRow icon={ScanLine} label="Category" value={foundCat.name} />}
+                {foundEvent && <InfoRow icon={Calendar} label="Event"    value={foundEvent.title} />}
+                {foundCat  && <InfoRow icon={ScanLine}  label="Category" value={foundCat.name} />}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0' }}>
                   <div style={{ width: 32, height: 32, borderRadius: 10, background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <CreditCard style={{ width: 15, height: 15, color: 'rgba(255,255,255,0.35)' }} />
                   </div>
                   <div>
                     <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>Payment</p>
-                    <span style={{ fontSize: 12, fontWeight: 800, padding: '3px 10px', borderRadius: 6, background: payLabelDisplay?.bg, color: payLabelDisplay?.color, marginTop: 3, display: 'inline-block' }}>
-                      {payLabelDisplay?.label}
-                    </span>
+                    <span style={{ fontSize: 12, fontWeight: 800, padding: '3px 10px', borderRadius: 6, background: payLabelDisplay?.bg, color: payLabelDisplay?.color, marginTop: 3, display: 'inline-block' }}>{payLabelDisplay?.label}</span>
                   </div>
                 </div>
               </div>
@@ -367,8 +482,8 @@ export default function StrideCheckin() {
               <div style={{ padding: '8px 20px 4px' }}>
                 <InfoRow icon={Hash}     label="Name"       value={`${foundReg.first_name} ${foundReg.last_name}`} />
                 <InfoRow icon={Hash}     label="Bib Number" value={foundReg.bib_number} valueColor="rgba(255,255,255,0.5)" />
-                {foundEvent && <InfoRow icon={Calendar} label="Event" value={foundEvent.title} />}
-                {foundCat  && <InfoRow icon={ScanLine} label="Category" value={foundCat.name} />}
+                {foundEvent && <InfoRow icon={Calendar} label="Event"    value={foundEvent.title} />}
+                {foundCat  && <InfoRow icon={ScanLine}  label="Category" value={foundCat.name} />}
                 {foundReg.checked_in_by && <InfoRow icon={Hash} label="Checked In By" value={foundReg.checked_in_by} />}
               </div>
               <div style={{ padding: '8px 20px 16px' }}>
@@ -382,51 +497,38 @@ export default function StrideCheckin() {
           {/* ── READY TO CHECK IN ── */}
           {state === S.READY && foundReg && (
             <div style={{ borderRadius: 20, overflow: 'hidden', border: '1px solid rgba(0,210,110,0.3)', background: 'rgba(0,210,110,0.04)' }}>
-              {/* Runner header */}
               <div style={{ padding: '18px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)', background: 'rgba(0,210,110,0.06)' }}>
                 <p style={{ fontSize: 22, fontWeight: 900, color: '#fff', margin: 0 }}>{foundReg.first_name} {foundReg.last_name}</p>
                 <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', margin: '4px 0 0' }}>{foundReg.user_email}</p>
               </div>
-
-              {/* Details */}
               <div style={{ padding: '4px 20px 8px' }}>
-                {foundEvent && <InfoRow icon={Calendar} label="Event"       value={foundEvent.title} />}
-                {foundCat  && <InfoRow icon={ScanLine}  label="Category"    value={foundCat.name} />}
+                {foundEvent && <InfoRow icon={Calendar} label="Event"      value={foundEvent.title} />}
+                {foundCat  && <InfoRow icon={ScanLine}  label="Category"   value={foundCat.name} />}
                 <InfoRow icon={Hash} label="Bib Number" value={foundReg.bib_number || 'Pending'} valueColor={foundReg.bib_number ? '#BFFF00' : undefined} />
-
-                {/* Payment badge */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                   <div style={{ width: 32, height: 32, borderRadius: 10, background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <CreditCard style={{ width: 15, height: 15, color: 'rgba(255,255,255,0.35)' }} />
                   </div>
                   <div>
                     <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>Payment</p>
-                    <span style={{ fontSize: 12, fontWeight: 800, padding: '3px 10px', borderRadius: 6, background: payLabelDisplay?.bg, color: payLabelDisplay?.color, marginTop: 3, display: 'inline-block' }}>
-                      {payLabelDisplay?.label}
-                    </span>
+                    <span style={{ fontSize: 12, fontWeight: 800, padding: '3px 10px', borderRadius: 6, background: payLabelDisplay?.bg, color: payLabelDisplay?.color, marginTop: 3, display: 'inline-block' }}>{payLabelDisplay?.label}</span>
                   </div>
                 </div>
-
-                {/* Status badge */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0' }}>
                   <div style={{ width: 32, height: 32, borderRadius: 10, background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <CheckCircle2 style={{ width: 15, height: 15, color: 'rgba(255,255,255,0.35)' }} />
                   </div>
                   <div>
                     <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>Registration</p>
-                    <span style={{ fontSize: 12, fontWeight: 800, padding: '3px 10px', borderRadius: 6, background: 'rgba(0,210,110,0.12)', color: 'rgb(0,210,110)', marginTop: 3, display: 'inline-block' }}>
-                      Confirmed
-                    </span>
+                    <span style={{ fontSize: 12, fontWeight: 800, padding: '3px 10px', borderRadius: 6, background: 'rgba(0,210,110,0.12)', color: 'rgb(0,210,110)', marginTop: 3, display: 'inline-block' }}>Confirmed</span>
                   </div>
                 </div>
               </div>
-
-              {/* CTA */}
               <div style={{ padding: '4px 20px 20px' }}>
                 <button
                   onClick={() => checkinMutation.mutate()}
                   disabled={checkinMutation.isPending}
-                  style={{ width: '100%', padding: '18px 0', borderRadius: 16, fontWeight: 900, fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, cursor: checkinMutation.isPending ? 'not-allowed' : 'pointer', transition: 'all 0.15s ease', background: '#BFFF00', color: '#0A0A0A', border: 'none', opacity: checkinMutation.isPending ? 0.7 : 1 }}
+                  style={{ width: '100%', padding: '18px 0', borderRadius: 16, fontWeight: 900, fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, cursor: checkinMutation.isPending ? 'not-allowed' : 'pointer', background: '#BFFF00', color: '#0A0A0A', border: 'none', opacity: checkinMutation.isPending ? 0.7 : 1 }}
                 >
                   {checkinMutation.isPending
                     ? <><Loader2 style={{ width: 22, height: 22, animation: 'spin 1s linear infinite' }} /> Checking in…</>
@@ -466,12 +568,8 @@ export default function StrideCheckin() {
         </div>
       )}
 
-      {/* QR Camera Scanner overlay */}
       {showScanner && (
-        <QRScanner
-          onScan={handleQRScan}
-          onClose={() => setShowScanner(false)}
-        />
+        <QRScanner onScan={handleQRScan} onClose={() => setShowScanner(false)} />
       )}
     </div>
   );
