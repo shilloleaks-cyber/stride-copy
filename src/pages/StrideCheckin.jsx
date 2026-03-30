@@ -27,10 +27,10 @@ function InfoRow({ icon: Icon, label, value, valueColor }) {
 
 function PaymentBadge({ status }) {
   const map = {
-    approved: { label: 'Payment Approved', color: 'rgb(0,210,110)', bg: 'rgba(0,210,110,0.1)', border: 'rgba(0,210,110,0.25)' },
-    not_required: { label: 'Free Entry', color: '#BFFF00', bg: 'rgba(191,255,0,0.1)', border: 'rgba(191,255,0,0.2)' },
-    pending: { label: 'Payment Pending', color: 'rgba(255,200,80,1)', bg: 'rgba(255,200,80,0.1)', border: 'rgba(255,200,80,0.25)' },
-    rejected: { label: 'Payment Rejected', color: 'rgba(255,80,80,1)', bg: 'rgba(255,80,80,0.1)', border: 'rgba(255,80,80,0.25)' },
+    paid:         { label: 'Payment Approved',    color: 'rgb(0,210,110)',      bg: 'rgba(0,210,110,0.1)',  border: 'rgba(0,210,110,0.25)' },
+    not_required: { label: 'No Payment Required', color: '#BFFF00',             bg: 'rgba(191,255,0,0.1)', border: 'rgba(191,255,0,0.2)' },
+    pending:      { label: 'Awaiting Payment',    color: 'rgba(255,200,80,1)',  bg: 'rgba(255,200,80,0.1)', border: 'rgba(255,200,80,0.25)' },
+    refunded:     { label: 'Refunded',            color: 'rgba(255,255,255,0.5)', bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.1)' },
   };
   const s = map[status] || { label: status || 'Unknown', color: 'rgba(255,255,255,0.5)', bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.1)' };
   return (
@@ -157,7 +157,7 @@ export default function StrideCheckin() {
       return;
     }
     if (reg.status !== 'confirmed') { setState(S.NOT_CONFIRMED); return; }
-    if (reg.payment_status !== 'approved' && reg.payment_status !== 'not_required') { setState(S.PAYMENT); return; }
+    if (reg.payment_status !== 'paid' && reg.payment_status !== 'not_required') { setState(S.PAYMENT); return; }
     setState(S.FOUND);
   };
 
