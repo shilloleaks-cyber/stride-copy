@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { ArrowLeft, Loader2 } from 'lucide-react';
-import QRModal from '@/components/stride/QRModal';
 import RaceTicket from '@/components/stride/RaceTicket.jsx';
 import RSVPCard from '@/components/stride/RSVPCard.jsx';
+import TicketDetail from '@/components/stride/TicketDetail.jsx';
 
 export default function StrideMyEvents() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [qrReg, setQrReg] = useState(null);
+  const [selectedReg, setSelectedReg] = useState(null);
 
   const { data: user } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
 
@@ -49,10 +49,17 @@ export default function StrideMyEvents() {
     },
   });
 
-  const qrEvent = qrReg ? eventMap[qrReg.event_id] : null;
-  const qrCat = qrReg ? catMap[qrReg.category_id] : null;
-
   const isEmpty = !isLoading && officialRegs.length === 0 && rsvpRegs.length === 0;
+
+  // Open the correct ticket if reg_id is in the URL (from StrideEventDetail "View My Ticket")
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const regId = params.get('reg_id');
+    if (regId && regs.length > 0) {
+      const found = regs.find(r => r.id === regId);
+      if (found) setSelectedReg(found);
+    }
+  }, [regs]);
 
   return (
     <div className="min-h-screen text-white pb-28" style={{ backgroundColor: '#0A0A0A' }}>
@@ -91,13 +98,19 @@ export default function StrideMyEvents() {
             </p>
             <div className="space-y-4">
               {officialRegs.map(reg => (
-                <RaceTicket
+                <button
                   key={reg.id}
-                  reg={reg}
-                  event={eventMap[reg.event_id]}
-                  category={catMap[reg.category_id]}
-                  onShowQR={setQrReg}
-                />
+                  onClick={() => setSelectedReg(reg)}
+                  className="w-full text-left"
+                  style={{ WebkitTapHighlightColor: 'transparent' }}
+                >
+                  <RaceTicket
+                    reg={reg}
+                    event={eventMap[reg.event_id]}
+                    category={catMap[reg.category_id]}
+                    onShowQR={() => setSelectedReg(reg)}
+                  />
+                </button>
               ))}
             </div>
           </div>
@@ -124,12 +137,12 @@ export default function StrideMyEvents() {
         )}
       </div>
 
-      {qrReg && (
-        <QRModal
-          registration={qrReg}
-          event={qrEvent}
-          category={qrCat}
-          onClose={() => setQrReg(null)}
+      {selectedReg && (
+        <TicketDetail
+          reg={selectedReg}
+          event={eventMap[selectedReg.event_id]}
+          category={catMap[selectedReg.category_id]}
+          onClose={() => setSelectedReg(null)}
         />
       )}
     </div>
