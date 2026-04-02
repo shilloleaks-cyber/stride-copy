@@ -97,13 +97,16 @@ export default function EventCard({ event, isRegistered, onClick }) {
               </span>
             </div>
           )}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-            <Users style={{ width: 13, height: 13, color: 'rgba(255,255,255,0.3)', flexShrink: 0 }} />
-            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>
-              {event.total_registered || 0} registered
-              {event.max_participants > 0 ? ` · max ${event.max_participants}` : ''}
-            </span>
-          </div>
+          {(event.total_registered > 0 || event.max_participants > 0) && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+              <Users style={{ width: 13, height: 13, color: 'rgba(191,255,0,0.5)', flexShrink: 0 }} />
+              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', fontWeight: 500 }}>
+                {event.total_registered > 0 ? `${event.total_registered} registered` : ''}
+                {event.max_participants > 0 && event.total_registered > 0 ? ' · ' : ''}
+                {event.max_participants > 0 ? `${Math.max(0, event.max_participants - (event.total_registered || 0))} spots left` : ''}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 

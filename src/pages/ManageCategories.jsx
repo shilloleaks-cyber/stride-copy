@@ -506,8 +506,16 @@ export default function ManageCategories() {
 
         {/* Active categories */}
         {activeCategories.map(cat => {
-          const regCount = registrations.filter(r => r.category_id === cat.id).length;
+          const registered = cat.registered_count || 0;
+          const hasLimit = cat.max_slots > 0;
+          const isFull = hasLimit && registered >= cat.max_slots;
+          const nearlyFull = hasLimit && !isFull && (registered / cat.max_slots) >= 0.8;
           const isEditingThis = editingCat?.id === cat.id;
+
+          let occupancyColor = 'rgba(191,255,0,0.85)';
+          if (isFull) occupancyColor = 'rgba(255,80,80,0.9)';
+          else if (nearlyFull) occupancyColor = 'rgba(255,180,0,0.9)';
+
           return (
             <div key={cat.id} style={{
               background: isEditingThis ? 'rgba(138,43,226,0.06)' : 'rgba(255,255,255,0.04)',
@@ -519,7 +527,15 @@ export default function ManageCategories() {
             }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
                 <div style={{ flex: 1 }}>
-                  <p style={{ fontSize: 15, fontWeight: 800, color: '#fff', margin: 0 }}>{cat.name}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <p style={{ fontSize: 15, fontWeight: 800, color: '#fff', margin: 0 }}>{cat.name}</p>
+                    {isFull && (
+                      <span style={{ fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 5, background: 'rgba(255,80,80,0.12)', color: 'rgba(255,100,100,1)', border: '1px solid rgba(255,80,80,0.25)' }}>FULL</span>
+                    )}
+                    {nearlyFull && (
+                      <span style={{ fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 5, background: 'rgba(255,180,0,0.1)', color: 'rgba(255,180,0,0.9)', border: '1px solid rgba(255,180,0,0.25)' }}>NEARLY FULL</span>
+                    )}
+                  </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 8 }}>
                     {cat.distance_km != null && (
                       <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>📍 {cat.distance_km} km</span>
@@ -527,18 +543,25 @@ export default function ManageCategories() {
                     <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
                       💰 {cat.price === 0 ? 'Free' : `฿${cat.price?.toLocaleString()}`}
                     </span>
-                    <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
-                      👥 {cat.max_slots > 0 ? `${cat.registered_count || 0}/${cat.max_slots} slots` : 'Unlimited'}
+                    {/* Occupancy — uses backend-synced registered_count */}
+                    <span style={{ fontSize: 12, fontWeight: 700, color: occupancyColor }}>
+                      👥 {hasLimit ? `${registered} / ${cat.max_slots} registered` : `${registered} registered · Unlimited`}
                     </span>
                     {cat.bib_prefix && (
                       <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>🎫 Bib: {cat.bib_prefix}{cat.bib_start}</span>
                     )}
-                    {regCount > 0 && (
-                      <span style={{ fontSize: 12, color: 'rgba(255,180,0,0.85)', fontWeight: 700 }}>
-                        ⚡ {regCount} reg{regCount !== 1 ? 's' : ''}
-                      </span>
-                    )}
                   </div>
+                  {/* Slot progress bar */}
+                  {hasLimit && (
+                    <div style={{ marginTop: 10, height: 4, borderRadius: 99, background: 'rgba(255,255,255,0.07)', overflow: 'hidden' }}>
+                      <div style={{
+                        height: '100%',
+                        width: `${Math.min(100, (registered / cat.max_slots) * 100)}%`,
+                        borderRadius: 99,
+                        background: isFull ? 'rgba(255,80,80,0.7)' : nearlyFull ? 'rgba(255,180,0,0.8)' : (cat.color || '#BFFF00'),
+                      }} />
+                    </div>
+                  )}
                   {cat.shirt_sizes?.length > 0 && (
                     <div style={{ display: 'flex', gap: 5, marginTop: 8, flexWrap: 'wrap' }}>
                       {cat.shirt_sizes.map(s => (

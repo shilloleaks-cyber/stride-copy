@@ -156,6 +156,19 @@ export default function StrideEventDetail() {
               </div>
             </div>
           )}
+          {/* Total registered — from backend-synced counter */}
+          {event.event_type !== 'community' && (event.total_registered > 0 || event.max_participants > 0) && (
+            <div className="flex items-center gap-3">
+              <Users className="w-5 h-5 flex-shrink-0" style={{ color: 'rgba(191,255,0,0.6)' }} />
+              <div>
+                <p className="text-xs mb-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Registered</p>
+                <p className="text-white font-semibold">
+                  {event.total_registered || 0} registered
+                  {event.max_participants > 0 && ` · ${Math.max(0, event.max_participants - (event.total_registered || 0))} spots left`}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* User-facing: published but no categories yet */}
@@ -225,8 +238,27 @@ export default function StrideEventDetail() {
             <div className="space-y-3">
               {categories.map((cat, idx) => {
                 const color = cat.color || CAT_COLORS[idx % CAT_COLORS.length];
-                const isFull = cat.max_slots > 0 && cat.registered_count >= cat.max_slots;
+                const registered = cat.registered_count || 0;
+                const hasLimit = cat.max_slots > 0;
+                const isFull = hasLimit && registered >= cat.max_slots;
+                const nearlyFull = hasLimit && !isFull && (registered / cat.max_slots) >= 0.8;
+                const spotsLeft = hasLimit ? Math.max(0, cat.max_slots - registered) : null;
                 const isSelected = selectedCategory?.id === cat.id;
+
+                // Slot availability label
+                let slotLabel = null;
+                let slotColor = 'rgba(255,255,255,0.35)';
+                if (isFull) {
+                  slotLabel = 'Full';
+                  slotColor = 'rgba(255,80,80,0.85)';
+                } else if (hasLimit) {
+                  slotLabel = `${registered} / ${cat.max_slots}`;
+                  slotColor = nearlyFull ? 'rgba(255,180,0,0.9)' : 'rgba(255,255,255,0.4)';
+                } else {
+                  slotLabel = registered > 0 ? `${registered} joined` : null;
+                  slotColor = 'rgba(255,255,255,0.35)';
+                }
+
                 return (
                   <button
                     key={cat.id}
@@ -234,30 +266,50 @@ export default function StrideEventDetail() {
                     disabled={alreadyRegistered || !isOpen || isFull}
                     className="w-full text-left rounded-2xl p-4 transition-all"
                     style={{
-                      background: isSelected ? `${color}15` : 'rgba(255,255,255,0.04)',
-                      border: `1px solid ${isSelected ? color + '50' : 'rgba(255,255,255,0.08)'}`,
+                      background: isFull ? 'rgba(255,255,255,0.02)' : isSelected ? `${color}15` : 'rgba(255,255,255,0.04)',
+                      border: `1px solid ${isFull ? 'rgba(255,80,80,0.15)' : isSelected ? color + '50' : 'rgba(255,255,255,0.08)'}`,
+                      opacity: isFull ? 0.7 : 1,
                     }}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm" style={{ background: color + '20', color }}>
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm" style={{ background: isFull ? 'rgba(255,255,255,0.05)' : color + '20', color: isFull ? 'rgba(255,255,255,0.3)' : color }}>
                           {cat.distance_km ? `${cat.distance_km}K` : cat.name.slice(0, 2)}
                         </div>
                         <div>
-                          <p className="font-bold text-white">{cat.name}</p>
-                          {cat.distance_km && <p className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>{cat.distance_km} km</p>}
+                          <p className="font-bold" style={{ color: isFull ? 'rgba(255,255,255,0.5)' : '#fff' }}>{cat.name}</p>
+                          {cat.distance_km && <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>{cat.distance_km} km</p>}
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-black text-base" style={{ color }}>{cat.price === 0 ? 'Free' : `฿${cat.price}`}</p>
-                        {cat.max_slots > 0 && (
-                          <p className="text-xs mt-0.5" style={{ color: isFull ? 'rgba(255,80,80,0.8)' : 'rgba(255,255,255,0.35)' }}>
-                            {isFull ? 'Full' : `${cat.registered_count}/${cat.max_slots} slots`}
-                          </p>
+                      <div className="text-right flex flex-col items-end gap-1">
+                        {isFull ? (
+                          <span style={{ fontSize: 11, fontWeight: 800, padding: '3px 8px', borderRadius: 6, background: 'rgba(255,80,80,0.12)', color: 'rgba(255,100,100,1)', border: '1px solid rgba(255,80,80,0.25)' }}>
+                            Full
+                          </span>
+                        ) : (
+                          <p className="font-black text-base" style={{ color }}>{cat.price === 0 ? 'Free' : `฿${cat.price}`}</p>
+                        )}
+                        {slotLabel && (
+                          <p className="text-xs" style={{ color: slotColor }}>{slotLabel}</p>
+                        )}
+                        {!isFull && hasLimit && spotsLeft <= 10 && spotsLeft > 0 && (
+                          <p className="text-xs font-bold" style={{ color: 'rgba(255,180,0,0.9)' }}>{spotsLeft} left!</p>
                         )}
                       </div>
                     </div>
                     {cat.description && <p className="text-xs mt-2" style={{ color: 'rgba(255,255,255,0.4)' }}>{cat.description}</p>}
+                    {/* Progress bar for limited slots */}
+                    {hasLimit && (
+                      <div style={{ marginTop: 10, height: 3, borderRadius: 99, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+                        <div style={{
+                          height: '100%',
+                          width: `${Math.min(100, (registered / cat.max_slots) * 100)}%`,
+                          borderRadius: 99,
+                          background: isFull ? 'rgba(255,80,80,0.7)' : nearlyFull ? 'rgba(255,180,0,0.8)' : color,
+                          transition: 'width 0.4s ease',
+                        }} />
+                      </div>
+                    )}
                   </button>
                 );
               })}

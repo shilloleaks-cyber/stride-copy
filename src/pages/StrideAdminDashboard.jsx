@@ -239,41 +239,68 @@ export default function StrideAdminDashboard() {
             Select an event to manage its race categories
           </p>
           {events.filter(e => e.event_type === 'official').sort((a, b) => {
-            // drafts first
             if (a.status === 'draft' && b.status !== 'draft') return -1;
             if (a.status !== 'draft' && b.status === 'draft') return 1;
             return 0;
           }).map(ev => {
-            const evCats = allCategories.filter(c => c.event_id === ev.id);
+            const evCats = allCategories.filter(c => c.event_id === ev.id && c.is_active !== false);
+            const totalReg = ev.total_registered || 0;
             return (
               <button
                 key={ev.id}
                 onClick={() => navigate(`/ManageCategories?event_id=${ev.id}`)}
-                className="w-full text-left rounded-2xl p-4 flex items-center gap-3"
+                className="w-full text-left rounded-2xl p-4"
                 style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}
               >
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="flex items-center gap-2">
-                    <p className="font-bold text-white text-sm truncate">{ev.title}</p>
-                    {ev.status === 'draft' && (
-                      <span style={{ fontSize: 9, fontWeight: 800, padding: '2px 6px', borderRadius: 5, background: 'rgba(255,180,0,0.12)', color: 'rgba(255,180,0,0.9)', border: '1px solid rgba(255,180,0,0.25)', flexShrink: 0 }}>DRAFT</span>
+                <div className="flex items-start gap-3">
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-bold text-white text-sm truncate">{ev.title}</p>
+                      {ev.status === 'draft' && (
+                        <span style={{ fontSize: 9, fontWeight: 800, padding: '2px 6px', borderRadius: 5, background: 'rgba(255,180,0,0.12)', color: 'rgba(255,180,0,0.9)', border: '1px solid rgba(255,180,0,0.25)', flexShrink: 0 }}>DRAFT</span>
+                      )}
+                    </div>
+                    <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                      {evCats.length === 0
+                        ? '⚠️ No categories — registration hidden'
+                        : `${evCats.length} ${evCats.length === 1 ? 'category' : 'categories'}`}
+                    </p>
+                    {/* Per-category occupancy pills */}
+                    {evCats.length > 0 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 8 }}>
+                        {evCats.map(cat => {
+                          const reg = cat.registered_count || 0;
+                          const hasLimit = cat.max_slots > 0;
+                          const full = hasLimit && reg >= cat.max_slots;
+                          const nearly = hasLimit && !full && (reg / cat.max_slots) >= 0.8;
+                          let bg = 'rgba(191,255,0,0.08)', color = '#BFFF00', border = 'rgba(191,255,0,0.2)';
+                          if (full) { bg = 'rgba(255,80,80,0.1)'; color = 'rgba(255,100,100,1)'; border = 'rgba(255,80,80,0.25)'; }
+                          else if (nearly) { bg = 'rgba(255,180,0,0.1)'; color = 'rgba(255,180,0,0.9)'; border = 'rgba(255,180,0,0.25)'; }
+                          return (
+                            <span key={cat.id} style={{ fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 6, background: bg, color, border: `1px solid ${border}` }}>
+                              {cat.name}: {hasLimit ? `${reg}/${cat.max_slots}` : `${reg} / ∞`}
+                              {full ? ' · FULL' : ''}
+                            </span>
+                          );
+                        })}
+                      </div>
                     )}
                   </div>
-                  <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                    {evCats.length === 0
-                      ? '⚠️ No categories — registration hidden'
-                      : `${evCats.length} ${evCats.length === 1 ? 'category' : 'categories'}`}
-                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
+                    <span style={{
+                      fontSize: 11, fontWeight: 700, padding: '5px 11px', borderRadius: 9,
+                      ...(evCats.length === 0
+                        ? { background: 'rgba(255,180,0,0.1)', border: '1px solid rgba(255,180,0,0.25)', color: 'rgba(255,180,0,0.9)' }
+                        : { background: 'rgba(191,255,0,0.08)', border: '1px solid rgba(191,255,0,0.2)', color: '#BFFF00' }
+                      ),
+                    }}>
+                      {evCats.length === 0 ? 'Add →' : 'Manage →'}
+                    </span>
+                    {totalReg > 0 && (
+                      <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)' }}>{totalReg} total</span>
+                    )}
+                  </div>
                 </div>
-                <span style={{
-                  fontSize: 11, fontWeight: 700, padding: '5px 11px', borderRadius: 9, flexShrink: 0,
-                  ...(evCats.length === 0
-                    ? { background: 'rgba(255,180,0,0.1)', border: '1px solid rgba(255,180,0,0.25)', color: 'rgba(255,180,0,0.9)' }
-                    : { background: 'rgba(191,255,0,0.08)', border: '1px solid rgba(191,255,0,0.2)', color: '#BFFF00' }
-                  ),
-                }}>
-                  {evCats.length === 0 ? 'Add →' : 'Manage →'}
-                </span>
               </button>
             );
           })}
