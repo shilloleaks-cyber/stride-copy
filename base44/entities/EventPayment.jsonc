@@ -1,0 +1,112 @@
+{
+  "name": "EventPayment",
+  "type": "object",
+  "properties": {
+    "registration_id": {
+      "type": "string",
+      "description": "EventRegistration ID"
+    },
+    "event_id": {
+      "type": "string",
+      "description": "StrideEvent ID"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Payer email"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Amount paid (THB)"
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "bank_transfer",
+        "qr_scan"
+      ],
+      "default": "bank_transfer",
+      "description": "Payment method used by the participant"
+    },
+    "slip_image": {
+      "type": "string",
+      "description": "URL of uploaded payment slip image"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "needs_attention"
+      ],
+      "default": "pending",
+      "description": "pending = awaiting approval, approved = payment confirmed, needs_attention = admin requested re-upload"
+    },
+    "reviewed_by": {
+      "type": "string",
+      "description": "Admin email who last reviewed"
+    },
+    "reviewed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When payment was last reviewed"
+    },
+    "admin_note": {
+      "type": "string",
+      "description": "Admin note shown to participant (e.g. reason for needs_attention)"
+    },
+    "submitted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the slip was last submitted/re-submitted"
+    }
+  },
+  "required": [
+    "registration_id",
+    "event_id",
+    "user_email",
+    "amount"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

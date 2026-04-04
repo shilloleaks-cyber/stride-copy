@@ -1,20 +1,25 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { CheckCircle2, XCircle, Loader2, ExternalLink, Clock } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, Loader2, ExternalLink, Clock, Building2, QrCode } from 'lucide-react';
 import { format } from 'date-fns';
 
 const METHOD_LABELS = {
   bank_transfer: 'Bank Transfer',
-  promptpay: 'PromptPay',
-  cash: 'Cash',
-  other: 'Other',
+  qr_scan: 'QR Scan',
+};
+
+const STATUS_CFG = {
+  pending:         { label: 'Awaiting Payment Approval', color: 'rgba(255,200,80,1)',   bg: 'rgba(255,200,80,0.08)',  border: 'rgba(255,200,80,0.2)' },
+  approved:        { label: 'Payment Approved',          color: 'rgb(0,210,110)',       bg: 'rgba(0,210,110,0.08)',  border: 'rgba(0,210,110,0.2)' },
+  needs_attention: { label: 'Payment Needs Attention',   color: 'rgba(255,150,50,1)',   bg: 'rgba(255,120,0,0.07)', border: 'rgba(255,120,0,0.25)' },
 };
 
 export default function PaymentReviewPanel({ payment, reg, catMap, registrations, user, onDone }) {
   const queryClient = useQueryClient();
-  const [rejectNote, setRejectNote] = useState('');
-  const [showRejectInput, setShowRejectInput] = useState(false);
+  const [noteInput, setNoteInput] = useState('');
+  const [showNoteInput, setShowNoteInput] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null); // 'approve' | 'needs_attention'
 
   const generateBib = () => {
     const cat = catMap[reg.category_id];
@@ -34,6 +39,13 @@ export default function PaymentReviewPanel({ payment, reg, catMap, registrations
     return bib;
   };
 
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ['all-payments-admin'] });
+    queryClient.invalidateQueries({ queryKey: ['all-regs-admin'] });
+    queryClient.invalidateQueries({ queryKey: ['all-cats-admin'] });
+    if (onDone) onDone();
+  };
+
   const approveMutation = useMutation({
     mutationFn: async () => {
       const now = new Date().toISOString();
@@ -43,147 +55,195 @@ export default function PaymentReviewPanel({ payment, reg, catMap, registrations
           status: 'approved',
           reviewed_by: user.email,
           reviewed_at: now,
+          admin_note: null,
         }),
         base44.entities.EventRegistration.update(reg.id, {
           status: 'confirmed',
           payment_status: 'paid',
-          bib_number: bibNumber,
+          bib_number: reg.bib_number || bibNumber,
         }),
       ]);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['all-payments-admin'] });
-      queryClient.invalidateQueries({ queryKey: ['all-regs-admin'] });
-      queryClient.invalidateQueries({ queryKey: ['all-cats-admin'] });
-      onDone();
-    },
+    onSuccess: invalidate,
   });
 
-  const rejectMutation = useMutation({
+  const needsAttentionMutation = useMutation({
     mutationFn: async () => {
       const now = new Date().toISOString();
       await base44.entities.EventPayment.update(payment.id, {
-        status: 'rejected',
+        status: 'needs_attention',
         reviewed_by: user.email,
         reviewed_at: now,
-        admin_note: rejectNote.trim() || null,
+        admin_note: noteInput.trim() || null,
       });
-      // Keep registration as pending — user can re-upload
+      // Keep registration at pending so user is prompted to re-upload
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['all-payments-admin'] });
-      queryClient.invalidateQueries({ queryKey: ['all-regs-admin'] });
-      onDone();
+      setShowNoteInput(false);
+      setNoteInput('');
+      setPendingAction(null);
+      invalidate();
     },
   });
 
+  const cfg = STATUS_CFG[payment.status] || STATUS_CFG.pending;
   const isPending = payment.status === 'pending';
+  const isApproved = payment.status === 'approved';
+  const isNeedsAttention = payment.status === 'needs_attention';
 
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+    <div style={{ borderRadius: 20, overflow: 'hidden', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+
       {/* Slip image */}
       {payment.slip_image && (
-        <div className="relative" style={{ height: 160 }}>
-          <img src={payment.slip_image} alt="Payment slip" className="w-full h-full object-cover" />
+        <div style={{ position: 'relative', height: 180 }}>
+          <img src={payment.slip_image} alt="Payment slip" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           <a
             href={payment.slip_image}
             target="_blank"
             rel="noreferrer"
-            className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold"
-            style={{ background: 'rgba(0,0,0,0.7)', color: 'white' }}
+            style={{ position: 'absolute', top: 10, right: 10, display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 8, background: 'rgba(0,0,0,0.75)', color: 'white', fontSize: 11, fontWeight: 700, textDecoration: 'none' }}
           >
-            <ExternalLink className="w-3 h-3" /> Full size
+            <ExternalLink style={{ width: 11, height: 11 }} /> Full size
           </a>
-          {/* Status overlay */}
-          {payment.status !== 'pending' && (
-            <div className="absolute inset-0 flex items-center justify-center" style={{ background: payment.status === 'approved' ? 'rgba(0,210,110,0.3)' : 'rgba(255,80,80,0.3)' }}>
-              {payment.status === 'approved'
-                ? <CheckCircle2 className="w-12 h-12" style={{ color: 'rgb(0,210,110)' }} />
-                : <XCircle className="w-12 h-12" style={{ color: 'rgba(255,100,100,1)' }} />
-              }
+          {/* Status tint overlay */}
+          {isApproved && (
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,210,110,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <CheckCircle2 style={{ width: 44, height: 44, color: 'rgb(0,210,110)' }} />
+            </div>
+          )}
+          {isNeedsAttention && (
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,120,0,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <AlertTriangle style={{ width: 44, height: 44, color: 'rgba(255,150,50,1)' }} />
             </div>
           )}
         </div>
       )}
 
-      <div className="p-4 space-y-3">
-        <div className="flex items-center justify-between">
+      <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+        {/* Name + amount */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
           <div>
-            <p className="font-bold text-white">{reg.first_name} {reg.last_name}</p>
-            <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>{reg.user_email}</p>
+            <p style={{ fontSize: 15, fontWeight: 800, color: '#fff', margin: 0 }}>{reg.first_name} {reg.last_name}</p>
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '3px 0 0' }}>{reg.user_email}</p>
           </div>
-          <div className="text-right">
-            <p className="font-black text-lg" style={{ color: '#BFFF00' }}>฿{payment.amount?.toLocaleString()}</p>
-            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>{METHOD_LABELS[payment.method] || payment.method}</p>
+          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+            <p style={{ fontSize: 20, fontWeight: 900, color: '#BFFF00', margin: 0 }}>฿{payment.amount?.toLocaleString()}</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, justifyContent: 'flex-end', marginTop: 3 }}>
+              {payment.payment_method === 'qr_scan'
+                ? <QrCode style={{ width: 11, height: 11, color: 'rgba(255,255,255,0.3)' }} />
+                : <Building2 style={{ width: 11, height: 11, color: 'rgba(255,255,255,0.3)' }} />
+              }
+              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>
+                {METHOD_LABELS[payment.payment_method] || payment.payment_method || 'Bank Transfer'}
+              </span>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
-          <Clock className="w-3 h-3" />
-          <span>Submitted {format(new Date(payment.created_date), 'MMM d, yyyy · h:mm a')}</span>
+        {/* Status badge + submitted time */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 11px', borderRadius: 99, fontSize: 12, fontWeight: 700, background: cfg.bg, border: `1px solid ${cfg.border}`, color: cfg.color }}>
+            {cfg.label}
+          </span>
+          {payment.submitted_at && (
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>
+              <Clock style={{ width: 10, height: 10 }} />
+              {format(new Date(payment.submitted_at), 'MMM d · h:mm a')}
+            </span>
+          )}
         </div>
 
-        {payment.status !== 'pending' && (
-          <div className="px-3 py-2 rounded-xl text-xs" style={{
-            background: payment.status === 'approved' ? 'rgba(0,210,110,0.08)' : 'rgba(255,80,80,0.08)',
-            border: `1px solid ${payment.status === 'approved' ? 'rgba(0,210,110,0.2)' : 'rgba(255,80,80,0.2)'}`,
-            color: payment.status === 'approved' ? 'rgb(0,210,110)' : 'rgba(255,100,100,1)',
-          }}>
-            {payment.status === 'approved' ? '✓ Approved' : '✗ Rejected'}
-            {payment.admin_note && <span style={{ color: 'rgba(255,255,255,0.45)' }}> · {payment.admin_note}</span>}
+        {/* Admin note (needs_attention) */}
+        {isNeedsAttention && payment.admin_note && (
+          <div style={{ padding: '10px 12px', borderRadius: 12, background: 'rgba(255,120,0,0.07)', border: '1px solid rgba(255,120,0,0.2)' }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,150,50,0.9)', margin: '0 0 3px' }}>Admin note to participant:</p>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.5 }}>{payment.admin_note}</p>
           </div>
         )}
 
-        {isPending && !showRejectInput && (
-          <div className="flex gap-2">
+        {/* ── Actions ── */}
+        {!isApproved && !showNoteInput && (
+          <div style={{ display: 'flex', gap: 8 }}>
             <button
               onClick={() => approveMutation.mutate()}
-              disabled={approveMutation.isPending || rejectMutation.isPending}
-              className="flex-1 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5"
-              style={{ background: 'rgba(0,210,110,0.15)', color: 'rgb(0,210,110)', border: '1px solid rgba(0,210,110,0.25)' }}
+              disabled={approveMutation.isPending || needsAttentionMutation.isPending}
+              style={{
+                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                padding: '11px 0', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                background: 'rgba(0,210,110,0.12)', border: '1px solid rgba(0,210,110,0.3)', color: 'rgb(0,210,110)',
+              }}
             >
-              {approveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+              {approveMutation.isPending ? <Loader2 style={{ width: 14, height: 14, animation: 'spin 1s linear infinite' }} /> : <CheckCircle2 style={{ width: 14, height: 14 }} />}
               Approve
             </button>
             <button
-              onClick={() => setShowRejectInput(true)}
-              className="flex-1 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5"
-              style={{ background: 'rgba(255,80,80,0.1)', color: 'rgba(255,100,100,1)', border: '1px solid rgba(255,80,80,0.2)' }}
+              onClick={() => setShowNoteInput(true)}
+              disabled={approveMutation.isPending || needsAttentionMutation.isPending}
+              style={{
+                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                padding: '11px 0', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                background: 'rgba(255,120,0,0.1)', border: '1px solid rgba(255,120,0,0.25)', color: 'rgba(255,150,50,1)',
+              }}
             >
-              <XCircle className="w-4 h-4" /> Reject
+              <AlertTriangle style={{ width: 14, height: 14 }} />
+              Needs Attention
             </button>
           </div>
         )}
 
-        {isPending && showRejectInput && (
-          <div className="space-y-2">
-            <input
-              value={rejectNote}
-              onChange={e => setRejectNote(e.target.value)}
-              placeholder="Reason for rejection (optional)"
-              className="w-full px-3 py-2.5 rounded-xl text-sm text-white outline-none"
-              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,80,80,0.3)' }}
+        {/* Re-approve after needs_attention */}
+        {isNeedsAttention && !showNoteInput && (
+          <button
+            onClick={() => approveMutation.mutate()}
+            disabled={approveMutation.isPending}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              padding: '11px 0', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              background: 'rgba(0,210,110,0.12)', border: '1px solid rgba(0,210,110,0.3)', color: 'rgb(0,210,110)',
+            }}
+          >
+            {approveMutation.isPending ? <Loader2 style={{ width: 14, height: 14, animation: 'spin 1s linear infinite' }} /> : <CheckCircle2 style={{ width: 14, height: 14 }} />}
+            Approve Payment
+          </button>
+        )}
+
+        {/* Needs Attention — note input */}
+        {showNoteInput && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <textarea
+              value={noteInput}
+              onChange={e => setNoteInput(e.target.value)}
+              placeholder="Tell the participant what to fix (e.g. 'Amount unclear, please re-upload a clearer slip')…"
+              rows={3}
+              autoFocus
+              style={{ width: '100%', padding: '10px 14px', borderRadius: 12, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,120,0,0.3)', color: '#fff', fontSize: 13, outline: 'none', resize: 'none', boxSizing: 'border-box', lineHeight: 1.5 }}
             />
-            <div className="flex gap-2">
+            <div style={{ display: 'flex', gap: 8 }}>
               <button
-                onClick={() => rejectMutation.mutate()}
-                disabled={rejectMutation.isPending}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5"
-                style={{ background: 'rgba(255,80,80,0.15)', color: 'rgba(255,100,100,1)', border: '1px solid rgba(255,80,80,0.25)' }}
+                onClick={() => needsAttentionMutation.mutate()}
+                disabled={needsAttentionMutation.isPending}
+                style={{
+                  flex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  padding: '11px 0', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                  background: 'rgba(255,120,0,0.12)', border: '1px solid rgba(255,120,0,0.3)', color: 'rgba(255,150,50,1)',
+                }}
               >
-                {rejectMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                Confirm Reject
+                {needsAttentionMutation.isPending && <Loader2 style={{ width: 13, height: 13, animation: 'spin 1s linear infinite' }} />}
+                Request Re-upload
               </button>
               <button
-                onClick={() => setShowRejectInput(false)}
-                className="px-4 py-2.5 rounded-xl text-sm font-semibold"
-                style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}
+                onClick={() => { setShowNoteInput(false); setNoteInput(''); }}
+                style={{ flex: 1, padding: '11px 0', borderRadius: 12, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)', color: 'rgba(255,255,255,0.45)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
               >
                 Cancel
               </button>
             </div>
           </div>
         )}
+
+        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
       </div>
     </div>
   );

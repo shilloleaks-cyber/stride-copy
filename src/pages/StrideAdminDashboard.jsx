@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Users, CheckCircle2, Clock, XCircle, ScanLine, Search, Filter, ChevronDown, CreditCard, Tag } from 'lucide-react';
 import { format } from 'date-fns';
 import PaymentReviewPanel from '@/components/stride/PaymentReviewPanel';
+import EventPaymentSetup from '@/components/stride/EventPaymentSetup';
 import RegistrationDetailSheet from '@/components/stride/RegistrationDetailSheet';
 
 const STATUS_CFG = {
@@ -26,6 +27,7 @@ export default function StrideAdminDashboard() {
   const [showFilters, setShowFilters] = useState(false);
   const [detailReg, setDetailReg] = useState(null);
   const [activeQuickFilter, setActiveQuickFilter] = useState('all');
+  const [expandedPaymentSetup, setExpandedPaymentSetup] = useState(null);
 
   const { data: user } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
 
@@ -236,7 +238,7 @@ export default function StrideAdminDashboard() {
       {activeTab === 'categories' && (
         <div className="px-6 pt-4 space-y-3">
           <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
-            Select an event to manage its race categories
+            Select an event to manage its race categories and payment settings
           </p>
           {events.filter(e => e.event_type === 'official').sort((a, b) => {
             if (a.status === 'draft' && b.status !== 'draft') return -1;
@@ -246,8 +248,8 @@ export default function StrideAdminDashboard() {
             const evCats = allCategories.filter(c => c.event_id === ev.id && c.is_active !== false);
             const totalReg = ev.total_registered || 0;
             return (
+              <div key={ev.id} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               <button
-                key={ev.id}
                 onClick={() => navigate(`/ManageCategories?event_id=${ev.id}`)}
                 className="w-full text-left rounded-2xl p-4"
                 style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}
@@ -302,6 +304,29 @@ export default function StrideAdminDashboard() {
                   </div>
                 </div>
               </button>
+              {/* Payment Setup inline */}
+              <button
+                onClick={() => setExpandedPaymentSetup(expandedPaymentSetup === ev.id ? null : ev.id)}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '10px 14px', borderRadius: 12, marginTop: -6, cursor: 'pointer',
+                  background: expandedPaymentSetup === ev.id ? 'rgba(191,255,0,0.06)' : 'rgba(255,255,255,0.02)',
+                  border: expandedPaymentSetup === ev.id ? '1px solid rgba(191,255,0,0.2)' : '1px solid rgba(255,255,255,0.06)',
+                }}
+              >
+                <span style={{ fontSize: 11, fontWeight: 700, color: expandedPaymentSetup === ev.id ? '#BFFF00' : 'rgba(255,255,255,0.35)' }}>
+                  💳 Payment Setup
+                </span>
+                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)' }}>
+                  {expandedPaymentSetup === ev.id ? '▲ Hide' : '▼ Configure'}
+                </span>
+              </button>
+              {expandedPaymentSetup === ev.id && (
+                <div style={{ padding: '14px 16px 16px', borderRadius: 14, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                  <EventPaymentSetup eventId={ev.id} />
+                </div>
+              )}
+              </div>
             );
           })}
           {events.filter(e => e.event_type === 'official').length === 0 && (

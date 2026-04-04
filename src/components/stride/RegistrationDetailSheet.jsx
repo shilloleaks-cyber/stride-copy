@@ -127,7 +127,7 @@ export default function RegistrationDetailSheet({ reg, eventMap, catMap, registr
     queryFn: () => base44.entities.EventPayment.filter({ registration_id: reg.id }),
     enabled: reg.payment_status === 'pending',
   });
-  const hasSlip = payments.length > 0 && !!payments[0]?.slip_image_url;
+  const hasSlip = payments.length > 0 && !!payments[0]?.slip_image;
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ['all-regs-admin'] });
