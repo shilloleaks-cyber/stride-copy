@@ -219,8 +219,15 @@ export default function CommentsSheet({ open, onClose, post, currentUser, entity
           )}
         </div>
 
-        {/* Input */}
-        <form
+        {/* Input — only shown for authenticated users */}
+        {!currentUser && (
+          <div className="commentInputArea" style={{ justifyContent: 'center' }}>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', textAlign: 'center' }}>
+              Sign in to leave a comment
+            </p>
+          </div>
+        )}
+        {currentUser && <form
           className="commentInputArea"
           style={{ 
             position: 'relative',
@@ -290,7 +297,7 @@ export default function CommentsSheet({ open, onClose, post, currentUser, entity
               <Send className="w-4 h-4" style={{ pointerEvents: "none" }} />
             )}
           </button>
-        </form>
+        </form>}
       </SheetContent>
     </Sheet>
   );

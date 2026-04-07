@@ -96,7 +96,7 @@ export default function GroupsPanel({ mode = 'page', showHeader = true, showCrea
         </div>
         {showCreateButton && !embedded && (
           <button
-            onClick={() => setCreateDialogOpen(true)}
+            onClick={() => requireAuth(() => setCreateDialogOpen(true))}
             className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
             style={{ backgroundColor: '#BFFF00', color: '#0A0A0A' }}
           >
