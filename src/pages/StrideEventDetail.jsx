@@ -81,6 +81,11 @@ export default function StrideEventDetail() {
   const alreadyRegistered = !!myReg;
   const isCommunityEvent = event.event_type === 'community';
 
+  // Pre-check payment readiness — used to block paid registration before it creates a record
+  const { ready: paymentReady } = checkPaymentReady(event);
+  const selectedIsPaid = selectedCategory?.price > 0;
+  const paymentBlocked = selectedIsPaid && !paymentReady;
+
   return (
     <div className="min-h-screen text-white pb-32" style={{ backgroundColor: '#0A0A0A' }}>
       {/* Banner */}
@@ -388,17 +393,37 @@ export default function StrideEventDetail() {
               View My Ticket <ChevronRight className="w-5 h-5" />
             </button>
           ) : isOpen && categories.length > 0 ? (
-            <button
-              onClick={() => selectedCategory && requireAuth(() => setShowForm(true))}
-              disabled={!selectedCategory}
-              className="w-full py-4 rounded-2xl font-bold text-base transition-all"
-              style={selectedCategory
-                ? { background: '#BFFF00', color: '#0A0A0A' }
-                : { background: 'rgba(191,255,0,0.15)', color: 'rgba(191,255,0,0.4)' }
-              }
-            >
-              {selectedCategory ? `Register for ${selectedCategory.name}` : 'Select a Category'}
-            </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {/* Payment unavailable warning — shown when a paid category is selected but payment isn't configured */}
+              {paymentBlocked && (
+                <div style={{
+                  padding: '11px 14px', borderRadius: 14,
+                  background: 'rgba(255,120,0,0.08)', border: '1px solid rgba(255,120,0,0.3)',
+                  display: 'flex', alignItems: 'flex-start', gap: 10,
+                }}>
+                  <span style={{ fontSize: 16, flexShrink: 0, lineHeight: 1.3 }}>🚫</span>
+                  <div>
+                    <p style={{ fontSize: 13, fontWeight: 800, color: 'rgba(255,150,50,1)', margin: '0 0 3px' }}>
+                      Payment not available yet
+                    </p>
+                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: 1.5 }}>
+                      Registration for this category is temporarily unavailable. Please try again later or contact the organizer.
+                    </p>
+                  </div>
+                </div>
+              )}
+              <button
+                onClick={() => selectedCategory && !paymentBlocked && requireAuth(() => setShowForm(true))}
+                disabled={!selectedCategory || paymentBlocked}
+                className="w-full py-4 rounded-2xl font-bold text-base transition-all"
+                style={selectedCategory && !paymentBlocked
+                  ? { background: '#BFFF00', color: '#0A0A0A' }
+                  : { background: 'rgba(191,255,0,0.15)', color: 'rgba(191,255,0,0.4)' }
+                }
+              >
+                {selectedCategory ? `Register for ${selectedCategory.name}` : 'Select a Category'}
+              </button>
+            </div>
           ) : null}
         </div>
       )}
@@ -476,14 +501,11 @@ export default function StrideEventDetail() {
                   <div style={{ marginBottom: 16, padding: '12px 14px', borderRadius: 14, background: 'rgba(255,120,0,0.08)', border: '1px solid rgba(255,120,0,0.3)', display: 'flex', flexDirection: 'column', gap: 6 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span style={{ fontSize: 16 }}>⚠️</span>
-                      <p style={{ fontSize: 13, fontWeight: 800, color: 'rgba(255,150,50,1)', margin: 0 }}>Payment Setup Incomplete</p>
+                      <p style={{ fontSize: 13, fontWeight: 800, color: 'rgba(255,150,50,1)', margin: 0 }}>Payment not available yet</p>
                     </div>
                     <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', margin: '0 0 2px', lineHeight: 1.5 }}>
-                      The organizer hasn't fully configured payment. Please contact them before transferring.
+                      The organizer hasn't finished setting up payment for this event. Please don't transfer any money yet — try again later or contact the organizer directly.
                     </p>
-                    {issues.map((issue, i) => (
-                      <p key={i} style={{ fontSize: 11, color: 'rgba(255,150,50,0.7)', margin: 0 }}>· {issue}</p>
-                    ))}
                   </div>
                 );
               })()}
