@@ -4,6 +4,8 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Search } from 'lucide-react';
 import EventCard from '@/components/stride/EventCard';
+import { useAuthGate } from '@/hooks/useAuthGate';
+import LoginGateModal from '@/components/auth/LoginGateModal';
 
 
 
@@ -32,6 +34,7 @@ export default function StrideEvents() {
   const [search, setSearch] = useState('');
 
   const { data: user } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
+  const { showGate, setShowGate, requireAuth } = useAuthGate(user);
 
   const { data: events = [], isLoading } = useQuery({
     queryKey: ['stride-events'],
@@ -237,6 +240,8 @@ export default function StrideEvents() {
 
         </div>
       )}
+
+      <LoginGateModal open={showGate} onClose={() => setShowGate(false)} />
     </div>
   );
 }

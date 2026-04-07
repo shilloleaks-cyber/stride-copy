@@ -5,6 +5,8 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import RunCard from '@/components/running/RunCard';
 import { Calendar, MapPin, Users } from 'lucide-react';
+import { useAuthGate } from '@/hooks/useAuthGate';
+import LoginGateModal from '@/components/auth/LoginGateModal';
 
 // ===== Coin Pop Animation =====
 function CoinPopLayer({ pops }) {
@@ -267,6 +269,8 @@ export default function Home() {
   const level = Math.floor(coinBalance / 100) + 1;
   const progress = coinBalance % 100;
 
+  const { showGate, setShowGate, requireAuth } = useAuthGate(user);
+
   // ===== UI states =====
   const [showPaceHistory, setShowPaceHistory] = useState(false);
 
@@ -298,7 +302,7 @@ export default function Home() {
   }, [streakDays]);
 
   function handleStartRun() {
-    navigate(createPageUrl('ActiveRun'));
+    requireAuth(() => navigate(createPageUrl('ActiveRun')));
   }
 
   function handleCoinClick() {
@@ -541,6 +545,8 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      <LoginGateModal open={showGate} onClose={() => setShowGate(false)} />
 
       {/* Pace history modal */}
       {showPaceHistory && (

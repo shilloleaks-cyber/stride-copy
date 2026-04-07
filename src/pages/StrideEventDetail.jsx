@@ -8,6 +8,8 @@ import RegistrationForm from '@/components/stride/RegistrationForm';
 import CommunityRSVP from '@/components/stride/CommunityRSVP';
 import EventShareButton from '@/components/stride/EventShareButton';
 import EventInviteSheet from '@/components/stride/EventInviteSheet';
+import { useAuthGate } from '@/hooks/useAuthGate';
+import LoginGateModal from '@/components/auth/LoginGateModal';
 
 const CAT_COLORS = ['#BFFF00', '#8A2BE2', 'rgb(0,200,180)', 'rgb(255,180,0)', 'rgb(255,80,130)'];
 
@@ -22,6 +24,7 @@ export default function StrideEventDetail() {
   const [showInvite, setShowInvite] = useState(false);
 
   const { data: user } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
+  const { showGate, setShowGate, requireAuth } = useAuthGate(user);
 
   const { data: event, isLoading } = useQuery({
     queryKey: ['stride-event', eventId],
@@ -230,6 +233,18 @@ export default function StrideEventDetail() {
         {isCommunityEvent && user && (
           <CommunityRSVP event={event} user={user} myReg={myReg} />
         )}
+        {isCommunityEvent && !user && (
+          <button
+            onClick={() => setShowGate(true)}
+            style={{
+              width: '100%', padding: '15px 0', borderRadius: 16,
+              background: '#BFFF00', color: '#0A0A0A',
+              fontSize: 15, fontWeight: 900, border: 'none', cursor: 'pointer',
+            }}
+          >
+            Join Event
+          </button>
+        )}
 
         {/* Official: Categories */}
         {!isCommunityEvent && categories.length > 0 && (
@@ -367,7 +382,7 @@ export default function StrideEventDetail() {
             </button>
           ) : isOpen && categories.length > 0 ? (
             <button
-              onClick={() => selectedCategory && setShowForm(true)}
+              onClick={() => selectedCategory && requireAuth(() => setShowForm(true))}
               disabled={!selectedCategory}
               className="w-full py-4 rounded-2xl font-bold text-base transition-all"
               style={selectedCategory
@@ -391,6 +406,8 @@ export default function StrideEventDetail() {
           onSuccess={handleRegisterSuccess}
         />
       )}
+
+      <LoginGateModal open={showGate} onClose={() => setShowGate(false)} />
 
       {/* Invite Sheet */}
       {showInvite && user && (

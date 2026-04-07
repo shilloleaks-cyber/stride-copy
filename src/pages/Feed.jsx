@@ -20,6 +20,8 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import CreatePostModal from '@/components/feed/CreatePostModal';
 import CommentsSheet from '@/components/feed/CommentsSheet';
 import GroupsPanel from '@/components/group/GroupsPanel';
+import { useAuthGate } from '@/hooks/useAuthGate';
+import LoginGateModal from '@/components/auth/LoginGateModal';
 
 export default function Feed() {
   const navigate = useNavigate();
@@ -40,6 +42,8 @@ export default function Feed() {
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
   });
+
+  const { showGate, setShowGate, requireAuth } = useAuthGate(currentUser);
 
   const { data: follows = [] } = useQuery({
     queryKey: ['follows', currentUser?.email],
@@ -118,17 +122,21 @@ export default function Feed() {
   });
 
   const handleLike = (postId, isLiked) => {
-    const post = allPosts.find(p => p.id === postId);
-    const currentLikes = post?.likes || [];
-    const newLikes = isLiked
-      ? currentLikes.filter(email => email !== currentUser?.email)
-      : [...currentLikes, currentUser?.email];
-    likeMutation.mutate({ postId, newLikes });
+    requireAuth(() => {
+      const post = allPosts.find(p => p.id === postId);
+      const currentLikes = post?.likes || [];
+      const newLikes = isLiked
+        ? currentLikes.filter(email => email !== currentUser?.email)
+        : [...currentLikes, currentUser?.email];
+      likeMutation.mutate({ postId, newLikes });
+    });
   };
 
   const handleViewComments = (post) => {
-    setSelectedPost(post);
-    setShowComments(true);
+    requireAuth(() => {
+      setSelectedPost(post);
+      setShowComments(true);
+    });
   };
 
   return (
@@ -330,7 +338,7 @@ export default function Feed() {
         animate={{ scale: 1 }}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
-        onClick={() => setShowCreatePost(true)}
+        onClick={() => requireAuth(() => setShowCreatePost(true))}
         className="fixed bottom-24 right-6 w-14 h-14 rounded-full flex items-center justify-center shadow-lg z-20 neon-glow"
         style={{ background: 'linear-gradient(135deg, #BFFF00 0%, #8A2BE2 100%)' }}
       >
@@ -356,6 +364,8 @@ export default function Feed() {
         onCancel={() => setDeleteTargetPostId(null)}
         onConfirm={() => deleteMutation.mutateAsync(deleteTargetPostId)}
       />
+
+      <LoginGateModal open={showGate} onClose={() => setShowGate(false)} />
 
       {/* Comments Sheet */}
       <CommentsSheet

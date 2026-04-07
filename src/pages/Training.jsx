@@ -12,6 +12,8 @@ import ActiveGoalCard from '@/components/training/ActiveGoalCard';
 import EmptyGoalState from '@/components/training/EmptyGoalState';
 import WeekSwitcher from '@/components/training/WeekSwitcher';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { useAuthGate } from '@/hooks/useAuthGate';
+import LoginGateModal from '@/components/auth/LoginGateModal';
 
 export default function Training() {
   const [showCreateGoal, setShowCreateGoal] = useState(false);
@@ -24,6 +26,8 @@ export default function Training() {
     queryKey: ['me'],
     queryFn: () => base44.auth.me(),
   });
+
+  const { showGate, setShowGate, requireAuth } = useAuthGate(user);
 
   const { data: goals = [] } = useQuery({
     queryKey: ['training-goals', user?.email],
@@ -101,7 +105,7 @@ export default function Training() {
             <h1 className="text-3xl font-bold text-white">Your Plan</h1>
           </div>
           <button
-            onClick={() => setShowCreateGoal(true)}
+            onClick={() => requireAuth(() => setShowCreateGoal(true))}
             className="flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm transition-all"
             style={{ backgroundColor: '#BFFF00', color: '#0A0A0A' }}
           >
@@ -119,7 +123,7 @@ export default function Training() {
             onDelete={() => setConfirmAction({ type: 'delete', goal: activeGoal })}
           />
         ) : (
-          <EmptyGoalState onCreateGoal={() => setShowCreateGoal(true)} />
+          <EmptyGoalState onCreateGoal={() => requireAuth(() => setShowCreateGoal(true))} />
         )}
       </div>
 
@@ -166,6 +170,8 @@ export default function Training() {
         user={user}
         existingActiveGoal={activeGoal}
       />
+
+      <LoginGateModal open={showGate} onClose={() => setShowGate(false)} />
 
       {/* Confirm pause / delete */}
       <ConfirmDialog

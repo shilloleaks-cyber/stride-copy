@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import GroupCard from '@/components/group/GroupCard';
 import CreateGroupDialog from '@/components/group/CreateGroupDialog';
+import { useAuthGate } from '@/hooks/useAuthGate';
+import LoginGateModal from '@/components/auth/LoginGateModal';
 
 export default function GroupsPanel({ mode = 'page', showHeader = true, showCreateButton = true, embedded = false }) {
   const navigate = useNavigate();
@@ -68,6 +70,7 @@ export default function GroupsPanel({ mode = 'page', showHeader = true, showCrea
     },
   });
 
+  const { showGate, setShowGate, requireAuth } = useAuthGate(user);
   const myGroupIds = new Set(myMemberships.map(m => m.group_id));
 
   const filteredGroups = groups.filter(g =>
@@ -135,7 +138,7 @@ export default function GroupsPanel({ mode = 'page', showHeader = true, showCrea
                 key={group.id}
                 group={group}
                 variant="discover"
-                onJoin={() => joinGroupMutation.mutate(group)}
+                onJoin={() => requireAuth(() => joinGroupMutation.mutate(group))}
                 isJoining={joinGroupMutation.isPending}
               />
             ))}
@@ -147,6 +150,8 @@ export default function GroupsPanel({ mode = 'page', showHeader = true, showCrea
           </div>
         )}
       </div>
+
+      <LoginGateModal open={showGate} onClose={() => setShowGate(false)} />
 
       <CreateGroupDialog
         open={createDialogOpen}
