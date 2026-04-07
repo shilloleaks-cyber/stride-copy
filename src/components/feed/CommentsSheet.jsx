@@ -18,7 +18,6 @@ export default function CommentsSheet({ open, onClose, post, currentUser, entity
   const [newComment, setNewComment] = useState('');
   const queryClient = useQueryClient();
   const postId = post?.id;
-  const isGuest = !currentUser;
 
   const { data: comments = [], isLoading } = useQuery({
     queryKey: ['comments', postId],
@@ -220,24 +219,8 @@ export default function CommentsSheet({ open, onClose, post, currentUser, entity
           )}
         </div>
 
-        {/* Guest notice — replaces input for non-logged-in users */}
-        {isGuest && (
-          <div className="commentInputArea" style={{ justifyContent: 'center', flexDirection: 'column', gap: 6, textAlign: 'center', padding: '14px 20px calc(14px + env(safe-area-inset-bottom))' }}>
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', margin: 0 }}>Sign in to join the conversation</p>
-            <button
-              onClick={() => {
-                onClose();
-                base44.auth.redirectToLogin(window.location.pathname + window.location.search);
-              }}
-              style={{ background: '#BFFF00', color: '#0A0A0A', border: 'none', borderRadius: 12, padding: '10px 28px', fontWeight: 800, fontSize: 14, cursor: 'pointer' }}
-            >
-              Login to comment
-            </button>
-          </div>
-        )}
-
         {/* Input */}
-        {!isGuest && <form
+        <form
           className="commentInputArea"
           style={{ 
             position: 'relative',
@@ -307,7 +290,7 @@ export default function CommentsSheet({ open, onClose, post, currentUser, entity
               <Send className="w-4 h-4" style={{ pointerEvents: "none" }} />
             )}
           </button>
-        </form>}
+        </form>
       </SheetContent>
     </Sheet>
   );
