@@ -59,9 +59,12 @@ export default function StrideEventDetail() {
     setShowForm(false);
     queryClient.invalidateQueries({ queryKey: ['my-reg', eventId, user?.email] });
     queryClient.invalidateQueries({ queryKey: ['my-stride-regs', user?.email] });
-    // If paid, immediately open payment flow
     if (selectedCategory?.price > 0 && reg) {
+      // Paid: open payment flow
       setPaymentReg(reg);
+    } else if (reg) {
+      // Free: go straight to ticket
+      navigate(`/StrideMyEvents?reg_id=${reg.id}`);
     }
   };
 

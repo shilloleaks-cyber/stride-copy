@@ -36,6 +36,21 @@ export default function RegistrationForm({ event, category, user, onClose, onSuc
 
       const qr = generateQR();
 
+      // For free official categories: generate bib immediately
+      let autoBib = null;
+      const isFreeOfficial = category.price <= 0;
+      if (isFreeOfficial) {
+        const existingRegs = await base44.entities.EventRegistration.filter({ category_id: category.id });
+        const usedBibs = new Set(existingRegs.filter(r => r.bib_number).map(r => r.bib_number));
+        const prefix = freshCat?.bib_prefix || 'R';
+        const start = freshCat?.bib_start || 1;
+        let candidate = start;
+        do {
+          autoBib = `${prefix}${String(candidate).padStart(3, '0')}`;
+          candidate++;
+        } while (usedBibs.has(autoBib));
+      }
+
       const displayName =
         user.first_name ||
         user.display_name ||
@@ -62,11 +77,13 @@ export default function RegistrationForm({ event, category, user, onClose, onSuc
         user_id: user.id || user.email,
         first_name: firstName,
         last_name: lastName,
-        status: 'pending',
+        // Free official: confirm immediately with bib. Paid: stay pending for payment flow.
+        status: isFreeOfficial ? 'confirmed' : 'pending',
         qr_code: qr,
         checked_in: false,
         blood_type: 'unknown',
-        payment_status: category.price > 0 ? 'pending' : 'not_required',
+        payment_status: isFreeOfficial ? 'not_required' : 'pending',
+        ...(autoBib ? { bib_number: autoBib } : {}),
       };
 
       if (user.phone) payload.phone = user.phone;
