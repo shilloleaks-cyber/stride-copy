@@ -9,6 +9,7 @@ function generateQR() {
 }
 
 export default function RegistrationForm({ event, category, user, onClose, onSuccess }) {
+  if (!user) return null;
   const [itemSelections, setItemSelections] = useState({});
   const [requiredItemsMissing, setRequiredItemsMissing] = useState(false);
   const [blockReason, setBlockReason] = useState(null);
