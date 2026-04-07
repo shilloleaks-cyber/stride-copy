@@ -87,9 +87,9 @@ export default function RegistrationForm({ event, category, user, onClose, onSuc
       return reg;
     },
 
-    onSuccess: () => {
+    onSuccess: (reg) => {
       setBlockReason(null);
-      onSuccess();
+      onSuccess(reg);
     },
 
     onError: (err) => {
@@ -177,7 +177,7 @@ export default function RegistrationForm({ event, category, user, onClose, onSuc
           >
             {registerMutation.isPending
               ? <><Loader2 className="w-5 h-5 animate-spin" /> Registering...</>
-              : 'Confirm Registration'
+              : category.price > 0 ? 'Register & Proceed to Payment' : 'Confirm Registration'
             }
           </button>
         </div>

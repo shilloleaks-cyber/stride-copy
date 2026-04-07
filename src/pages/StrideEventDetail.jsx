@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PaymentUpload from '@/components/stride/PaymentUpload';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -22,6 +23,7 @@ export default function StrideEventDetail() {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [showInvite, setShowInvite] = useState(false);
+  const [paymentReg, setPaymentReg] = useState(null); // set when paid reg just created
 
   const { data: user } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
   const { showGate, setShowGate, requireAuth } = useAuthGate(user);
@@ -52,10 +54,14 @@ export default function StrideEventDetail() {
     enabled: !!eventId && !!user?.email,
   });
 
-  const handleRegisterSuccess = () => {
+  const handleRegisterSuccess = (reg) => {
     setShowForm(false);
     queryClient.invalidateQueries({ queryKey: ['my-reg', eventId, user?.email] });
     queryClient.invalidateQueries({ queryKey: ['my-stride-regs', user?.email] });
+    // If paid, immediately open payment flow
+    if (selectedCategory?.price > 0 && reg) {
+      setPaymentReg(reg);
+    }
   };
 
   if (isLoading) return (
@@ -408,6 +414,81 @@ export default function StrideEventDetail() {
       )}
 
       <LoginGateModal open={showGate} onClose={() => setShowGate(false)} />
+
+      {/* Payment Modal — opens immediately after paid registration */}
+      {paymentReg && selectedCategory && (
+        <div className="fixed inset-0 z-50 flex flex-col" style={{ backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}>
+          <div className="flex-1" onClick={() => setPaymentReg(null)} />
+          <div
+            className="rounded-t-3xl overflow-hidden flex flex-col"
+            style={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', maxHeight: '90dvh' }}
+          >
+            {/* Handle */}
+            <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
+              <div className="w-10 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.2)' }} />
+            </div>
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-3 flex-shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+              <div>
+                <p className="font-bold text-white text-base">Complete Payment</p>
+                <p className="text-xs mt-0.5 font-semibold" style={{ color: '#BFFF00' }}>
+                  {selectedCategory.name} · ฿{selectedCategory.price}
+                </p>
+              </div>
+              <button
+                onClick={() => setPaymentReg(null)}
+                className="w-8 h-8 rounded-full flex items-center justify-center"
+                style={{ background: 'rgba(255,255,255,0.08)' }}
+              >
+                <ChevronRight className="w-4 h-4 text-white rotate-90" />
+              </button>
+            </div>
+
+            {/* Step indicator */}
+            <div className="px-6 pt-4 pb-2 flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-black" style={{ background: '#BFFF00', color: '#0A0A0A' }}>✓</div>
+                  <span className="text-xs font-bold" style={{ color: '#BFFF00' }}>Registered</span>
+                </div>
+                <div className="flex-1 h-px" style={{ background: '#BFFF00', opacity: 0.4 }} />
+                <div className="flex items-center gap-1.5">
+                  <div className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-black" style={{ background: '#BFFF00', color: '#0A0A0A' }}>2</div>
+                  <span className="text-xs font-bold" style={{ color: '#BFFF00' }}>Payment</span>
+                </div>
+                <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.1)' }} />
+                <div className="flex items-center gap-1.5">
+                  <div className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-black" style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.3)' }}>3</div>
+                  <span className="text-xs font-bold" style={{ color: 'rgba(255,255,255,0.3)' }}>Review</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Upload content */}
+            <div className="flex-1 overflow-y-auto px-6 py-4" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <PaymentUpload
+                registration={paymentReg}
+                category={selectedCategory}
+              />
+            </div>
+
+            {/* Done button */}
+            <div className="px-6 pb-8 pt-3 flex-shrink-0" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+              <button
+                onClick={() => {
+                  setPaymentReg(null);
+                  navigate(`/StrideMyEvents?reg_id=${paymentReg.id}`);
+                }}
+                className="w-full py-3 rounded-2xl font-bold text-sm"
+                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.45)' }}
+              >
+                I'll pay later · View My Ticket
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Invite Sheet */}
       {showInvite && user && (
