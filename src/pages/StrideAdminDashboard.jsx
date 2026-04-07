@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Users, CheckCircle2, Clock, XCircle, ScanLine, Search, Filter, ChevronDown, CreditCard, Tag } from 'lucide-react';
 import { format } from 'date-fns';
 import PaymentReviewPanel from '@/components/stride/PaymentReviewPanel';
-import EventPaymentSetup from '@/components/stride/EventPaymentSetup';
+import EventPaymentSetup, { checkPaymentReady } from '@/components/stride/EventPaymentSetup';
 import RegistrationDetailSheet from '@/components/stride/RegistrationDetailSheet';
 
 const STATUS_CFG = {
@@ -305,22 +305,41 @@ export default function StrideAdminDashboard() {
                 </div>
               </button>
               {/* Payment Setup inline */}
-              <button
-                onClick={() => setExpandedPaymentSetup(expandedPaymentSetup === ev.id ? null : ev.id)}
-                style={{
-                  width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '10px 14px', borderRadius: 12, marginTop: -6, cursor: 'pointer',
-                  background: expandedPaymentSetup === ev.id ? 'rgba(191,255,0,0.06)' : 'rgba(255,255,255,0.02)',
-                  border: expandedPaymentSetup === ev.id ? '1px solid rgba(191,255,0,0.2)' : '1px solid rgba(255,255,255,0.06)',
-                }}
-              >
-                <span style={{ fontSize: 11, fontWeight: 700, color: expandedPaymentSetup === ev.id ? '#BFFF00' : 'rgba(255,255,255,0.35)' }}>
-                  💳 Payment Setup
-                </span>
-                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)' }}>
-                  {expandedPaymentSetup === ev.id ? '▲ Hide' : '▼ Configure'}
-                </span>
-              </button>
+              {(() => {
+                const { ready } = checkPaymentReady(ev);
+                const hasPaidCats = allCategories.some(c => c.event_id === ev.id && c.price > 0 && c.is_active !== false);
+                return (
+                  <button
+                    onClick={() => setExpandedPaymentSetup(expandedPaymentSetup === ev.id ? null : ev.id)}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '10px 14px', borderRadius: 12, marginTop: -6, cursor: 'pointer',
+                      background: expandedPaymentSetup === ev.id ? 'rgba(191,255,0,0.06)' : 'rgba(255,255,255,0.02)',
+                      border: expandedPaymentSetup === ev.id ? '1px solid rgba(191,255,0,0.2)' : '1px solid rgba(255,255,255,0.06)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: expandedPaymentSetup === ev.id ? '#BFFF00' : 'rgba(255,255,255,0.35)' }}>
+                        💳 Payment Setup
+                      </span>
+                      {hasPaidCats && (
+                        <span style={{
+                          fontSize: 9, fontWeight: 800, padding: '2px 7px', borderRadius: 6,
+                          ...(ready
+                            ? { background: 'rgba(0,210,110,0.12)', color: 'rgb(0,210,110)', border: '1px solid rgba(0,210,110,0.25)' }
+                            : { background: 'rgba(255,120,0,0.12)', color: 'rgba(255,150,50,1)', border: '1px solid rgba(255,120,0,0.3)' }
+                          ),
+                        }}>
+                          {ready ? '✓ Ready' : '⚠ Incomplete'}
+                        </span>
+                      )}
+                    </div>
+                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)' }}>
+                      {expandedPaymentSetup === ev.id ? '▲ Hide' : '▼ Configure'}
+                    </span>
+                  </button>
+                );
+              })()}
               {expandedPaymentSetup === ev.id && (
                 <div style={{ padding: '14px 16px 16px', borderRadius: 14, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
                   <EventPaymentSetup eventId={ev.id} />

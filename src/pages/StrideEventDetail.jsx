@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import PaymentUpload from '@/components/stride/PaymentUpload';
+import { checkPaymentReady } from '@/components/stride/EventPaymentSetup';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -467,6 +468,25 @@ export default function StrideEventDetail() {
 
             {/* Payment Upload content */}
             <div className="flex-1 overflow-y-auto px-6 py-4" style={{ WebkitOverflowScrolling: 'touch' }}>
+              {/* Payment config warning */}
+              {(() => {
+                const { ready, issues } = checkPaymentReady(event);
+                if (ready) return null;
+                return (
+                  <div style={{ marginBottom: 16, padding: '12px 14px', borderRadius: 14, background: 'rgba(255,120,0,0.08)', border: '1px solid rgba(255,120,0,0.3)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 16 }}>⚠️</span>
+                      <p style={{ fontSize: 13, fontWeight: 800, color: 'rgba(255,150,50,1)', margin: 0 }}>Payment Setup Incomplete</p>
+                    </div>
+                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', margin: '0 0 2px', lineHeight: 1.5 }}>
+                      The organizer hasn't fully configured payment. Please contact them before transferring.
+                    </p>
+                    {issues.map((issue, i) => (
+                      <p key={i} style={{ fontSize: 11, color: 'rgba(255,150,50,0.7)', margin: 0 }}>· {issue}</p>
+                    ))}
+                  </div>
+                );
+              })()}
               <PaymentUpload
                 registration={paymentReg}
                 category={selectedCategory}

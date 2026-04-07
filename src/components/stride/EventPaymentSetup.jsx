@@ -1,7 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Loader2, Building2, QrCode, ImagePlus, X, CheckCircle2 } from 'lucide-react';
+import { Loader2, Building2, QrCode, ImagePlus, X, CheckCircle2, AlertTriangle } from 'lucide-react';
+
+/** Returns { ready, issues } for a given event object (or form state) */
+export function checkPaymentReady(ev) {
+  if (!ev) return { ready: false, issues: ['No event data'] };
+  const methods = ev.payment_methods_enabled || [];
+  if (methods.length === 0) return { ready: false, issues: ['No payment method enabled'] };
+  const issues = [];
+  if (methods.includes('bank_transfer')) {
+    if (!ev.bank_name)      issues.push('Bank name is missing');
+    if (!ev.account_name)   issues.push('Account name is missing');
+    if (!ev.account_number) issues.push('Account number is missing');
+  }
+  if (methods.includes('qr_scan')) {
+    if (!ev.payment_qr_image) issues.push('QR code image is missing');
+  }
+  return { ready: issues.length === 0, issues };
+}
 
 const METHODS = [
   { key: 'bank_transfer', label: 'Bank Transfer', Icon: Building2, desc: 'Participants transfer to your bank account' },
@@ -101,6 +118,15 @@ export default function EventPaymentSetup({ eventId }) {
 
   const bankEnabled = form.payment_methods_enabled.includes('bank_transfer');
   const qrEnabled   = form.payment_methods_enabled.includes('qr_scan');
+
+  // Validate current form state (before save)
+  const { ready: formReady, issues: formIssues } = checkPaymentReady({
+    payment_methods_enabled: form.payment_methods_enabled,
+    bank_name: form.bank_name,
+    account_name: form.account_name,
+    account_number: form.account_number,
+    payment_qr_image: form.payment_qr_image,
+  });
 
   if (isLoading) return (
     <div style={{ padding: 24, display: 'flex', justifyContent: 'center' }}>
@@ -236,6 +262,24 @@ export default function EventPaymentSetup({ eventId }) {
             : 'Save Payment Settings'
         }
       </button>
+
+      {/* Readiness status */}
+      {formReady ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 12, background: 'rgba(0,210,110,0.07)', border: '1px solid rgba(0,210,110,0.2)' }}>
+          <CheckCircle2 style={{ width: 14, height: 14, color: 'rgb(0,210,110)', flexShrink: 0 }} />
+          <p style={{ fontSize: 12, fontWeight: 700, color: 'rgb(0,210,110)', margin: 0 }}>Payment setup is complete ✓</p>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '10px 14px', borderRadius: 12, background: 'rgba(255,120,0,0.07)', border: '1px solid rgba(255,120,0,0.25)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+            <AlertTriangle style={{ width: 14, height: 14, color: 'rgba(255,150,50,1)', flexShrink: 0 }} />
+            <p style={{ fontSize: 12, fontWeight: 800, color: 'rgba(255,150,50,1)', margin: 0 }}>Payment setup incomplete</p>
+          </div>
+          {formIssues.map((issue, i) => (
+            <p key={i} style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '0 0 0 21px', lineHeight: 1.5 }}>· {issue}</p>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
