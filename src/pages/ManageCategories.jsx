@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Plus, Trash2, Loader2, Pencil, X, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Loader2, Pencil, X, AlertTriangle, ChevronDown, ChevronUp, CreditCard } from 'lucide-react';
 import CategoryItemsManager from '@/components/stride/CategoryItemsManager';
+import CategoryPaymentSetup, { checkPaymentReady } from '@/components/stride/CategoryPaymentSetup';
 
 const SHIRT_SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
@@ -327,6 +328,7 @@ export default function ManageCategories() {
   const [pendingDelete, setPendingDelete] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [expandedCatId, setExpandedCatId] = useState(null); // which category shows items
+  const [expandedPaymentCatId, setExpandedPaymentCatId] = useState(null); // which category shows payment setup
 
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['me'],
@@ -610,6 +612,47 @@ export default function ManageCategories() {
                   <CategoryItemsManager categoryId={cat.id} />
                 </div>
               )}
+
+              {/* Payment Setup — only for paid categories */}
+              {cat.price > 0 && !isEditingThis && (() => {
+                const { ready } = checkPaymentReady(event);
+                const isExpanded = expandedPaymentCatId === cat.id;
+                return (
+                  <>
+                    <button
+                      onClick={() => setExpandedPaymentCatId(isExpanded ? null : cat.id)}
+                      style={{
+                        marginTop: 8, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '9px 12px', borderRadius: 10, cursor: 'pointer',
+                        background: isExpanded ? 'rgba(191,255,0,0.05)' : 'rgba(255,255,255,0.03)',
+                        border: isExpanded ? '1px solid rgba(191,255,0,0.2)' : '1px solid rgba(255,255,255,0.07)',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                        <CreditCard style={{ width: 13, height: 13, color: isExpanded ? '#BFFF00' : 'rgba(255,255,255,0.35)' }} />
+                        <span style={{ fontSize: 11, fontWeight: 700, color: isExpanded ? '#BFFF00' : 'rgba(255,255,255,0.4)' }}>Payment Setup</span>
+                        <span style={{
+                          fontSize: 9, fontWeight: 800, padding: '2px 7px', borderRadius: 5,
+                          ...(ready
+                            ? { background: 'rgba(0,210,110,0.1)', color: 'rgb(0,210,110)', border: '1px solid rgba(0,210,110,0.2)' }
+                            : { background: 'rgba(255,120,0,0.1)', color: 'rgba(255,150,50,1)', border: '1px solid rgba(255,120,0,0.25)' }
+                          ),
+                        }}>
+                          {ready ? '✓ Ready' : '⚠ Required'}
+                        </span>
+                      </div>
+                      <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)' }}>
+                        {isExpanded ? '▲' : '▼'}
+                      </span>
+                    </button>
+                    {isExpanded && (
+                      <div style={{ marginTop: 10, padding: 14, borderRadius: 14, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <CategoryPaymentSetup eventId={eventId} />
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           );
         })}
