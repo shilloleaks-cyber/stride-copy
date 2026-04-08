@@ -282,7 +282,10 @@ function CategoryForm({ eventId, eventData, existingCategories, initial, editing
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 14, borderRadius: 14, background: 'rgba(191,255,0,0.03)', border: '1px solid rgba(191,255,0,0.15)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
             <CreditCard style={{ width: 13, height: 13, color: 'rgba(191,255,0,0.7)' }} />
-            <p style={{ fontSize: 12, fontWeight: 800, color: 'rgba(191,255,0,0.8)', margin: 0 }}>Payment Setup</p>
+            <div>
+              <p style={{ fontSize: 12, fontWeight: 800, color: 'rgba(191,255,0,0.8)', margin: 0 }}>Payment Setup</p>
+              <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', margin: '2px 0 0', fontWeight: 500 }}>This payment setup applies to all paid categories in this event.</p>
+            </div>
             {(() => {
               const { ready } = checkPaymentReady({ payment_methods_enabled: payment.payment_methods_enabled, bank_name: payment.bank_name, account_name: payment.account_name, account_number: payment.account_number, payment_qr_image: payment.payment_qr_image });
               return (
