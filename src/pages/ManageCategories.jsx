@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Plus, Trash2, Loader2, Pencil, X, AlertTriangle, ChevronDown, ChevronUp, CreditCard } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Loader2, Pencil, X, AlertTriangle, ChevronDown, ChevronUp, CreditCard, Building2, QrCode, ImagePlus, CheckCircle2 } from 'lucide-react';
 import CategoryItemsManager from '@/components/stride/CategoryItemsManager';
-import CategoryPaymentSetup, { checkPaymentReady } from '@/components/stride/CategoryPaymentSetup';
+import { checkPaymentReady } from '@/components/stride/CategoryPaymentSetup';
 
 const SHIRT_SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
@@ -40,17 +40,53 @@ function validate(form, existingCategories, editingId) {
   return errors;
 }
 
-function CategoryForm({ eventId, existingCategories, initial, editingId, onSaved, onCancel }) {
+function CategoryForm({ eventId, eventData, existingCategories, initial, editingId, onSaved, onCancel }) {
   const isEdit = !!editingId;
   const [form, setForm] = useState(initial || EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
 
+  // Payment setup state — pre-filled from existing event data
+  const [payment, setPayment] = useState({
+    payment_methods_enabled: eventData?.payment_methods_enabled?.length > 0 ? eventData.payment_methods_enabled : ['bank_transfer'],
+    bank_name: eventData?.bank_name || '',
+    account_name: eventData?.account_name || '',
+    account_number: eventData?.account_number || '',
+    payment_note: eventData?.payment_note || '',
+    payment_qr_image: eventData?.payment_qr_image || '',
+  });
+  const [qrPreview, setQrPreview] = useState(eventData?.payment_qr_image || null);
+  const [uploadingQr, setUploadingQr] = useState(false);
+
+  const isPaid = parseFloat(form.price) > 0;
+
   const set = (field, val) => {
     setForm(prev => ({ ...prev, [field]: val }));
-    // Clear error on change
     if (errors[field]) setErrors(prev => { const e = { ...prev }; delete e[field]; return e; });
+  };
+
+  const setP = (field, val) => setPayment(prev => ({ ...prev, [field]: val }));
+
+  const togglePaymentMethod = (key) => {
+    setPayment(prev => {
+      const enabled = prev.payment_methods_enabled;
+      if (enabled.includes(key)) {
+        if (enabled.length === 1) return prev;
+        return { ...prev, payment_methods_enabled: enabled.filter(k => k !== key) };
+      }
+      return { ...prev, payment_methods_enabled: [...enabled, key] };
+    });
+  };
+
+  const handleQrUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploadingQr(true);
+    setQrPreview(URL.createObjectURL(file));
+    const result = await base44.integrations.Core.UploadFile({ file });
+    setP('payment_qr_image', result.file_url);
+    setUploadingQr(false);
   };
 
   const touch = (field) => setTouched(prev => ({ ...prev, [field]: true }));
@@ -66,7 +102,6 @@ function CategoryForm({ eventId, existingCategories, initial, editingId, onSaved
     const errs = validate(form, existingCategories, editingId);
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
-      // Mark all fields as touched to show errors
       const allTouched = {};
       Object.keys(errs).forEach(k => { allTouched[k] = true; });
       setTouched(allTouched);
@@ -74,11 +109,12 @@ function CategoryForm({ eventId, existingCategories, initial, editingId, onSaved
     }
 
     setSaving(true);
+    const price = form.price !== '' ? parseFloat(form.price) : 0;
     const payload = {
       event_id: eventId,
       name: form.name.trim(),
       distance_km: form.distance_km !== '' ? parseFloat(form.distance_km) : null,
-      price: form.price !== '' ? parseFloat(form.price) : 0,
+      price,
       max_slots: form.max_slots !== '' ? parseInt(form.max_slots) : 0,
       bib_prefix: form.bib_prefix.trim() || null,
       bib_start: parseInt(form.bib_start) || 1,
@@ -92,13 +128,26 @@ function CategoryForm({ eventId, existingCategories, initial, editingId, onSaved
     } else {
       await base44.entities.EventCategory.create(payload);
     }
+
+    // If paid, also save payment settings to the event
+    if (price > 0) {
+      await base44.entities.StrideEvent.update(eventId, {
+        payment_methods_enabled: payment.payment_methods_enabled,
+        bank_name: payment.bank_name || null,
+        account_name: payment.account_name || null,
+        account_number: payment.account_number || null,
+        payment_note: payment.payment_note || null,
+        payment_qr_image: payment.payment_qr_image || null,
+      });
+    }
+
     setSaving(false);
     onSaved();
   };
 
   const inputStyle = (field) => ({
-    background: touched[field] && errors[field] ? 'rgba(255,60,60,0.07)' : 'rgba(255,255,255,0.05)',
-    border: `1px solid ${touched[field] && errors[field] ? 'rgba(255,80,80,0.4)' : 'rgba(255,255,255,0.09)'}`,
+    background: field && touched[field] && errors[field] ? 'rgba(255,60,60,0.07)' : 'rgba(255,255,255,0.05)',
+    border: `1px solid ${field && touched[field] && errors[field] ? 'rgba(255,80,80,0.4)' : 'rgba(255,255,255,0.09)'}`,
     borderRadius: 12,
     color: 'white',
     padding: '11px 14px',
@@ -228,6 +277,86 @@ function CategoryForm({ eventId, existingCategories, initial, editingId, onSaved
         </div>
       </div>
 
+      {/* Payment Setup — only shown when price > 0 */}
+      {isPaid && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 14, borderRadius: 14, background: 'rgba(191,255,0,0.03)', border: '1px solid rgba(191,255,0,0.15)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+            <CreditCard style={{ width: 13, height: 13, color: 'rgba(191,255,0,0.7)' }} />
+            <p style={{ fontSize: 12, fontWeight: 800, color: 'rgba(191,255,0,0.8)', margin: 0 }}>Payment Setup</p>
+            {(() => {
+              const { ready } = checkPaymentReady({ payment_methods_enabled: payment.payment_methods_enabled, bank_name: payment.bank_name, account_name: payment.account_name, account_number: payment.account_number, payment_qr_image: payment.payment_qr_image });
+              return (
+                <span style={{ fontSize: 9, fontWeight: 800, padding: '2px 7px', borderRadius: 5, marginLeft: 'auto', ...(ready ? { background: 'rgba(0,210,110,0.1)', color: 'rgb(0,210,110)', border: '1px solid rgba(0,210,110,0.2)' } : { background: 'rgba(255,120,0,0.1)', color: 'rgba(255,150,50,1)', border: '1px solid rgba(255,120,0,0.25)' }) }}>
+                  {ready ? '✓ Ready' : '⚠ Setup required'}
+                </span>
+              );
+            })()}
+          </div>
+
+          {/* Method toggles */}
+          <div style={{ display: 'flex', gap: 8 }}>
+            {[{ key: 'bank_transfer', label: 'Bank Transfer', Icon: Building2 }, { key: 'qr_scan', label: 'QR Scan', Icon: QrCode }].map(({ key, label, Icon }) => {
+              const active = payment.payment_methods_enabled.includes(key);
+              return (
+                <button key={key} type="button" onClick={() => togglePaymentMethod(key)} style={{ flex: 1, padding: '9px 8px', borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, fontSize: 11, fontWeight: 700, ...(active ? { background: 'rgba(191,255,0,0.08)', border: '1.5px solid rgba(191,255,0,0.3)', color: '#BFFF00' } : { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.3)' }) }}>
+                  <Icon style={{ width: 13, height: 13 }} /> {label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Bank Transfer fields */}
+          {payment.payment_methods_enabled.includes('bank_transfer') && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div>
+                <label style={labelStyle}>Bank Name</label>
+                <input type="text" value={payment.bank_name} onChange={e => setP('bank_name', e.target.value)} placeholder="e.g. Kasikorn Bank" style={inputStyle()} />
+              </div>
+              <div>
+                <label style={labelStyle}>Account Name</label>
+                <input type="text" value={payment.account_name} onChange={e => setP('account_name', e.target.value)} placeholder="e.g. BoomX Running Co." style={inputStyle()} />
+              </div>
+              <div>
+                <label style={labelStyle}>Account Number</label>
+                <input type="text" value={payment.account_number} onChange={e => setP('account_number', e.target.value)} placeholder="e.g. 000-0-00000-0" style={{ ...inputStyle(), fontFamily: 'monospace', letterSpacing: '0.08em' }} />
+              </div>
+            </div>
+          )}
+
+          {/* QR Scan */}
+          {payment.payment_methods_enabled.includes('qr_scan') && (
+            <div>
+              <label style={labelStyle}>QR Payment Image</label>
+              {qrPreview ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                  <div style={{ position: 'relative', borderRadius: 10, overflow: 'hidden', background: 'white', padding: 8, display: 'inline-block' }}>
+                    <img src={qrPreview} alt="QR" style={{ width: 120, height: 120, objectFit: 'contain', display: 'block' }} />
+                    {uploadingQr && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.8)' }}><Loader2 style={{ width: 18, height: 18, color: '#0A0A0A', animation: 'spin 1s linear infinite' }} /></div>}
+                  </div>
+                  {!uploadingQr && (
+                    <button type="button" onClick={() => { setQrPreview(null); setP('payment_qr_image', ''); }} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 8, background: 'rgba(255,80,80,0.08)', border: '1px solid rgba(255,80,80,0.2)', color: 'rgba(255,100,100,1)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+                      <X style={{ width: 10, height: 10 }} /> Remove
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 5, borderRadius: 10, cursor: 'pointer', height: 72, background: 'rgba(191,255,0,0.02)', border: '1px dashed rgba(191,255,0,0.15)' }}>
+                  <ImagePlus style={{ width: 16, height: 16, color: 'rgba(191,255,0,0.3)' }} />
+                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>Upload QR image</span>
+                  <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleQrUpload} />
+                </label>
+              )}
+            </div>
+          )}
+
+          {/* Optional payment note */}
+          <div>
+            <label style={labelStyle}>Payment Note (optional)</label>
+            <textarea value={payment.payment_note} onChange={e => setP('payment_note', e.target.value)} placeholder="e.g. Include your full name as reference" rows={2} style={{ ...inputStyle(), resize: 'none', lineHeight: 1.5 }} />
+          </div>
+        </div>
+      )}
+
       {/* Actions */}
       <div style={{ display: 'flex', gap: 10 }}>
         <button type="button" onClick={onCancel}
@@ -328,7 +457,6 @@ export default function ManageCategories() {
   const [pendingDelete, setPendingDelete] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [expandedCatId, setExpandedCatId] = useState(null); // which category shows items
-  const [expandedPaymentCatId, setExpandedPaymentCatId] = useState(null); // which category shows payment setup
 
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['me'],
@@ -464,6 +592,7 @@ export default function ManageCategories() {
         {showForm && (
           <CategoryForm
             eventId={eventId}
+            eventData={event}
             existingCategories={categories}
             editingId={null}
             onSaved={handleSaved}
@@ -475,6 +604,7 @@ export default function ManageCategories() {
         {editingCat && (
           <CategoryForm
             eventId={eventId}
+            eventData={event}
             existingCategories={categories}
             initial={editingCat}
             editingId={editingCat.id}
@@ -613,44 +743,17 @@ export default function ManageCategories() {
                 </div>
               )}
 
-              {/* Payment Setup — only for paid categories */}
+              {/* Payment readiness badge — shown on card for paid categories */}
               {cat.price > 0 && !isEditingThis && (() => {
                 const { ready } = checkPaymentReady(event);
-                const isExpanded = expandedPaymentCatId === cat.id;
                 return (
-                  <>
-                    <button
-                      onClick={() => setExpandedPaymentCatId(isExpanded ? null : cat.id)}
-                      style={{
-                        marginTop: 8, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        padding: '9px 12px', borderRadius: 10, cursor: 'pointer',
-                        background: isExpanded ? 'rgba(191,255,0,0.05)' : 'rgba(255,255,255,0.03)',
-                        border: isExpanded ? '1px solid rgba(191,255,0,0.2)' : '1px solid rgba(255,255,255,0.07)',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                        <CreditCard style={{ width: 13, height: 13, color: isExpanded ? '#BFFF00' : 'rgba(255,255,255,0.35)' }} />
-                        <span style={{ fontSize: 11, fontWeight: 700, color: isExpanded ? '#BFFF00' : 'rgba(255,255,255,0.4)' }}>Payment Setup</span>
-                        <span style={{
-                          fontSize: 9, fontWeight: 800, padding: '2px 7px', borderRadius: 5,
-                          ...(ready
-                            ? { background: 'rgba(0,210,110,0.1)', color: 'rgb(0,210,110)', border: '1px solid rgba(0,210,110,0.2)' }
-                            : { background: 'rgba(255,120,0,0.1)', color: 'rgba(255,150,50,1)', border: '1px solid rgba(255,120,0,0.25)' }
-                          ),
-                        }}>
-                          {ready ? '✓ Ready' : '⚠ Required'}
-                        </span>
-                      </div>
-                      <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)' }}>
-                        {isExpanded ? '▲' : '▼'}
-                      </span>
-                    </button>
-                    {isExpanded && (
-                      <div style={{ marginTop: 10, padding: 14, borderRadius: 14, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                        <CategoryPaymentSetup eventId={eventId} />
-                      </div>
-                    )}
-                  </>
+                  <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <CreditCard style={{ width: 11, height: 11, color: 'rgba(255,255,255,0.3)' }} />
+                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>Payment:</span>
+                    <span style={{ fontSize: 10, fontWeight: 800, ...(ready ? { color: 'rgb(0,210,110)' } : { color: 'rgba(255,150,50,1)' }) }}>
+                      {ready ? '✓ Ready' : '⚠ Edit to configure'}
+                    </span>
+                  </div>
                 );
               })()}
             </div>
