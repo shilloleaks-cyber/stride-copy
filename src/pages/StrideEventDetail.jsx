@@ -347,6 +347,25 @@ export default function StrideEventDetail() {
           </div>
         )}
 
+        {/* Payment warning — shown below categories when a paid category is selected but payment isn't ready */}
+        {!isCommunityEvent && !alreadyRegistered && isOpen && selectedCategory?.price > 0 && !checkPaymentReady(event).ready && (
+          <div style={{
+            padding: '12px 14px', borderRadius: 14,
+            background: 'rgba(255,120,0,0.08)', border: '1px solid rgba(255,120,0,0.3)',
+            display: 'flex', alignItems: 'flex-start', gap: 10,
+          }}>
+            <span style={{ fontSize: 16, flexShrink: 0, lineHeight: 1.3 }}>🚫</span>
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 800, color: 'rgba(255,150,50,1)', margin: '0 0 3px' }}>
+                Payment not available yet
+              </p>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: 1.5 }}>
+                Registration for this category is temporarily unavailable. Please try again later or contact the organizer.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Official: Already registered — status card */}
         {!isCommunityEvent && alreadyRegistered && myReg && (() => {
           const checkedIn = myReg.checked_in;
@@ -396,37 +415,27 @@ export default function StrideEventDetail() {
               View My Ticket <ChevronRight className="w-5 h-5" />
             </button>
           ) : isOpen && categories.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {/* Payment unavailable warning — shown when a paid category is selected but payment isn't configured */}
-              {paymentBlocked && (
-                <div style={{
-                  padding: '11px 14px', borderRadius: 14,
-                  background: 'rgba(255,120,0,0.08)', border: '1px solid rgba(255,120,0,0.3)',
-                  display: 'flex', alignItems: 'flex-start', gap: 10,
-                }}>
-                  <span style={{ fontSize: 16, flexShrink: 0, lineHeight: 1.3 }}>🚫</span>
-                  <div>
-                    <p style={{ fontSize: 13, fontWeight: 800, color: 'rgba(255,150,50,1)', margin: '0 0 3px' }}>
-                      Payment not available yet
-                    </p>
-                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: 1.5 }}>
-                      Registration for this category is temporarily unavailable. Please try again later or contact the organizer.
-                    </p>
-                  </div>
-                </div>
-              )}
+            paymentBlocked ? (
               <button
-                onClick={() => selectedCategory && !paymentBlocked && requireAuth(() => setShowForm(true))}
-                disabled={!selectedCategory || paymentBlocked}
+                disabled
+                className="w-full py-4 rounded-2xl font-bold text-base"
+                style={{ background: 'rgba(255,120,0,0.08)', border: '1px solid rgba(255,120,0,0.25)', color: 'rgba(255,150,50,0.6)' }}
+              >
+                Registration Unavailable
+              </button>
+            ) : (
+              <button
+                onClick={() => selectedCategory && requireAuth(() => setShowForm(true))}
+                disabled={!selectedCategory}
                 className="w-full py-4 rounded-2xl font-bold text-base transition-all"
-                style={selectedCategory && !paymentBlocked
+                style={selectedCategory
                   ? { background: '#BFFF00', color: '#0A0A0A' }
                   : { background: 'rgba(191,255,0,0.15)', color: 'rgba(191,255,0,0.4)' }
                 }
               >
                 {selectedCategory ? `Register for ${selectedCategory.name}` : 'Select a Category'}
               </button>
-            </div>
+            )
           ) : null}
         </div>
       )}
