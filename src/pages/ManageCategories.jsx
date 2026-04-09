@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -58,6 +58,20 @@ function CategoryForm({ eventId, eventData, existingCategories, initial, editing
   });
   const [qrPreview, setQrPreview] = useState(eventData?.payment_qr_image || null);
   const [uploadingQr, setUploadingQr] = useState(false);
+
+  // Re-sync payment fields if eventData loads asynchronously (edit flow)
+  useEffect(() => {
+    if (!eventData) return;
+    setPayment({
+      payment_methods_enabled: eventData.payment_methods_enabled?.length > 0 ? eventData.payment_methods_enabled : ['bank_transfer'],
+      bank_name: eventData.bank_name || '',
+      account_name: eventData.account_name || '',
+      account_number: eventData.account_number || '',
+      payment_note: eventData.payment_note || '',
+      payment_qr_image: eventData.payment_qr_image || '',
+    });
+    if (eventData.payment_qr_image) setQrPreview(eventData.payment_qr_image);
+  }, [eventData?.id]);
 
   const isPaid = parseFloat(form.price) > 0;
 
