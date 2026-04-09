@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Users, CheckCircle2, Clock, XCircle, ScanLine, Search, Filter, ChevronDown, CreditCard, Tag } from 'lucide-react';
 import { format } from 'date-fns';
 import PaymentReviewPanel from '@/components/stride/PaymentReviewPanel';
-import EventPaymentSetup, { checkPaymentReady } from '@/components/stride/EventPaymentSetup';
+import { checkPaymentReady } from '@/components/stride/EventPaymentSetup';
 import RegistrationDetailSheet from '@/components/stride/RegistrationDetailSheet';
 
 const STATUS_CFG = {
@@ -27,7 +27,7 @@ export default function StrideAdminDashboard() {
   const [showFilters, setShowFilters] = useState(false);
   const [detailReg, setDetailReg] = useState(null);
   const [activeQuickFilter, setActiveQuickFilter] = useState('all');
-  const [expandedPaymentSetup, setExpandedPaymentSetup] = useState(null);
+
 
   const { data: user } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
 
@@ -238,7 +238,7 @@ export default function StrideAdminDashboard() {
       {activeTab === 'categories' && (
         <div className="px-6 pt-4 space-y-3">
           <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
-            Select an event to manage its race categories and payment settings
+            Select an event to manage its race categories. Payment is configured inside each category.
           </p>
           {events.filter(e => e.event_type === 'official').sort((a, b) => {
             if (a.status === 'draft' && b.status !== 'draft') return -1;
@@ -304,47 +304,36 @@ export default function StrideAdminDashboard() {
                   </div>
                 </div>
               </button>
-              {/* Payment Setup inline */}
+              {/* Payment status summary — read-only, configure in ManageCategories */}
               {(() => {
-                const { ready } = checkPaymentReady(ev);
                 const hasPaidCats = allCategories.some(c => c.event_id === ev.id && c.price > 0 && c.is_active !== false);
+                if (!hasPaidCats) return null;
+                const { ready } = checkPaymentReady(ev);
                 return (
                   <button
-                    onClick={() => setExpandedPaymentSetup(expandedPaymentSetup === ev.id ? null : ev.id)}
+                    onClick={() => navigate(`/ManageCategories?event_id=${ev.id}`)}
                     style={{
                       width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      padding: '10px 14px', borderRadius: 12, marginTop: -6, cursor: 'pointer',
-                      background: expandedPaymentSetup === ev.id ? 'rgba(191,255,0,0.06)' : 'rgba(255,255,255,0.02)',
-                      border: expandedPaymentSetup === ev.id ? '1px solid rgba(191,255,0,0.2)' : '1px solid rgba(255,255,255,0.06)',
+                      padding: '9px 14px', borderRadius: 10, marginTop: -6, cursor: 'pointer',
+                      background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)',
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: expandedPaymentSetup === ev.id ? '#BFFF00' : 'rgba(255,255,255,0.35)' }}>
-                        💳 Payment Setup
+                      <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>💳 Payment:</span>
+                      <span style={{
+                        fontSize: 10, fontWeight: 800, padding: '2px 7px', borderRadius: 6,
+                        ...(ready
+                          ? { background: 'rgba(0,210,110,0.1)', color: 'rgb(0,210,110)', border: '1px solid rgba(0,210,110,0.2)' }
+                          : { background: 'rgba(255,120,0,0.1)', color: 'rgba(255,150,50,1)', border: '1px solid rgba(255,120,0,0.25)' }
+                        ),
+                      }}>
+                        {ready ? '✓ Ready' : '⚠ Incomplete — Edit in Event Setup'}
                       </span>
-                      {hasPaidCats && (
-                        <span style={{
-                          fontSize: 9, fontWeight: 800, padding: '2px 7px', borderRadius: 6,
-                          ...(ready
-                            ? { background: 'rgba(0,210,110,0.12)', color: 'rgb(0,210,110)', border: '1px solid rgba(0,210,110,0.25)' }
-                            : { background: 'rgba(255,120,0,0.12)', color: 'rgba(255,150,50,1)', border: '1px solid rgba(255,120,0,0.3)' }
-                          ),
-                        }}>
-                          {ready ? '✓ Ready' : '⚠ Incomplete'}
-                        </span>
-                      )}
                     </div>
-                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)' }}>
-                      {expandedPaymentSetup === ev.id ? '▲ Hide' : '▼ Configure'}
-                    </span>
+                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)' }}>Configure →</span>
                   </button>
                 );
               })()}
-              {expandedPaymentSetup === ev.id && (
-                <div style={{ padding: '14px 16px 16px', borderRadius: 14, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
-                  <EventPaymentSetup eventId={ev.id} />
-                </div>
-              )}
               </div>
             );
           })}
