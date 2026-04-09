@@ -125,9 +125,10 @@ export default function RegistrationDetailSheet({ reg, eventMap, catMap, registr
   const { data: payments = [] } = useQuery({
     queryKey: ['reg-payment', reg.id],
     queryFn: () => base44.entities.EventPayment.filter({ registration_id: reg.id }),
-    enabled: reg.payment_status === 'pending',
+    enabled: reg.payment_status === 'pending' || reg.payment_status === 'paid',
   });
   const hasSlip = payments.length > 0 && !!payments[0]?.slip_image;
+  const paymentNeedsAttention = payments[0]?.status === 'needs_attention';
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ['all-regs-admin'] });
@@ -172,7 +173,9 @@ export default function RegistrationDetailSheet({ reg, eventMap, catMap, registr
     : null;
 
   const hasSelections = reg.item_selections && Object.keys(reg.item_selections).length > 0;
-  const pay = paymentLabel(reg.payment_status, hasSlip);
+  const pay = paymentNeedsAttention
+    ? { label: 'Needs Attention', color: 'rgba(255,150,50,1)', bg: 'rgba(255,120,0,0.12)' }
+    : paymentLabel(reg.payment_status, hasSlip);
 
   // Confirm-then-execute helper
   const withConfirm = (cfg) => setConfirm(cfg);

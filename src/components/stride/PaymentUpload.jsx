@@ -264,7 +264,7 @@ export default function PaymentUpload({ registration, category }) {
       {/* Submit button */}
       <button
         onClick={() => submitMutation.mutate()}
-        disabled={!slipUrl || submitMutation.isPending}
+        disabled={!slipUrl || !method || submitMutation.isPending}
         style={{
           width: '100%', padding: '14px 0', borderRadius: 14, fontSize: 14, fontWeight: 800,
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: slipUrl ? 'pointer' : 'not-allowed', border: 'none',
