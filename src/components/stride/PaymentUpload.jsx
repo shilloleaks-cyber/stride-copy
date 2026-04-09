@@ -46,7 +46,7 @@ function SlipUploader({ onUploaded }) {
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function PaymentUpload({ registration, category }) {
   const queryClient = useQueryClient();
-  const [method, setMethod] = useState('bank_transfer');
+  const [method, setMethod] = useState(null); // set after event loads
   const [slipUrl, setSlipUrl] = useState('');
   const [slipPreview, setSlipPreview] = useState(null);
 
@@ -61,6 +61,13 @@ export default function PaymentUpload({ registration, category }) {
     ? event.payment_methods_enabled
     : ['bank_transfer'];
   const availableMethods = METHODS.filter(m => enabledMethods.includes(m.key));
+
+  // Sync method to first available once event loads
+  React.useEffect(() => {
+    if (availableMethods.length > 0 && (!method || !enabledMethods.includes(method))) {
+      setMethod(availableMethods[0].key);
+    }
+  }, [enabledMethods.join(',')]);
 
   // Fetch existing payment record
   const { data: payments = [], isLoading } = useQuery({

@@ -164,7 +164,7 @@ export default function PaymentReviewPanel({ payment, reg, catMap, registrations
         )}
 
         {/* ── Actions ── */}
-        {!isApproved && !showNoteInput && (
+        {!isApproved && !isNeedsAttention && !showNoteInput && (
           <div style={{ display: 'flex', gap: 8 }}>
             <button
               onClick={() => approveMutation.mutate()}
