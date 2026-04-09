@@ -37,6 +37,7 @@ export default function CategoriesWithItemsManager({ eventId, onCategoryCountCha
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ['event-categories', eventId] });
     queryClient.invalidateQueries({ queryKey: ['all-category-items-create', eventId] });
+    queryClient.invalidateQueries({ queryKey: ['stride-event-data', eventId] });
   };
 
   useEffect(() => {
