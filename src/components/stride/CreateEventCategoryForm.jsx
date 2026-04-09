@@ -23,7 +23,7 @@ export default function CreateEventCategoryForm({ eventId, eventData, existingCa
   const [qrPreview, setQrPreview] = useState(null);
   const [uploadingQr, setUploadingQr] = useState(false);
 
-  // Sync payment fields when eventData loads
+  // Sync payment fields when eventData loads or when switching between edited categories
   useEffect(() => {
     if (!eventData) return;
     setPayment({
@@ -34,8 +34,8 @@ export default function CreateEventCategoryForm({ eventId, eventData, existingCa
       payment_note: eventData.payment_note || '',
       payment_qr_image: eventData.payment_qr_image || '',
     });
-    if (eventData.payment_qr_image) setQrPreview(eventData.payment_qr_image);
-  }, [eventData?.id]);
+    setQrPreview(eventData.payment_qr_image || null);
+  }, [eventData?.id, editingId]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const setP = (k, v) => setPayment(p => ({ ...p, [k]: v }));
