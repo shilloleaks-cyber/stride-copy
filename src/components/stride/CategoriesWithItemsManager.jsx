@@ -10,6 +10,12 @@ export default function CategoriesWithItemsManager({ eventId, onCategoryCountCha
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingCat, setEditingCat] = useState(null);
 
+  const { data: eventData } = useQuery({
+    queryKey: ['stride-event-data', eventId],
+    queryFn: async () => { const r = await base44.entities.StrideEvent.filter({ id: eventId }); return r[0] || null; },
+    enabled: !!eventId,
+  });
+
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ['event-categories', eventId],
     queryFn: () => base44.entities.EventCategory.filter({ event_id: eventId, is_active: true }),
@@ -64,6 +70,7 @@ export default function CategoriesWithItemsManager({ eventId, onCategoryCountCha
           <CreateEventCategoryForm
             key={cat.id}
             eventId={eventId}
+            eventData={eventData}
             existingCategories={categories}
             initial={editingCat}
             editingId={cat.id}
@@ -92,6 +99,7 @@ export default function CategoriesWithItemsManager({ eventId, onCategoryCountCha
       {showAddForm && (
         <CreateEventCategoryForm
           eventId={eventId}
+          eventData={eventData}
           existingCategories={categories}
           editingId={null}
           onSaved={handleSaved}
