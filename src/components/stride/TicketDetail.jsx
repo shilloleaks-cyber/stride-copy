@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   X, Calendar, MapPin, User, CreditCard, ScanLine,
   CheckCircle2, Clock, XCircle, QrCode, Package,
@@ -200,9 +200,20 @@ function PaymentCallout({ paymentStatus }) {
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
-export default function TicketDetail({ reg, event, category, onClose }) {
+export default function TicketDetail({ reg, event, category, onClose, onRemoved }) {
   const [showQRFullscreen, setShowQRFullscreen] = useState(false);
+  const [confirmRemove, setConfirmRemove] = useState(false);
+  const queryClient = useQueryClient();
   if (!reg) return null;
+
+  const isExpired = event?.event_date ? new Date(event.event_date) < new Date() : false;
+
+  const removeMutation = useMutation({
+    mutationFn: () => base44.entities.EventRegistration.update(reg.id, { status: 'cancelled' }),
+    onSuccess: () => {
+      if (onRemoved) onRemoved();
+    },
+  });
 
   const isCancelled = reg.status === 'cancelled' || reg.status === 'rejected';
   const isConfirmed = reg.status === 'confirmed';
@@ -520,6 +531,40 @@ export default function TicketDetail({ reg, event, category, onClose }) {
             {/* Rewards */}
             {reg.checked_in && (
               <RewardSection registrationId={reg.id} userEmail={reg.user_email} />
+            )}
+
+            {/* Remove from My Tickets — only for past/expired events */}
+            {isExpired && (
+              <div style={{ marginTop: 24, paddingBottom: 8 }}>
+                {!confirmRemove ? (
+                  <button
+                    onClick={() => setConfirmRemove(true)}
+                    style={{ width: '100%', padding: '12px 0', borderRadius: 14, background: 'rgba(255,80,80,0.07)', border: '1px solid rgba(255,80,80,0.2)', color: 'rgba(255,100,100,0.8)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+                  >
+                    Remove from My Tickets
+                  </button>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '14px', borderRadius: 14, background: 'rgba(255,80,80,0.06)', border: '1px solid rgba(255,80,80,0.2)' }}>
+                    <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.5 }}>This will remove the ticket from your list. Are you sure?</p>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        onClick={() => removeMutation.mutate()}
+                        disabled={removeMutation.isPending}
+                        style={{ flex: 1, padding: '10px 0', borderRadius: 12, background: 'rgba(255,80,80,0.15)', border: '1px solid rgba(255,80,80,0.3)', color: 'rgba(255,100,100,1)', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                      >
+                        {removeMutation.isPending && <span style={{ width: 12, height: 12, borderRadius: '50%', border: '2px solid rgba(255,100,100,0.5)', borderTopColor: 'rgba(255,100,100,1)', display: 'inline-block', animation: 'spin 0.8s linear infinite' }} />}
+                        Remove
+                      </button>
+                      <button
+                        onClick={() => setConfirmRemove(false)}
+                        style={{ flex: 1, padding: '10px 0', borderRadius: 12, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)', color: 'rgba(255,255,255,0.4)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
 
           </div>
