@@ -102,33 +102,32 @@ export default function PremiumTicketCard({ reg, event, category }) {
 
       {/* Header — image or gradient */}
       {coverImage ? (
-        <div style={{ position: 'relative', height: 100, overflow: 'hidden' }}>
+        <div style={{ position: 'relative', height: 88, overflow: 'hidden' }}>
           <img
             src={coverImage}
             alt={event?.title}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', filter: 'brightness(0.7) saturate(0.8)' }}
           />
-          {/* Dark overlay for readability */}
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, #0e0e12 0%, rgba(14,14,18,0.55) 50%, rgba(14,14,18,0.25) 100%)' }} />
-          {/* Subtle BoomX tint */}
+          {/* Strong dark overlay */}
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(8,8,12,0.52)' }} />
+          {/* Bottom gradient for text */}
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(8,8,12,0.95) 0%, rgba(8,8,12,0.3) 55%, transparent 100%)' }} />
+          {/* BoomX tint overlay */}
           <div style={{ position: 'absolute', inset: 0, background: tintColor }} />
-          {/* Badges on image */}
-          <div style={{ position: 'absolute', top: 10, right: 12, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5 }}>
-            <span style={{ fontSize: 9, fontWeight: 800, padding: '3px 9px', borderRadius: 99, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)', border: `1px solid ${typeBadge.border}`, color: typeBadge.color, whiteSpace: 'nowrap' }}>
+          {/* Badges — small and quiet, top-right */}
+          <div style={{ position: 'absolute', top: 9, right: 11, display: 'flex', gap: 5 }}>
+            <span style={{ fontSize: 8, fontWeight: 700, padding: '2px 7px', borderRadius: 99, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', border: `1px solid ${typeBadge.border}`, color: typeBadge.color, opacity: 0.75, whiteSpace: 'nowrap' }}>
               {typeBadge.label}
             </span>
-            <span style={{ fontSize: 9, fontWeight: 800, padding: '3px 9px', borderRadius: 99, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)', color: cfg.color, whiteSpace: 'nowrap', opacity: 0.85 }}>
-              {cfg.label}
-            </span>
           </div>
-          {/* Title over image */}
-          <div style={{ position: 'absolute', bottom: 10, left: 16, right: 80 }}>
-            <p style={{ fontSize: 8, fontWeight: 800, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.18em', textTransform: 'uppercase', margin: '0 0 3px' }}>BOOMX TICKET</p>
-            <p style={{ fontSize: 16, fontWeight: 900, color: '#fff', margin: 0, lineHeight: 1.2, textShadow: '0 1px 8px rgba(0,0,0,0.8)' }}>{event?.title || '—'}</p>
+          {/* Title — dominant, bottom of image */}
+          <div style={{ position: 'absolute', bottom: 9, left: 14, right: 14 }}>
+            <p style={{ fontSize: 8, fontWeight: 700, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.16em', textTransform: 'uppercase', margin: '0 0 3px' }}>BOOMX TICKET</p>
+            <p style={{ fontSize: 15, fontWeight: 900, color: '#fff', margin: 0, lineHeight: 1.2, textShadow: '0 2px 10px rgba(0,0,0,0.9)', letterSpacing: '-0.2px' }}>{event?.title || '—'}</p>
             {event?.event_date && (
-              <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', margin: '3px 0 0', fontWeight: 600 }}>
+              <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', margin: '2px 0 0', fontWeight: 600 }}>
                 {format(new Date(event.event_date), 'EEE, MMM d yyyy')}
-                {event.start_time && <span style={{ color: 'rgba(255,255,255,0.3)' }}> · {event.start_time}</span>}
+                {event.start_time && <span style={{ color: 'rgba(255,255,255,0.28)' }}> · {event.start_time}</span>}
               </p>
             )}
           </div>
