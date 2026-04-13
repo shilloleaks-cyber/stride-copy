@@ -136,19 +136,7 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
     toast.success('เปลี่ยนชื่อสำเร็จ ✓');
   };
 
-  const handleWeightSave = async () => {
-    const val = weightInput.trim() === '' ? null : parseFloat(weightInput);
-    if (weightInput.trim() !== '') {
-      if (isNaN(val) || val < 20 || val > 300) {
-        toast.error('Enter a weight between 20 and 300 kg');
-        return;
-      }
-    }
-    setWeightSaving(true);
-    await base44.auth.updateMe({ weight_kg: val });
-    setWeightSaving(false);
-    toast.success('Weight saved ✓');
-  };
+
 
   const handleSignIn = () => {
     // Mark that we're mid-login so we can show success on return

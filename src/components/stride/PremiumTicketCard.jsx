@@ -1,6 +1,12 @@
 import React, { useRef, useEffect } from 'react';
 import { format } from 'date-fns';
-import { MapPin, CheckCircle2, Clock, XCircle } from 'lucide-react';
+import { CheckCircle2, Clock, XCircle } from 'lucide-react';
+
+// Resolve cover image from multiple possible field names
+function getCoverImage(event) {
+  if (!event) return null;
+  return event.cover_image || event.banner_url || event.event_image || event.image || event.banner_image || null;
+}
 
 // ── Minimal QR canvas renderer ──────────────────────────────────────────────
 function QRDisplay({ value, size = 140 }) {
@@ -75,6 +81,9 @@ export default function PremiumTicketCard({ reg, event, category }) {
     ? 'linear-gradient(90deg, transparent, rgba(191,255,0,0.6), transparent)'
     : 'linear-gradient(90deg, transparent, rgba(138,43,226,0.7), transparent)';
 
+  const coverImage = getCoverImage(event);
+  const tintColor = isOfficial ? 'rgba(191,255,0,0.06)' : 'rgba(138,43,226,0.08)';
+
   return (
     <div style={{
       borderRadius: 28,
@@ -91,31 +100,65 @@ export default function PremiumTicketCard({ reg, event, category }) {
       {/* Top accent line */}
       <div style={{ height: 1, background: accentLine, opacity: 0.7 }} />
 
-      {/* Header */}
-      <div style={{ padding: '18px 22px 14px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-        <div>
-          <p style={{ fontSize: 9, fontWeight: 800, color: 'rgba(255,255,255,0.22)', letterSpacing: '0.18em', textTransform: 'uppercase', margin: '0 0 8px' }}>
-            BOOMX TICKET
-          </p>
-          <p style={{ fontSize: 20, fontWeight: 900, color: '#fff', margin: 0, lineHeight: 1.2, maxWidth: 220 }}>
-            {event?.title || '—'}
-          </p>
-          {event?.event_date && (
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', margin: '5px 0 0', fontWeight: 600 }}>
-              {format(new Date(event.event_date), 'EEE, MMM d yyyy')}
-              {event.start_time && <span style={{ color: 'rgba(255,255,255,0.25)' }}> · {event.start_time}</span>}
+      {/* Header — image or gradient */}
+      {coverImage ? (
+        <div style={{ position: 'relative', height: 100, overflow: 'hidden' }}>
+          <img
+            src={coverImage}
+            alt={event?.title}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          />
+          {/* Dark overlay for readability */}
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, #0e0e12 0%, rgba(14,14,18,0.55) 50%, rgba(14,14,18,0.25) 100%)' }} />
+          {/* Subtle BoomX tint */}
+          <div style={{ position: 'absolute', inset: 0, background: tintColor }} />
+          {/* Badges on image */}
+          <div style={{ position: 'absolute', top: 10, right: 12, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5 }}>
+            <span style={{ fontSize: 9, fontWeight: 800, padding: '3px 9px', borderRadius: 99, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)', border: `1px solid ${typeBadge.border}`, color: typeBadge.color, whiteSpace: 'nowrap' }}>
+              {typeBadge.label}
+            </span>
+            <span style={{ fontSize: 9, fontWeight: 800, padding: '3px 9px', borderRadius: 99, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)', color: cfg.color, whiteSpace: 'nowrap', opacity: 0.85 }}>
+              {cfg.label}
+            </span>
+          </div>
+          {/* Title over image */}
+          <div style={{ position: 'absolute', bottom: 10, left: 16, right: 80 }}>
+            <p style={{ fontSize: 8, fontWeight: 800, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.18em', textTransform: 'uppercase', margin: '0 0 3px' }}>BOOMX TICKET</p>
+            <p style={{ fontSize: 16, fontWeight: 900, color: '#fff', margin: 0, lineHeight: 1.2, textShadow: '0 1px 8px rgba(0,0,0,0.8)' }}>{event?.title || '—'}</p>
+            {event?.event_date && (
+              <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', margin: '3px 0 0', fontWeight: 600 }}>
+                {format(new Date(event.event_date), 'EEE, MMM d yyyy')}
+                {event.start_time && <span style={{ color: 'rgba(255,255,255,0.3)' }}> · {event.start_time}</span>}
+              </p>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div style={{ padding: '18px 22px 14px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+          <div>
+            <p style={{ fontSize: 9, fontWeight: 800, color: 'rgba(255,255,255,0.22)', letterSpacing: '0.18em', textTransform: 'uppercase', margin: '0 0 8px' }}>
+              BOOMX TICKET
             </p>
-          )}
+            <p style={{ fontSize: 20, fontWeight: 900, color: '#fff', margin: 0, lineHeight: 1.2, maxWidth: 220 }}>
+              {event?.title || '—'}
+            </p>
+            {event?.event_date && (
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', margin: '5px 0 0', fontWeight: 600 }}>
+                {format(new Date(event.event_date), 'EEE, MMM d yyyy')}
+                {event.start_time && <span style={{ color: 'rgba(255,255,255,0.25)' }}> · {event.start_time}</span>}
+              </p>
+            )}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0, paddingTop: 2 }}>
+            <span style={{ fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 99, background: typeBadge.bg, border: `1px solid ${typeBadge.border}`, color: typeBadge.color, letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>
+              {typeBadge.label}
+            </span>
+            <span style={{ fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 99, background: cfg.bg, color: cfg.color, whiteSpace: 'nowrap' }}>
+              {cfg.label}
+            </span>
+          </div>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0, paddingTop: 2 }}>
-          <span style={{ fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 99, background: typeBadge.bg, border: `1px solid ${typeBadge.border}`, color: typeBadge.color, letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>
-            {typeBadge.label}
-          </span>
-          <span style={{ fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 99, background: cfg.bg, color: cfg.color, whiteSpace: 'nowrap' }}>
-            {cfg.label}
-          </span>
-        </div>
-      </div>
+      )}
 
       {/* Dashed tear line */}
       <div style={{ display: 'flex', alignItems: 'center', margin: '0 0' }}>

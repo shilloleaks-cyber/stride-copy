@@ -9,7 +9,6 @@ function generateQR() {
 }
 
 export default function RegistrationForm({ event, category, user, onClose, onSuccess }) {
-  if (!user) return null;
   const [itemSelections, setItemSelections] = useState({});
   const [requiredItemsMissing, setRequiredItemsMissing] = useState(false);
   const [blockReason, setBlockReason] = useState(null);
@@ -124,6 +123,8 @@ export default function RegistrationForm({ event, category, user, onClose, onSuc
   });
 
   const canSubmit = !requiredItemsMissing;
+
+  if (!user) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col" style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)' }}>

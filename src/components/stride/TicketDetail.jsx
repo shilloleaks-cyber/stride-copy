@@ -204,16 +204,23 @@ export default function TicketDetail({ reg, event, category, onClose, onRemoved 
   const [showQRFullscreen, setShowQRFullscreen] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
   const queryClient = useQueryClient();
-  if (!reg) return null;
 
-  const isExpired = event?.event_date ? new Date(event.event_date) < new Date() : false;
+  const isExpired = reg && event?.event_date ? new Date(event.event_date) < new Date() : false;
 
   const removeMutation = useMutation({
-    mutationFn: () => base44.entities.EventRegistration.update(reg.id, { status: 'cancelled' }),
-    onSuccess: () => {
-      if (onRemoved) onRemoved();
-    },
+    mutationFn: () => base44.entities.EventRegistration.update(reg?.id, { status: 'cancelled' }),
+    onSuccess: () => { if (onRemoved) onRemoved(); },
   });
+
+  const { data: categoryItems = [] } = useQuery({
+    queryKey: ['cat-items-ticket', reg?.category_id],
+    queryFn: () => base44.entities.CategoryItem.filter({ event_category_id: reg.category_id }),
+    enabled: !!reg?.category_id && !!reg?.item_selections && Object.keys(reg?.item_selections || {}).length > 0,
+  });
+
+  if (!reg) return null;
+
+
 
   const isCancelled = reg.status === 'cancelled' || reg.status === 'rejected';
   const isConfirmed = reg.status === 'confirmed';
@@ -229,12 +236,7 @@ export default function TicketDetail({ reg, event, category, onClose, onRemoved 
   const userName = [reg.first_name, reg.last_name].filter(Boolean).join(' ') || '—';
   const needsPayment = category?.price > 0 && paymentState !== 'paid' && !isCancelled;
 
-  // Fetch CategoryItems to resolve item_selections → human-readable names
-  const { data: categoryItems = [] } = useQuery({
-    queryKey: ['cat-items-ticket', reg.category_id],
-    queryFn: () => base44.entities.CategoryItem.filter({ event_category_id: reg.category_id }),
-    enabled: !!reg.category_id && !!reg.item_selections && Object.keys(reg.item_selections || {}).length > 0,
-  });
+
   const itemNameMap = Object.fromEntries(categoryItems.map(i => [i.id, i.name]));
 
   // Only show items that have a resolved name (filter out stale/unknown ids)
@@ -308,6 +310,24 @@ export default function TicketDetail({ reg, event, category, onClose, onRemoved 
 
           {/* ── CONTENT ── */}
           <div style={{ padding: '16px 20px 0' }}>
+
+            {/* ── COVER IMAGE (if available) ── */}
+            {(() => {
+              const coverImage = event?.cover_image || event?.banner_url || event?.event_image || event?.image || event?.banner_image;
+              if (!coverImage) return null;
+              const isOfficial = event?.event_type === 'official' || !event?.group_id;
+              const tint = isOfficial ? 'rgba(191,255,0,0.05)' : 'rgba(138,43,226,0.07)';
+              return (
+                <div style={{ position: 'relative', height: 110, borderRadius: 18, overflow: 'hidden', marginBottom: 14 }}>
+                  <img src={coverImage} alt={event?.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(10,10,14,0.85) 0%, rgba(10,10,14,0.2) 60%, transparent 100%)' }} />
+                  <div style={{ position: 'absolute', inset: 0, background: tint }} />
+                  <p style={{ position: 'absolute', bottom: 12, left: 14, fontSize: 15, fontWeight: 900, color: '#fff', margin: 0, textShadow: '0 1px 8px rgba(0,0,0,0.9)', maxWidth: '75%', lineHeight: 1.2 }}>
+                    {event?.title}
+                  </p>
+                </div>
+              );
+            })()}
 
             {/* ── TICKET CARD ── */}
             <div style={{
