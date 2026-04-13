@@ -107,7 +107,6 @@ const REG_STATUS = {
   rejected:  { label: 'Rejected',               color: 'rgba(255,80,80,0.9)', bg: 'rgba(255,80,80,0.08)', border: 'rgba(255,80,80,0.2)',    Icon: XCircle },
 };
 
-// Payment states mapped clearly — pending means payment submitted awaiting admin review
 const PAY_STATUS = {
   pending:      { label: 'Awaiting Payment Approval', color: 'rgba(255,200,80,1)',      bg: 'rgba(255,200,80,0.08)',   border: 'rgba(255,200,80,0.2)' },
   paid:         { label: 'Payment Approved',          color: 'rgb(0,210,110)',          bg: 'rgba(0,210,110,0.1)',    border: 'rgba(0,210,110,0.25)' },
@@ -115,9 +114,8 @@ const PAY_STATUS = {
   refunded:     { label: 'Refunded',                  color: 'rgba(138,43,226,0.9)',   bg: 'rgba(138,43,226,0.08)', border: 'rgba(138,43,226,0.2)' },
 };
 
-// ─── Info row — renders nothing if value is falsy ─────────────────────────────
+// ─── Info row ─────────────────────────────────────────────────────────────────
 function Row({ icon: Icon, label, value, children, last }) {
-  // If only a value prop was passed and it's empty, render nothing
   if (value !== undefined && !value) return null;
   return (
     <div style={{
@@ -148,7 +146,6 @@ function Row({ icon: Icon, label, value, children, last }) {
   );
 }
 
-// ─── Section label ────────────────────────────────────────────────────────────
 function Section({ children }) {
   return (
     <p style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '18px 0 6px' }}>
@@ -157,7 +154,6 @@ function Section({ children }) {
   );
 }
 
-// ─── Badge pill ───────────────────────────────────────────────────────────────
 function Badge({ label, color, bg, border, Icon }) {
   return (
     <span style={{
@@ -172,12 +168,9 @@ function Badge({ label, color, bg, border, Icon }) {
   );
 }
 
-// ─── Payment state callout ────────────────────────────────────────────────────
 function PaymentCallout({ paymentStatus }) {
-  // Show a prominent callout when payment is still awaiting
   const needsPayment = paymentStatus === 'not_required' ? false : paymentStatus !== 'paid';
   if (!needsPayment) return null;
-
   const isAwaitingApproval = paymentStatus === 'pending';
   const color = isAwaitingApproval ? 'rgba(255,200,80,1)' : 'rgba(255,140,60,1)';
   const bg = isAwaitingApproval ? 'rgba(255,200,80,0.06)' : 'rgba(255,140,60,0.06)';
@@ -185,7 +178,6 @@ function PaymentCallout({ paymentStatus }) {
   const msg = isAwaitingApproval
     ? 'Your payment slip has been submitted and is awaiting admin approval.'
     : 'Payment is required to confirm your registration.';
-
   return (
     <div style={{
       display: 'flex', alignItems: 'flex-start', gap: 10,
@@ -197,6 +189,12 @@ function PaymentCallout({ paymentStatus }) {
       <p style={{ fontSize: 12, color, fontWeight: 600, margin: 0, lineHeight: 1.5 }}>{msg}</p>
     </div>
   );
+}
+
+// ─── Resolve cover image ──────────────────────────────────────────────────────
+function getCoverImage(event) {
+  if (!event) return null;
+  return event.cover_image || event.banner_url || event.event_image || event.image || event.banner_image || null;
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
@@ -220,40 +218,31 @@ export default function TicketDetail({ reg, event, category, onClose, onRemoved 
 
   if (!reg) return null;
 
-
-
   const isCancelled = reg.status === 'cancelled' || reg.status === 'rejected';
   const isConfirmed = reg.status === 'confirmed';
   const regCfg = REG_STATUS[reg.status] || REG_STATUS.pending;
-
-  // Determine correct payment state label:
-  // payment_status='pending' means slip uploaded, awaiting approval
-  // no slip yet = still "Awaiting Payment" (use a derived key)
   const paymentState = reg.payment_status || 'not_required';
   const payCfg = PAY_STATUS[paymentState] || PAY_STATUS.not_required;
-
   const hasQR = !!reg.qr_code && !isCancelled;
   const userName = [reg.first_name, reg.last_name].filter(Boolean).join(' ') || '—';
   const needsPayment = category?.price > 0 && paymentState !== 'paid' && !isCancelled;
-
-
   const itemNameMap = Object.fromEntries(categoryItems.map(i => [i.id, i.name]));
-
-  // Only show items that have a resolved name (filter out stale/unknown ids)
   const resolvedItems = reg.item_selections
     ? Object.entries(reg.item_selections).filter(([id]) => !!itemNameMap[id])
     : [];
   const hasItems = resolvedItems.length > 0;
-
-  // Conditional participant fields
   const hasPhone = !!reg.phone;
   const hasBloodType = !!reg.blood_type && reg.blood_type !== 'unknown';
   const hasEmergencyName = !!reg.emergency_contact_name;
   const hasEmergencyPhone = !!reg.emergency_contact_phone;
   const hasEmergency = hasEmergencyName || hasEmergencyPhone;
   const hasAnyExtra = hasPhone || hasBloodType || hasEmergency;
-
   const accentBorder = isConfirmed ? 'rgba(191,255,0,0.3)' : 'rgba(255,255,255,0.1)';
+  const coverImage = getCoverImage(event);
+  const isOfficial = event?.event_type === 'official' || !event?.group_id;
+  const heroTint = isOfficial ? 'rgba(191,255,0,0.05)' : 'rgba(138,43,226,0.08)';
+  const typeBadgeColor = isOfficial ? '#BFFF00' : 'rgba(180,120,255,1)';
+  const typeBadgeBorder = isOfficial ? 'rgba(191,255,0,0.35)' : 'rgba(138,43,226,0.45)';
 
   return (
     <>
@@ -270,64 +259,80 @@ export default function TicketDetail({ reg, event, category, onClose, onRemoved 
           onClick={e => e.stopPropagation()}
           style={{
             width: '100%', maxWidth: 560,
-            background: 'linear-gradient(180deg, #0f0f14 0%, #0a0a0a 100%)',
+            background: '#0a0a0e',
             borderTopLeftRadius: 26, borderTopRightRadius: 26,
+            border: `1px solid rgba(255,255,255,0.06)`,
             borderTop: `1.5px solid ${accentBorder}`,
-            borderLeft: `1px solid rgba(255,255,255,0.06)`,
-            borderRight: `1px solid rgba(255,255,255,0.06)`,
-            // maxHeight leaves room so it clearly sits above the page (no overlap)
             maxHeight: 'calc(100dvh - 56px)',
             overflowY: 'auto',
             WebkitOverflowScrolling: 'touch',
             paddingBottom: 'calc(32px + env(safe-area-inset-bottom))',
           }}
         >
-          {/* Drag handle */}
-          <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 10 }}>
-            <div style={{ width: 36, height: 4, borderRadius: 99, background: 'rgba(255,255,255,0.14)' }} />
-          </div>
-
-          {/* Sheet header — "My Ticket" + close */}
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '10px 20px 14px',
-            borderBottom: '1px solid rgba(255,255,255,0.05)',
-          }}>
-            <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0 }}>
-              My Ticket
-            </p>
+          {/* ── HERO COVER — single, full-width, edge-to-edge ── */}
+          <div style={{ position: 'relative', height: 250, overflow: 'hidden', borderTopLeftRadius: 26, borderTopRightRadius: 26, flexShrink: 0 }}>
+            {/* Drag handle floated on top */}
+            <div style={{ position: 'absolute', top: 10, left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 10 }}>
+              <div style={{ width: 36, height: 4, borderRadius: 99, background: 'rgba(255,255,255,0.3)' }} />
+            </div>
+            {/* Close button floated top-right */}
             <button
               onClick={onClose}
               style={{
-                width: 32, height: 32, borderRadius: 10,
-                background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)',
+                position: 'absolute', top: 14, right: 14, zIndex: 10,
+                width: 34, height: 34, borderRadius: 10,
+                background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)',
+                border: '1px solid rgba(255,255,255,0.18)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
               }}
             >
-              <X style={{ width: 15, height: 15, color: 'rgba(255,255,255,0.55)' }} />
+              <X style={{ width: 15, height: 15, color: 'rgba(255,255,255,0.75)' }} />
             </button>
+
+            {/* Background: image or gradient */}
+            {coverImage
+              ? <img src={coverImage} alt={event?.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              : (
+                <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #1a0a2e 0%, #0a140a 50%, #0f0f18 100%)' }}>
+                  <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 25% 40%, rgba(138,43,226,0.3) 0%, transparent 60%), radial-gradient(ellipse at 75% 65%, rgba(191,255,0,0.12) 0%, transparent 60%)' }} />
+                </div>
+              )
+            }
+            {/* Dark gradient overlay — bottom heavy */}
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(10,10,14,1) 0%, rgba(10,10,14,0.55) 40%, rgba(10,10,14,0.1) 100%)' }} />
+            {/* BoomX tint */}
+            <div style={{ position: 'absolute', inset: 0, background: heroTint }} />
+
+            {/* Badges — top-right area */}
+            <div style={{ position: 'absolute', top: 52, right: 14, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+              <span style={{ fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 99, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', border: `1px solid ${typeBadgeBorder}`, color: typeBadgeColor }}>
+                {isOfficial ? 'Official' : 'Group'}
+              </span>
+              <span style={{ fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 99, background: regCfg.bg, border: `1px solid ${regCfg.border}`, color: regCfg.color }}>
+                {regCfg.label}
+              </span>
+              {reg.checked_in && (
+                <span style={{ fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 99, background: 'rgba(191,255,0,0.15)', border: '1px solid rgba(191,255,0,0.4)', color: '#BFFF00' }}>✓ Checked In</span>
+              )}
+            </div>
+
+            {/* Title + date — bottom-left */}
+            <div style={{ position: 'absolute', bottom: 18, left: 20, right: 120 }}>
+              <p style={{ fontSize: 9, fontWeight: 800, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.16em', textTransform: 'uppercase', margin: '0 0 5px' }}>BOOMX TICKET</p>
+              <p style={{ fontSize: 22, fontWeight: 900, color: '#fff', margin: 0, lineHeight: 1.2, textShadow: '0 2px 14px rgba(0,0,0,0.9)' }}>
+                {event?.title || '—'}
+              </p>
+              {event?.event_date && (
+                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', margin: '6px 0 0', fontWeight: 600 }}>
+                  {format(new Date(event.event_date), 'EEE, MMM d yyyy')}
+                  {event.start_time && <span style={{ color: 'rgba(255,255,255,0.35)' }}> · {event.start_time}</span>}
+                </p>
+              )}
+            </div>
           </div>
 
-          {/* ── CONTENT ── */}
-          <div style={{ padding: '16px 20px 0' }}>
-
-            {/* ── COVER IMAGE (if available) ── */}
-            {(() => {
-              const coverImage = event?.cover_image || event?.banner_url || event?.event_image || event?.image || event?.banner_image;
-              if (!coverImage) return null;
-              const isOfficial = event?.event_type === 'official' || !event?.group_id;
-              const tint = isOfficial ? 'rgba(191,255,0,0.05)' : 'rgba(138,43,226,0.07)';
-              return (
-                <div style={{ position: 'relative', height: 110, borderRadius: 18, overflow: 'hidden', marginBottom: 14 }}>
-                  <img src={coverImage} alt={event?.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(10,10,14,0.85) 0%, rgba(10,10,14,0.2) 60%, transparent 100%)' }} />
-                  <div style={{ position: 'absolute', inset: 0, background: tint }} />
-                  <p style={{ position: 'absolute', bottom: 12, left: 14, fontSize: 15, fontWeight: 900, color: '#fff', margin: 0, textShadow: '0 1px 8px rgba(0,0,0,0.9)', maxWidth: '75%', lineHeight: 1.2 }}>
-                    {event?.title}
-                  </p>
-                </div>
-              );
-            })()}
+          {/* ── SCROLLABLE CONTENT ── */}
+          <div style={{ padding: '18px 20px 0' }}>
 
             {/* ── TICKET CARD ── */}
             <div style={{
@@ -336,34 +341,17 @@ export default function TicketDetail({ reg, event, category, onClose, onRemoved 
               marginBottom: 18,
               boxShadow: isConfirmed ? '0 0 32px rgba(191,255,0,0.06)' : 'none',
             }}>
-              {/* Banner */}
-              <div style={{ position: 'relative', height: 96 }}>
-                {event?.banner_image
-                  ? <img src={event.banner_image} alt={event.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                  : <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, rgba(138,43,226,0.5), rgba(191,255,0,0.18))' }} />
-                }
-                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, #111114 0%, transparent 60%)' }} />
-                <div style={{ position: 'absolute', top: 10, right: 10 }}>
-                  <Badge label={regCfg.label} color={regCfg.color} bg={regCfg.bg} border={regCfg.border} Icon={regCfg.Icon} />
-                </div>
-                {reg.checked_in && (
-                  <div style={{ position: 'absolute', top: 10, left: 10 }}>
-                    <Badge label="✓ Checked In" color="#BFFF00" bg="rgba(191,255,0,0.15)" border="rgba(191,255,0,0.4)" />
-                  </div>
-                )}
-              </div>
+              {/* Category accent line */}
+              <div style={{ height: 2, background: category?.color ? `linear-gradient(90deg, ${category.color}66, transparent)` : 'linear-gradient(90deg, rgba(191,255,0,0.35), transparent)' }} />
 
-              {/* Event name + category */}
-              <div style={{ padding: '6px 16px 12px' }}>
-                <p style={{ fontSize: 17, fontWeight: 900, color: '#fff', margin: '0 0 2px', lineHeight: 1.25 }}>
-                  {event?.title || '—'}
-                </p>
-                {category && (
+              {/* Category name */}
+              {category && (
+                <div style={{ padding: '10px 16px 6px' }}>
                   <p style={{ fontSize: 12, fontWeight: 700, color: category.color || '#BFFF00', margin: 0, letterSpacing: '0.04em' }}>
                     {category.name}{category.distance_km ? ` · ${category.distance_km} km` : ''}
                   </p>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* Tear line */}
               <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
@@ -390,7 +378,6 @@ export default function TicketDetail({ reg, event, category, onClose, onRemoved 
                   <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '4px 0 0', fontWeight: 600 }}>{userName}</p>
                 </div>
 
-                {/* Tappable inline QR */}
                 {hasQR ? (
                   <button
                     onClick={() => setShowQRFullscreen(true)}
@@ -402,7 +389,6 @@ export default function TicketDetail({ reg, event, category, onClose, onRemoved 
                     }}
                   >
                     <QRDisplay value={reg.qr_code} size={76} />
-                    {/* Enlarge hint overlay */}
                     <div style={{
                       position: 'absolute', bottom: 4, right: 4,
                       width: 18, height: 18, borderRadius: 5,
@@ -454,7 +440,7 @@ export default function TicketDetail({ reg, event, category, onClose, onRemoved 
               )}
             </div>
 
-            {/* ── PAYMENT UPLOAD (when payment still required) ── */}
+            {/* ── PAYMENT UPLOAD ── */}
             {needsPayment && (
               <>
                 <Section>Payment</Section>
@@ -488,7 +474,7 @@ export default function TicketDetail({ reg, event, category, onClose, onRemoved 
               )}
             </div>
 
-            {/* ── ITEM SELECTIONS (only when resolved items exist) ── */}
+            {/* ── ITEM SELECTIONS ── */}
             {hasItems && (
               <>
                 <Section>Your Items</Section>
@@ -522,7 +508,7 @@ export default function TicketDetail({ reg, event, category, onClose, onRemoved 
               </>
             )}
 
-            {/* ── PARTICIPANT INFO (only rows with data) ── */}
+            {/* ── PARTICIPANT INFO ── */}
             {hasAnyExtra && (
               <>
                 <Section>Participant</Section>
@@ -600,6 +586,7 @@ export default function TicketDetail({ reg, event, category, onClose, onRemoved 
           onClose={() => setShowQRFullscreen(false)}
         />
       )}
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </>
   );
 }
