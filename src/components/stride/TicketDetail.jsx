@@ -318,12 +318,11 @@ export default function TicketDetail({ reg, event, category, onClose, onRemoved 
               const isOfficial = event?.event_type === 'official' || !event?.group_id;
               const tint = isOfficial ? 'rgba(191,255,0,0.05)' : 'rgba(138,43,226,0.07)';
               return (
-                <div style={{ position: 'relative', height: 96, borderRadius: 18, overflow: 'hidden', marginBottom: 14 }}>
-                  <img src={coverImage} alt={event?.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', filter: 'brightness(0.65) saturate(0.75)' }} />
-                  <div style={{ position: 'absolute', inset: 0, background: 'rgba(8,8,12,0.5)' }} />
-                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(8,8,12,0.92) 0%, rgba(8,8,12,0.25) 55%, transparent 100%)' }} />
+                <div style={{ position: 'relative', height: 110, borderRadius: 18, overflow: 'hidden', marginBottom: 14 }}>
+                  <img src={coverImage} alt={event?.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(10,10,14,0.85) 0%, rgba(10,10,14,0.2) 60%, transparent 100%)' }} />
                   <div style={{ position: 'absolute', inset: 0, background: tint }} />
-                  <p style={{ position: 'absolute', bottom: 11, left: 14, fontSize: 15, fontWeight: 900, color: '#fff', margin: 0, textShadow: '0 2px 10px rgba(0,0,0,0.95)', maxWidth: '80%', lineHeight: 1.2, letterSpacing: '-0.2px' }}>
+                  <p style={{ position: 'absolute', bottom: 12, left: 14, fontSize: 15, fontWeight: 900, color: '#fff', margin: 0, textShadow: '0 1px 8px rgba(0,0,0,0.9)', maxWidth: '75%', lineHeight: 1.2 }}>
                     {event?.title}
                   </p>
                 </div>
