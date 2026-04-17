@@ -69,6 +69,13 @@ Deno.serve(async (req) => {
     for (const evId of eventIds) {
       if (!evId) continue;
 
+      // Check event still exists before updating (may have been deleted)
+      const evCheck = await sr.entities.StrideEvent.filter({ id: evId });
+      if (!evCheck || evCheck.length === 0) {
+        console.log(`[sync] event ${evId} not found — skipping`);
+        continue;
+      }
+
       const regs = await sr.entities.EventRegistration.filter({ event_id: evId });
       const count = regs.filter(r => !INACTIVE.has(r.status)).length;
 
