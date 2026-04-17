@@ -39,15 +39,16 @@ export default function CreateOfficialEvent() {
     enabled: isEditMode,
   });
 
-  const { data: existingCategories = [] } = useQuery({
+  const { data: existingCategories, isLoading: categoriesLoading } = useQuery({
     queryKey: ['event-categories-edit', editEventId],
     queryFn: () => base44.entities.EventCategory.filter({ event_id: editEventId, is_active: true }),
     enabled: isEditMode,
   });
 
-  // Prefill form once draft data + categories are loaded
+  // Wait for BOTH draft AND categories to finish loading before prefilling
   useEffect(() => {
     if (!isEditMode || draftLoaded) return;
+    if (draftLoading || categoriesLoading) return; // wait for both
     const draft = existingDraft?.[0];
     if (!draft) return;
 
@@ -68,11 +69,11 @@ export default function CreateOfficialEvent() {
     setDraftEvent(draft);
     setDraftLoaded(true);
 
-    // Resume at step 2 if categories already exist
-    if (existingCategories.length > 0) {
+    // Resume at step 2 only if categories are confirmed to exist
+    if (existingCategories && existingCategories.length > 0) {
       setPhase('categories');
     }
-  }, [existingDraft, existingCategories, isEditMode, draftLoaded]);
+  }, [existingDraft, existingCategories, draftLoading, categoriesLoading, isEditMode, draftLoaded]);
 
   if (!userLoading && user && user.role !== 'admin') {
     return (
@@ -84,8 +85,8 @@ export default function CreateOfficialEvent() {
     );
   }
 
-  // Show loading spinner while fetching draft
-  if (isEditMode && (draftLoading || !draftLoaded)) {
+  // Show loading spinner while fetching draft + categories
+  if (isEditMode && (draftLoading || categoriesLoading || !draftLoaded)) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center text-white" style={{ backgroundColor: '#0A0A0A' }}>
         <Loader2 className="w-7 h-7 animate-spin" style={{ color: '#BFFF00' }} />
