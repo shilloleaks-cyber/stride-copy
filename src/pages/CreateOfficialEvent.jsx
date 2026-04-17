@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -9,13 +9,20 @@ export default function CreateOfficialEvent() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
+  // Check for existing draft being resumed via ?event_id=
+  const urlParams = new URLSearchParams(window.location.search);
+  const editEventId = urlParams.get('event_id');
+  const isEditMode = !!editEventId;
+
   const [phase, setPhase] = useState('form'); // 'form' | 'categories'
   const [draftEvent, setDraftEvent] = useState(null);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [isUpdatingDraft, setIsUpdatingDraft] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [bannerPreview, setBannerPreview] = useState(null);
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
   const [categoryCount, setCategoryCount] = useState(0);
+  const [draftLoaded, setDraftLoaded] = useState(false);
   const [form, setForm] = useState({
     title: '', description: '', location_name: '', event_date: '', max_participants: '', banner_image: '',
   });
@@ -25,12 +32,64 @@ export default function CreateOfficialEvent() {
     queryFn: () => base44.auth.me(),
   });
 
+  // Load existing draft if editing
+  const { data: existingDraft, isLoading: draftLoading } = useQuery({
+    queryKey: ['draft-event-edit', editEventId],
+    queryFn: () => base44.entities.StrideEvent.filter({ id: editEventId }),
+    enabled: isEditMode,
+  });
+
+  const { data: existingCategories = [] } = useQuery({
+    queryKey: ['event-categories-edit', editEventId],
+    queryFn: () => base44.entities.EventCategory.filter({ event_id: editEventId, is_active: true }),
+    enabled: isEditMode,
+  });
+
+  // Prefill form once draft data + categories are loaded
+  useEffect(() => {
+    if (!isEditMode || draftLoaded) return;
+    const draft = existingDraft?.[0];
+    if (!draft) return;
+
+    const dateStr = draft.event_date
+      ? `${draft.event_date}${draft.start_time ? 'T' + draft.start_time : 'T00:00'}`
+      : '';
+
+    setForm({
+      title: draft.title || '',
+      description: draft.description || '',
+      location_name: draft.location_name || '',
+      event_date: dateStr,
+      max_participants: draft.max_participants ? String(draft.max_participants) : '',
+      banner_image: draft.banner_image || '',
+    });
+
+    if (draft.banner_image) setBannerPreview(draft.banner_image);
+    setDraftEvent(draft);
+    setDraftLoaded(true);
+
+    // Resume at step 2 if categories already exist
+    if (existingCategories.length > 0) {
+      setPhase('categories');
+    }
+  }, [existingDraft, existingCategories, isEditMode, draftLoaded]);
+
   if (!userLoading && user && user.role !== 'admin') {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center text-white" style={{ backgroundColor: '#0A0A0A' }}>
         <p className="text-4xl mb-4">🚫</p>
         <p className="text-xl font-bold mb-2">Admin Only</p>
         <button onClick={() => navigate(-1)} className="mt-4 text-sm" style={{ color: '#BFFF00' }}>Go Back</button>
+      </div>
+    );
+  }
+
+  // Show loading spinner while fetching draft
+  if (isEditMode && (draftLoading || !draftLoaded)) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center text-white" style={{ backgroundColor: '#0A0A0A' }}>
+        <Loader2 className="w-7 h-7 animate-spin" style={{ color: '#BFFF00' }} />
+        <p className="mt-3 text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>Loading draft…</p>
       </div>
     );
   }
@@ -49,13 +108,10 @@ export default function CreateOfficialEvent() {
 
   const clearBanner = () => { setBannerPreview(null); handleChange('banner_image', ''); };
 
-  const handleSaveDraft = async (e) => {
-    e.preventDefault();
-    if (!form.title || !form.event_date || !user) return;
-    setIsSavingDraft(true);
+  const buildPayload = () => {
     const datePart = form.event_date.split('T')[0];
     const timePart = form.event_date.split('T')[1]?.slice(0, 5) || '';
-    const created = await base44.entities.StrideEvent.create({
+    return {
       title: form.title,
       description: form.description,
       banner_image: form.banner_image,
@@ -65,11 +121,33 @@ export default function CreateOfficialEvent() {
       max_participants: form.max_participants ? parseInt(form.max_participants) : 0,
       visibility: 'public',
       event_type: 'official',
-      creator_email: user.email,
       status: 'draft',
+    };
+  };
+
+  // Create new draft (Step 1 for a brand-new event)
+  const handleSaveDraft = async (e) => {
+    e.preventDefault();
+    if (!form.title || !form.event_date || !user) return;
+    setIsSavingDraft(true);
+    const created = await base44.entities.StrideEvent.create({
+      ...buildPayload(),
+      creator_email: user.email,
     });
     setIsSavingDraft(false);
     if (created?.id) { setDraftEvent(created); setPhase('categories'); }
+  };
+
+  // Update existing draft then advance to step 2 (edit mode Step 1)
+  const handleUpdateAndContinue = async (e) => {
+    e.preventDefault();
+    if (!form.title || !form.event_date || !draftEvent?.id) return;
+    setIsUpdatingDraft(true);
+    const updated = await base44.entities.StrideEvent.update(draftEvent.id, buildPayload());
+    queryClient.invalidateQueries({ queryKey: ['stride-events-drafts'] });
+    setIsUpdatingDraft(false);
+    setDraftEvent(prev => ({ ...prev, ...buildPayload() }));
+    setPhase('categories');
   };
 
   const handlePublish = async () => {
@@ -92,7 +170,8 @@ export default function CreateOfficialEvent() {
     letterSpacing: '0.10em', marginBottom: '8px', display: 'block', fontWeight: 700,
   };
 
-  const formDisabled = isSavingDraft || !form.title || !form.event_date;
+  const saving = isSavingDraft || isUpdatingDraft;
+  const formDisabled = saving || !form.title || !form.event_date;
   const hasCategories = categoryCount > 0;
 
   return (
@@ -108,7 +187,9 @@ export default function CreateOfficialEvent() {
         </button>
         <div className="flex-1 min-w-0">
           <p style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0 }}>Admin · Official</p>
-          <h1 style={{ fontSize: 17, fontWeight: 800, color: '#fff', margin: 0, marginTop: 1 }}>Create Official Event</h1>
+          <h1 style={{ fontSize: 17, fontWeight: 800, color: '#fff', margin: 0, marginTop: 1 }}>
+            {isEditMode ? 'Edit Draft Event' : 'Create Official Event'}
+          </h1>
         </div>
         {/* Step indicator */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
@@ -118,14 +199,21 @@ export default function CreateOfficialEvent() {
             return (
               <React.Fragment key={stepNum}>
                 {i > 0 && <div style={{ width: 16, height: 1, background: 'rgba(255,255,255,0.15)' }} />}
-                <div style={{
-                  width: 22, height: 22, borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 10, fontWeight: 800,
-                  background: done ? 'rgba(0,210,110,0.2)' : active ? '#BFFF00' : 'rgba(255,255,255,0.08)',
-                  color: done ? 'rgb(0,210,110)' : active ? '#0A0A0A' : 'rgba(255,255,255,0.3)',
-                }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (stepNum === 1 && phase === 'categories') setPhase('form');
+                  }}
+                  style={{
+                    width: 22, height: 22, borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 10, fontWeight: 800, border: 'none',
+                    cursor: stepNum === 1 && phase === 'categories' ? 'pointer' : 'default',
+                    background: done ? 'rgba(0,210,110,0.2)' : active ? '#BFFF00' : 'rgba(255,255,255,0.08)',
+                    color: done ? 'rgb(0,210,110)' : active ? '#0A0A0A' : 'rgba(255,255,255,0.3)',
+                  }}
+                >
                   {done ? '✓' : stepNum}
-                </div>
+                </button>
               </React.Fragment>
             );
           })}
@@ -134,7 +222,8 @@ export default function CreateOfficialEvent() {
 
       {/* ── PHASE 1: Event Details ── */}
       {phase === 'form' && (
-        <form onSubmit={handleSaveDraft} style={{ padding: '28px 20px 0', display: 'flex', flexDirection: 'column', gap: 22 }}>
+        <form onSubmit={isEditMode ? handleUpdateAndContinue : handleSaveDraft}
+          style={{ padding: '28px 20px 0', display: 'flex', flexDirection: 'column', gap: 22 }}>
 
           <div>
             <label style={labelStyle}>Event Title *</label>
@@ -201,12 +290,14 @@ export default function CreateOfficialEvent() {
               placeholder="Leave blank or 0 for unlimited" min="0" style={inputStyle} />
           </div>
 
-          <div style={{ padding: '13px 16px', borderRadius: 14, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-            <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>📋</span>
-            <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: 1.6 }}>
-              Saves as a draft first. You'll add race categories &amp; included items next, then publish.
-            </p>
-          </div>
+          {!isEditMode && (
+            <div style={{ padding: '13px 16px', borderRadius: 14, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+              <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>📋</span>
+              <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: 1.6 }}>
+                Saves as a draft first. You'll add race categories &amp; included items next, then publish.
+              </p>
+            </div>
+          )}
 
           <div style={{ paddingBottom: 16 }}>
             <button type="submit" disabled={formDisabled} style={{
@@ -219,8 +310,11 @@ export default function CreateOfficialEvent() {
                 : { background: 'rgba(191,255,0,0.12)', border: '1px solid rgba(191,255,0,0.35)', color: '#BFFF00', boxShadow: '0 0 24px rgba(191,255,0,0.1)' }
               ),
             }}>
-              {isSavingDraft && <Loader2 className="w-4 h-4 animate-spin" />}
-              {isSavingDraft ? 'Saving Draft…' : 'Save Draft & Setup Categories →'}
+              {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+              {saving
+                ? (isEditMode ? 'Saving…' : 'Saving Draft…')
+                : (isEditMode ? 'Update & Continue →' : 'Save Draft & Setup Categories →')
+              }
             </button>
           </div>
         </form>
@@ -233,7 +327,9 @@ export default function CreateOfficialEvent() {
           <div style={{ padding: '14px 16px', borderRadius: 14, background: 'rgba(0,210,110,0.07)', border: '1px solid rgba(0,210,110,0.2)', display: 'flex', alignItems: 'center', gap: 10 }}>
             <CheckCircle2 style={{ width: 16, height: 16, color: 'rgb(0,210,110)', flexShrink: 0 }} />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontSize: 13, fontWeight: 800, color: 'rgb(0,210,110)', margin: 0 }}>Draft Saved</p>
+              <p style={{ fontSize: 13, fontWeight: 800, color: 'rgb(0,210,110)', margin: 0 }}>
+                {isEditMode ? 'Resuming Draft' : 'Draft Saved'}
+              </p>
               <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '2px 0 0' }} className="truncate">"{draftEvent.title}"</p>
             </div>
           </div>

@@ -196,7 +196,7 @@ export default function StrideEvents() {
                 {draftEvents.map(ev => (
                   <button
                     key={ev.id}
-                    onClick={() => navigate(`/StrideEventDetail?id=${ev.id}`)}
+                    onClick={() => navigate(`/CreateOfficialEvent?event_id=${ev.id}`)}
                     style={{
                       width: '100%', textAlign: 'left', padding: '14px 16px', borderRadius: 16,
                       background: 'rgba(255,180,0,0.04)', border: '1px solid rgba(255,180,0,0.18)',
