@@ -83,6 +83,7 @@ export default function CategoriesWithItemsManager({ eventId, onCategoryCountCha
             key={cat.id}
             cat={cat}
             itemCount={getItemCount(cat.id)}
+            onItemsChanged={invalidate}
             onEdit={(c) => setEditingCat({
               ...c,
               distance_km: c.distance_km != null ? String(c.distance_km) : '',

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ChevronDown, ChevronUp, Pencil, Trash2 } from 'lucide-react';
 import CategoryItemsManager from '@/components/stride/CategoryItemsManager';
 
-export default function CreateEventCategoryCard({ cat, itemCount, onEdit, onDelete }) {
+export default function CreateEventCategoryCard({ cat, itemCount, onEdit, onDelete, onItemsChanged }) {
   const [expanded, setExpanded] = useState(false);
   const hasNoItems = itemCount === 0;
 
@@ -66,7 +66,7 @@ export default function CreateEventCategoryCard({ cat, itemCount, onEdit, onDele
       {/* Inline items manager */}
       {expanded && (
         <div style={{ padding: '12px 14px 14px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-          <CategoryItemsManager categoryId={cat.id} />
+          <CategoryItemsManager categoryId={cat.id} onItemsChanged={onItemsChanged} />
         </div>
       )}
     </div>

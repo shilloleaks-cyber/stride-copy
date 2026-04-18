@@ -278,7 +278,7 @@ function ItemForm({ categoryId, initial, editingId, sortOrderNext, onSaved, onCa
   );
 }
 
-export default function CategoryItemsManager({ categoryId }) {
+export default function CategoryItemsManager({ categoryId, onItemsChanged }) {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
@@ -290,7 +290,10 @@ export default function CategoryItemsManager({ categoryId }) {
     enabled: !!categoryId,
   });
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['category-items', categoryId] });
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ['category-items', categoryId] });
+    if (onItemsChanged) onItemsChanged();
+  };
 
   const handleSaved = () => {
     invalidate();
