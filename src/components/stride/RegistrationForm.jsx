@@ -131,7 +131,7 @@ export default function RegistrationForm({ event, category, user, onClose, onSuc
       <div className="flex-1" onClick={onClose} />
       <div
         className="rounded-t-3xl overflow-hidden flex flex-col"
-        style={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', height: 'calc(100dvh - 24px)', maxHeight: 'calc(100dvh - 24px)' }}
+        style={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', maxHeight: '80dvh' }}
       >
         {/* Handle */}
         <div className="flex justify-center pt-3 pb-1">
