@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
+import { SHEET_CONTENT_PADDING_BOTTOM } from '@/lib/sheetLayout';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   X, Calendar, MapPin, User, CreditCard, ScanLine,
@@ -266,7 +267,7 @@ export default function TicketDetail({ reg, event, category, onClose, onRemoved 
             maxHeight: 'calc(100dvh - 56px)',
             overflowY: 'auto',
             WebkitOverflowScrolling: 'touch',
-            paddingBottom: 'calc(90px + env(safe-area-inset-bottom))',
+            paddingBottom: SHEET_CONTENT_PADDING_BOTTOM,
           }}
         >
           {/* ── HERO COVER — single, full-width, edge-to-edge ── */}

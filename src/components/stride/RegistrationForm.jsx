@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useMutation } from '@tanstack/react-query';
 import { X, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import CategoryItemsPicker from '@/components/stride/CategoryItemsPicker';
+import { SHEET_BOTTOM_PADDING } from '@/lib/sheetLayout';
 
 function generateQR() {
   return 'QR-' + Math.random().toString(36).substring(2, 10).toUpperCase() + '-' + Date.now();
@@ -160,7 +161,7 @@ export default function RegistrationForm({ event, category, user, onClose, onSuc
         )}
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4" style={{ WebkitOverflowScrolling: 'touch', paddingBottom: SHEET_BOTTOM_PADDING }}>
 
           {/* Registering as */}
           <div className="flex items-center gap-3 px-4 py-3 rounded-2xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
@@ -183,7 +184,7 @@ export default function RegistrationForm({ event, category, user, onClose, onSuc
         </div>
 
         {/* Submit */}
-        <div className="px-6 pb-8 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+        <div className="px-6 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingBottom: SHEET_BOTTOM_PADDING }}>
           <button
             onClick={() => registerMutation.mutate()}
             disabled={!canSubmit || registerMutation.isPending}

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { X, Loader2, AlertCircle } from 'lucide-react';
+import { SHEET_CONTENT_PADDING_BOTTOM } from '@/lib/sheetLayout';
 
 // ─── Payment label logic ─────────────────────────────────────────────────────
 // payment_status = 'pending'        → "Awaiting Payment"
@@ -215,7 +216,7 @@ export default function RegistrationDetailSheet({ reg, eventMap, catMap, registr
             borderTop: '1.5px solid rgba(138,43,226,0.4)',
             maxHeight: '90dvh', overflowY: 'auto',
             WebkitOverflowScrolling: 'touch',
-            paddingBottom: 'calc(32px + env(safe-area-inset-bottom))',
+            paddingBottom: SHEET_CONTENT_PADDING_BOTTOM,
           }}
         >
           {/* Handle */}
