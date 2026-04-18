@@ -102,7 +102,15 @@ export default function CommunityRSVP({ event, user, myReg }) {
 
       {/* CTA button — shown when not yet going */}
       {event.status === 'open' && (!myReg || isCancelled) && (
-        <div className="fixed left-0 right-0 px-6" style={{ bottom: SHEET_BOTTOM_PADDING, paddingBottom: 8 }}>
+        <div
+          className="fixed left-0 right-0 px-6"
+          style={{
+            bottom: 0,
+            paddingTop: 12,
+            paddingBottom: `calc(70px + env(safe-area-inset-bottom, 0px) + 8px)`,
+            background: 'linear-gradient(to top, rgba(10,10,10,1) 60%, rgba(10,10,10,0))',
+          }}
+        >
           <button
             onClick={() => rsvpMutation.mutate()}
             disabled={rsvpMutation.isPending}

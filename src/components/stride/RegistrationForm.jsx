@@ -161,7 +161,7 @@ export default function RegistrationForm({ event, category, user, onClose, onSuc
         )}
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4" style={{ WebkitOverflowScrolling: 'touch', paddingBottom: SHEET_BOTTOM_PADDING }}>
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4" style={{ WebkitOverflowScrolling: 'touch', paddingBottom: 24 }}>
 
           {/* Registering as */}
           <div className="flex items-center gap-3 px-4 py-3 rounded-2xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
