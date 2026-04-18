@@ -118,6 +118,12 @@
     "first_name",
     "last_name"
   ],
+  "unique_together": [
+    [
+      "category_id",
+      "bib_number"
+    ]
+  ],
   "rls": {
     "create": {
       "data.user_email": "{{user.email}}"

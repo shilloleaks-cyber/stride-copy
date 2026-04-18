@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Missing event_id or category_id' }, { status: 400 });
   }
 
-  // ── 1. Duplicate check ──────────────────────────────────────────────────────
+  // ── 1. Duplicate registration check ────────────────────────────────────────
   const existingRegs = await base44.asServiceRole.entities.EventRegistration.filter({
     event_id,
     user_email: user.email,
@@ -42,128 +42,113 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'FULL' }, { status: 409 });
   }
 
-  const isFree = (cat.price || 0) <= 0;
-
-  // ── 4. Bib assignment (free registrations only, server-side with retry) ─────
-  let assignedBib = null;
-  if (isFree) {
-    const prefix = cat.bib_prefix || 'R';
-    const start  = cat.bib_start  || 1;
-    const MAX_ATTEMPTS = 20;
-
-    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-      // Fresh query each attempt to get latest used bibs
-      const allCatRegs = await base44.asServiceRole.entities.EventRegistration.filter({
-        category_id,
-      });
-      const usedBibs = new Set(
-        allCatRegs.filter(r => r.bib_number).map(r => r.bib_number)
-      );
-
-      // Find first unused bib starting from start + attempt offset
-      let candidate = start;
-      let bib = null;
-      while (true) {
-        const tryBib = `${prefix}${String(candidate).padStart(3, '0')}`;
-        if (!usedBibs.has(tryBib)) {
-          bib = tryBib;
-          break;
-        }
-        candidate++;
-        if (candidate > start + 9999) break; // safety ceiling
-      }
-
-      if (!bib) {
-        return Response.json({ error: 'No bibs available' }, { status: 409 });
-      }
-
-      // ── 5. Create registration with the chosen bib ──────────────────────────
-      const qr = 'QR-' + Math.random().toString(36).substring(2, 10).toUpperCase() + '-' + Date.now();
-
-      const displayName = user.first_name || user.full_name || user.email.split('@')[0] || 'User';
-      const nameParts = String(displayName).trim().split(/\s+/).filter(Boolean);
-      const firstName = user.first_name || nameParts[0] || user.email.split('@')[0] || 'User';
-      const lastName  = user.last_name  || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '—');
-
-      const payload = {
-        event_id,
-        category_id,
-        user_email: user.email,
-        user_id: user.id || user.email,
-        first_name: firstName,
-        last_name: lastName,
-        status: 'confirmed',
-        qr_code: qr,
-        checked_in: false,
-        blood_type: 'unknown',
-        payment_status: 'not_required',
-        bib_number: bib,
-      };
-
-      if (user.phone)       payload.phone        = user.phone;
-      if (user.birth_date)  payload.date_of_birth = user.birth_date;
-      if (user.gender && ['male', 'female', 'other'].includes(user.gender)) {
-        payload.gender = user.gender;
-      }
-      if (user.nationality) payload.nationality = user.nationality;
-      if (item_selections && typeof item_selections === 'object' && Object.keys(item_selections).length > 0) {
-        payload.item_selections = item_selections;
-      }
-
-      const reg = await base44.asServiceRole.entities.EventRegistration.create(payload);
-
-      // ── 6. Hard safety: verify the bib is unique after write ───────────────
-      const verifyRegs = await base44.asServiceRole.entities.EventRegistration.filter({
-        category_id,
-        bib_number: bib,
-      });
-      const duplicates = verifyRegs.filter(r => r.id !== reg.id && r.bib_number === bib);
-
-      if (duplicates.length === 0) {
-        // Clean win — bib is uniquely ours
-        return Response.json({ registration: reg });
-      }
-
-      // Collision detected after write — delete our record and retry
-      console.warn(`Bib collision on ${bib}, attempt ${attempt + 1}. Retrying...`);
-      await base44.asServiceRole.entities.EventRegistration.delete(reg.id);
-      // Loop continues with fresh bib query
-    }
-
-    return Response.json({ error: 'Failed to assign a unique bib after retries' }, { status: 500 });
-  }
-
-  // ── Paid registration — no bib yet, stays pending ──────────────────────────
+  // ── 4. Shared payload builder ───────────────────────────────────────────────
   const qr = 'QR-' + Math.random().toString(36).substring(2, 10).toUpperCase() + '-' + Date.now();
-  const displayName = user.first_name || user.full_name || user.email.split('@')[0] || 'User';
+  const displayName = user.full_name || user.email.split('@')[0] || 'User';
   const nameParts = String(displayName).trim().split(/\s+/).filter(Boolean);
   const firstName = user.first_name || nameParts[0] || user.email.split('@')[0] || 'User';
   const lastName  = user.last_name  || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '—');
 
-  const paidPayload = {
+  const basePayload = {
     event_id,
     category_id,
     user_email: user.email,
     user_id: user.id || user.email,
     first_name: firstName,
     last_name: lastName,
-    status: 'pending',
     qr_code: qr,
     checked_in: false,
     blood_type: 'unknown',
-    payment_status: 'pending',
   };
 
-  if (user.phone)       paidPayload.phone         = user.phone;
-  if (user.birth_date)  paidPayload.date_of_birth  = user.birth_date;
+  if (user.phone)       basePayload.phone          = user.phone;
+  if (user.birth_date)  basePayload.date_of_birth   = user.birth_date;
   if (user.gender && ['male', 'female', 'other'].includes(user.gender)) {
-    paidPayload.gender = user.gender;
+    basePayload.gender = user.gender;
   }
-  if (user.nationality) paidPayload.nationality = user.nationality;
+  if (user.nationality) basePayload.nationality = user.nationality;
   if (item_selections && typeof item_selections === 'object' && Object.keys(item_selections).length > 0) {
-    paidPayload.item_selections = item_selections;
+    basePayload.item_selections = item_selections;
   }
 
-  const paidReg = await base44.asServiceRole.entities.EventRegistration.create(paidPayload);
-  return Response.json({ registration: paidReg });
+  const isFree = (cat.price || 0) <= 0;
+
+  // ── 5. PAID: no bib assigned now, stays pending ─────────────────────────────
+  if (!isFree) {
+    const paidReg = await base44.asServiceRole.entities.EventRegistration.create({
+      ...basePayload,
+      status: 'pending',
+      payment_status: 'pending',
+    });
+    return Response.json({ registration: paidReg });
+  }
+
+  // ── 6. FREE: assign bib with optimistic-create retry ───────────────────────
+  // Strategy:
+  //   a) Scan existing bibs once to find the current max used number.
+  //   b) Pick the next candidate from there.
+  //   c) Attempt to create the record directly — the DB unique constraint on
+  //      (category_id, bib_number) will reject concurrent duplicates atomically.
+  //   d) If the create throws a uniqueness/conflict error, advance the candidate
+  //      and retry. No post-create delete is ever performed.
+  //
+  // Chosen uniqueness rule: category_id + bib_number
+  // (bibs are scoped per category, e.g. R001 in "5K" ≠ R001 in "10K")
+
+  const prefix = cat.bib_prefix || 'R';
+  const start  = cat.bib_start  || 1;
+  const MAX_ATTEMPTS = 30;
+
+  // Pre-scan to find the highest currently-used sequential number so we start
+  // from a good candidate instead of always starting from `start`.
+  const allCatRegs = await base44.asServiceRole.entities.EventRegistration.filter({ category_id });
+  const usedNumbers = new Set();
+  for (const r of allCatRegs) {
+    if (r.bib_number && r.bib_number.startsWith(prefix)) {
+      const num = parseInt(r.bib_number.slice(prefix.length), 10);
+      if (!isNaN(num)) usedNumbers.add(num);
+    }
+  }
+
+  // Find the first unused number starting from `start`
+  let candidateNum = start;
+  while (usedNumbers.has(candidateNum)) candidateNum++;
+
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    const bib = `${prefix}${String(candidateNum).padStart(3, '0')}`;
+
+    try {
+      const reg = await base44.asServiceRole.entities.EventRegistration.create({
+        ...basePayload,
+        status: 'confirmed',
+        payment_status: 'not_required',
+        bib_number: bib,
+      });
+
+      // Success — the DB constraint confirmed this bib is unique in this category
+      return Response.json({ registration: reg });
+
+    } catch (err) {
+      // Check if this is a uniqueness / duplicate-key error from the DB.
+      // The Base44 SDK wraps DB errors; inspect the message for known signals.
+      const msg = String(err?.message || err?.data?.message || '').toLowerCase();
+      const isUniquenessError =
+        msg.includes('unique') ||
+        msg.includes('duplicate') ||
+        msg.includes('already exists') ||
+        msg.includes('conflict') ||
+        (err?.status === 409);
+
+      if (!isUniquenessError) {
+        // Unexpected error — surface it immediately
+        throw err;
+      }
+
+      // Bib conflict: advance to the next candidate and retry
+      console.warn(`Bib conflict on ${bib} (attempt ${attempt + 1}), trying next...`);
+      candidateNum++;
+    }
+  }
+
+  return Response.json({ error: 'Failed to assign a unique bib after retries' }, { status: 500 });
 });
