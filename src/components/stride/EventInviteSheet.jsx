@@ -117,7 +117,7 @@ export default function EventInviteSheet({ event, user, onClose }) {
           border: '1px solid rgba(255,255,255,0.1)',
           borderRadius: '24px 24px 0 0',
           maxHeight: '80dvh',
-          paddingBottom: 'calc(env(safe-area-inset-bottom) + 16px)',
+          paddingBottom: 'calc(70px + env(safe-area-inset-bottom, 0px) + 16px)',
         }}
         onClick={e => e.stopPropagation()}
       >

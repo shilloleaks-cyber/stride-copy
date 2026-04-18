@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { SHEET_BOTTOM_PADDING, SHEET_CONTENT_PADDING_BOTTOM } from '@/lib/sheetLayout';
 import PaymentUpload from '@/components/stride/PaymentUpload';
 import { checkPaymentReady } from '@/components/stride/EventPaymentSetup';
 import { useNavigate } from 'react-router-dom';
@@ -90,7 +91,7 @@ export default function StrideEventDetail() {
   const paymentBlocked = selectedIsPaid && !paymentReady;
 
   return (
-    <div className="min-h-screen text-white pb-32" style={{ backgroundColor: '#0A0A0A' }}>
+    <div className="min-h-screen text-white" style={{ backgroundColor: '#0A0A0A', paddingBottom: SHEET_CONTENT_PADDING_BOTTOM }}>
       {/* Banner */}
       <div className="relative" style={{ height: 200 }}>
         {event.banner_image
@@ -405,7 +406,7 @@ export default function StrideEventDetail() {
 
       {/* Official: Bottom CTA */}
       {!isCommunityEvent && (
-        <div className="fixed bottom-20 left-0 right-0 px-6 pb-2">
+        <div className="fixed left-0 right-0 px-6" style={{ bottom: SHEET_BOTTOM_PADDING, paddingBottom: 8 }}>
           {alreadyRegistered && myReg ? (
             <button
               onClick={() => navigate(`/StrideMyEvents?reg_id=${myReg.id}`)}
@@ -504,7 +505,7 @@ export default function StrideEventDetail() {
             </div>
 
             {/* Payment Upload content */}
-            <div className="flex-1 overflow-y-auto px-6 py-4" style={{ WebkitOverflowScrolling: 'touch' }}>
+            <div className="flex-1 overflow-y-auto px-6 py-4" style={{ WebkitOverflowScrolling: 'touch', paddingBottom: SHEET_CONTENT_PADDING_BOTTOM }}>
               {/* Payment config warning */}
               {(() => {
                 const { ready, issues } = checkPaymentReady(event);
@@ -528,7 +529,7 @@ export default function StrideEventDetail() {
             </div>
 
             {/* Done button */}
-            <div className="px-6 pb-8 pt-3 flex-shrink-0" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+            <div className="px-6 pt-3 flex-shrink-0" style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingBottom: SHEET_BOTTOM_PADDING }}>
               <button
                 onClick={() => {
                   setPaymentReg(null);

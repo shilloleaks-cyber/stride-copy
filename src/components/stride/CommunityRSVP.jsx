@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { CheckCircle2, Users, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { SHEET_BOTTOM_PADDING } from '@/lib/sheetLayout';
 
 export default function CommunityRSVP({ event, user, myReg }) {
   const queryClient = useQueryClient();
@@ -101,7 +102,7 @@ export default function CommunityRSVP({ event, user, myReg }) {
 
       {/* CTA button — shown when not yet going */}
       {event.status === 'open' && (!myReg || isCancelled) && (
-        <div className="fixed bottom-20 left-0 right-0 px-6 pb-2">
+        <div className="fixed left-0 right-0 px-6" style={{ bottom: SHEET_BOTTOM_PADDING, paddingBottom: 8 }}>
           <button
             onClick={() => rsvpMutation.mutate()}
             disabled={rsvpMutation.isPending}
