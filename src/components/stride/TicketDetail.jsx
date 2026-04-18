@@ -266,7 +266,7 @@ export default function TicketDetail({ reg, event, category, onClose, onRemoved 
             maxHeight: 'calc(100dvh - 56px)',
             overflowY: 'auto',
             WebkitOverflowScrolling: 'touch',
-            paddingBottom: 'calc(32px + env(safe-area-inset-bottom))',
+            paddingBottom: 'calc(90px + env(safe-area-inset-bottom))',
           }}
         >
           {/* ── HERO COVER — single, full-width, edge-to-edge ── */}
