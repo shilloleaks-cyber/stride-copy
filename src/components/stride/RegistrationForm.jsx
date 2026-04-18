@@ -5,10 +5,6 @@ import { X, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import CategoryItemsPicker from '@/components/stride/CategoryItemsPicker';
 import { SHEET_BOTTOM_PADDING } from '@/lib/sheetLayout';
 
-function generateQR() {
-  return 'QR-' + Math.random().toString(36).substring(2, 10).toUpperCase() + '-' + Date.now();
-}
-
 export default function RegistrationForm({ event, category, user, onClose, onSuccess }) {
   const [itemSelections, setItemSelections] = useState({});
   const [requiredItemsMissing, setRequiredItemsMissing] = useState(false);
@@ -16,92 +12,14 @@ export default function RegistrationForm({ event, category, user, onClose, onSuc
 
   const registerMutation = useMutation({
     mutationFn: async () => {
-      const existing = await base44.entities.EventRegistration.filter({
-        event_id: event.id,
-        user_email: user.email,
-      });
-
-      const activeExisting = existing.filter(
-        (r) => r.status !== 'cancelled' && r.status !== 'rejected'
-      );
-
-      if (activeExisting.length > 0) throw new Error('DUPLICATE');
-
-      const freshCats = await base44.entities.EventCategory.filter({ id: category.id });
-      const freshCat = freshCats[0];
-
-      if (freshCat && freshCat.max_slots > 0 && freshCat.registered_count >= freshCat.max_slots) {
-        throw new Error('FULL');
-      }
-
-      const qr = generateQR();
-
-      // For free official categories: generate bib immediately
-      let autoBib = null;
-      const isFreeOfficial = category.price <= 0;
-      if (isFreeOfficial) {
-        const existingRegs = await base44.entities.EventRegistration.filter({ category_id: category.id });
-        const usedBibs = new Set(existingRegs.filter(r => r.bib_number).map(r => r.bib_number));
-        const prefix = freshCat?.bib_prefix || 'R';
-        const start = freshCat?.bib_start || 1;
-        let candidate = start;
-        do {
-          autoBib = `${prefix}${String(candidate).padStart(3, '0')}`;
-          candidate++;
-        } while (usedBibs.has(autoBib));
-      }
-
-      const displayName =
-        user.first_name ||
-        user.display_name ||
-        user.full_name ||
-        user.email?.split('@')[0] ||
-        'User';
-
-      const nameParts = String(displayName).trim().split(/\s+/).filter(Boolean);
-
-      const firstName =
-        user.first_name ||
-        nameParts[0] ||
-        user.email?.split('@')[0] ||
-        'User';
-
-      const lastName =
-        user.last_name ||
-        (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '—');
-
-      const payload = {
+      const response = await base44.functions.invoke('registerForEvent', {
         event_id: event.id,
         category_id: category.id,
-        user_email: user.email,
-        user_id: user.id || user.email,
-        first_name: firstName,
-        last_name: lastName,
-        // Free official: confirm immediately with bib. Paid: stay pending for payment flow.
-        status: isFreeOfficial ? 'confirmed' : 'pending',
-        qr_code: qr,
-        checked_in: false,
-        blood_type: 'unknown',
-        payment_status: isFreeOfficial ? 'not_required' : 'pending',
-        ...(autoBib ? { bib_number: autoBib } : {}),
-      };
-
-      if (user.phone) payload.phone = user.phone;
-      if (user.birth_date) payload.date_of_birth = user.birth_date;
-      if (user.gender && ['male', 'female', 'other'].includes(user.gender)) {
-        payload.gender = user.gender;
-      }
-      if (user.nationality) payload.nationality = user.nationality;
-
-      if (itemSelections && typeof itemSelections === 'object' && Object.keys(itemSelections).length > 0) {
-        payload.item_selections = itemSelections;
-      }
-
-      console.log('REGISTER PAYLOAD', payload);
-
-      const reg = await base44.entities.EventRegistration.create(payload);
-
-      return reg;
+        item_selections: itemSelections,
+      });
+      const data = response.data;
+      if (data.error) throw new Error(data.error);
+      return data.registration;
     },
 
     onSuccess: (reg) => {
