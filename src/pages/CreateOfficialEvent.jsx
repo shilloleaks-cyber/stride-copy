@@ -22,6 +22,7 @@ export default function CreateOfficialEvent() {
   const [bannerPreview, setBannerPreview] = useState(null);
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
   const [categoryCount, setCategoryCount] = useState(0);
+  const [paymentBlocking, setPaymentBlocking] = useState(false);
   const [draftLoaded, setDraftLoaded] = useState(false);
   const [form, setForm] = useState({
     title: '', description: '', location_name: '', event_date: '', max_participants: '', banner_image: '',
@@ -174,6 +175,7 @@ export default function CreateOfficialEvent() {
   const saving = isSavingDraft || isUpdatingDraft;
   const formDisabled = saving || !form.title || !form.event_date;
   const hasCategories = categoryCount > 0;
+  const canPublish = hasCategories && !paymentBlocking;
 
   return (
     <div className="min-h-screen text-white pb-32" style={{ backgroundColor: '#0A0A0A' }}>
@@ -345,33 +347,36 @@ export default function CreateOfficialEvent() {
           <CategoriesWithItemsManager
             eventId={draftEvent.id}
             onCategoryCountChange={setCategoryCount}
+            onReadinessChange={({ paymentBlocking: pb }) => setPaymentBlocking(pb)}
           />
 
           {/* Publish readiness */}
           <div style={{
             padding: '13px 16px', borderRadius: 14,
-            background: hasCategories ? 'rgba(191,255,0,0.05)' : 'rgba(255,180,0,0.05)',
-            border: `1px solid ${hasCategories ? 'rgba(191,255,0,0.18)' : 'rgba(255,180,0,0.18)'}`,
+            background: canPublish ? 'rgba(191,255,0,0.05)' : 'rgba(255,180,0,0.05)',
+            border: `1px solid ${canPublish ? 'rgba(191,255,0,0.18)' : 'rgba(255,180,0,0.18)'}`,
             display: 'flex', alignItems: 'flex-start', gap: 10,
           }}>
-            <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>{hasCategories ? '🏁' : '⚠️'}</span>
-            <p style={{ fontSize: 12, fontWeight: 600, color: hasCategories ? 'rgba(191,255,0,0.75)' : 'rgba(255,180,0,0.85)', margin: 0, lineHeight: 1.6 }}>
-              {hasCategories
-                ? `${categoryCount} ${categoryCount === 1 ? 'category' : 'categories'} ready. Publish to open registration.`
-                : 'Add at least one race category before publishing so participants can register.'
+            <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>{canPublish ? '🏁' : '⚠️'}</span>
+            <p style={{ fontSize: 12, fontWeight: 600, color: canPublish ? 'rgba(191,255,0,0.75)' : 'rgba(255,180,0,0.85)', margin: 0, lineHeight: 1.6 }}>
+              {!hasCategories
+                ? 'Add at least one race category before publishing so participants can register.'
+                : paymentBlocking
+                  ? 'Complete payment setup for paid categories before publishing.'
+                  : `${categoryCount} ${categoryCount === 1 ? 'category' : 'categories'} ready. Publish to open registration.`
               }
             </p>
           </div>
 
           <div style={{ paddingBottom: 16 }}>
-            <button type="button" onClick={handlePublish} disabled={isPublishing || !hasCategories}
+            <button type="button" onClick={handlePublish} disabled={isPublishing || !canPublish}
               style={{
                 width: '100%', padding: '15px 0', borderRadius: 16,
                 fontSize: 15, fontWeight: 800, letterSpacing: '0.02em',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                cursor: (isPublishing || !hasCategories) ? 'not-allowed' : 'pointer',
+                cursor: (isPublishing || !canPublish) ? 'not-allowed' : 'pointer',
                 transition: 'all 0.18s ease',
-                ...((isPublishing || !hasCategories)
+                ...((isPublishing || !canPublish)
                   ? { background: 'rgba(255,255,255,0.07)', border: '1px solid transparent', color: 'rgba(255,255,255,0.25)' }
                   : { background: 'rgba(191,255,0,0.12)', border: '1px solid rgba(191,255,0,0.35)', color: '#BFFF00', boxShadow: '0 0 24px rgba(191,255,0,0.1)' }
                 ),

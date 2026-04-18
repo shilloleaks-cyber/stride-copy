@@ -4,8 +4,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle } from 'lucide-react';
 import CreateEventCategoryForm from '@/components/stride/CreateEventCategoryForm';
 import CreateEventCategoryCard from '@/components/stride/CreateEventCategoryCard';
+import { checkPaymentReady } from '@/components/stride/EventPaymentSetup';
 
-export default function CategoriesWithItemsManager({ eventId, onCategoryCountChange }) {
+export default function CategoriesWithItemsManager({ eventId, onCategoryCountChange, onReadinessChange }) {
   const queryClient = useQueryClient();
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingCat, setEditingCat] = useState(null);
@@ -57,6 +58,20 @@ export default function CategoriesWithItemsManager({ eventId, onCategoryCountCha
 
   const getItemCount = (catId) => allItems.filter(i => i.event_category_id === catId).length;
   const catsWithNoItems = categories.filter(c => getItemCount(c.id) === 0);
+
+  // Payment readiness: any paid category requires valid payment config on the event
+  const hasPaidCategories = categories.some(c => (c.price || 0) > 0);
+  const { ready: paymentReady } = checkPaymentReady(eventData);
+  const paymentBlocking = hasPaidCategories && !paymentReady;
+
+  useEffect(() => {
+    if (onReadinessChange) {
+      onReadinessChange({
+        hasCategories: categories.length > 0,
+        paymentBlocking,
+      });
+    }
+  }, [categories.length, paymentBlocking]);
 
   if (isLoading) return (
     <div style={{ textAlign: 'center', padding: 16, color: 'rgba(255,255,255,0.3)', fontSize: 12 }}>Loading…</div>
@@ -129,6 +144,16 @@ export default function CategoriesWithItemsManager({ eventId, onCategoryCountCha
           <AlertTriangle style={{ width: 13, height: 13, color: 'rgba(255,180,0,0.8)', flexShrink: 0, marginTop: 1 }} />
           <p style={{ fontSize: 11, color: 'rgba(255,180,0,0.75)', margin: 0, lineHeight: 1.6 }}>
             {catsWithNoItems.map(c => c.name).join(', ')} {catsWithNoItems.length === 1 ? 'has' : 'have'} no included items yet. You can still publish — items are optional.
+          </p>
+        </div>
+      )}
+
+      {/* Warning for paid categories with incomplete payment setup */}
+      {paymentBlocking && (
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 12px', borderRadius: 11, background: 'rgba(255,80,80,0.05)', border: '1px solid rgba(255,80,80,0.2)' }}>
+          <AlertTriangle style={{ width: 13, height: 13, color: 'rgba(255,100,100,0.9)', flexShrink: 0, marginTop: 1 }} />
+          <p style={{ fontSize: 11, color: 'rgba(255,120,120,0.9)', margin: 0, lineHeight: 1.6 }}>
+            You have paid categories but payment setup is incomplete. Edit the category to configure bank transfer or QR details before publishing.
           </p>
         </div>
       )}
