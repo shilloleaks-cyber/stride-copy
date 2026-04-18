@@ -91,7 +91,7 @@ export default function StrideEventDetail() {
   const paymentBlocked = selectedIsPaid && !paymentReady;
 
   return (
-    <div className="min-h-screen text-white" style={{ backgroundColor: '#0A0A0A', paddingBottom: SHEET_CONTENT_PADDING_BOTTOM }}>
+    <div className="min-h-screen text-white" style={{ backgroundColor: '#0A0A0A', paddingBottom: `calc(${70 + 56 + 24}px + env(safe-area-inset-bottom, 0px))` }}>
       {/* Banner */}
       <div className="relative" style={{ height: 200 }}>
         {event.banner_image
@@ -406,7 +406,16 @@ export default function StrideEventDetail() {
 
       {/* Official: Bottom CTA */}
       {!isCommunityEvent && (
-        <div className="fixed left-0 right-0 px-6" style={{ bottom: SHEET_BOTTOM_PADDING, paddingBottom: 8 }}>
+        <div
+          className="fixed left-0 right-0 px-6"
+          style={{
+            bottom: 0,
+            paddingTop: 12,
+            paddingBottom: `calc(70px + env(safe-area-inset-bottom, 0px) + 8px)`,
+            background: 'linear-gradient(to top, rgba(10,10,10,1) 60%, rgba(10,10,10,0))',
+            backdropFilter: 'blur(2px)',
+          }}
+        >
           {alreadyRegistered && myReg ? (
             <button
               onClick={() => navigate(`/StrideMyEvents?reg_id=${myReg.id}`)}
