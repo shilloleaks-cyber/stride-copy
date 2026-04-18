@@ -405,7 +405,7 @@ export default function StrideEventDetail() {
 
       {/* Official: Bottom CTA */}
       {!isCommunityEvent && (
-        <div className="fixed bottom-20 left-0 right-0 px-6 pb-2">
+        <div className="fixed bottom-0 left-0 right-0 px-6 pb-safe" style={{ paddingBottom: 'calc(90px + env(safe-area-inset-bottom))' }}>
           {alreadyRegistered && myReg ? (
             <button
               onClick={() => navigate(`/StrideMyEvents?reg_id=${myReg.id}`)}
