@@ -20,6 +20,7 @@ import SponsorClaim from './pages/SponsorClaim';
 import CreateOfficialEvent from './pages/CreateOfficialEvent';
 import ManageCategories from './pages/ManageCategories';
 import AdminEvents from './pages/AdminEvents';
+import EventWorkspace from './pages/EventWorkspace';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRef } from 'react';
@@ -135,6 +136,7 @@ const AuthenticatedApp = () => {
         <Route path="/CreateOfficialEvent" element={<LayoutWrapper currentPageName="CreateOfficialEvent"><CreateOfficialEvent /></LayoutWrapper>} />
         <Route path="/ManageCategories" element={<LayoutWrapper currentPageName="ManageCategories"><ManageCategories /></LayoutWrapper>} />
         <Route path="/AdminEvents" element={<LayoutWrapper currentPageName="AdminEvents"><AdminEvents /></LayoutWrapper>} />
+        <Route path="/EventWorkspace" element={<LayoutWrapper currentPageName="EventWorkspace"><EventWorkspace /></LayoutWrapper>} />
         <Route path="*" element={<PageNotFound />} />
       </Routes>
     </AnimatedRoutes>

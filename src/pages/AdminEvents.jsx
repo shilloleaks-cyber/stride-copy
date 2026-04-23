@@ -213,7 +213,7 @@ export default function AdminEvents() {
 
                 {/* Action button */}
                 <button
-                  onClick={() => navigate(`/StrideAdminDashboard?event_id=${ev.id}`)}
+                  onClick={() => navigate(`/EventWorkspace?event_id=${ev.id}`)}
                   style={{
                     width: '100%', padding: '12px 0', borderRadius: 14,
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
