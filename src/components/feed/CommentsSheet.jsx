@@ -32,14 +32,9 @@ export default function CommentsSheet({ open, onClose, post, currentUser, entity
 
   const { data: comments = [], isLoading } = useQuery({
     queryKey: ['comments', postId],
-    queryFn: async ({ queryKey }) => {
+    queryFn: ({ queryKey }) => {
       const [, id] = queryKey;
-      console.log('🔍 Fetching comments for post:', id);
-      console.log('🔍 Filter query:', { post_id: id });
-      const result = await base44.entities.Comment.filter({ post_id: id }, '-created_date');
-      console.log('📦 Comments fetched:', result);
-      console.log('📦 Comments count:', result?.length);
-      return result;
+      return base44.entities.Comment.filter({ post_id: id }, '-created_date');
     },
     enabled: !!postId && open,
   });
@@ -49,7 +44,6 @@ export default function CommentsSheet({ open, onClose, post, currentUser, entity
     if (!open || !postId) return;
 
     const unsubscribe = base44.entities.Comment.subscribe((event) => {
-      console.log('🔴 Real-time comment event:', event);
 
       // Only process comments for this post
       if (event.data?.post_id !== postId && event.type !== 'delete') return;
@@ -160,6 +154,7 @@ export default function CommentsSheet({ open, onClose, post, currentUser, entity
                 actor_name: currentUser?.full_name || 'Someone',
                 post_id: postId,
                 context: content.trim().slice(0, 100),
+                group_id: groupId,
               });
             }
           }
@@ -321,36 +316,14 @@ export default function CommentsSheet({ open, onClose, post, currentUser, entity
           }}
           onSubmit={(e) => {
             e.preventDefault();
-            console.log("🔥 Form submitted");
-
             const text = newComment.trim();
-            console.log("📝 Comment data:", { 
-              text, 
-              textLen: text.length, 
-              isPending: addCommentMutation.isPending,
-              disabled: !newComment.trim() || addCommentMutation.isPending
-            });
-
-            if (!text) {
-              console.log("❌ Empty text, aborting");
-              return;
-            }
-            
-            if (addCommentMutation.isPending) {
-              console.log("⏳ Already pending, aborting");
-              return;
-            }
-
-            console.log("✅ Sending comment...");
+            if (!text || addCommentMutation.isPending) return;
             addCommentMutation.mutate({ content: text, replyTarget: replyToComment });
           }}
         >
           <Input
             value={newComment}
-            onChange={(e) => {
-              console.log("📥 Input changed:", e.target.value);
-              setNewComment(e.target.value);
-            }}
+            onChange={(e) => setNewComment(e.target.value)}
             placeholder="Write a comment..."
             className="commentInput"
             style={{ pointerEvents: 'auto' }}
@@ -367,13 +340,7 @@ export default function CommentsSheet({ open, onClose, post, currentUser, entity
               zIndex: 10,
               background: addCommentMutation.isPending ? 'rgba(191, 255, 0, 0.8)' : '#BFFF00',
             }}
-            onClick={(e) => {
-              console.log("🖱️ Button clicked", {
-                disabled: !newComment.trim() || addCommentMutation.isPending,
-                newComment: newComment,
-                type: e.type
-              });
-            }}
+
           >
             {addCommentMutation.isPending ? (
               <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />

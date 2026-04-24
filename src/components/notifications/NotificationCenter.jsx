@@ -56,14 +56,35 @@ const TYPE_CATEGORY = {
 };
 
 function timeAgo(dateStr) {
+  if (!dateStr) return '';
   const diff = Date.now() - new Date(dateStr).getTime();
-  const m = Math.floor(diff / 60000);
-  if (m < 1) return 'just now';
+  const s = Math.floor(diff / 1000);
+  if (s < 60) return 'just now';
+  const m = Math.floor(s / 60);
   if (m < 60) return `${m}m ago`;
   const h = Math.floor(m / 60);
   if (h < 24) return `${h}h ago`;
-  return `${Math.floor(h / 24)}d ago`;
+  const d = Math.floor(h / 24);
+  if (d < 7) return `${d}d ago`;
+  // Show date for older notifications
+  const dt = new Date(dateStr);
+  return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
+
+// Category label pill config
+const CATEGORY_LABELS = {
+  registration_success: { label: 'Event', color: C.lime, bg: C.limeDim },
+  payment_approved:     { label: 'Payment', color: '#00e676', bg: 'rgba(0,230,118,0.07)' },
+  payment_needs_attention: { label: 'Payment', color: C.amber, bg: C.amberDim },
+  staff_invitation:     { label: 'Event', color: C.purple, bg: C.purpleDim },
+  event_reminder:       { label: 'Event', color: 'rgba(180,120,255,1)', bg: 'rgba(180,120,255,0.07)' },
+  post_liked:           { label: 'Feed', color: 'rgba(255,90,130,1)', bg: 'rgba(255,90,130,0.07)' },
+  post_commented:       { label: 'Feed', color: 'rgba(100,180,255,1)', bg: 'rgba(100,180,255,0.07)' },
+  comment_replied:      { label: 'Feed', color: 'rgba(130,210,255,1)', bg: 'rgba(130,210,255,0.07)' },
+  mentioned:            { label: 'Mention', color: C.lime, bg: C.limeDim },
+  group_post_created:   { label: 'Group', color: C.purple, bg: C.purpleDim },
+  group_announcement:   { label: 'Group', color: C.amber, bg: C.amberDim },
+};
 
 // ── Single notification row ───────────────────────────────────────────────────
 function NotifRow({ notif, onRead, onNavigate }) {
@@ -106,20 +127,26 @@ function NotifRow({ notif, onRead, onNavigate }) {
             {notif.body}
           </p>
         )}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 5, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 5, flexWrap: 'wrap' }}>
+          {/* Category label pill */}
+          {CATEGORY_LABELS[notif.type] && (
+            <span style={{
+              fontSize: 9, fontWeight: 800, letterSpacing: '0.04em', textTransform: 'uppercase',
+              color: CATEGORY_LABELS[notif.type].color,
+              background: CATEGORY_LABELS[notif.type].bg,
+              border: `1px solid ${CATEGORY_LABELS[notif.type].color}40`,
+              padding: '2px 6px', borderRadius: 99,
+            }}>
+              {CATEGORY_LABELS[notif.type].label}
+            </span>
+          )}
           {/* Context pill: event title or group name */}
           {(notif.event_title || notif.group_name) && (
-            <span style={{ fontSize: 10, fontWeight: 700, color: cfg.accent, background: cfg.bg, border: `1px solid ${cfg.border}`, padding: '2px 7px', borderRadius: 99 }}>
+            <span style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.45)', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', padding: '2px 7px', borderRadius: 99, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {notif.group_name || notif.event_title}
             </span>
           )}
-          {/* Source badge for group feed */}
-          {isFeedGroup && (
-            <span style={{ fontSize: 10, fontWeight: 700, color: C.purple, background: C.purpleDim, border: `1px solid ${C.purpleBorder}`, padding: '2px 7px', borderRadius: 99 }}>
-              Group
-            </span>
-          )}
-          <span style={{ fontSize: 10, color: C.muted }}>
+          <span style={{ fontSize: 10, color: C.muted, marginLeft: 'auto' }}>
             {timeAgo(notif.created_date)}
           </span>
         </div>

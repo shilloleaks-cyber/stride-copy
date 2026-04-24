@@ -158,6 +158,7 @@ export default function PostComposer({ mode = 'feed', groupId, groupName = '', u
               actor_name: user?.full_name || 'Someone',
               post_id: createdPost?.id,
               context: content.trim().slice(0, 100),
+              group_id: groupId,
             });
           }
         }

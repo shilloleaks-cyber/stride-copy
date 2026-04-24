@@ -120,7 +120,7 @@ export function notifyPostLiked({ user_email, actor_name, post_id }) {
     title: `${actor_name} liked your post ❤️`,
     body: 'Tap to view your post.',
     actor_name, post_id,
-    action_url: '/Feed',
+    action_url: post_id ? `/Feed?post=${post_id}` : '/Feed',
   });
 }
 
@@ -134,7 +134,7 @@ export function notifyPostCommented({ user_email, actor_name, post_id, comment_p
     title: `${actor_name} commented on your post 💬`,
     body: comment_preview || 'Tap to view the comment.',
     actor_name, post_id,
-    action_url: '/Feed',
+    action_url: post_id ? `/Feed?post=${post_id}` : '/Feed',
   });
 }
 
@@ -147,20 +147,23 @@ export function notifyCommentReplied({ user_email, actor_name, post_id, reply_pr
     title: `${actor_name} replied to your comment ↩️`,
     body: reply_preview || 'Tap to view the reply.',
     actor_name, post_id,
-    action_url: '/Feed',
+    action_url: post_id ? `/Feed?post=${post_id}` : '/Feed',
   });
 }
 
 /**
  * Notify a user when they are @mentioned in a post or comment.
+ * For group mentions, pass group_id so action_url opens the correct group.
  */
-export function notifyMentioned({ user_email, actor_name, post_id, context }) {
+export function notifyMentioned({ user_email, actor_name, post_id, context, group_id }) {
   return createNotification({
-    user_email, type: 'mentioned', category: 'feed', source_type: 'general_feed',
-    title: `${actor_name} mentioned you @`,
+    user_email, type: 'mentioned', category: 'feed',
+    source_type: group_id ? 'group_feed' : 'general_feed',
+    title: `${actor_name} mentioned you`,
     body: context || 'Tap to see where you were mentioned.',
     actor_name, post_id,
-    action_url: '/Feed',
+    group_id: group_id || null,
+    action_url: group_id ? `/GroupDetail?id=${group_id}` : (post_id ? `/Feed?post=${post_id}` : '/Feed'),
   });
 }
 
