@@ -8,6 +8,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Users, Compass, RefreshCw, TrendingUp, Clock, Target } from 'lucide-react';
 import NotificationCenter from '@/components/notifications/NotificationCenter';
+import { notifyPostLiked } from '@/lib/notifications';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -129,7 +130,18 @@ export default function Feed() {
       const newLikes = isLiked
         ? currentLikes.filter(email => email !== currentUser?.email)
         : [...currentLikes, currentUser?.email];
-      likeMutation.mutate({ postId, newLikes });
+      likeMutation.mutate({ postId, newLikes }, {
+        onSuccess: () => {
+          // Only notify on a new like (not an unlike), and never notify self
+          if (!isLiked && post?.author_email && post.author_email !== currentUser?.email) {
+            notifyPostLiked({
+              user_email: post.author_email,
+              actor_name: currentUser?.full_name || 'Someone',
+              post_id: postId,
+            });
+          }
+        },
+      });
     });
   };
 

@@ -13,6 +13,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { notifyPostCommented } from '@/lib/notifications';
 
 export default function CommentsSheet({ open, onClose, post, currentUser, entityType = 'post', groupId }) {
   const [newComment, setNewComment] = useState('');
@@ -86,6 +87,16 @@ export default function CommentsSheet({ open, onClose, post, currentUser, entity
         await base44.entities.GroupPost.update(postId, { comments_count: nextCount });
       } else {
         await base44.entities.Post.update(postId, { comments_count: nextCount });
+      }
+
+      // Notify post author on comment — skip if commenter is the author
+      if (entityType !== 'group' && post?.author_email && post.author_email !== currentUser?.email) {
+        notifyPostCommented({
+          user_email: post.author_email,
+          actor_name: currentUser?.full_name || 'Someone',
+          post_id: postId,
+          comment_preview: content.length > 80 ? content.slice(0, 80) + '…' : content,
+        });
       }
 
       return newCommentData;
