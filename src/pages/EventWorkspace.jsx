@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -58,6 +58,16 @@ export default function EventWorkspace() {
     enabled: user?.role === 'admin',
   });
 
+  const event = events.find(e => e.id === eventIdParam);
+
+  // Redirect to event list if no event_id or event not found (after events have loaded)
+  // Must be before any early returns to satisfy Rules of Hooks
+  useEffect(() => {
+    if (!eventIdParam || (!event && events.length > 0)) {
+      navigate('/AdminEvents', { replace: true });
+    }
+  }, [eventIdParam, event, events.length]);
+
   if (user && user.role !== 'admin') {
     return (
       <div style={{ minHeight: '100dvh', background: BG, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
@@ -68,15 +78,7 @@ export default function EventWorkspace() {
     );
   }
 
-  // No event_id or event not found → redirect to event list
-  const event = events.find(e => e.id === eventIdParam);
-
-  if (!eventIdParam || (!event && events.length > 0)) {
-    navigate('/AdminEvents', { replace: true });
-    return null;
-  }
-
-  // Still loading events
+  // Still loading or redirecting
   if (!event) {
     return <div style={{ minHeight: '100dvh', background: BG }} />;
   }

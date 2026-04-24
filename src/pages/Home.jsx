@@ -758,7 +758,7 @@ const homeStyles = `
 }
 .coinHud{
   position: fixed;
-  top: 14px; right: 14px;
+  top: 14px; right: 62px;
   display:flex; align-items:center; gap:8px;
   padding: 10px 12px;
   border-radius: 999px;

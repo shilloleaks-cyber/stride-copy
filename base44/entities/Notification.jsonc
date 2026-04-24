@@ -1,0 +1,102 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Recipient user email"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "registration_success",
+        "payment_approved",
+        "payment_needs_attention",
+        "staff_invitation",
+        "event_reminder"
+      ],
+      "description": "Notification type"
+    },
+    "title": {
+      "type": "string",
+      "description": "Short notification title"
+    },
+    "body": {
+      "type": "string",
+      "description": "Notification body text"
+    },
+    "event_id": {
+      "type": "string",
+      "description": "Related event ID (if event-scoped)"
+    },
+    "event_title": {
+      "type": "string",
+      "description": "Cached event title for display"
+    },
+    "registration_id": {
+      "type": "string",
+      "description": "Related registration ID"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the notification has been read"
+    },
+    "action_url": {
+      "type": "string",
+      "description": "Optional deep-link URL for the notification action"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Extra data for future push support (e.g. push token, channel)"
+    }
+  },
+  "required": [
+    "user_email",
+    "type",
+    "title"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
