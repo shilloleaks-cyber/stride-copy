@@ -7,6 +7,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Users, Compass, RefreshCw, TrendingUp, Clock, Target } from 'lucide-react';
+import NotificationCenter from '@/components/notifications/NotificationCenter';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -148,6 +149,8 @@ export default function Feed() {
           <div className="flex items-center justify-between mb-3">
             <h1 className="text-2xl font-light">ฟีด</h1>
             <div className="flex items-center gap-2">
+              {/* Notification Bell */}
+              {currentUser && <NotificationCenter user={currentUser} />}
               {/* Sort Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

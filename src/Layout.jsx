@@ -4,7 +4,6 @@ import { createPageUrl } from '@/utils';
 import { Home, BarChart2, User, Users, CalendarDays } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import NotificationCenter from '@/components/notifications/NotificationCenter';
 import './globals.css';
 
 export default function Layout({ children }) {
@@ -81,25 +80,8 @@ export default function Layout({ children }) {
     }
   };
 
-  // Hide notification bell on admin/workspace pages (they have their own header context)
-  const hideNotifBell = location.pathname.includes('AdminEvents') || location.pathname.includes('EventWorkspace');
-
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#0A0A0A' }}>
-      {/* ── Global Notification Bell (top-right, above all content) ── */}
-      {user && !hideNotifBell && (
-        <div style={{
-          position: 'fixed',
-          top: 'max(env(safe-area-inset-top, 0px), 12px)',
-          right: 14,
-          zIndex: 9998,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-        }}>
-          <NotificationCenter user={user} />
-        </div>
-      )}
       {children}
       
       {!hideNav && (

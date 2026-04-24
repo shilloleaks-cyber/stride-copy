@@ -13,9 +13,31 @@
         "payment_approved",
         "payment_needs_attention",
         "staff_invitation",
-        "event_reminder"
+        "event_reminder",
+        "post_liked",
+        "post_commented",
+        "comment_replied",
+        "mentioned",
+        "group_post_created",
+        "group_announcement"
       ],
       "description": "Notification type"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "events",
+        "feed"
+      ],
+      "description": "High-level category for filtering: events or feed"
+    },
+    "source_type": {
+      "type": "string",
+      "enum": [
+        "general_feed",
+        "group_feed"
+      ],
+      "description": "For feed notifications: general_feed (following/posts) or group_feed (group activity)"
     },
     "title": {
       "type": "string",
@@ -37,6 +59,22 @@
       "type": "string",
       "description": "Related registration ID"
     },
+    "post_id": {
+      "type": "string",
+      "description": "Related post ID (for feed notifications)"
+    },
+    "actor_name": {
+      "type": "string",
+      "description": "Name of the user who triggered the notification (e.g. who liked, commented)"
+    },
+    "group_id": {
+      "type": "string",
+      "description": "Related group ID (for group feed notifications)"
+    },
+    "group_name": {
+      "type": "string",
+      "description": "Cached group name for display"
+    },
     "is_read": {
       "type": "boolean",
       "default": false,
@@ -48,7 +86,7 @@
     },
     "metadata": {
       "type": "object",
-      "description": "Extra data for future push support (e.g. push token, channel)"
+      "description": "Extra data for future push support"
     }
   },
   "required": [

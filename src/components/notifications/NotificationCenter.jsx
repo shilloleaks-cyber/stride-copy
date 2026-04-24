@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Bell, X, CheckCheck, ChevronRight } from 'lucide-react';
+import { Bell, X, CheckCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 // ── BoomX palette ─────────────────────────────────────────────────────────────
@@ -24,36 +24,35 @@ const C = {
 
 // ── Type config ───────────────────────────────────────────────────────────────
 const TYPE_CFG = {
-  registration_success: {
-    icon: '🎉',
-    accent: C.lime,
-    bg: C.limeDim,
-    border: C.limeBorder,
-  },
-  payment_approved: {
-    icon: '✅',
-    accent: '#00e676',
-    bg: 'rgba(0,230,118,0.07)',
-    border: 'rgba(0,230,118,0.2)',
-  },
-  payment_needs_attention: {
-    icon: '⚠️',
-    accent: C.amber,
-    bg: C.amberDim,
-    border: C.amberBorder,
-  },
-  staff_invitation: {
-    icon: '🔑',
-    accent: C.purple,
-    bg: C.purpleDim,
-    border: C.purpleBorder,
-  },
-  event_reminder: {
-    icon: '📅',
-    accent: 'rgba(180,120,255,1)',
-    bg: 'rgba(180,120,255,0.07)',
-    border: 'rgba(180,120,255,0.2)',
-  },
+  // Events
+  registration_success: { icon: '🎉', accent: C.lime,   bg: C.limeDim,   border: C.limeBorder },
+  payment_approved:     { icon: '✅', accent: '#00e676', bg: 'rgba(0,230,118,0.07)', border: 'rgba(0,230,118,0.2)' },
+  payment_needs_attention: { icon: '⚠️', accent: C.amber, bg: C.amberDim, border: C.amberBorder },
+  staff_invitation:     { icon: '🔑', accent: C.purple,  bg: C.purpleDim, border: C.purpleBorder },
+  event_reminder:       { icon: '📅', accent: 'rgba(180,120,255,1)', bg: 'rgba(180,120,255,0.07)', border: 'rgba(180,120,255,0.2)' },
+  // Feed — general
+  post_liked:           { icon: '❤️', accent: 'rgba(255,90,130,1)',   bg: 'rgba(255,90,130,0.07)',  border: 'rgba(255,90,130,0.2)' },
+  post_commented:       { icon: '💬', accent: 'rgba(100,180,255,1)',  bg: 'rgba(100,180,255,0.07)', border: 'rgba(100,180,255,0.2)' },
+  comment_replied:      { icon: '↩️', accent: 'rgba(130,210,255,1)',  bg: 'rgba(130,210,255,0.07)', border: 'rgba(130,210,255,0.2)' },
+  mentioned:            { icon: '@',  accent: C.lime,   bg: C.limeDim,   border: C.limeBorder },
+  // Feed — group
+  group_post_created:   { icon: '📣', accent: C.purple,  bg: C.purpleDim, border: C.purpleBorder },
+  group_announcement:   { icon: '📢', accent: 'rgba(255,180,0,0.9)', bg: C.amberDim, border: C.amberBorder },
+};
+
+// Category of each type (for filter tabs)
+const TYPE_CATEGORY = {
+  registration_success: 'events',
+  payment_approved: 'events',
+  payment_needs_attention: 'events',
+  staff_invitation: 'events',
+  event_reminder: 'events',
+  post_liked: 'feed',
+  post_commented: 'feed',
+  comment_replied: 'feed',
+  mentioned: 'feed',
+  group_post_created: 'feed',
+  group_announcement: 'feed',
 };
 
 function timeAgo(dateStr) {
@@ -63,14 +62,14 @@ function timeAgo(dateStr) {
   if (m < 60) return `${m}m ago`;
   const h = Math.floor(m / 60);
   if (h < 24) return `${h}h ago`;
-  const d = Math.floor(h / 24);
-  return `${d}d ago`;
+  return `${Math.floor(h / 24)}d ago`;
 }
 
 // ── Single notification row ───────────────────────────────────────────────────
 function NotifRow({ notif, onRead, onNavigate }) {
   const cfg = TYPE_CFG[notif.type] || TYPE_CFG.registration_success;
   const isUnread = !notif.is_read;
+  const isFeedGroup = notif.source_type === 'group_feed';
 
   return (
     <button
@@ -79,26 +78,20 @@ function NotifRow({ notif, onRead, onNavigate }) {
         if (notif.action_url) onNavigate(notif.action_url);
       }}
       style={{
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: 12,
-        width: '100%',
-        padding: '14px 16px',
+        display: 'flex', alignItems: 'flex-start', gap: 12,
+        width: '100%', padding: '14px 16px',
         borderBottom: `1px solid ${C.line}`,
         background: isUnread ? cfg.bg : 'transparent',
         borderLeft: isUnread ? `3px solid ${cfg.accent}` : '3px solid transparent',
-        cursor: 'pointer',
-        textAlign: 'left',
+        cursor: 'pointer', textAlign: 'left',
         transition: 'background 0.15s',
       }}
     >
       {/* Icon */}
       <div style={{
         width: 36, height: 36, borderRadius: 12, flexShrink: 0,
-        background: `rgba(0,0,0,0.3)`,
-        border: `1px solid ${cfg.border}`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 17,
+        background: 'rgba(0,0,0,0.3)', border: `1px solid ${cfg.border}`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17,
       }}>
         {cfg.icon}
       </div>
@@ -113,10 +106,17 @@ function NotifRow({ notif, onRead, onNavigate }) {
             {notif.body}
           </p>
         )}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 5 }}>
-          {notif.event_title && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 5, flexWrap: 'wrap' }}>
+          {/* Context pill: event title or group name */}
+          {(notif.event_title || notif.group_name) && (
             <span style={{ fontSize: 10, fontWeight: 700, color: cfg.accent, background: cfg.bg, border: `1px solid ${cfg.border}`, padding: '2px 7px', borderRadius: 99 }}>
-              {notif.event_title}
+              {notif.group_name || notif.event_title}
+            </span>
+          )}
+          {/* Source badge for group feed */}
+          {isFeedGroup && (
+            <span style={{ fontSize: 10, fontWeight: 700, color: C.purple, background: C.purpleDim, border: `1px solid ${C.purpleBorder}`, padding: '2px 7px', borderRadius: 99 }}>
+              Group
             </span>
           )}
           <span style={{ fontSize: 10, color: C.muted }}>
@@ -133,10 +133,18 @@ function NotifRow({ notif, onRead, onNavigate }) {
   );
 }
 
+// ── Filter tabs config ────────────────────────────────────────────────────────
+const FILTERS = [
+  { key: 'all',    label: 'All' },
+  { key: 'unread', label: 'Unread' },
+  { key: 'feed',   label: 'Feed' },
+  { key: 'events', label: 'Events' },
+];
+
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function NotificationCenter({ user }) {
   const [open, setOpen] = useState(false);
-  const [filter, setFilter] = useState('all'); // 'all' | 'unread'
+  const [filter, setFilter] = useState('all');
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const panelRef = useRef(null);
@@ -146,10 +154,10 @@ export default function NotificationCenter({ user }) {
     queryFn: () => base44.entities.Notification.filter(
       { user_email: user.email },
       '-created_date',
-      50
+      60
     ),
     enabled: !!user?.email,
-    refetchInterval: 30000, // poll every 30s
+    refetchInterval: 30000,
   });
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
@@ -171,9 +179,7 @@ export default function NotificationCenter({ user }) {
   useEffect(() => {
     if (!open) return;
     const handler = (e) => {
-      if (panelRef.current && !panelRef.current.contains(e.target)) {
-        setOpen(false);
-      }
+      if (panelRef.current && !panelRef.current.contains(e.target)) setOpen(false);
     };
     document.addEventListener('mousedown', handler);
     document.addEventListener('touchstart', handler);
@@ -183,9 +189,13 @@ export default function NotificationCenter({ user }) {
     };
   }, [open]);
 
-  const displayed = filter === 'unread'
-    ? notifications.filter(n => !n.is_read)
-    : notifications;
+  // Apply filter
+  const displayed = notifications.filter(n => {
+    if (filter === 'unread') return !n.is_read;
+    if (filter === 'feed') return TYPE_CATEGORY[n.type] === 'feed';
+    if (filter === 'events') return TYPE_CATEGORY[n.type] === 'events';
+    return true;
+  });
 
   const handleNavigate = (url) => {
     setOpen(false);
@@ -198,38 +208,23 @@ export default function NotificationCenter({ user }) {
       <button
         onClick={() => setOpen(v => !v)}
         style={{
-          position: 'relative',
-          width: 40, height: 40,
-          borderRadius: 13,
+          position: 'relative', width: 40, height: 40, borderRadius: 13,
           background: open ? C.purpleDim : 'rgba(255,255,255,0.06)',
           border: `1px solid ${open ? C.purpleBorder : 'rgba(255,255,255,0.1)'}`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer',
-          transition: 'all 0.15s',
-          flexShrink: 0,
+          cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0,
         }}
         aria-label="Notifications"
       >
-        <Bell
-          style={{
-            width: 18, height: 18,
-            color: open ? C.purple : 'rgba(255,255,255,0.45)',
-            transition: 'color 0.15s',
-          }}
-        />
-        {/* Unread badge */}
+        <Bell style={{ width: 18, height: 18, color: open ? C.purple : 'rgba(255,255,255,0.45)', transition: 'color 0.15s' }} />
         {unreadCount > 0 && (
           <span style={{
-            position: 'absolute',
-            top: -5, right: -5,
-            minWidth: 17, height: 17,
-            borderRadius: 99,
-            background: C.lime,
-            color: '#0A0A0A',
+            position: 'absolute', top: -5, right: -5,
+            minWidth: 17, height: 17, borderRadius: 99,
+            background: C.lime, color: '#0A0A0A',
             fontSize: 10, fontWeight: 900,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: '0 4px',
-            border: '1.5px solid #0A0A0A',
+            padding: '0 4px', border: '1.5px solid #0A0A0A',
             boxShadow: `0 0 8px rgba(191,255,0,0.5)`,
           }}>
             {unreadCount > 99 ? '99+' : unreadCount}
@@ -237,32 +232,27 @@ export default function NotificationCenter({ user }) {
         )}
       </button>
 
-      {/* ── Dropdown panel ── */}
+      {/* ── Backdrop ── */}
       {open && (
         <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            right: 0,
-            bottom: 0,
-            width: '100%',
-            maxWidth: 420,
-            background: C.panel,
-            border: `1px solid ${C.purpleBorder}`,
-            borderRadius: '0 0 0 20px',
-            boxShadow: `-8px 0 40px rgba(138,43,226,0.2), 0 0 80px rgba(0,0,0,0.8)`,
-            zIndex: 99990,
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-          }}
-        >
+          onClick={() => setOpen(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(3px)', zIndex: 99989 }}
+        />
+      )}
+
+      {/* ── Side panel ── */}
+      {open && (
+        <div style={{
+          position: 'fixed', top: 0, right: 0, bottom: 0,
+          width: '100%', maxWidth: 420,
+          background: C.panel,
+          border: `1px solid ${C.purpleBorder}`,
+          borderRadius: '0 0 0 20px',
+          boxShadow: `-8px 0 40px rgba(138,43,226,0.2), 0 0 80px rgba(0,0,0,0.8)`,
+          zIndex: 99990, display: 'flex', flexDirection: 'column', overflow: 'hidden',
+        }}>
           {/* Header */}
-          <div style={{
-            padding: 'max(env(safe-area-inset-top,0px),20px) 16px 0',
-            borderBottom: `1px solid ${C.line}`,
-            flexShrink: 0,
-          }}>
+          <div style={{ padding: 'max(env(safe-area-inset-top,0px),20px) 16px 0', borderBottom: `1px solid ${C.line}`, flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <Bell style={{ width: 16, height: 16, color: C.purple }} />
@@ -294,8 +284,7 @@ export default function NotificationCenter({ user }) {
                   style={{
                     width: 32, height: 32, borderRadius: 10,
                     background: 'rgba(255,255,255,0.06)', border: `1px solid ${C.line}`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
                   }}
                 >
                   <X style={{ width: 14, height: 14, color: C.muted }} />
@@ -303,25 +292,30 @@ export default function NotificationCenter({ user }) {
               </div>
             </div>
 
-            {/* All / Unread filter */}
-            <div style={{ display: 'flex', gap: 6, paddingBottom: 14 }}>
-              {[['all', 'All'], ['unread', 'Unread']].map(([key, label]) => (
-                <button
-                  key={key}
-                  onClick={() => setFilter(key)}
-                  style={{
-                    padding: '6px 16px', borderRadius: 99,
-                    fontSize: 12, fontWeight: 700, cursor: 'pointer', border: 'none',
-                    ...(filter === key
-                      ? { background: C.purple, color: '#fff' }
-                      : { background: 'rgba(255,255,255,0.06)', color: C.muted, border: `1px solid ${C.line}` }
-                    ),
-                  }}
-                >
-                  {label}
-                  {key === 'unread' && unreadCount > 0 && ` (${unreadCount})`}
-                </button>
-              ))}
+            {/* Filter tabs: All / Unread / Feed / Events */}
+            <div style={{ display: 'flex', gap: 6, paddingBottom: 14, overflowX: 'auto' }}>
+              {FILTERS.map(({ key, label }) => {
+                const count = key === 'unread' ? unreadCount
+                  : key === 'feed' ? notifications.filter(n => TYPE_CATEGORY[n.type] === 'feed' && !n.is_read).length
+                  : key === 'events' ? notifications.filter(n => TYPE_CATEGORY[n.type] === 'events' && !n.is_read).length
+                  : 0;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setFilter(key)}
+                    style={{
+                      padding: '6px 14px', borderRadius: 99, fontSize: 12, fontWeight: 700,
+                      cursor: 'pointer', border: 'none', flexShrink: 0,
+                      ...(filter === key
+                        ? { background: C.purple, color: '#fff' }
+                        : { background: 'rgba(255,255,255,0.06)', color: C.muted, border: `1px solid ${C.line}` }
+                      ),
+                    }}
+                  >
+                    {label}{count > 0 ? ` (${count})` : ''}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -331,10 +325,10 @@ export default function NotificationCenter({ user }) {
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 24px', textAlign: 'center' }}>
                 <div style={{ fontSize: 40, marginBottom: 12, opacity: 0.3 }}>🔔</div>
                 <p style={{ fontSize: 15, fontWeight: 700, color: C.muted, margin: 0 }}>
-                  {filter === 'unread' ? 'All caught up!' : 'No notifications yet'}
+                  {filter === 'unread' ? 'All caught up!' : `No ${filter === 'all' ? '' : filter + ' '}notifications yet`}
                 </p>
                 <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', marginTop: 6 }}>
-                  {filter === 'unread' ? "You're up to date." : "We'll notify you about your events and registrations."}
+                  {filter === 'unread' ? "You're up to date." : "We'll notify you about relevant activity."}
                 </p>
               </div>
             ) : (
@@ -350,26 +344,8 @@ export default function NotificationCenter({ user }) {
           </div>
 
           {/* Footer glow accent */}
-          <div style={{
-            height: 1,
-            background: `linear-gradient(90deg, transparent, ${C.purple}, transparent)`,
-            opacity: 0.4,
-            flexShrink: 0,
-          }} />
+          <div style={{ height: 1, background: `linear-gradient(90deg, transparent, ${C.purple}, transparent)`, opacity: 0.4, flexShrink: 0 }} />
         </div>
-      )}
-
-      {/* Backdrop */}
-      {open && (
-        <div
-          onClick={() => setOpen(false)}
-          style={{
-            position: 'fixed', inset: 0,
-            background: 'rgba(0,0,0,0.5)',
-            backdropFilter: 'blur(3px)',
-            zIndex: 99989,
-          }}
-        />
       )}
     </div>
   );

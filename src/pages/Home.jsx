@@ -7,6 +7,7 @@ import RunCard from '@/components/running/RunCard';
 import { Calendar, MapPin, Users } from 'lucide-react';
 import { useAuthGate } from '@/hooks/useAuthGate';
 import LoginGateModal from '@/components/auth/LoginGateModal';
+import NotificationCenter from '@/components/notifications/NotificationCenter';
 
 // ===== Coin Pop Animation =====
 function CoinPopLayer({ pops }) {
@@ -341,16 +342,20 @@ export default function Home() {
       {/* Coin Pop Animation */}
       <CoinPopLayer pops={coinPops} />
 
-      {/* Sticky Coin HUD */}
-      <button
-        className="coinHud"
-        data-coin-hud="true"
-        onClick={handleCoinClick}
-        aria-label="Coin balance"
-      >
-        <span className="coinIcon">🪙</span>
-        <span className="coinText">{coinBalance}</span>
-      </button>
+      {/* Top-right HUD: Coin balance + Notification bell */}
+      <div style={{ position: 'fixed', top: 14, right: 14, zIndex: 9999, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <button
+          className="coinHud"
+          data-coin-hud="true"
+          onClick={handleCoinClick}
+          aria-label="Coin balance"
+          style={{ position: 'static' }}
+        >
+          <span className="coinIcon">🪙</span>
+          <span className="coinText">{coinBalance}</span>
+        </button>
+        {user && <NotificationCenter user={user} />}
+      </div>
 
       <header className="topHeader">
         <div className="welcome">WELCOME BACK</div>
@@ -757,8 +762,6 @@ const homeStyles = `
   margin-top: 6px;
 }
 .coinHud{
-  position: fixed;
-  top: 14px; right: 62px;
   display:flex; align-items:center; gap:8px;
   padding: 10px 12px;
   border-radius: 999px;
@@ -766,8 +769,8 @@ const homeStyles = `
   border: 1px solid rgba(255,255,255,0.12);
   color: var(--text);
   backdrop-filter: blur(10px);
-  z-index: 9999;
   cursor: pointer;
+  flex-shrink: 0;
 }
 .coinIcon{ filter: drop-shadow(0 0 10px rgba(191,255,0,0.35)); }
 .coinText{ font-weight: 800; color:var(--lime); }

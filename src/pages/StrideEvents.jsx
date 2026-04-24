@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Search } from 'lucide-react';
+import NotificationCenter from '@/components/notifications/NotificationCenter';
 import EventCard from '@/components/stride/EventCard';
 import { useAuthGate } from '@/hooks/useAuthGate';
 import LoginGateModal from '@/components/auth/LoginGateModal';
@@ -83,21 +84,24 @@ export default function StrideEvents() {
         <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4 }}>
           Discover
         </p>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
           <h1 style={{ fontSize: 32, fontWeight: 900, color: '#fff', margin: 0, lineHeight: 1.1 }}>Events</h1>
-          <button
-            onClick={() => navigate('/StrideMyEvents')}
-            style={{
-              background: 'rgba(255,255,255,0.07)',
-              border: '1px solid rgba(255,255,255,0.12)',
-              color: 'rgba(255,255,255,0.75)',
-              fontSize: 13, fontWeight: 700,
-              padding: '8px 16px', borderRadius: 99,
-              minHeight: 36,
-            }}
-          >
-            My Events
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            {user && <NotificationCenter user={user} />}
+            <button
+              onClick={() => navigate('/StrideMyEvents')}
+              style={{
+                background: 'rgba(255,255,255,0.07)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                color: 'rgba(255,255,255,0.75)',
+                fontSize: 13, fontWeight: 700,
+                padding: '8px 16px', borderRadius: 99,
+                minHeight: 36,
+              }}
+            >
+              My Events
+            </button>
+          </div>
         </div>
       </div>
 
