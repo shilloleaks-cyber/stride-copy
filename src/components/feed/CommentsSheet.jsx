@@ -13,10 +13,12 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { notifyPostCommented } from '@/lib/notifications';
+import { notifyPostCommented, notifyCommentReplied } from '@/lib/notifications';
 
 export default function CommentsSheet({ open, onClose, post, currentUser, entityType = 'post', groupId }) {
   const [newComment, setNewComment] = useState('');
+  // replyToComment: the comment being replied to { id, author_email, author_name }
+  const [replyToComment, setReplyToComment] = useState(null);
   const queryClient = useQueryClient();
   const postId = post?.id;
 
@@ -73,7 +75,7 @@ export default function CommentsSheet({ open, onClose, post, currentUser, entity
   }, [open, postId, queryClient]);
 
   const addCommentMutation = useMutation({
-    mutationFn: async (content) => {
+    mutationFn: async ({ content, replyTarget }) => {
       const newCommentData = await base44.entities.Comment.create({
         post_id: postId,
         content,
@@ -82,28 +84,18 @@ export default function CommentsSheet({ open, onClose, post, currentUser, entity
       });
 
       const nextCount = (post?.comments_count || 0) + 1;
-
       if (entityType === 'group') {
         await base44.entities.GroupPost.update(postId, { comments_count: nextCount });
       } else {
         await base44.entities.Post.update(postId, { comments_count: nextCount });
       }
 
-      // Notify post author on comment — skip if commenter is the author
-      if (entityType !== 'group' && post?.author_email && post.author_email !== currentUser?.email) {
-        notifyPostCommented({
-          user_email: post.author_email,
-          actor_name: currentUser?.full_name || 'Someone',
-          post_id: postId,
-          comment_preview: content.length > 80 ? content.slice(0, 80) + '…' : content,
-        });
-      }
-
-      return newCommentData;
+      // Return enough context for onSuccess to fire notifications correctly
+      return { newCommentData, content, replyTarget };
     },
-    onSuccess: () => {
+    onSuccess: ({ content, replyTarget }) => {
+      // Cache updates
       queryClient.invalidateQueries({ queryKey: ['comments', postId] });
-
       if (entityType === 'group') {
         queryClient.setQueryData(['groupPosts', groupId], (old = []) =>
           old.map((p) => p.id === postId ? { ...p, comments_count: (p.comments_count || 0) + 1 } : p)
@@ -116,7 +108,35 @@ export default function CommentsSheet({ open, onClose, post, currentUser, entity
         queryClient.invalidateQueries({ queryKey: ['posts'] });
       }
 
+      const actorName = currentUser?.full_name || 'Someone';
+      const preview = content.length > 80 ? content.slice(0, 80) + '…' : content;
+
+      if (entityType !== 'group') {
+        if (replyTarget) {
+          // comment_replied: notify the original comment author (not self)
+          if (replyTarget.author_email && replyTarget.author_email !== currentUser?.email) {
+            notifyCommentReplied({
+              user_email: replyTarget.author_email,
+              actor_name: actorName,
+              post_id: postId,
+              reply_preview: preview,
+            });
+          }
+        } else {
+          // post_commented: notify the post author (not self)
+          if (post?.author_email && post.author_email !== currentUser?.email) {
+            notifyPostCommented({
+              user_email: post.author_email,
+              actor_name: actorName,
+              post_id: postId,
+              comment_preview: preview,
+            });
+          }
+        }
+      }
+
       setNewComment('');
+      setReplyToComment(null);
     },
   });
 
@@ -207,16 +227,25 @@ export default function CommentsSheet({ open, onClose, post, currentUser, entity
                       </div>
                       <p className="text-sm text-white mt-1" style={{ lineHeight: '1.5' }}>{comment.content}</p>
                     </div>
-                    {comment.author_email === currentUser?.email && (
-                      <div className="flex items-center gap-3 mt-1 px-2">
+                    <div className="flex items-center gap-3 mt-1 px-2">
+                      {comment.author_email !== currentUser?.email && (
+                        <button
+                          onClick={() => setReplyToComment({ id: comment.id, author_email: comment.author_email, author_name: comment.author_name })}
+                          className="text-xs transition-colors"
+                          style={{ color: 'rgba(191,255,0,0.6)' }}
+                        >
+                          ↩ Reply
+                        </button>
+                      )}
+                      {comment.author_email === currentUser?.email && (
                         <button 
                           onClick={() => deleteCommentMutation.mutate(comment.id)}
                           className="text-xs text-red-400 hover:text-red-300 transition-colors"
                         >
                           ลบ
                         </button>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </motion.div>
               ))}
@@ -229,6 +258,19 @@ export default function CommentsSheet({ open, onClose, post, currentUser, entity
             </div>
           )}
         </div>
+
+        {/* Reply context banner */}
+        {currentUser && replyToComment && (
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '6px 16px', background: 'rgba(191,255,0,0.06)',
+            borderTop: '1px solid rgba(191,255,0,0.15)',
+            fontSize: 12, color: 'rgba(191,255,0,0.8)',
+          }}>
+            <span>↩ Replying to <strong>{replyToComment.author_name}</strong></span>
+            <button onClick={() => setReplyToComment(null)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 14 }}>✕</button>
+          </div>
+        )}
 
         {/* Input — only shown for authenticated users */}
         {!currentUser && (
@@ -269,7 +311,7 @@ export default function CommentsSheet({ open, onClose, post, currentUser, entity
             }
 
             console.log("✅ Sending comment...");
-            addCommentMutation.mutate(text);
+            addCommentMutation.mutate({ content: text, replyTarget: replyToComment });
           }}
         >
           <Input
