@@ -1,6 +1,25 @@
 /**
  * BoomX Notification Utility
  *
+ * extractMentions(text) — returns a deduped array of @mentioned display
+ * tokens found in a string.  The caller is responsible for resolving the
+ * display name to an email address before calling notifyMentioned().
+ */
+
+/**
+ * Parse @mentions from text.
+ * Returns unique lowercase mention strings (without the @ sign) found in text.
+ * Pattern: @word (letters, digits, underscores, dots, hyphens, Thai chars).
+ */
+export function extractMentions(text) {
+  if (!text) return [];
+  const matches = text.match(/@([\w.\-\u0E00-\u0E7F]+)/g) || [];
+  const unique = [...new Set(matches.map(m => m.slice(1).toLowerCase()))];
+  return unique;
+}
+
+/**
+ *
  * Central helper to create in-app notifications.
  * Supports both event notifications and feed notifications (general + group).
  *

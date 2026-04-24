@@ -8,7 +8,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Users, Compass, RefreshCw, TrendingUp, Clock, Target } from 'lucide-react';
 import NotificationCenter from '@/components/notifications/NotificationCenter';
-import { notifyPostLiked } from '@/lib/notifications';
+import { notifyPostLiked, notifyMentioned, extractMentions } from '@/lib/notifications';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -47,6 +47,14 @@ export default function Feed() {
 
   const { showGate, setShowGate, requireAuth } = useAuthGate(currentUser);
 
+  // Lightweight user list for @mention resolution in feed posts
+  const { data: allUsers = [] } = useQuery({
+    queryKey: ['allUsers'],
+    queryFn: () => base44.entities.User.list(),
+    staleTime: 300000, // 5 min — rarely changes
+    enabled: !!currentUser,
+  });
+
   const { data: follows = [] } = useQuery({
     queryKey: ['follows', currentUser?.email],
     queryFn: () => base44.entities.Follow.filter({ follower_email: currentUser?.email }),
@@ -83,8 +91,29 @@ export default function Feed() {
 
   const createPostMutation = useMutation({
     mutationFn: (postData) => base44.entities.Post.create(postData),
-    onSuccess: () => {
+    onSuccess: (createdPost, postData) => {
       queryClient.invalidateQueries(['posts']);
+
+      // Detect @mentions in the post content and notify each mentioned user (not self)
+      const mentionTokens = extractMentions(postData?.content || '');
+      if (mentionTokens.length > 0 && allUsers.length > 0) {
+        const seen = new Set();
+        for (const u of allUsers) {
+          if (u.email === currentUser?.email) continue;
+          const nameToken = u.full_name?.toLowerCase().replace(/\s+/g, '') || '';
+          const emailToken = u.email?.toLowerCase().split('@')[0] || '';
+          const matched = mentionTokens.some(t => t === nameToken || t === emailToken);
+          if (matched && !seen.has(u.email)) {
+            seen.add(u.email);
+            notifyMentioned({
+              user_email: u.email,
+              actor_name: currentUser?.full_name || 'Someone',
+              post_id: createdPost?.id,
+              context: (postData?.content || '').slice(0, 100),
+            });
+          }
+        }
+      }
     },
   });
 

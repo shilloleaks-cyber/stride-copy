@@ -287,6 +287,8 @@ export default function GroupDetail() {
           <PostComposer
             mode="group"
             groupId={groupId}
+            groupName={group?.name || ''}
+            groupMembers={members}
             user={user}
             onSuccess={() => {
               setTimeout(() => queryClient.invalidateQueries({ queryKey: postsKey }), 800);

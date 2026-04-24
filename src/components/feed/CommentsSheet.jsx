@@ -13,7 +13,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { notifyPostCommented, notifyCommentReplied } from '@/lib/notifications';
+import { notifyPostCommented, notifyCommentReplied, notifyMentioned, extractMentions } from '@/lib/notifications';
 
 export default function CommentsSheet({ open, onClose, post, currentUser, entityType = 'post', groupId }) {
   const [newComment, setNewComment] = useState('');
@@ -21,6 +21,14 @@ export default function CommentsSheet({ open, onClose, post, currentUser, entity
   const [replyToComment, setReplyToComment] = useState(null);
   const queryClient = useQueryClient();
   const postId = post?.id;
+
+  // Fetch group members for mention resolution (group posts only)
+  const { data: groupMembers = [] } = useQuery({
+    queryKey: ['groupMembers', groupId],
+    queryFn: () => base44.entities.GroupMember.filter({ group_id: groupId, status: 'active' }),
+    enabled: entityType === 'group' && !!groupId,
+    staleTime: 60000,
+  });
 
   const { data: comments = [], isLoading } = useQuery({
     queryKey: ['comments', postId],
@@ -131,6 +139,29 @@ export default function CommentsSheet({ open, onClose, post, currentUser, entity
               post_id: postId,
               comment_preview: preview,
             });
+          }
+        }
+      }
+
+      // Detect @mentions in comment content (group posts: resolve via groupMembers)
+      if (entityType === 'group' && groupMembers.length > 0) {
+        const mentionTokens = extractMentions(content);
+        if (mentionTokens.length > 0) {
+          const seen = new Set();
+          for (const m of groupMembers) {
+            if (m.user_email === currentUser?.email) continue;
+            const nameToken = m.user_name?.toLowerCase().replace(/\s+/g, '') || '';
+            const emailToken = m.user_email?.toLowerCase().split('@')[0] || '';
+            const matched = mentionTokens.some(t => t === nameToken || t === emailToken);
+            if (matched && !seen.has(m.user_email)) {
+              seen.add(m.user_email);
+              notifyMentioned({
+                user_email: m.user_email,
+                actor_name: currentUser?.full_name || 'Someone',
+                post_id: postId,
+                context: content.trim().slice(0, 100),
+              });
+            }
           }
         }
       }

@@ -3,7 +3,13 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
-import { Send, Paperclip, X, MapPin, Clock, Zap, Flame, Check, Loader2 } from 'lucide-react';
+import { Send, Paperclip, X, MapPin, Clock, Zap, Flame, Check, Loader2, Megaphone } from 'lucide-react';
+import {
+  extractMentions,
+  notifyMentioned,
+  notifyGroupPostCreated,
+  notifyGroupAnnouncement,
+} from '@/lib/notifications';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -19,7 +25,7 @@ import {
  * mode="feed"  → posts to Post entity, calls onSubmit(postData)
  * mode="group" → posts to GroupPost entity directly (groupId required)
  */
-export default function PostComposer({ mode = 'feed', groupId, user, onSubmit, onSuccess }) {
+export default function PostComposer({ mode = 'feed', groupId, groupName = '', user, onSubmit, onSuccess, groupMembers = [] }) {
   const [content, setContent] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
@@ -27,6 +33,7 @@ export default function PostComposer({ mode = 'feed', groupId, user, onSubmit, o
   const [mediaPreview, setMediaPreview] = useState(null);
   const [selectedRunId, setSelectedRunId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAnnouncement, setIsAnnouncement] = useState(false);
   const mediaInputRef = useRef(null);
 
   const { data: runs = [] } = useQuery({
@@ -100,8 +107,60 @@ export default function PostComposer({ mode = 'feed', groupId, user, onSubmit, o
           comments_count: 0,
         };
 
-        await base44.entities.GroupPost.create(postData);
+        const createdPost = await base44.entities.GroupPost.create(postData);
         base44.functions.invoke('awardActivityCoins', { activityType: 'group_post' });
+
+        // Notify group members (active, excluding author)
+        const activeMembers = groupMembers.filter(
+          m => m.status === 'active' && m.user_email !== user?.email
+        );
+        const memberEmails = activeMembers.map(m => m.user_email);
+
+        if (memberEmails.length > 0) {
+          const resolvedGroupName = groupName || groupId;
+          if (isAnnouncement) {
+            notifyGroupAnnouncement({
+              group_member_emails: memberEmails,
+              actor_name: user?.full_name || 'Someone',
+              group_id: groupId,
+              group_name: resolvedGroupName,
+              message: content.trim().slice(0, 120) || 'New announcement in your group.',
+            });
+          } else {
+            notifyGroupPostCreated({
+              group_member_emails: memberEmails,
+              actor_name: user?.full_name || 'Someone',
+              group_id: groupId,
+              group_name: resolvedGroupName,
+              post_id: createdPost?.id,
+            });
+          }
+        }
+
+        // Detect @mentions in group post content and notify mentioned users
+        const mentionTokens = extractMentions(content);
+        if (mentionTokens.length > 0) {
+          const mentionedMembers = groupMembers.filter(
+            m => m.status === 'active' &&
+                 m.user_email !== user?.email &&
+                 mentionTokens.some(token =>
+                   m.user_name?.toLowerCase().replace(/\s+/g, '') === token ||
+                   m.user_email?.toLowerCase().split('@')[0] === token
+                 )
+          );
+          // Dedupe by email
+          const seen = new Set();
+          for (const m of mentionedMembers) {
+            if (seen.has(m.user_email)) continue;
+            seen.add(m.user_email);
+            notifyMentioned({
+              user_email: m.user_email,
+              actor_name: user?.full_name || 'Someone',
+              post_id: createdPost?.id,
+              context: content.trim().slice(0, 100),
+            });
+          }
+        }
 
       } else {
         // feed mode — caller provides onSubmit
@@ -135,12 +194,17 @@ export default function PostComposer({ mode = 'feed', groupId, user, onSubmit, o
             avg_heart_rate: selectedRun.avg_heart_rate,
           };
         }
-        if (onSubmit) await onSubmit(postData);
+        if (onSubmit) {
+          const createdFeedPost = await onSubmit(postData);
+          // Detect @mentions in feed post — notify mentioned users via followers list
+          // (mention resolution in feed relies on caller passing `allUsers` or we skip)
+        }
       }
 
       // Reset
       setContent('');
       setSelectedRunId('');
+      setIsAnnouncement(false);
       clearMedia();
       if (onSuccess) onSuccess();
 
@@ -258,6 +322,22 @@ export default function PostComposer({ mode = 'feed', groupId, user, onSubmit, o
           <Paperclip className="w-4 h-4" />
           Media
         </button>
+
+        {/* Announcement toggle — group mode only */}
+        {mode === 'group' && (
+          <button
+            type="button"
+            onClick={() => setIsAnnouncement(v => !v)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs border transition-colors"
+            style={isAnnouncement
+              ? { backgroundColor: 'rgba(255,180,0,0.15)', borderColor: 'rgba(255,180,0,0.4)', color: 'rgba(255,180,0,0.95)' }
+              : { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)' }
+            }
+          >
+            <Megaphone className="w-3.5 h-3.5" />
+            {isAnnouncement ? 'Announce' : 'Announce'}
+          </button>
+        )}
 
         <div className="flex-1" />
 
