@@ -1,9 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ScanLine, Search, CheckCircle2, Download, CheckSquare, Square, Loader2 } from 'lucide-react';
+import { ScanLine, Search, CheckCircle2, Download, CheckSquare, Square } from 'lucide-react';
 import { format } from 'date-fns';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import BulkConfirmDialog from './BulkConfirmDialog';
+import BulkResultBanner from './BulkResultBanner';
+import SelectionBar from './SelectionBar';
 
 const ACCENT = '#00e676';
 const CARD_BG = 'rgba(10,30,18,0.9)';
@@ -50,10 +53,12 @@ export default function EventCheckinPanel({ event, registrations, categories, on
   const [catFilter, setCatFilter]         = useState('all');
   const [checkinFilter, setCheckinFilter] = useState('all');
   const [selected, setSelected]           = useState(new Set());
+  const [confirmOpen, setConfirmOpen]     = useState(false);
+  const [result, setResult]               = useState(null);
 
-  const catMap  = Object.fromEntries(categories.map(c => [c.id, c]));
-  const slug    = makeSlug(event.title);
-  const today   = format(new Date(), 'yyyy-MM-dd');
+  const catMap = Object.fromEntries(categories.map(c => [c.id, c]));
+  const slug   = makeSlug(event.title);
+  const today  = format(new Date(), 'yyyy-MM-dd');
 
   const eventRegs      = registrations.filter(r => r.event_id === event.id && r.status === 'confirmed');
   const checkedInCount = eventRegs.filter(r => r.checked_in).length;
@@ -71,18 +76,17 @@ export default function EventCheckinPanel({ event, registrations, categories, on
     return true;
   }), [eventRegs, catFilter, checkinFilter, search]);
 
-  // Selection helpers
+  // Selection
   const allIds      = filtered.map(r => r.id);
   const allSelected = allIds.length > 0 && allIds.every(id => selected.has(id));
   const someSelected = selected.size > 0;
+  const selectedRows = filtered.filter(r => selected.has(r.id));
+  const notCheckedInSelected = selectedRows.filter(r => !r.checked_in).length;
+  const alreadyCheckedInSelected = selectedRows.filter(r => r.checked_in).length;
 
   const toggleSelect = (id, e) => {
     e.stopPropagation();
-    setSelected(prev => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
+    setSelected(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
   };
 
   const toggleAll = () => {
@@ -93,28 +97,32 @@ export default function EventCheckinPanel({ event, registrations, categories, on
     }
   };
 
-  const selectedRows = filtered.filter(r => selected.has(r.id));
+  const clearSelection = () => setSelected(new Set());
 
-  // Bulk check-in mutation (only uncheck-in ones that aren't yet checked in)
+  // Bulk check-in mutation with per-item tracking
   const bulkCheckinMutation = useMutation({
     mutationFn: async () => {
       const targets = selectedRows.filter(r => !r.checked_in);
+      const skipped = selectedRows.filter(r => r.checked_in).length;
       const now = new Date().toISOString();
-      await Promise.all(targets.map(r =>
-        base44.entities.EventRegistration.update(r.id, {
-          checked_in: true,
-          checked_in_at: now,
-        })
-      ));
+      const results = await Promise.allSettled(
+        targets.map(r => base44.entities.EventRegistration.update(r.id, { checked_in: true, checked_in_at: now }))
+      );
+      const succeeded = results.filter(r => r.status === 'fulfilled').length;
+      const failed    = results.filter(r => r.status === 'rejected').length;
+      return { succeeded, failed, skipped };
     },
-    onSuccess: () => {
-      setSelected(new Set());
+    onSuccess: ({ succeeded, failed, skipped }) => {
+      clearSelection();
+      setConfirmOpen(false);
       queryClient.invalidateQueries({ queryKey: ['all-regs-admin'] });
       if (onRegsUpdated) onRegsUpdated();
+      const lines = [`${succeeded} checked in`];
+      if (skipped > 0) lines.push(`${skipped} skipped — already checked in`);
+      if (failed > 0)  lines.push(`${failed} failed — please try again`);
+      setResult({ lines, isError: failed > 0 && succeeded === 0 });
     },
   });
-
-  const notCheckedInSelected = selectedRows.filter(r => !r.checked_in).length;
 
   const exportFiltered = () => downloadCSV(buildCSV(filtered, catMap),     `${slug}-checkin-${today}.csv`);
   const exportSelected = () => downloadCSV(buildCSV(selectedRows, catMap), `${slug}-checkin-selected-${today}.csv`);
@@ -132,8 +140,7 @@ export default function EventCheckinPanel({ event, registrations, categories, on
       </div>
 
       {/* QR Scanner CTA */}
-      <button
-        onClick={() => navigate(`/StrideCheckin?event_id=${event.id}`)}
+      <button onClick={() => navigate(`/StrideCheckin?event_id=${event.id}`)}
         style={{
           width: '100%', padding: '16px 0', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
           background: ACCENT, color: '#050f08', fontSize: 15, fontWeight: 900, border: 'none', cursor: 'pointer',
@@ -143,11 +150,14 @@ export default function EventCheckinPanel({ event, registrations, categories, on
         <ScanLine style={{ width: 20, height: 20 }} /> Open QR Scanner
       </button>
 
+      {/* Result banner */}
+      <BulkResultBanner result={result} onClose={() => setResult(null)} />
+
       {/* Search */}
       <div style={{ position: 'relative' }}>
         <Search style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, color: 'rgba(0,230,118,0.4)' }} />
         <input
-          value={search} onChange={e => { setSearch(e.target.value); setSelected(new Set()); }}
+          value={search} onChange={e => { setSearch(e.target.value); clearSelection(); }}
           placeholder="Search bib, name, email..."
           style={{
             width: '100%', boxSizing: 'border-box', paddingLeft: 36, paddingRight: 12, paddingTop: 10, paddingBottom: 10,
@@ -170,55 +180,35 @@ export default function EventCheckinPanel({ event, registrations, categories, on
         </select>
       </div>
 
-      {/* Toolbar */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        <button onClick={toggleAll} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(0,230,118,0.6)', fontSize: 11, fontWeight: 700, padding: 0 }}>
-          {allSelected ? <CheckSquare style={{ width: 14, height: 14, color: ACCENT }} /> : <Square style={{ width: 14, height: 14 }} />}
-          {allSelected ? 'Deselect all' : 'Select all'}
-        </button>
-        <span style={{ fontSize: 10, fontWeight: 800, color: 'rgba(0,230,118,0.5)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
-          {filtered.length} participants{someSelected ? ` · ${selected.size} selected` : ''}
-        </span>
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
-          {someSelected && notCheckedInSelected > 0 && (
-            <button
-              onClick={() => bulkCheckinMutation.mutate()}
-              disabled={bulkCheckinMutation.isPending}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px',
-                borderRadius: 99, fontSize: 11, fontWeight: 700, cursor: 'pointer',
-                background: 'rgba(0,230,118,0.12)', border: '1px solid rgba(0,230,118,0.3)', color: ACCENT,
-              }}
-            >
-              {bulkCheckinMutation.isPending
-                ? <Loader2 style={{ width: 11, height: 11, animation: 'spin 1s linear infinite' }} />
-                : <CheckCircle2 style={{ width: 11, height: 11 }} />
-              }
-              Check in {notCheckedInSelected}
-            </button>
-          )}
-          {someSelected && (
-            <button onClick={exportSelected}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px',
-                borderRadius: 99, fontSize: 11, fontWeight: 700, cursor: 'pointer',
-                background: 'rgba(138,43,226,0.12)', border: '1px solid rgba(138,43,226,0.3)', color: 'rgba(190,140,255,1)',
-              }}
-            >
-              <Download style={{ width: 12, height: 12 }} /> Export selected
-            </button>
-          )}
-          <button onClick={exportFiltered}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px',
-              borderRadius: 99, fontSize: 11, fontWeight: 700, cursor: 'pointer',
-              background: 'rgba(0,230,118,0.08)', border: '1px solid rgba(0,230,118,0.2)', color: ACCENT,
-            }}
-          >
+      {/* Selection bar / toolbar */}
+      {someSelected ? (
+        <SelectionBar
+          count={selected.size}
+          onClear={clearSelection}
+          onExport={exportSelected}
+          actions={notCheckedInSelected > 0 ? [
+            {
+              label: `Check in ${notCheckedInSelected}`,
+              icon: CheckCircle2,
+              onClick: () => setConfirmOpen(true),
+              color: ACCENT,
+            },
+          ] : []}
+        />
+      ) : (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button onClick={toggleAll} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(0,230,118,0.6)', fontSize: 11, fontWeight: 700, padding: 0 }}>
+            {allSelected ? <CheckSquare style={{ width: 14, height: 14, color: ACCENT }} /> : <Square style={{ width: 14, height: 14 }} />}
+            {allSelected ? 'Deselect all' : 'Select all'}
+          </button>
+          <span style={{ fontSize: 10, fontWeight: 800, color: 'rgba(0,230,118,0.5)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
+            {filtered.length} participants
+          </span>
+          <button onClick={exportFiltered} style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 99, fontSize: 11, fontWeight: 700, cursor: 'pointer', background: 'rgba(0,230,118,0.08)', border: '1px solid rgba(0,230,118,0.2)', color: ACCENT }}>
             <Download style={{ width: 12, height: 12 }} /> Export
           </button>
         </div>
-      </div>
+      )}
 
       {/* Empty state */}
       {filtered.length === 0 && (
@@ -237,10 +227,9 @@ export default function EventCheckinPanel({ event, registrations, categories, on
           const cat   = catMap[reg.category_id];
           const isSel = selected.has(reg.id);
           return (
-            <div key={reg.id} style={{ display: 'flex', alignItems: 'stretch', gap: 0 }}>
+            <div key={reg.id} style={{ display: 'flex', alignItems: 'stretch' }}>
               {/* Checkbox */}
-              <button
-                onClick={(e) => toggleSelect(reg.id, e)}
+              <button onClick={(e) => toggleSelect(reg.id, e)}
                 style={{
                   flexShrink: 0, width: 36, display: 'flex', alignItems: 'center', justifyContent: 'center',
                   background: isSel ? 'rgba(0,230,118,0.08)' : 'transparent',
@@ -253,7 +242,7 @@ export default function EventCheckinPanel({ event, registrations, categories, on
                   : <Square style={{ width: 13, height: 13, color: 'rgba(255,255,255,0.2)' }} />
                 }
               </button>
-              {/* Row card */}
+              {/* Row */}
               <div style={{
                 flex: 1, display: 'flex', alignItems: 'center', gap: 12, padding: '11px 14px',
                 background: isSel ? 'rgba(0,230,118,0.04)' : CARD_BG,
@@ -284,7 +273,15 @@ export default function EventCheckinPanel({ event, registrations, categories, on
         })}
       </div>
 
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+      {/* Confirmation dialog */}
+      <BulkConfirmDialog
+        open={confirmOpen}
+        variant="checkin"
+        count={notCheckedInSelected}
+        onConfirm={() => bulkCheckinMutation.mutate()}
+        onCancel={() => setConfirmOpen(false)}
+        isLoading={bulkCheckinMutation.isPending}
+      />
     </div>
   );
 }

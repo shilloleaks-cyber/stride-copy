@@ -1,13 +1,17 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Download, CheckSquare, Square, ChevronDown, Loader2 } from 'lucide-react';
+import { Search, Download, CheckSquare, Square } from 'lucide-react';
 import { format } from 'date-fns';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import RegistrationDetailSheet from '@/components/stride/RegistrationDetailSheet';
+import BulkConfirmDialog from './BulkConfirmDialog';
+import BulkResultBanner from './BulkResultBanner';
+import SelectionBar from './SelectionBar';
+import { CheckCircle2, XCircle } from 'lucide-react';
 
 const ACCENT = '#00e676';
 const CARD_BG = 'rgba(10,30,18,0.9)';
-const BORDER = 'rgba(0,200,80,0.12)';
+const BORDER  = 'rgba(0,200,80,0.12)';
 
 const STATUS_CFG = {
   pending:   { label: 'Pending',   color: 'rgba(255,200,80,1)',  bg: 'rgba(255,200,80,0.1)' },
@@ -66,10 +70,10 @@ export default function EventRegistrationsPanel({ event, registrations, categori
   const [quickFilter, setQuickFilter]     = useState('all');
   const [detailReg, setDetailReg]         = useState(null);
   const [selected, setSelected]           = useState(new Set());
-  const [bulkMenuOpen, setBulkMenuOpen]   = useState(false);
+  const [confirm, setConfirm]             = useState(null); // 'approve' | 'reject' | null
+  const [result, setResult]               = useState(null); // BulkResultBanner payload
 
   const queryClient = useQueryClient();
-
   const catMap   = Object.fromEntries(categories.map(c => [c.id, c]));
   const eventMap = { [event.id]: event };
   const slug     = makeSlug(event.title);
@@ -108,69 +112,79 @@ export default function EventRegistrationsPanel({ event, registrations, categori
     { key: 'checked_in', label: 'Checked In', value: stats.checked_in },
   ];
 
-  // Selection helpers
+  // Selection
   const allFilteredIds = filtered.map(r => r.id);
-  const allSelected = allFilteredIds.length > 0 && allFilteredIds.every(id => selected.has(id));
-  const someSelected = selected.size > 0;
+  const allSelected    = allFilteredIds.length > 0 && allFilteredIds.every(id => selected.has(id));
+  const someSelected   = selected.size > 0;
+  const selectedRows   = filtered.filter(r => selected.has(r.id));
 
   const toggleSelect = (id, e) => {
     e.stopPropagation();
-    setSelected(prev => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
+    setSelected(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
   };
 
   const toggleAll = () => {
     if (allSelected) {
-      setSelected(prev => {
-        const next = new Set(prev);
-        allFilteredIds.forEach(id => next.delete(id));
-        return next;
-      });
+      setSelected(prev => { const next = new Set(prev); allFilteredIds.forEach(id => next.delete(id)); return next; });
     } else {
       setSelected(prev => new Set([...prev, ...allFilteredIds]));
     }
   };
 
-  const selectedRows = filtered.filter(r => selected.has(r.id));
+  const clearSelection = () => setSelected(new Set());
 
-  // Bulk approve mutation
+  // Bulk approve mutation — with per-item result tracking
   const bulkApproveMutation = useMutation({
     mutationFn: async () => {
-      await Promise.all(selectedRows.map(r =>
-        base44.entities.EventRegistration.update(r.id, { status: 'confirmed' })
-      ));
+      const results = await Promise.allSettled(
+        selectedRows.map(r => base44.entities.EventRegistration.update(r.id, { status: 'confirmed' }))
+      );
+      const succeeded = results.filter(r => r.status === 'fulfilled').length;
+      const failed    = results.filter(r => r.status === 'rejected').length;
+      return { succeeded, failed, total: selectedRows.length };
     },
-    onSuccess: () => {
-      setSelected(new Set());
-      setBulkMenuOpen(false);
+    onSuccess: ({ succeeded, failed }) => {
+      clearSelection();
+      setConfirm(null);
       queryClient.invalidateQueries({ queryKey: ['all-regs-admin'] });
       if (onRegsUpdated) onRegsUpdated();
+      const lines = [`${succeeded} approved successfully`];
+      if (failed > 0) lines.push(`${failed} failed — please try again`);
+      setResult({ lines, isError: failed > 0 && succeeded === 0 });
     },
   });
 
-  // Bulk reject mutation
+  // Bulk reject mutation — with per-item result tracking
   const bulkRejectMutation = useMutation({
     mutationFn: async () => {
-      await Promise.all(selectedRows.map(r =>
-        base44.entities.EventRegistration.update(r.id, { status: 'rejected' })
-      ));
+      const results = await Promise.allSettled(
+        selectedRows.map(r => base44.entities.EventRegistration.update(r.id, { status: 'rejected' }))
+      );
+      const succeeded = results.filter(r => r.status === 'fulfilled').length;
+      const failed    = results.filter(r => r.status === 'rejected').length;
+      return { succeeded, failed };
     },
-    onSuccess: () => {
-      setSelected(new Set());
-      setBulkMenuOpen(false);
+    onSuccess: ({ succeeded, failed }) => {
+      clearSelection();
+      setConfirm(null);
       queryClient.invalidateQueries({ queryKey: ['all-regs-admin'] });
       if (onRegsUpdated) onRegsUpdated();
+      const lines = [`${succeeded} rejected`];
+      if (failed > 0) lines.push(`${failed} failed — please try again`);
+      setResult({ lines, isError: failed > 0 && succeeded === 0 });
     },
   });
 
-  const isBulkBusy = bulkApproveMutation.isPending || bulkRejectMutation.isPending;
+  const isConfirmLoading = bulkApproveMutation.isPending || bulkRejectMutation.isPending;
 
-  // Export helpers
-  const exportFiltered  = () => downloadCSV(buildCSV(filtered, catMap),      `${slug}-registrations-${today}.csv`);
-  const exportSelected  = () => downloadCSV(buildCSV(selectedRows, catMap),  `${slug}-registrations-selected-${today}.csv`);
+  const handleConfirm = () => {
+    if (confirm === 'approve') bulkApproveMutation.mutate();
+    if (confirm === 'reject')  bulkRejectMutation.mutate();
+  };
+
+  // Export
+  const exportFiltered = () => downloadCSV(buildCSV(filtered, catMap),     `${slug}-registrations-${today}.csv`);
+  const exportSelected = () => downloadCSV(buildCSV(selectedRows, catMap), `${slug}-registrations-selected-${today}.csv`);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -178,14 +192,13 @@ export default function EventRegistrationsPanel({ event, registrations, categori
       {/* Quick filter pills */}
       <div style={{ display: 'flex', gap: 6, padding: '0 16px', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
         {quickFilters.map(f => (
-          <button key={f.key} onClick={() => { setQuickFilter(f.key); setSelected(new Set()); }}
+          <button key={f.key} onClick={() => { setQuickFilter(f.key); clearSelection(); }}
             style={{
               flexShrink: 0, padding: '6px 12px', borderRadius: 99, fontSize: 12, fontWeight: 700,
               cursor: 'pointer', border: 'none', display: 'flex', alignItems: 'center', gap: 5,
               ...(quickFilter === f.key
                 ? { background: ACCENT, color: '#050f08' }
-                : { background: 'rgba(0,230,118,0.07)', color: 'rgba(0,230,118,0.55)', border: '1px solid rgba(0,230,118,0.15)' }
-              ),
+                : { background: 'rgba(0,230,118,0.07)', color: 'rgba(0,230,118,0.55)', border: '1px solid rgba(0,230,118,0.15)' }),
             }}
           >
             {f.label}
@@ -202,7 +215,7 @@ export default function EventRegistrationsPanel({ event, registrations, categori
       <div style={{ padding: '0 16px', position: 'relative' }}>
         <Search style={{ position: 'absolute', left: 28, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, color: 'rgba(0,230,118,0.4)' }} />
         <input
-          value={search} onChange={e => { setSearch(e.target.value); setSelected(new Set()); }}
+          value={search} onChange={e => { setSearch(e.target.value); clearSelection(); }}
           placeholder="Search name, email, bib, phone..."
           style={{
             width: '100%', boxSizing: 'border-box', paddingLeft: 36, paddingRight: 12, paddingTop: 10, paddingBottom: 10,
@@ -243,69 +256,33 @@ export default function EventRegistrationsPanel({ event, registrations, categori
         </select>
       </div>
 
-      {/* Toolbar: count + select-all + bulk actions + export */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 16px', flexWrap: 'wrap' }}>
-        {/* Select all toggle */}
-        <button onClick={toggleAll} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(0,230,118,0.6)', fontSize: 11, fontWeight: 700, padding: 0 }}>
-          {allSelected
-            ? <CheckSquare style={{ width: 14, height: 14, color: ACCENT }} />
-            : <Square style={{ width: 14, height: 14 }} />
-          }
-          {allSelected ? 'Deselect all' : 'Select all'}
-        </button>
+      {/* Result banner */}
+      <BulkResultBanner result={result} onClose={() => setResult(null)} />
 
-        <span style={{ fontSize: 11, color: 'rgba(0,230,118,0.4)', fontWeight: 600 }}>
-          {filtered.length} shown{someSelected ? ` · ${selected.size} selected` : ''}
-        </span>
-
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center' }}>
-          {/* Bulk actions (only when rows selected) */}
-          {someSelected && (
-            <div style={{ position: 'relative' }}>
-              <button
-                onClick={() => setBulkMenuOpen(v => !v)}
-                disabled={isBulkBusy}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px',
-                  borderRadius: 99, fontSize: 11, fontWeight: 700, cursor: 'pointer',
-                  background: 'rgba(138,43,226,0.15)', border: '1px solid rgba(138,43,226,0.35)', color: 'rgba(190,140,255,1)',
-                }}
-              >
-                {isBulkBusy ? <Loader2 style={{ width: 11, height: 11, animation: 'spin 1s linear infinite' }} /> : null}
-                Bulk ({selected.size}) <ChevronDown style={{ width: 11, height: 11 }} />
-              </button>
-              {bulkMenuOpen && (
-                <div style={{
-                  position: 'absolute', right: 0, top: '110%', zIndex: 50,
-                  background: '#0f0f1a', border: '1px solid rgba(138,43,226,0.3)', borderRadius: 12,
-                  minWidth: 180, overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-                }}>
-                  {[
-                    { label: '✅ Approve selected', action: () => bulkApproveMutation.mutate(), color: '#00e676' },
-                    { label: '❌ Reject selected',  action: () => bulkRejectMutation.mutate(),  color: 'rgba(255,80,80,0.9)' },
-                    { label: '⬇ Export selected CSV', action: () => { exportSelected(); setBulkMenuOpen(false); }, color: ACCENT },
-                  ].map(item => (
-                    <button key={item.label} onClick={item.action}
-                      style={{ display: 'block', width: '100%', textAlign: 'left', padding: '11px 16px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: item.color, borderBottom: '1px solid rgba(255,255,255,0.05)' }}
-                    >{item.label}</button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Export filtered */}
-          <button onClick={exportFiltered}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px',
-              borderRadius: 99, fontSize: 11, fontWeight: 700, cursor: 'pointer',
-              background: 'rgba(0,230,118,0.08)', border: '1px solid rgba(0,230,118,0.2)', color: ACCENT,
-            }}
-          >
+      {/* Selection bar (replaces old inline toolbar when selected) */}
+      {someSelected ? (
+        <SelectionBar
+          count={selected.size}
+          onClear={clearSelection}
+          onExport={exportSelected}
+          actions={[
+            { label: 'Approve', icon: CheckCircle2, onClick: () => setConfirm('approve'), color: '#00e676' },
+            { label: 'Reject',  icon: XCircle,      onClick: () => setConfirm('reject'),  color: 'rgba(255,90,90,0.9)' },
+          ]}
+        />
+      ) : (
+        /* Toolbar when nothing selected */
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 16px' }}>
+          <button onClick={toggleAll} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(0,230,118,0.6)', fontSize: 11, fontWeight: 700, padding: 0 }}>
+            {allSelected ? <CheckSquare style={{ width: 14, height: 14, color: ACCENT }} /> : <Square style={{ width: 14, height: 14 }} />}
+            {allSelected ? 'Deselect all' : 'Select all'}
+          </button>
+          <span style={{ fontSize: 11, color: 'rgba(0,230,118,0.4)', fontWeight: 600 }}>{filtered.length} shown</span>
+          <button onClick={exportFiltered} style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 99, fontSize: 11, fontWeight: 700, cursor: 'pointer', background: 'rgba(0,230,118,0.08)', border: '1px solid rgba(0,230,118,0.2)', color: ACCENT }}>
             <Download style={{ width: 12, height: 12 }} /> Export
           </button>
         </div>
-      </div>
+      )}
 
       {/* Empty state */}
       {filtered.length === 0 && (
@@ -324,10 +301,9 @@ export default function EventRegistrationsPanel({ event, registrations, categori
           const payCfg = PAYMENT_STATUS_CFG[reg.payment_status];
           const isSel  = selected.has(reg.id);
           return (
-            <div key={reg.id} style={{ position: 'relative', display: 'flex', alignItems: 'stretch', gap: 0 }}>
+            <div key={reg.id} style={{ display: 'flex', alignItems: 'stretch' }}>
               {/* Checkbox */}
-              <button
-                onClick={(e) => toggleSelect(reg.id, e)}
+              <button onClick={(e) => toggleSelect(reg.id, e)}
                 style={{
                   flexShrink: 0, width: 36, display: 'flex', alignItems: 'center', justifyContent: 'center',
                   background: isSel ? 'rgba(0,230,118,0.08)' : 'transparent',
@@ -341,10 +317,10 @@ export default function EventRegistrationsPanel({ event, registrations, categori
                 }
               </button>
               {/* Card */}
-              <button
-                onClick={() => setDetailReg(reg)}
+              <button onClick={() => setDetailReg(reg)}
                 style={{
-                  flex: 1, textAlign: 'left', background: isSel ? 'rgba(0,230,118,0.04)' : CARD_BG,
+                  flex: 1, textAlign: 'left',
+                  background: isSel ? 'rgba(0,230,118,0.04)' : CARD_BG,
                   border: `1px solid ${isSel ? 'rgba(0,230,118,0.3)' : BORDER}`,
                   borderRadius: '0 12px 12px 0', padding: '12px 14px', cursor: 'pointer',
                 }}
@@ -371,6 +347,7 @@ export default function EventRegistrationsPanel({ event, registrations, categori
         })}
       </div>
 
+      {/* Detail sheet */}
       {detailReg && (
         <RegistrationDetailSheet
           reg={detailReg}
@@ -382,7 +359,15 @@ export default function EventRegistrationsPanel({ event, registrations, categori
         />
       )}
 
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+      {/* Confirmation dialog */}
+      <BulkConfirmDialog
+        open={!!confirm}
+        variant={confirm || 'approve'}
+        count={selectedRows.length}
+        onConfirm={handleConfirm}
+        onCancel={() => setConfirm(null)}
+        isLoading={isConfirmLoading}
+      />
     </div>
   );
 }
