@@ -1,7 +1,13 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Download, CheckSquare, Square } from 'lucide-react';
+import { Search, Download, CheckSquare, Square, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { base44 } from '@/api/base44Client';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import PaymentReviewPanel from '@/components/stride/PaymentReviewPanel';
+import SelectionBar from '@/components/admin/SelectionBar';
+import BulkConfirmDialog from '@/components/admin/BulkConfirmDialog';
+import BulkResultBanner from '@/components/admin/BulkResultBanner';
+import { logActivity } from '@/lib/eventActivityLog';
 
 const ACCENT = '#00e676';
 
@@ -43,17 +49,40 @@ function downloadCSV(content, filename) {
   a.click();
 }
 
-export default function EventPaymentsPanel({ event, registrations, payments, categories, onDone, canReview = true, actorEmail }) {
-  const [search, setSearch]               = useState('');
-  const [statusFilter, setStatusFilter]   = useState('all');
-  const [methodFilter, setMethodFilter]   = useState('all');
-  const [catFilter, setCatFilter]         = useState('all');
-  const [selected, setSelected]           = useState(new Set());
+// Generates next available bib number for a category
+function generateBib(categoryId, catMap, registrations) {
+  const cat = catMap[categoryId];
+  const prefix = cat?.bib_prefix || 'R';
+  const start = cat?.bib_start || 1;
+  const usedBibs = new Set(
+    registrations
+      .filter(r => r.category_id === categoryId && r.bib_number)
+      .map(r => r.bib_number)
+  );
+  let candidate = start;
+  let bib;
+  do {
+    bib = `${prefix}${String(candidate).padStart(3, '0')}`;
+    candidate++;
+  } while (usedBibs.has(bib));
+  return bib;
+}
 
-  const catMap  = Object.fromEntries(categories.map(c => [c.id, c]));
-  const user    = { role: 'admin' };
-  const slug    = makeSlug(event.title);
-  const today   = format(new Date(), 'yyyy-MM-dd');
+export default function EventPaymentsPanel({ event, registrations, payments, categories, onDone, canReview = true, actorEmail }) {
+  const queryClient = useQueryClient();
+
+  const [search, setSearch]             = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [methodFilter, setMethodFilter] = useState('all');
+  const [catFilter, setCatFilter]       = useState('all');
+  const [selected, setSelected]         = useState(new Set());
+  const [confirm, setConfirm]           = useState(null); // 'approve' | 'needs_attention' | null
+  const [result, setResult]             = useState(null);
+
+  const catMap      = Object.fromEntries(categories.map(c => [c.id, c]));
+  const slug        = makeSlug(event.title);
+  const today       = format(new Date(), 'yyyy-MM-dd');
+  const reviewUser  = { role: 'admin', email: actorEmail };
 
   const eventRegs     = registrations.filter(r => r.event_id === event.id);
   const regsById      = Object.fromEntries(eventRegs.map(r => [r.id, r]));
@@ -80,10 +109,17 @@ export default function EventPaymentsPanel({ event, registrations, payments, cat
     return 0;
   }), [filtered]);
 
-  const pending     = eventPayments.filter(p => p.status === 'pending').length;
-  const someSelected = selected.size > 0;
-  const allIds      = sorted.map(p => p.id);
-  const allSelected = allIds.length > 0 && allIds.every(id => selected.has(id));
+  const pending         = eventPayments.filter(p => p.status === 'pending').length;
+  const someSelected    = selected.size > 0;
+  const allIds          = sorted.map(p => p.id);
+  const allSelected     = allIds.length > 0 && allIds.every(id => selected.has(id));
+  const selectedPayments = sorted.filter(p => selected.has(p.id));
+
+  // Count actionable items in selection
+  const approvable       = selectedPayments.filter(p => p.status !== 'approved').length;
+  const needsAttentionable = selectedPayments.filter(p => p.status !== 'needs_attention').length;
+
+  const clearSelection = () => setSelected(new Set());
 
   const toggleSelect = (id, e) => {
     e.stopPropagation();
@@ -102,10 +138,106 @@ export default function EventPaymentsPanel({ event, registrations, payments, cat
     }
   };
 
-  const selectedPayments = sorted.filter(p => selected.has(p.id));
+  // Bulk approve mutation
+  const bulkApproveMutation = useMutation({
+    mutationFn: async () => {
+      if (!canReview) throw new Error('Permission denied');
+      const now = new Date().toISOString();
+      const targets = selectedPayments.filter(p => p.status !== 'approved');
+      const results = await Promise.allSettled(
+        targets.map(async (p) => {
+          const reg = regsById[p.registration_id];
+          const bib = reg?.bib_number || generateBib(reg?.category_id, catMap, registrations);
+          await Promise.all([
+            base44.entities.EventPayment.update(p.id, {
+              status: 'approved',
+              reviewed_by: actorEmail,
+              reviewed_at: now,
+              admin_note: null,
+            }),
+            base44.entities.EventRegistration.update(p.registration_id, {
+              status: 'confirmed',
+              payment_status: 'paid',
+              bib_number: reg?.bib_number || bib,
+            }),
+          ]);
+        })
+      );
+      const succeeded = results.filter(r => r.status === 'fulfilled').length;
+      const failed    = results.filter(r => r.status === 'rejected').length;
+      const skipped   = selectedPayments.length - targets.length;
+      return { succeeded, failed, skipped };
+    },
+    onSuccess: ({ succeeded, failed, skipped }) => {
+      logActivity({
+        eventId: event.id,
+        actorEmail,
+        actionType: 'payment_approved',
+        targetType: 'payment',
+        summary: `Bulk approved ${succeeded} payment(s)`,
+        meta: { succeeded, failed, skipped },
+      });
+      clearSelection();
+      setConfirm(null);
+      queryClient.invalidateQueries({ queryKey: ['all-payments-admin'] });
+      queryClient.invalidateQueries({ queryKey: ['all-regs-admin'] });
+      if (onDone) onDone();
+      const lines = [`${succeeded} payment${succeeded !== 1 ? 's' : ''} approved`];
+      if (skipped > 0) lines.push(`${skipped} skipped (already approved)`);
+      if (failed > 0)  lines.push(`${failed} failed — please retry`);
+      setResult({ lines, isError: failed > 0 && succeeded === 0 });
+    },
+  });
 
-  const exportFiltered = () => downloadCSV(buildCSV(sorted, regsById, catMap),           `${slug}-payments-${today}.csv`);
-  const exportSelected = () => downloadCSV(buildCSV(selectedPayments, regsById, catMap), `${slug}-payments-selected-${today}.csv`);
+  // Bulk needs-attention mutation
+  const bulkNeedsAttentionMutation = useMutation({
+    mutationFn: async () => {
+      if (!canReview) throw new Error('Permission denied');
+      const now = new Date().toISOString();
+      const targets = selectedPayments.filter(p => p.status !== 'needs_attention');
+      const results = await Promise.allSettled(
+        targets.map(p =>
+          base44.entities.EventPayment.update(p.id, {
+            status: 'needs_attention',
+            reviewed_by: actorEmail,
+            reviewed_at: now,
+          })
+        )
+      );
+      const succeeded = results.filter(r => r.status === 'fulfilled').length;
+      const failed    = results.filter(r => r.status === 'rejected').length;
+      const skipped   = selectedPayments.length - targets.length;
+      return { succeeded, failed, skipped };
+    },
+    onSuccess: ({ succeeded, failed, skipped }) => {
+      logActivity({
+        eventId: event.id,
+        actorEmail,
+        actionType: 'payment_needs_attention',
+        targetType: 'payment',
+        summary: `Bulk marked ${succeeded} payment(s) as Needs Attention`,
+        meta: { succeeded, failed, skipped },
+      });
+      clearSelection();
+      setConfirm(null);
+      queryClient.invalidateQueries({ queryKey: ['all-payments-admin'] });
+      if (onDone) onDone();
+      const lines = [`${succeeded} payment${succeeded !== 1 ? 's' : ''} marked as Needs Attention`];
+      if (skipped > 0) lines.push(`${skipped} skipped (already marked)`);
+      if (failed > 0)  lines.push(`${failed} failed — please retry`);
+      setResult({ lines, isError: failed > 0 && succeeded === 0 });
+    },
+  });
+
+  const isLoading = bulkApproveMutation.isPending || bulkNeedsAttentionMutation.isPending;
+
+  const handleConfirm = () => {
+    if (confirm === 'approve')          bulkApproveMutation.mutate();
+    if (confirm === 'needs_attention')  bulkNeedsAttentionMutation.mutate();
+  };
+
+  const exportFiltered = () => downloadCSV(buildCSV(sorted, regsById, catMap),            `${slug}-payments-${today}.csv`);
+  const exportSelected = () => downloadCSV(buildCSV(selectedPayments, regsById, catMap),  `${slug}-payments-selected-${today}.csv`);
 
   return (
     <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -114,7 +246,7 @@ export default function EventPaymentsPanel({ event, registrations, payments, cat
       <div style={{ position: 'relative' }}>
         <Search style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, color: 'rgba(0,230,118,0.4)' }} />
         <input
-          value={search} onChange={e => { setSearch(e.target.value); setSelected(new Set()); }}
+          value={search} onChange={e => { setSearch(e.target.value); clearSelection(); }}
           placeholder="Search name, email, bib..."
           style={{
             width: '100%', boxSizing: 'border-box', paddingLeft: 36, paddingRight: 12, paddingTop: 10, paddingBottom: 10,
@@ -147,38 +279,52 @@ export default function EventPaymentsPanel({ event, registrations, payments, cat
         </select>
       </div>
 
-      {/* Toolbar */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        <button onClick={toggleAll} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(0,230,118,0.6)', fontSize: 11, fontWeight: 700, padding: 0 }}>
-          {allSelected ? <CheckSquare style={{ width: 14, height: 14, color: ACCENT }} /> : <Square style={{ width: 14, height: 14 }} />}
-          {allSelected ? 'Deselect all' : 'Select all'}
-        </button>
-        <span style={{ fontSize: 11, color: 'rgba(0,230,118,0.5)', fontWeight: 600 }}>
-          {pending > 0 ? `${pending} pending · ` : ''}{sorted.length} shown{someSelected ? ` · ${selected.size} selected` : ''}
-        </span>
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
-          {someSelected && (
-            <button onClick={exportSelected}
+      {/* Result banner */}
+      <BulkResultBanner result={result} onClose={() => setResult(null)} />
+
+      {/* Selection bar OR default toolbar */}
+      {someSelected ? (
+        <SelectionBar
+          count={selected.size}
+          onClear={clearSelection}
+          onExport={canReview ? exportSelected : null}
+          actions={canReview ? [
+            ...(approvable > 0 ? [{
+              label: `Approve ${approvable}`,
+              icon: CheckCircle2,
+              onClick: () => setConfirm('approve'),
+              color: '#00e676',
+            }] : []),
+            ...(needsAttentionable > 0 ? [{
+              label: `Needs Attention ${needsAttentionable}`,
+              icon: AlertTriangle,
+              onClick: () => setConfirm('needs_attention'),
+              color: 'rgba(255,150,50,1)',
+            }] : []),
+          ] : []}
+        />
+      ) : (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <button onClick={toggleAll} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(0,230,118,0.6)', fontSize: 11, fontWeight: 700, padding: 0 }}>
+            {allSelected ? <CheckSquare style={{ width: 14, height: 14, color: ACCENT }} /> : <Square style={{ width: 14, height: 14 }} />}
+            {allSelected ? 'Deselect all' : 'Select all'}
+          </button>
+          <span style={{ fontSize: 11, color: 'rgba(0,230,118,0.5)', fontWeight: 600 }}>
+            {pending > 0 ? `${pending} pending · ` : ''}{sorted.length} shown
+          </span>
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
+            <button onClick={exportFiltered}
               style={{
                 display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px',
                 borderRadius: 99, fontSize: 11, fontWeight: 700, cursor: 'pointer',
-                background: 'rgba(138,43,226,0.12)', border: '1px solid rgba(138,43,226,0.3)', color: 'rgba(190,140,255,1)',
+                background: 'rgba(0,230,118,0.08)', border: '1px solid rgba(0,230,118,0.2)', color: ACCENT,
               }}
             >
-              <Download style={{ width: 12, height: 12 }} /> Export selected
+              <Download style={{ width: 12, height: 12 }} /> Export
             </button>
-          )}
-          <button onClick={exportFiltered}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px',
-              borderRadius: 99, fontSize: 11, fontWeight: 700, cursor: 'pointer',
-              background: 'rgba(0,230,118,0.08)', border: '1px solid rgba(0,230,118,0.2)', color: ACCENT,
-            }}
-          >
-            <Download style={{ width: 12, height: 12 }} /> Export
-          </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Empty state */}
       {sorted.length === 0 && (
@@ -191,7 +337,7 @@ export default function EventPaymentsPanel({ event, registrations, payments, cat
         </div>
       )}
 
-      {/* Payment rows with selection checkbox */}
+      {/* Payment rows */}
       {sorted.map(payment => {
         const reg   = regsById[payment.registration_id];
         const isSel = selected.has(payment.id);
@@ -220,7 +366,7 @@ export default function EventPaymentsPanel({ event, registrations, payments, cat
                 reg={reg}
                 catMap={catMap}
                 registrations={registrations}
-                user={user}
+                user={reviewUser}
                 onDone={onDone}
                 canReview={canReview}
                 eventId={event.id}
@@ -229,6 +375,21 @@ export default function EventPaymentsPanel({ event, registrations, payments, cat
           </div>
         );
       })}
+
+      {/* Bulk confirm dialog */}
+      <BulkConfirmDialog
+        open={!!confirm}
+        variant={confirm === 'approve' ? 'approve' : 'reject'}
+        count={confirm === 'approve' ? approvable : needsAttentionable}
+        onConfirm={handleConfirm}
+        onCancel={() => setConfirm(null)}
+        isLoading={isLoading}
+        customLabel={confirm === 'needs_attention' ? 'Mark Needs Attention' : undefined}
+        customMessage={confirm === 'needs_attention'
+          ? `Mark ${needsAttentionable} payment(s) as Needs Attention? Participants will need to re-upload their slip.`
+          : undefined
+        }
+      />
     </div>
   );
 }

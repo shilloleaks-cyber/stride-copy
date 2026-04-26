@@ -34,11 +34,18 @@ const VARIANTS = {
     confirmLabel: 'Yes, Check In',
     confirmStyle: { background: 'rgba(0,230,118,0.15)', border: '1px solid rgba(0,230,118,0.35)', color: '#00e676' },
   },
+  needs_attention: {
+    icon: '⚠️',
+    title: (n) => `Mark ${n} payment${n !== 1 ? 's' : ''} as Needs Attention?`,
+    body:  (n) => `This will flag ${n} payment${n !== 1 ? 's' : ''} for re-upload. Participants will be notified to resubmit their slip.`,
+    confirmLabel: 'Yes, Flag',
+    confirmStyle: { background: 'rgba(255,120,0,0.12)', border: '1px solid rgba(255,120,0,0.35)', color: 'rgba(255,150,50,1)' },
+  },
 };
 
-export default function BulkConfirmDialog({ open, variant = 'approve', count, onConfirm, onCancel, isLoading }) {
+export default function BulkConfirmDialog({ open, variant = 'approve', count, onConfirm, onCancel, isLoading, customLabel, customMessage }) {
   if (!open) return null;
-  const cfg = VARIANTS[variant];
+  const cfg = VARIANTS[variant] || VARIANTS.approve;
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
@@ -57,7 +64,7 @@ export default function BulkConfirmDialog({ open, variant = 'approve', count, on
           {cfg.title(count)}
         </h3>
         <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', margin: '0 0 24px', textAlign: 'center', lineHeight: 1.5 }}>
-          {cfg.body(count)}
+          {customMessage || cfg.body(count)}
         </p>
 
         <div style={{ display: 'flex', gap: 10 }}>
@@ -80,7 +87,7 @@ export default function BulkConfirmDialog({ open, variant = 'approve', count, on
               ? <Loader2 style={{ width: 14, height: 14, animation: 'spin 1s linear infinite' }} />
               : null
             }
-            {isLoading ? 'Processing…' : cfg.confirmLabel}
+            {isLoading ? 'Processing…' : (customLabel || cfg.confirmLabel)}
           </button>
         </div>
       </div>
