@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, AlertTriangle, Loader2, ExternalLink, Clock, Building2, QrCode } from 'lucide-react';
 import { format } from 'date-fns';
+import { logActivity } from '@/lib/eventActivityLog';
 
 const METHOD_LABELS = {
   bank_transfer: 'Bank Transfer',
@@ -15,7 +16,7 @@ const STATUS_CFG = {
   needs_attention: { label: 'Payment Needs Attention',   color: 'rgba(255,150,50,1)',   bg: 'rgba(255,120,0,0.07)', border: 'rgba(255,120,0,0.25)' },
 };
 
-export default function PaymentReviewPanel({ payment, reg, catMap, registrations, user, onDone }) {
+export default function PaymentReviewPanel({ payment, reg, catMap, registrations, user, onDone, canReview = true, eventId }) {
   const queryClient = useQueryClient();
   const [noteInput, setNoteInput] = useState('');
   const [showNoteInput, setShowNoteInput] = useState(false);
@@ -48,6 +49,7 @@ export default function PaymentReviewPanel({ payment, reg, catMap, registrations
 
   const approveMutation = useMutation({
     mutationFn: async () => {
+      if (!canReview) throw new Error('Permission denied');
       const now = new Date().toISOString();
       const bibNumber = generateBib();
       await Promise.all([
@@ -64,11 +66,15 @@ export default function PaymentReviewPanel({ payment, reg, catMap, registrations
         }),
       ]);
     },
-    onSuccess: invalidate,
+    onSuccess: () => {
+      logActivity({ eventId: eventId || reg.event_id, actorEmail: user.email, actionType: 'payment_approved', targetType: 'payment', targetId: payment.id, summary: `Approved payment for ${reg.first_name} ${reg.last_name} (฿${payment.amount})` });
+      invalidate();
+    },
   });
 
   const needsAttentionMutation = useMutation({
     mutationFn: async () => {
+      if (!canReview) throw new Error('Permission denied');
       const now = new Date().toISOString();
       await base44.entities.EventPayment.update(payment.id, {
         status: 'needs_attention',
@@ -79,6 +85,7 @@ export default function PaymentReviewPanel({ payment, reg, catMap, registrations
       // Keep registration at pending so user is prompted to re-upload
     },
     onSuccess: () => {
+      logActivity({ eventId: eventId || reg.event_id, actorEmail: user.email, actionType: 'payment_needs_attention', targetType: 'payment', targetId: payment.id, summary: `Marked payment needs attention for ${reg.first_name} ${reg.last_name}`, meta: { note: noteInput.trim() || null } });
       setShowNoteInput(false);
       setNoteInput('');
       setPendingAction(null);
@@ -163,8 +170,11 @@ export default function PaymentReviewPanel({ payment, reg, catMap, registrations
           </div>
         )}
 
-        {/* ── Actions ── */}
-        {!isApproved && !isNeedsAttention && !showNoteInput && (
+        {/* ── Actions (payment/full role only) ── */}
+        {!canReview && (
+          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', textAlign: 'center', margin: 0, padding: '4px 0' }}>Read-only · insufficient permissions</p>
+        )}
+        {canReview && !isApproved && !isNeedsAttention && !showNoteInput && (
           <div style={{ display: 'flex', gap: 8 }}>
             <button
               onClick={() => approveMutation.mutate()}
@@ -194,7 +204,7 @@ export default function PaymentReviewPanel({ payment, reg, catMap, registrations
         )}
 
         {/* Re-approve after needs_attention */}
-        {isNeedsAttention && !showNoteInput && (
+        {canReview && isNeedsAttention && !showNoteInput && (
           <button
             onClick={() => approveMutation.mutate()}
             disabled={approveMutation.isPending}
@@ -210,7 +220,7 @@ export default function PaymentReviewPanel({ payment, reg, catMap, registrations
         )}
 
         {/* Needs Attention — note input */}
-        {showNoteInput && (
+        {canReview && showNoteInput && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <textarea
               value={noteInput}

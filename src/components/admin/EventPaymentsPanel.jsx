@@ -43,7 +43,7 @@ function downloadCSV(content, filename) {
   a.click();
 }
 
-export default function EventPaymentsPanel({ event, registrations, payments, categories, onDone }) {
+export default function EventPaymentsPanel({ event, registrations, payments, categories, onDone, canReview = true, actorEmail }) {
   const [search, setSearch]               = useState('');
   const [statusFilter, setStatusFilter]   = useState('all');
   const [methodFilter, setMethodFilter]   = useState('all');
@@ -222,6 +222,8 @@ export default function EventPaymentsPanel({ event, registrations, payments, cat
                 registrations={registrations}
                 user={user}
                 onDone={onDone}
+                canReview={canReview}
+                eventId={event.id}
               />
             </div>
           </div>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { UserCog, Plus, X, Loader2, ShieldCheck } from 'lucide-react';
+import { logActivity } from '@/lib/eventActivityLog';
 
 const ACCENT = '#00e676';
 const CARD_BG = 'rgba(10,30,18,0.9)';
@@ -38,7 +39,8 @@ export default function EventStaffsPanel({ event, user }) {
       status: 'active',
       invited_by: user?.email,
     }),
-    onSuccess: () => {
+    onSuccess: (created) => {
+      logActivity({ eventId: event.id, actorEmail: user?.email, actionType: 'staff_added', targetType: 'staff', targetId: created?.id, summary: `Added ${email.trim()} as ${ROLE_MAP[role]?.label || role}` });
       queryClient.invalidateQueries({ queryKey: ['event-staffs', event.id] });
       setEmail('');
       setShowAdd(false);
@@ -47,7 +49,9 @@ export default function EventStaffsPanel({ event, user }) {
 
   const removeMutation = useMutation({
     mutationFn: (id) => base44.entities.EventStaff.update(id, { status: 'removed' }),
-    onSuccess: () => {
+    onSuccess: (_, id) => {
+      const target = staffs.find(s => s.id === id);
+      logActivity({ eventId: event.id, actorEmail: user?.email, actionType: 'staff_removed', targetType: 'staff', targetId: id, summary: `Removed ${target?.user_email || id} from event staff` });
       queryClient.invalidateQueries({ queryKey: ['event-staffs', event.id] });
       setRemoveTarget(null);
     },

@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Loader2, Upload } from 'lucide-react';
+import { Loader2, Upload, Lock } from 'lucide-react';
+import { logActivity } from '@/lib/eventActivityLog';
 
 const ACCENT = '#00e676';
 const CARD_BG = 'rgba(10,30,18,0.9)';
 const BORDER = 'rgba(0,200,80,0.12)';
 
-export default function EventSettingsPanel({ event, onUpdated }) {
+export default function EventSettingsPanel({ event, onUpdated, actorEmail }) {
   const queryClient = useQueryClient();
 
   const [form, setForm] = useState({
@@ -25,7 +26,8 @@ export default function EventSettingsPanel({ event, onUpdated }) {
 
   const updateMutation = useMutation({
     mutationFn: (data) => base44.entities.StrideEvent.update(event.id, data),
-    onSuccess: () => {
+    onSuccess: (_, data) => {
+      logActivity({ eventId: event.id, actorEmail, actionType: 'event_settings_updated', targetType: 'event', targetId: event.id, summary: `Updated event settings for "${event.title}"`, meta: { status: data.status } });
       queryClient.invalidateQueries({ queryKey: ['admin-events-list'] });
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);

@@ -7,6 +7,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import BulkConfirmDialog from './BulkConfirmDialog';
 import BulkResultBanner from './BulkResultBanner';
 import SelectionBar from './SelectionBar';
+import { logActivity } from '@/lib/eventActivityLog';
 
 const ACCENT = '#00e676';
 const CARD_BG = 'rgba(10,30,18,0.9)';
@@ -45,7 +46,7 @@ function downloadCSV(content, filename) {
   a.click();
 }
 
-export default function EventCheckinPanel({ event, registrations, categories, onRegsUpdated, canBulkCheckin = true }) {
+export default function EventCheckinPanel({ event, registrations, categories, onRegsUpdated, canBulkCheckin = true, actorEmail }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -102,6 +103,7 @@ export default function EventCheckinPanel({ event, registrations, categories, on
   // Bulk check-in mutation with per-item tracking
   const bulkCheckinMutation = useMutation({
     mutationFn: async () => {
+      if (!canBulkCheckin) throw new Error('Permission denied');
       const targets = selectedRows.filter(r => !r.checked_in);
       const skipped = selectedRows.filter(r => r.checked_in).length;
       const now = new Date().toISOString();
@@ -113,6 +115,7 @@ export default function EventCheckinPanel({ event, registrations, categories, on
       return { succeeded, failed, skipped };
     },
     onSuccess: ({ succeeded, failed, skipped }) => {
+      logActivity({ eventId: event.id, actorEmail, actionType: 'bulk_checkin', targetType: 'registration', summary: `Bulk checked in ${succeeded} participant(s)`, meta: { succeeded, failed, skipped } });
       clearSelection();
       setConfirmOpen(false);
       queryClient.invalidateQueries({ queryKey: ['all-regs-admin'] });

@@ -210,6 +210,7 @@ export default function EventWorkspace() {
             categories={categories}
             canApprove={can('registrations')}
             canReject={can('registrations')}
+            actorEmail={user?.email}
             onRegsUpdated={() => queryClient.invalidateQueries({ queryKey: ['all-regs-admin'] })}
           />
         )}
@@ -219,11 +220,17 @@ export default function EventWorkspace() {
             registrations={registrations}
             payments={allPayments}
             categories={categories}
+            canReview={can('payments')}
+            actorEmail={user?.email}
             onDone={() => queryClient.invalidateQueries({ queryKey: ['all-payments-admin'] })}
           />
         )}
         {activeTab === 'categories' && can('categories') && (
-          <EventCategoriesPanel event={event} categories={categories} />
+          <EventCategoriesPanel
+            event={event}
+            categories={categories}
+            canManage={role === 'full'}
+          />
         )}
         {activeTab === 'checkin' && can('checkin') && (
           <EventCheckinPanel
@@ -231,6 +238,7 @@ export default function EventWorkspace() {
             registrations={registrations}
             categories={categories}
             canBulkCheckin={can('checkin')}
+            actorEmail={user?.email}
             onRegsUpdated={() => queryClient.invalidateQueries({ queryKey: ['all-regs-admin'] })}
           />
         )}
@@ -240,6 +248,7 @@ export default function EventWorkspace() {
         {activeTab === 'settings' && can('settings') && (
           <EventSettingsPanel
             event={event}
+            actorEmail={user?.email}
             onUpdated={() => queryClient.invalidateQueries({ queryKey: ['admin-events-list'] })}
           />
         )}

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Download, CheckSquare, Square } from 'lucide-react';
+import { Search, Download, CheckSquare, Square, CheckCircle2, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -7,7 +7,7 @@ import RegistrationDetailSheet from '@/components/stride/RegistrationDetailSheet
 import BulkConfirmDialog from './BulkConfirmDialog';
 import BulkResultBanner from './BulkResultBanner';
 import SelectionBar from './SelectionBar';
-import { CheckCircle2, XCircle } from 'lucide-react';
+import { logActivity } from '@/lib/eventActivityLog';
 
 const ACCENT = '#00e676';
 const CARD_BG = 'rgba(10,30,18,0.9)';
@@ -61,7 +61,7 @@ function downloadCSV(content, filename) {
   a.click();
 }
 
-export default function EventRegistrationsPanel({ event, registrations, categories, onRegsUpdated, canApprove = true, canReject = true }) {
+export default function EventRegistrationsPanel({ event, registrations, categories, onRegsUpdated, canApprove = true, canReject = true, actorEmail }) {
   const [search, setSearch]               = useState('');
   const [catFilter, setCatFilter]         = useState('all');
   const [statusFilter, setStatusFilter]   = useState('all');
@@ -136,6 +136,7 @@ export default function EventRegistrationsPanel({ event, registrations, categori
   // Bulk approve mutation — with per-item result tracking
   const bulkApproveMutation = useMutation({
     mutationFn: async () => {
+      if (!canApprove) throw new Error('Permission denied');
       const results = await Promise.allSettled(
         selectedRows.map(r => base44.entities.EventRegistration.update(r.id, { status: 'confirmed' }))
       );
@@ -144,6 +145,7 @@ export default function EventRegistrationsPanel({ event, registrations, categori
       return { succeeded, failed, total: selectedRows.length };
     },
     onSuccess: ({ succeeded, failed }) => {
+      logActivity({ eventId: event.id, actorEmail, actionType: 'bulk_approve_registrations', targetType: 'registration', summary: `Bulk approved ${succeeded} registration(s)`, meta: { succeeded, failed, total: selectedRows.length } });
       clearSelection();
       setConfirm(null);
       queryClient.invalidateQueries({ queryKey: ['all-regs-admin'] });
@@ -157,6 +159,7 @@ export default function EventRegistrationsPanel({ event, registrations, categori
   // Bulk reject mutation — with per-item result tracking
   const bulkRejectMutation = useMutation({
     mutationFn: async () => {
+      if (!canReject) throw new Error('Permission denied');
       const results = await Promise.allSettled(
         selectedRows.map(r => base44.entities.EventRegistration.update(r.id, { status: 'rejected' }))
       );
@@ -165,6 +168,7 @@ export default function EventRegistrationsPanel({ event, registrations, categori
       return { succeeded, failed };
     },
     onSuccess: ({ succeeded, failed }) => {
+      logActivity({ eventId: event.id, actorEmail, actionType: 'bulk_reject_registrations', targetType: 'registration', summary: `Bulk rejected ${succeeded} registration(s)`, meta: { succeeded, failed } });
       clearSelection();
       setConfirm(null);
       queryClient.invalidateQueries({ queryKey: ['all-regs-admin'] });

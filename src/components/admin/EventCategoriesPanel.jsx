@@ -1,13 +1,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { checkPaymentReady } from '@/components/stride/EventPaymentSetup';
-import { Tag, Plus } from 'lucide-react';
+import { Tag, Plus, Lock } from 'lucide-react';
 
 const ACCENT = '#00e676';
 const CARD_BG = 'rgba(10,30,18,0.9)';
 const BORDER = 'rgba(0,200,80,0.12)';
 
-export default function EventCategoriesPanel({ event, categories }) {
+export default function EventCategoriesPanel({ event, categories, canManage = true }) {
   const navigate = useNavigate();
   const eventCats = categories.filter(c => c.event_id === event.id && c.is_active !== false);
   const { ready: paymentReady } = checkPaymentReady(event);
@@ -31,7 +31,7 @@ export default function EventCategoriesPanel({ event, categories }) {
               <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '3px 0 0' }}>Configure in Event Setup</p>
             )}
           </div>
-          {!paymentReady && (
+          {!paymentReady && canManage && (
             <button
               onClick={() => navigate(`/ManageCategories?event_id=${event.id}`)}
               style={{ padding: '6px 12px', borderRadius: 8, background: 'rgba(255,150,50,0.15)', border: '1px solid rgba(255,150,50,0.3)', color: 'rgba(255,150,50,1)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
@@ -97,16 +97,23 @@ export default function EventCategoriesPanel({ event, categories }) {
         );
       })}
 
-      {/* Manage button */}
-      <button
-        onClick={() => navigate(`/ManageCategories?event_id=${event.id}`)}
-        style={{
-          width: '100%', padding: '13px 0', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-          background: ACCENT, color: '#050f08', fontSize: 13, fontWeight: 800, border: 'none', cursor: 'pointer',
-        }}
-      >
-        <Plus style={{ width: 15, height: 15 }} /> Manage Categories
-      </button>
+      {/* Manage button — Full Admin only */}
+      {canManage ? (
+        <button
+          onClick={() => navigate(`/ManageCategories?event_id=${event.id}`)}
+          style={{
+            width: '100%', padding: '13px 0', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+            background: ACCENT, color: '#050f08', fontSize: 13, fontWeight: 800, border: 'none', cursor: 'pointer',
+          }}
+        >
+          <Plus style={{ width: 15, height: 15 }} /> Manage Categories
+        </button>
+      ) : (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '12px 0', borderRadius: 14, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+          <Lock style={{ width: 13, height: 13, color: 'rgba(255,255,255,0.2)' }} />
+          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', fontWeight: 600 }}>Full Admin required to manage categories</span>
+        </div>
+      )}
     </div>
   );
 }

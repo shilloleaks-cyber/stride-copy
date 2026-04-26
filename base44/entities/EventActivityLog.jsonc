@@ -1,0 +1,83 @@
+{
+  "name": "EventActivityLog",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "description": "StrideEvent ID this action belongs to"
+    },
+    "actor_email": {
+      "type": "string",
+      "description": "Email of the staff/admin who performed the action"
+    },
+    "action_type": {
+      "type": "string",
+      "enum": [
+        "bulk_approve_registrations",
+        "bulk_reject_registrations",
+        "bulk_checkin",
+        "payment_approved",
+        "payment_needs_attention",
+        "staff_added",
+        "staff_removed",
+        "event_settings_updated",
+        "category_created",
+        "category_updated",
+        "category_deleted",
+        "payment_setup_updated"
+      ],
+      "description": "Type of action performed"
+    },
+    "target_type": {
+      "type": "string",
+      "enum": [
+        "registration",
+        "payment",
+        "staff",
+        "event",
+        "category"
+      ],
+      "description": "Entity type that was acted upon"
+    },
+    "target_id": {
+      "type": "string",
+      "description": "ID of the specific entity acted upon (if applicable)"
+    },
+    "summary": {
+      "type": "string",
+      "description": "Human-readable summary of the action"
+    },
+    "meta": {
+      "type": "object",
+      "description": "Extra structured data (e.g. count, previous value)"
+    }
+  },
+  "required": [
+    "event_id",
+    "actor_email",
+    "action_type",
+    "summary"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
