@@ -74,7 +74,7 @@ function QRFullscreen({ reg, event, category, onClose }) {
             {category ? ` · ${category.name}` : ''}
           </p>
           <p style={{ fontSize: 28, fontWeight: 900, color: '#BFFF00', margin: '0 0 4px', textShadow: '0 0 20px rgba(191,255,0,0.4)' }}>
-            {reg.bib_number || 'Pending'}
+            {reg.bib_number || '—'}
           </p>
           <p style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.7)', margin: 0 }}>
             {[reg.first_name, reg.last_name].filter(Boolean).join(' ')}
@@ -100,19 +100,22 @@ function QRFullscreen({ reg, event, category, onClose }) {
   );
 }
 
-// ─── Status configs ───────────────────────────────────────────────────────────
+import { REG_STATUS as REG_STATUS_MAP, PAY_STATUS as PAY_STATUS_MAP } from '@/lib/eventStatusConfig';
+
+// ─── Status configs (with Icon injected) ────────────────────────────────────
 const REG_STATUS = {
-  pending:   { label: 'Registration Submitted', color: 'rgba(255,200,80,1)',  bg: 'rgba(255,200,80,0.1)',  border: 'rgba(255,200,80,0.25)',  Icon: Clock },
-  confirmed: { label: 'Confirmed',              color: '#BFFF00',             bg: 'rgba(191,255,0,0.1)',   border: 'rgba(191,255,0,0.25)',   Icon: CheckCircle2 },
-  cancelled: { label: 'Cancelled',              color: 'rgba(255,80,80,0.9)', bg: 'rgba(255,80,80,0.08)', border: 'rgba(255,80,80,0.2)',    Icon: XCircle },
-  rejected:  { label: 'Rejected',               color: 'rgba(255,80,80,0.9)', bg: 'rgba(255,80,80,0.08)', border: 'rgba(255,80,80,0.2)',    Icon: XCircle },
+  pending:   { ...REG_STATUS_MAP.pending,   Icon: Clock },
+  confirmed: { ...REG_STATUS_MAP.confirmed, Icon: CheckCircle2 },
+  cancelled: { ...REG_STATUS_MAP.cancelled, Icon: XCircle },
+  rejected:  { ...REG_STATUS_MAP.rejected,  Icon: XCircle },
 };
 
 const PAY_STATUS = {
-  pending:      { label: 'Awaiting Payment Approval', color: 'rgba(255,200,80,1)',      bg: 'rgba(255,200,80,0.08)',   border: 'rgba(255,200,80,0.2)' },
-  paid:         { label: 'Payment Approved',          color: 'rgb(0,210,110)',          bg: 'rgba(0,210,110,0.1)',    border: 'rgba(0,210,110,0.25)' },
-  not_required: { label: 'No Payment Required',       color: 'rgba(255,255,255,0.45)', bg: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.08)' },
-  refunded:     { label: 'Refunded',                  color: 'rgba(138,43,226,0.9)',   bg: 'rgba(138,43,226,0.08)', border: 'rgba(138,43,226,0.2)' },
+  pending:         { ...PAY_STATUS_MAP.pending },
+  paid:            { ...PAY_STATUS_MAP.paid },
+  not_required:    { ...PAY_STATUS_MAP.not_required },
+  needs_attention: { ...PAY_STATUS_MAP.needs_attention },
+  refunded:        { ...PAY_STATUS_MAP.refunded },
 };
 
 // ─── Info row ─────────────────────────────────────────────────────────────────
@@ -177,8 +180,8 @@ function PaymentCallout({ paymentStatus }) {
   const bg = isAwaitingApproval ? 'rgba(255,200,80,0.06)' : 'rgba(255,140,60,0.06)';
   const border = isAwaitingApproval ? 'rgba(255,200,80,0.2)' : 'rgba(255,140,60,0.2)';
   const msg = isAwaitingApproval
-    ? 'Your payment slip has been submitted and is awaiting admin approval.'
-    : 'Payment is required to confirm your registration.';
+    ? 'Your payment slip has been submitted and is Pending Review by an admin.'
+    : 'Payment is required to confirm your registration. Please upload your payment slip.';
   return (
     <div style={{
       display: 'flex', alignItems: 'flex-start', gap: 10,
@@ -374,7 +377,7 @@ export default function TicketDetail({ reg, event, category, onClose, onRemoved 
                     textShadow: reg.bib_number ? '0 0 22px rgba(191,255,0,0.35)' : 'none',
                     letterSpacing: '-1px',
                   }}>
-                    {reg.bib_number || 'Pending'}
+                    {reg.bib_number || '—'}
                   </p>
                   <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '4px 0 0', fontWeight: 600 }}>{userName}</p>
                 </div>

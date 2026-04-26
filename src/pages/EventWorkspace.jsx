@@ -19,12 +19,7 @@ const BG = '#050f08';
 const ACCENT = '#00e676';
 const BORDER = 'rgba(0,200,80,0.12)';
 
-const STATUS_CFG = {
-  draft:     { label: 'Draft',     color: 'rgba(255,180,0,0.9)',   bg: 'rgba(255,180,0,0.1)' },
-  open:      { label: 'Published', color: ACCENT,                  bg: 'rgba(0,230,118,0.1)' },
-  closed:    { label: 'Closed',    color: 'rgba(255,255,255,0.4)', bg: 'rgba(255,255,255,0.06)' },
-  cancelled: { label: 'Cancelled', color: 'rgba(255,80,80,0.8)',   bg: 'rgba(255,80,80,0.08)' },
-};
+import { EVENT_STATUS } from '@/lib/eventStatusConfig';
 
 function AccessDenied({ onBack }) {
   return (
@@ -113,7 +108,7 @@ export default function EventWorkspace() {
       }).length
     : 0;
 
-  const statusCfg = STATUS_CFG[event.status] || STATUS_CFG.open;
+  const statusCfg = EVENT_STATUS[event.status] || EVENT_STATUS.open;
 
   // Role badge shown in header for non-full-admin staff
   const ROLE_LABEL = { full: null, registrations: 'Registrations', payments: 'Payments', checkin: 'Check-in' };

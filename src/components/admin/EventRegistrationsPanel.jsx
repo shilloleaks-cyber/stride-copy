@@ -13,18 +13,14 @@ const ACCENT = '#00e676';
 const CARD_BG = 'rgba(10,30,18,0.9)';
 const BORDER  = 'rgba(0,200,80,0.12)';
 
-const STATUS_CFG = {
-  pending:   { label: 'Pending',   color: 'rgba(255,200,80,1)',  bg: 'rgba(255,200,80,0.1)' },
-  confirmed: { label: 'Confirmed', color: '#00e676',             bg: 'rgba(0,230,118,0.1)' },
-  cancelled: { label: 'Cancelled', color: 'rgba(255,80,80,0.8)', bg: 'rgba(255,80,80,0.08)' },
-  rejected:  { label: 'Rejected',  color: 'rgba(255,80,80,0.8)', bg: 'rgba(255,80,80,0.08)' },
-};
+import { REG_STATUS as STATUS_CFG, PAY_STATUS } from '@/lib/eventStatusConfig';
 
 const PAYMENT_STATUS_CFG = {
-  not_required: { label: 'Not Required', color: 'rgba(255,255,255,0.4)' },
-  pending:      { label: 'Pay Pending',  color: 'rgba(255,200,80,1)' },
-  paid:         { label: 'Paid',         color: '#00e676' },
-  refunded:     { label: 'Refunded',     color: 'rgba(255,80,80,0.8)' },
+  not_required: { label: PAY_STATUS.not_required.label,    color: PAY_STATUS.not_required.color },
+  pending:      { label: PAY_STATUS.pending.label,         color: PAY_STATUS.pending.color },
+  paid:         { label: PAY_STATUS.paid.label,            color: PAY_STATUS.paid.color },
+  needs_attention: { label: PAY_STATUS.needs_attention.label, color: PAY_STATUS.needs_attention.color },
+  refunded:     { label: PAY_STATUS.refunded.label,        color: PAY_STATUS.refunded.color },
 };
 
 const selectStyle = {
@@ -301,7 +297,7 @@ export default function EventRegistrationsPanel({ event, registrations, categori
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '0 16px' }}>
         {filtered.map(reg => {
           const cat    = catMap[reg.category_id];
-          const cfg    = STATUS_CFG[reg.status] || STATUS_CFG.pending;
+          const cfg    = STATUS_CFG[reg.status] || { label: reg.status, color: 'rgba(255,255,255,0.5)', bg: 'rgba(255,255,255,0.06)' };
           const payCfg = PAYMENT_STATUS_CFG[reg.payment_status];
           const isSel  = selected.has(reg.id);
           return (
@@ -335,7 +331,7 @@ export default function EventRegistrationsPanel({ event, registrations, categori
                     <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '2px 0 0' }}>{reg.user_email}</p>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 99, background: cfg.bg, color: cfg.color }}>{cfg.label}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 99, background: cfg?.bg, color: cfg?.color }}>{cfg?.label}</span>
                     {cat && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 6, background: 'rgba(0,230,118,0.1)', color: ACCENT }}>{cat.name}</span>}
                   </div>
                 </div>

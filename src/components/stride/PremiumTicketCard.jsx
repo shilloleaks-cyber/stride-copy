@@ -43,11 +43,13 @@ function QRDisplay({ value, size = 140 }) {
   return <canvas ref={canvasRef} width={size} height={size} style={{ borderRadius: 10, display: 'block' }} />;
 }
 
+import { REG_STATUS as REG_STATUS_MAP } from '@/lib/eventStatusConfig';
+
 const STATUS_CFG = {
-  pending:   { label: 'Pending',    color: 'rgba(255,200,80,1)',  bg: 'rgba(255,200,80,0.12)',  Icon: Clock },
-  confirmed: { label: 'Confirmed',  color: '#BFFF00',            bg: 'rgba(191,255,0,0.12)',   Icon: CheckCircle2 },
-  cancelled: { label: 'Cancelled',  color: 'rgba(255,80,80,0.9)', bg: 'rgba(255,80,80,0.1)',  Icon: XCircle },
-  rejected:  { label: 'Rejected',   color: 'rgba(255,80,80,0.9)', bg: 'rgba(255,80,80,0.1)',  Icon: XCircle },
+  pending:   { ...REG_STATUS_MAP.pending,   Icon: Clock },
+  confirmed: { ...REG_STATUS_MAP.confirmed, Icon: CheckCircle2 },
+  cancelled: { ...REG_STATUS_MAP.cancelled, Icon: XCircle },
+  rejected:  { ...REG_STATUS_MAP.rejected,  Icon: XCircle },
 };
 
 export default function PremiumTicketCard({ reg, event, category }) {

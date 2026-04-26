@@ -10,10 +10,13 @@ const METHOD_LABELS = {
   qr_scan: 'QR Scan',
 };
 
+import { PAY_STATUS as PAY_CFG_MAP } from '@/lib/eventStatusConfig';
+
+// Map EventPayment.status to display config
 const STATUS_CFG = {
-  pending:         { label: 'Awaiting Payment Approval', color: 'rgba(255,200,80,1)',   bg: 'rgba(255,200,80,0.08)',  border: 'rgba(255,200,80,0.2)' },
-  approved:        { label: 'Payment Approved',          color: 'rgb(0,210,110)',       bg: 'rgba(0,210,110,0.08)',  border: 'rgba(0,210,110,0.2)' },
-  needs_attention: { label: 'Payment Needs Attention',   color: 'rgba(255,150,50,1)',   bg: 'rgba(255,120,0,0.07)', border: 'rgba(255,120,0,0.25)' },
+  pending:         { label: 'Pending Review',          ...PAY_CFG_MAP.pending_review,   border: PAY_CFG_MAP.pending_review.border },
+  approved:        { label: 'Payment Approved',        ...PAY_CFG_MAP.paid,             border: PAY_CFG_MAP.paid.border },
+  needs_attention: { label: 'Payment Needs Attention', ...PAY_CFG_MAP.needs_attention,  border: PAY_CFG_MAP.needs_attention.border },
 };
 
 export default function PaymentReviewPanel({ payment, reg, catMap, registrations, user, onDone, canReview = true, eventId }) {

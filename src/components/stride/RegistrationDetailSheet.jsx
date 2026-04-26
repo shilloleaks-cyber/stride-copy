@@ -4,20 +4,7 @@ import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { X, Loader2, AlertCircle } from 'lucide-react';
 import { SHEET_CONTENT_PADDING_BOTTOM } from '@/lib/sheetLayout';
 
-// ─── Payment label logic ─────────────────────────────────────────────────────
-// payment_status = 'pending'        → "Awaiting Payment"
-// payment_status = 'pending' + slip → "Awaiting Payment Approval"
-// payment_status = 'paid'           → "Payment Approved"
-// payment_status = 'not_required'   → "No Payment Required"
-// payment_status = 'refunded'       → "Refunded"
-function paymentLabel(payment_status, hasSlip) {
-  if (payment_status === 'paid')         return { label: 'Payment Approved',          color: 'rgb(0,210,110)',     bg: 'rgba(0,210,110,0.12)' };
-  if (payment_status === 'not_required') return { label: 'No Payment Required',       color: '#BFFF00',            bg: 'rgba(191,255,0,0.1)' };
-  if (payment_status === 'refunded')     return { label: 'Refunded',                  color: 'rgba(255,255,255,0.5)', bg: 'rgba(255,255,255,0.06)' };
-  if (payment_status === 'pending' && hasSlip)
-                                         return { label: 'Awaiting Payment Approval', color: 'rgb(255,140,0)',     bg: 'rgba(255,140,0,0.12)' };
-  return                                        { label: 'Awaiting Payment',          color: 'rgba(255,200,80,1)', bg: 'rgba(255,200,80,0.1)' };
-}
+import { REG_STATUS as REG_STATUS_CFG, resolvePaymentCfg } from '@/lib/eventStatusConfig';
 
 // ─── Tiny confirm modal ──────────────────────────────────────────────────────
 function ConfirmModal({ title, message, confirmLabel, confirmVariant = 'red', onConfirm, onCancel }) {
@@ -174,9 +161,7 @@ export default function RegistrationDetailSheet({ reg, eventMap, catMap, registr
     : null;
 
   const hasSelections = reg.item_selections && Object.keys(reg.item_selections).length > 0;
-  const pay = paymentNeedsAttention
-    ? { label: 'Needs Attention', color: 'rgba(255,150,50,1)', bg: 'rgba(255,120,0,0.12)' }
-    : paymentLabel(reg.payment_status, hasSlip);
+  const pay = resolvePaymentCfg(reg.payment_status, paymentNeedsAttention);
 
   // Confirm-then-execute helper
   const withConfirm = (cfg) => setConfirm(cfg);
@@ -240,13 +225,8 @@ export default function RegistrationDetailSheet({ reg, eventMap, catMap, registr
             {/* ── Status badges ── */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {(() => {
-                const s = {
-                  pending:   ['rgba(255,200,80,0.12)',  'rgba(255,200,80,1)',    'Pending'],
-                  confirmed: ['rgba(0,210,110,0.12)',   'rgb(0,210,110)',        'Confirmed'],
-                  rejected:  ['rgba(255,80,80,0.12)',   'rgba(255,100,100,1)',   'Rejected'],
-                  cancelled: ['rgba(255,80,80,0.12)',   'rgba(255,100,100,1)',   'Cancelled'],
-                }[reg.status] || ['rgba(255,255,255,0.06)', 'rgba(255,255,255,0.5)', reg.status];
-                return <span style={{ fontSize: 11, fontWeight: 800, padding: '4px 10px', borderRadius: 8, background: s[0], color: s[1] }}>{s[2]}</span>;
+                const s = REG_STATUS_CFG[reg.status] || { bg: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)', label: reg.status };
+                return <span style={{ fontSize: 11, fontWeight: 800, padding: '4px 10px', borderRadius: 8, background: s.bg, color: s.color }}>{s.label}</span>;
               })()}
               {reg.checked_in && (
                 <span style={{ fontSize: 11, fontWeight: 800, padding: '4px 10px', borderRadius: 8, background: 'rgba(191,255,0,0.12)', color: '#BFFF00' }}>✓ Checked In</span>
@@ -301,13 +281,13 @@ export default function RegistrationDetailSheet({ reg, eventMap, catMap, registr
 
                 {/* 1. Approve / Reject */}
                 <ACTION_BTN
-                  label="✓ Approve Registration"
+                  label="✓ Confirm Registration"
                   variant="green"
                   disabled={reg.status === 'confirmed' || reg.status === 'rejected'}
                   loading={update.isPending}
                   onClick={() => update.mutate({ status: 'confirmed' })}
                 />
-                {reg.status === 'confirmed' && <HINT>Already confirmed.</HINT>}
+                {reg.status === 'confirmed' && <HINT>Registration is already Confirmed.</HINT>}
 
                 <ACTION_BTN
                   label="✗ Reject Registration"
@@ -316,7 +296,7 @@ export default function RegistrationDetailSheet({ reg, eventMap, catMap, registr
                   loading={update.isPending}
                   onClick={() => withConfirm({
                     title: 'Reject Registration?',
-                    message: `This will reject ${reg.first_name} ${reg.last_name}'s registration. They won't be able to attend.`,
+                    message: `${reg.first_name} ${reg.last_name}'s registration will be set to Rejected. This cannot be undone.`,
                     confirmLabel: 'Reject',
                     variant: 'red',
                     action: () => update.mutate({ status: 'rejected' }),
@@ -371,9 +351,8 @@ export default function RegistrationDetailSheet({ reg, eventMap, catMap, registr
                     loading={update.isPending}
                     onClick={() => update.mutate({ payment_status: 'paid' })}
                   />
-                  {(reg.payment_status === 'paid' || reg.payment_status === 'not_required') && (
-                    <HINT>{reg.payment_status === 'paid' ? 'Payment already approved.' : 'No payment required for this registration.'}</HINT>
-                  )}
+                  {reg.payment_status === 'paid' && <HINT>Payment is already approved.</HINT>}
+                  {reg.payment_status === 'not_required' && <HINT>No Payment Required for this registration.</HINT>}
 
                   <div style={{ marginTop: 6 }}>
                     <ACTION_BTN
@@ -383,13 +362,13 @@ export default function RegistrationDetailSheet({ reg, eventMap, catMap, registr
                       loading={update.isPending}
                       onClick={() => withConfirm({
                         title: 'Reset Payment Status?',
-                        message: 'This will change the payment status back to "Awaiting Payment". Use this to undo an accidental approval.',
+                        message: 'This will reset payment to "Awaiting Payment". Use only to undo an accidental approval.',
                         confirmLabel: 'Reset',
                         variant: 'amber',
                         action: () => update.mutate({ payment_status: 'pending' }),
                       })}
                     />
-                    {reg.payment_status === 'pending' && <HINT>Already awaiting payment.</HINT>}
+                    {reg.payment_status === 'pending' && <HINT>Status is already Awaiting Payment.</HINT>}
                   </div>
                 </div>
 
@@ -399,13 +378,13 @@ export default function RegistrationDetailSheet({ reg, eventMap, catMap, registr
                   {!reg.checked_in ? (
                     <div>
                       <ACTION_BTN
-                        label="📍 Confirm Check-In"
+                        label="📍 Check In Participant"
                         variant={canCheckIn ? 'lime' : 'muted'}
                         disabled={!canCheckIn}
                         loading={update.isPending}
                         onClick={() => withConfirm({
-                          title: 'Confirm Check-In?',
-                          message: `Mark ${reg.first_name} ${reg.last_name} as checked in. This will unlock their finisher rewards.`,
+                          title: 'Check In Participant?',
+                          message: `Mark ${reg.first_name} ${reg.last_name} as Checked In. This action will be timestamped.`,
                           confirmLabel: 'Check In',
                           variant: 'green',
                           action: () => update.mutate({ checked_in: true, checked_in_at: new Date().toISOString() }),
@@ -421,8 +400,8 @@ export default function RegistrationDetailSheet({ reg, eventMap, catMap, registr
                         loading={update.isPending}
                         onClick={() => withConfirm({
                           title: 'Undo Check-In?',
-                          message: `This will mark ${reg.first_name} ${reg.last_name} as NOT checked in. Use only to correct a mistake.`,
-                          confirmLabel: 'Undo',
+                          message: `This will remove the Checked In status for ${reg.first_name} ${reg.last_name}. Use only to correct a mistake.`,
+                          confirmLabel: 'Undo Check-In',
                           variant: 'red',
                           action: () => update.mutate({ checked_in: false, checked_in_at: null }),
                         })}

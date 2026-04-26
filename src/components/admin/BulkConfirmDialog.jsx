@@ -15,9 +15,9 @@ import { Loader2, AlertTriangle, CheckCircle2 } from 'lucide-react';
 const VARIANTS = {
   approve: {
     icon: '✅',
-    title: (n) => `Approve ${n} registration${n !== 1 ? 's' : ''}?`,
+    title: (n) => `Confirm ${n} registration${n !== 1 ? 's' : ''}?`,
     body:  (n) => `This will set ${n} registration${n !== 1 ? 's' : ''} to Confirmed. This cannot be undone.`,
-    confirmLabel: 'Yes, Approve',
+    confirmLabel: 'Yes, Confirm',
     confirmStyle: { background: 'rgba(0,230,118,0.15)', border: '1px solid rgba(0,230,118,0.35)', color: '#00e676' },
   },
   reject: {
@@ -29,15 +29,15 @@ const VARIANTS = {
   },
   checkin: {
     icon: '👟',
-    title: (n) => `Check in ${n} participant${n !== 1 ? 's' : ''}?`,
-    body:  (n) => `This will mark ${n} participant${n !== 1 ? 's' : ''} as checked in with the current timestamp.`,
+    title: (n) => `Check In ${n} participant${n !== 1 ? 's' : ''}?`,
+    body:  (n) => `This will mark ${n} participant${n !== 1 ? 's' : ''} as Checked In with the current timestamp.`,
     confirmLabel: 'Yes, Check In',
     confirmStyle: { background: 'rgba(0,230,118,0.15)', border: '1px solid rgba(0,230,118,0.35)', color: '#00e676' },
   },
   needs_attention: {
     icon: '⚠️',
     title: (n) => `Mark ${n} payment${n !== 1 ? 's' : ''} as Needs Attention?`,
-    body:  (n) => `This will flag ${n} payment${n !== 1 ? 's' : ''} for re-upload. Participants will be notified to resubmit their slip.`,
+    body:  (n) => `This will flag ${n} payment${n !== 1 ? 's' : ''} as Payment Needs Attention. Participants should resubmit their slip.`,
     confirmLabel: 'Yes, Flag',
     confirmStyle: { background: 'rgba(255,120,0,0.12)', border: '1px solid rgba(255,120,0,0.35)', color: 'rgba(255,150,50,1)' },
   },
