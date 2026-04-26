@@ -1,5 +1,5 @@
 import React from 'react';
-import { BarChart2, Users, CreditCard, Tag, ScanLine, UserCog, Settings } from 'lucide-react';
+import { BarChart2, Users, CreditCard, Tag, ScanLine, UserCog, Settings, Activity } from 'lucide-react';
 
 const ACCENT = '#00e676';
 
@@ -11,6 +11,7 @@ const ALL_TABS = [
   { key: 'checkin',        label: 'Check-in',       Icon: ScanLine },
   { key: 'staffs',         label: 'Staffs',         Icon: UserCog },
   { key: 'settings',       label: 'Settings',       Icon: Settings },
+  { key: 'activity',       label: 'Activity',       Icon: Activity },
 ];
 
 export default function EventWorkspaceTabs({ activeTab, onTabChange, visibleTabs, badges = {} }) {

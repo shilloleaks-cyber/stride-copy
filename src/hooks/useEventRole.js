@@ -29,7 +29,7 @@ const ROLE_ACCESS = {
 };
 
 // All tabs a full admin can access
-const ALL_TABS = ['overview', 'registrations', 'payments', 'categories', 'checkin', 'staffs', 'settings'];
+const ALL_TABS = ['overview', 'registrations', 'payments', 'categories', 'checkin', 'staffs', 'settings', 'activity'];
 
 export function useEventRole(eventId, user) {
   // Global app admins: always full access, no DB query needed

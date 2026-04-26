@@ -12,6 +12,7 @@ import EventCategoriesPanel from '@/components/admin/EventCategoriesPanel';
 import EventCheckinPanel from '@/components/admin/EventCheckinPanel';
 import EventStaffsPanel from '@/components/admin/EventStaffsPanel';
 import EventSettingsPanel from '@/components/admin/EventSettingsPanel';
+import EventActivityPanel from '@/components/admin/EventActivityPanel';
 import { useEventRole } from '@/hooks/useEventRole';
 
 const BG = '#050f08';
@@ -251,6 +252,9 @@ export default function EventWorkspace() {
             actorEmail={user?.email}
             onUpdated={() => queryClient.invalidateQueries({ queryKey: ['admin-events-list'] })}
           />
+        )}
+        {activeTab === 'activity' && can('activity') && (
+          <EventActivityPanel event={event} />
         )}
       </div>
     </div>
