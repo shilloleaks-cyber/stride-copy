@@ -17,7 +17,7 @@ const ROLES = [
 
 const ROLE_MAP = Object.fromEntries(ROLES.map(r => [r.key, r]));
 
-export default function EventStaffsPanel({ event, user }) {
+export default function EventStaffsPanel({ event, user, eventRole }) {
   const queryClient = useQueryClient();
   const [showAdd, setShowAdd]   = useState(false);
   const [email, setEmail]       = useState('');
@@ -25,6 +25,8 @@ export default function EventStaffsPanel({ event, user }) {
   const [removeTarget, setRemoveTarget] = useState(null);
 
   const isGlobalAdmin = user?.role === 'admin';
+  // Global admins OR event-level Full Admins can manage staff for THIS event only
+  const isEventFullAdmin = eventRole === 'full';
 
   const { data: staffs = [], isLoading } = useQuery({
     queryKey: ['event-staffs', event.id],
@@ -57,8 +59,10 @@ export default function EventStaffsPanel({ event, user }) {
     },
   });
 
-  // Only global admins can manage staff
-  const canManage = isGlobalAdmin;
+  // Global admins can manage staff everywhere.
+  // Event Full Admins can manage staff for this specific event only
+  // (scope enforced by always using event.id in all mutations below).
+  const canManage = isGlobalAdmin || isEventFullAdmin;
 
   return (
     <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 14 }}>

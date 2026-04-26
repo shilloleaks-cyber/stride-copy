@@ -243,7 +243,7 @@ export default function EventWorkspace() {
           />
         )}
         {activeTab === 'staffs' && can('staffs') && (
-          <EventStaffsPanel event={event} user={user} />
+          <EventStaffsPanel event={event} user={user} eventRole={role} />
         )}
         {activeTab === 'settings' && can('settings') && (
           <EventSettingsPanel
