@@ -45,7 +45,7 @@ function downloadCSV(content, filename) {
   a.click();
 }
 
-export default function EventCheckinPanel({ event, registrations, categories, onRegsUpdated }) {
+export default function EventCheckinPanel({ event, registrations, categories, onRegsUpdated, canBulkCheckin = true }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -186,7 +186,7 @@ export default function EventCheckinPanel({ event, registrations, categories, on
           count={selected.size}
           onClear={clearSelection}
           onExport={exportSelected}
-          actions={notCheckedInSelected > 0 ? [
+          actions={notCheckedInSelected > 0 && canBulkCheckin ? [
             {
               label: `Check in ${notCheckedInSelected}`,
               icon: CheckCircle2,

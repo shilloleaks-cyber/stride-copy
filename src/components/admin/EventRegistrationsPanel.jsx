@@ -61,7 +61,7 @@ function downloadCSV(content, filename) {
   a.click();
 }
 
-export default function EventRegistrationsPanel({ event, registrations, categories, onRegsUpdated }) {
+export default function EventRegistrationsPanel({ event, registrations, categories, onRegsUpdated, canApprove = true, canReject = true }) {
   const [search, setSearch]               = useState('');
   const [catFilter, setCatFilter]         = useState('all');
   const [statusFilter, setStatusFilter]   = useState('all');
@@ -261,14 +261,14 @@ export default function EventRegistrationsPanel({ event, registrations, categori
 
       {/* Selection bar (replaces old inline toolbar when selected) */}
       {someSelected ? (
-        <SelectionBar
-          count={selected.size}
-          onClear={clearSelection}
-          onExport={exportSelected}
-          actions={[
-            { label: 'Approve', icon: CheckCircle2, onClick: () => setConfirm('approve'), color: '#00e676' },
-            { label: 'Reject',  icon: XCircle,      onClick: () => setConfirm('reject'),  color: 'rgba(255,90,90,0.9)' },
-          ]}
+      <SelectionBar
+      count={selected.size}
+      onClear={clearSelection}
+      onExport={exportSelected}
+      actions={[
+        ...(canApprove ? [{ label: 'Approve', icon: CheckCircle2, onClick: () => setConfirm('approve'), color: '#00e676' }] : []),
+        ...(canReject  ? [{ label: 'Reject',  icon: XCircle,      onClick: () => setConfirm('reject'),  color: 'rgba(255,90,90,0.9)' }] : []),
+      ]}
         />
       ) : (
         /* Toolbar when nothing selected */

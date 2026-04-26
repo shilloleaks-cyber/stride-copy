@@ -2,7 +2,8 @@ import React from 'react';
 import { BarChart2, Users, CreditCard, Tag, ScanLine, UserCog, Settings } from 'lucide-react';
 
 const ACCENT = '#00e676';
-const TABS = [
+
+const ALL_TABS = [
   { key: 'overview',       label: 'Overview',       Icon: BarChart2 },
   { key: 'registrations',  label: 'Registrations',  Icon: Users },
   { key: 'payments',       label: 'Payments',       Icon: CreditCard },
@@ -12,14 +13,19 @@ const TABS = [
   { key: 'settings',       label: 'Settings',       Icon: Settings },
 ];
 
-export default function EventWorkspaceTabs({ activeTab, onTabChange, badges = {} }) {
+export default function EventWorkspaceTabs({ activeTab, onTabChange, visibleTabs, badges = {} }) {
+  // If visibleTabs not provided, show all (backwards-compatible)
+  const tabsToShow = visibleTabs
+    ? ALL_TABS.filter(t => visibleTabs.includes(t.key))
+    : ALL_TABS;
+
   return (
     <div style={{
       overflowX: 'auto', WebkitOverflowScrolling: 'touch',
       scrollbarWidth: 'none', msOverflowStyle: 'none',
       display: 'flex', gap: 6, padding: '0 16px 12px',
     }}>
-      {TABS.map(({ key, label, Icon }) => {
+      {tabsToShow.map(({ key, label, Icon }) => {
         const isActive = activeTab === key;
         const badge = badges[key];
         return (

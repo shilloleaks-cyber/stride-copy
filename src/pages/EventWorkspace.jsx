@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, CalendarDays, MapPin, ChevronRight } from 'lucide-react';
+import { ArrowLeft, CalendarDays, MapPin, ChevronRight, ShieldAlert } from 'lucide-react';
 import { format } from 'date-fns';
 import EventWorkspaceTabs from '@/components/admin/EventWorkspaceTabs';
 import EventOverviewPanel from '@/components/admin/EventOverviewPanel';
@@ -12,6 +12,7 @@ import EventCategoriesPanel from '@/components/admin/EventCategoriesPanel';
 import EventCheckinPanel from '@/components/admin/EventCheckinPanel';
 import EventStaffsPanel from '@/components/admin/EventStaffsPanel';
 import EventSettingsPanel from '@/components/admin/EventSettingsPanel';
+import { useEventRole } from '@/hooks/useEventRole';
 
 const BG = '#050f08';
 const ACCENT = '#00e676';
@@ -24,74 +25,98 @@ const STATUS_CFG = {
   cancelled: { label: 'Cancelled', color: 'rgba(255,80,80,0.8)',   bg: 'rgba(255,80,80,0.08)' },
 };
 
+function AccessDenied({ onBack }) {
+  return (
+    <div style={{ minHeight: '100dvh', background: BG, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff', padding: 24, textAlign: 'center' }}>
+      <ShieldAlert style={{ width: 40, height: 40, color: 'rgba(255,80,80,0.7)', marginBottom: 16 }} />
+      <p style={{ fontSize: 18, fontWeight: 900, margin: '0 0 8px' }}>Access Denied</p>
+      <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', margin: '0 0 24px' }}>You don't have permission to access this event workspace.</p>
+      <button onClick={onBack} style={{ color: ACCENT, fontSize: 14, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700 }}>Go Back</button>
+    </div>
+  );
+}
+
 export default function EventWorkspace() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState('overview');
 
   const params = new URLSearchParams(window.location.search);
   const eventIdParam = params.get('event_id');
 
   const { data: user } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
 
+  // Role resolution (event-scoped)
+  const { role, can, visibleTabs, defaultTab, isLoading: roleLoading } = useEventRole(eventIdParam, user);
+
+  const [activeTab, setActiveTab] = useState(null); // set once role is known
+
+  // Set default tab once role is resolved
+  useEffect(() => {
+    if (defaultTab && !activeTab) setActiveTab(defaultTab);
+  }, [defaultTab]);
+
+  // Fetch event data only if user has some access
+  const hasAnyAccess = !!role;
+
   const { data: events = [] } = useQuery({
     queryKey: ['admin-events-list'],
     queryFn: () => base44.entities.StrideEvent.list('-event_date', 100),
-    enabled: user?.role === 'admin',
+    enabled: !!user,
   });
 
   const { data: allCategories = [] } = useQuery({
     queryKey: ['all-cats-admin'],
     queryFn: () => base44.entities.EventCategory.list('-created_date', 200),
-    enabled: user?.role === 'admin',
+    enabled: hasAnyAccess,
   });
 
   const { data: registrations = [] } = useQuery({
     queryKey: ['all-regs-admin'],
     queryFn: () => base44.entities.EventRegistration.list('-created_date', 500),
-    enabled: user?.role === 'admin',
+    enabled: hasAnyAccess,
   });
 
   const { data: allPayments = [] } = useQuery({
     queryKey: ['all-payments-admin'],
     queryFn: () => base44.entities.EventPayment.list('-created_date', 500),
-    enabled: user?.role === 'admin',
+    enabled: can('payments'),
   });
 
   const event = events.find(e => e.id === eventIdParam);
 
-  // Redirect to event list if no event_id or event not found (after events have loaded)
-  // Must be before any early returns to satisfy Rules of Hooks
   useEffect(() => {
-    if (!eventIdParam || (!event && events.length > 0)) {
+    if (!eventIdParam || (!event && events.length > 0 && user?.role === 'admin')) {
       navigate('/AdminEvents', { replace: true });
     }
-  }, [eventIdParam, event, events.length]);
+  }, [eventIdParam, event, events.length, user?.role]);
 
-  if (user && user.role !== 'admin') {
-    return (
-      <div style={{ minHeight: '100dvh', background: BG, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
-        <p style={{ fontSize: 40 }}>🚫</p>
-        <p style={{ fontSize: 18, fontWeight: 800, margin: '12px 0 8px' }}>Admin Only</p>
-        <button onClick={() => navigate(-1)} style={{ color: ACCENT, fontSize: 14, background: 'none', border: 'none', cursor: 'pointer' }}>Go Back</button>
-      </div>
-    );
+  // Loading state
+  if (!user || roleLoading || !event) {
+    return <div style={{ minHeight: '100dvh', background: BG }} />;
   }
 
-  // Still loading or redirecting
-  if (!event) {
-    return <div style={{ minHeight: '100dvh', background: BG }} />;
+  // No access at all
+  if (!role) {
+    return <AccessDenied onBack={() => navigate(-1)} />;
   }
 
   const categories = allCategories.filter(c => c.event_id === event.id);
 
-  const pendingRegs = registrations.filter(r => r.event_id === event.id && r.status === 'pending').length;
-  const pendingPayments = allPayments.filter(p => {
-    const reg = registrations.find(r => r.id === p.registration_id);
-    return reg?.event_id === event.id && p.status === 'pending';
-  }).length;
+  const pendingRegs = can('registrations')
+    ? registrations.filter(r => r.event_id === event.id && r.status === 'pending').length
+    : 0;
+  const pendingPayments = can('payments')
+    ? allPayments.filter(p => {
+        const reg = registrations.find(r => r.id === p.registration_id);
+        return reg?.event_id === event.id && p.status === 'pending';
+      }).length
+    : 0;
 
   const statusCfg = STATUS_CFG[event.status] || STATUS_CFG.open;
+
+  // Role badge shown in header for non-full-admin staff
+  const ROLE_LABEL = { full: null, registrations: 'Registrations', payments: 'Payments', checkin: 'Check-in' };
+  const roleBadge = ROLE_LABEL[role];
 
   return (
     <div style={{ minHeight: '100dvh', background: BG, paddingBottom: 100 }}>
@@ -104,17 +129,20 @@ export default function EventWorkspace() {
       }}>
         {/* Breadcrumb */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-          <button
-            onClick={() => navigate('/AdminEvents')}
-            style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-          >
+          <button onClick={() => navigate('/AdminEvents')}
+            style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
             <ArrowLeft style={{ width: 14, height: 14, color: 'rgba(0,230,118,0.6)' }} />
             <span style={{ fontSize: 12, color: 'rgba(0,230,118,0.6)', fontWeight: 700 }}>Events</span>
           </button>
           <ChevronRight style={{ width: 12, height: 12, color: 'rgba(255,255,255,0.2)' }} />
-          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 200 }}>
+          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 160 }}>
             {event.title}
           </span>
+          {roleBadge && (
+            <span style={{ fontSize: 9, fontWeight: 800, padding: '2px 7px', borderRadius: 6, background: 'rgba(138,43,226,0.15)', color: 'rgba(190,140,255,1)', border: '1px solid rgba(138,43,226,0.3)', flexShrink: 0 }}>
+              {roleBadge}
+            </span>
+          )}
         </div>
 
         {/* Event identity bar */}
@@ -154,17 +182,20 @@ export default function EventWorkspace() {
           </div>
         </div>
 
-        {/* Workspace tabs */}
-        <EventWorkspaceTabs
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          badges={{ registrations: pendingRegs, payments: pendingPayments }}
-        />
+        {/* Workspace tabs — filtered by role */}
+        {activeTab && (
+          <EventWorkspaceTabs
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            visibleTabs={visibleTabs}
+            badges={{ registrations: pendingRegs, payments: pendingPayments }}
+          />
+        )}
       </div>
 
       {/* ── Tab content ── */}
       <div style={{ paddingTop: 20 }}>
-        {activeTab === 'overview' && (
+        {activeTab === 'overview' && can('overview') && (
           <EventOverviewPanel
             event={event}
             registrations={registrations}
@@ -172,15 +203,17 @@ export default function EventWorkspace() {
             onTabChange={setActiveTab}
           />
         )}
-        {activeTab === 'registrations' && (
+        {activeTab === 'registrations' && can('registrations') && (
           <EventRegistrationsPanel
             event={event}
             registrations={registrations}
             categories={categories}
+            canApprove={can('registrations')}
+            canReject={can('registrations')}
             onRegsUpdated={() => queryClient.invalidateQueries({ queryKey: ['all-regs-admin'] })}
           />
         )}
-        {activeTab === 'payments' && (
+        {activeTab === 'payments' && can('payments') && (
           <EventPaymentsPanel
             event={event}
             registrations={registrations}
@@ -189,16 +222,22 @@ export default function EventWorkspace() {
             onDone={() => queryClient.invalidateQueries({ queryKey: ['all-payments-admin'] })}
           />
         )}
-        {activeTab === 'categories' && (
+        {activeTab === 'categories' && can('categories') && (
           <EventCategoriesPanel event={event} categories={categories} />
         )}
-        {activeTab === 'checkin' && (
-          <EventCheckinPanel event={event} registrations={registrations} categories={categories} />
+        {activeTab === 'checkin' && can('checkin') && (
+          <EventCheckinPanel
+            event={event}
+            registrations={registrations}
+            categories={categories}
+            canBulkCheckin={can('checkin')}
+            onRegsUpdated={() => queryClient.invalidateQueries({ queryKey: ['all-regs-admin'] })}
+          />
         )}
-        {activeTab === 'staffs' && (
-          <EventStaffsPanel event={event} />
+        {activeTab === 'staffs' && can('staffs') && (
+          <EventStaffsPanel event={event} user={user} />
         )}
-        {activeTab === 'settings' && (
+        {activeTab === 'settings' && can('settings') && (
           <EventSettingsPanel
             event={event}
             onUpdated={() => queryClient.invalidateQueries({ queryKey: ['admin-events-list'] })}

@@ -1,0 +1,75 @@
+{
+  "name": "EventStaff",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "description": "StrideEvent ID this staff member belongs to"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Email of the staff member"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "full",
+        "registrations",
+        "payments",
+        "checkin"
+      ],
+      "description": "Event-scoped role: full | registrations | payments | checkin"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "removed"
+      ],
+      "default": "active",
+      "description": "Staff membership status"
+    },
+    "invited_by": {
+      "type": "string",
+      "description": "Email of the admin who added this staff member"
+    },
+    "note": {
+      "type": "string",
+      "description": "Optional internal note"
+    }
+  },
+  "required": [
+    "event_id",
+    "user_email",
+    "role"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
