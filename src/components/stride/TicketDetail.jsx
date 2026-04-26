@@ -173,15 +173,17 @@ function Badge({ label, color, bg, border, Icon }) {
 }
 
 function PaymentCallout({ paymentStatus }) {
-  const needsPayment = paymentStatus === 'not_required' ? false : paymentStatus !== 'paid';
+  const needsPayment = paymentStatus !== 'not_required' && paymentStatus !== 'paid';
   if (!needsPayment) return null;
+  // paymentStatus values here: 'pending' (no slip yet) OR 'pending' (slip uploaded, awaiting review)
+  // We distinguish via whether a slip has been submitted — PaymentUpload handles that internally.
+  // 'pending' with no slip = Awaiting Payment; 'pending' with slip = Pending Review.
+  const hasSubmittedSlip = paymentStatus === 'pending'; // any pending state shows upload UI
   const isAwaitingApproval = paymentStatus === 'pending';
-  const color = isAwaitingApproval ? 'rgba(255,200,80,1)' : 'rgba(255,140,60,1)';
-  const bg = isAwaitingApproval ? 'rgba(255,200,80,0.06)' : 'rgba(255,140,60,0.06)';
-  const border = isAwaitingApproval ? 'rgba(255,200,80,0.2)' : 'rgba(255,140,60,0.2)';
-  const msg = isAwaitingApproval
-    ? 'Your payment slip has been submitted and is Pending Review by an admin.'
-    : 'Payment is required to confirm your registration. Please upload your payment slip.';
+  const color = 'rgba(255,200,80,1)';
+  const bg = 'rgba(255,200,80,0.06)';
+  const border = 'rgba(255,200,80,0.2)';
+  const msg = 'Payment is required to confirm your registration. Upload your payment slip below.';
   return (
     <div style={{
       display: 'flex', alignItems: 'flex-start', gap: 10,
@@ -229,7 +231,7 @@ export default function TicketDetail({ reg, event, category, onClose, onRemoved 
   const payCfg = PAY_STATUS[paymentState] || PAY_STATUS.not_required;
   const hasQR = !!reg.qr_code && !isCancelled;
   const userName = [reg.first_name, reg.last_name].filter(Boolean).join(' ') || '—';
-  const needsPayment = category?.price > 0 && paymentState !== 'paid' && !isCancelled;
+  const needsPayment = category?.price > 0 && paymentState !== 'paid' && paymentState !== 'not_required' && !isCancelled;
   const itemNameMap = Object.fromEntries(categoryItems.map(i => [i.id, i.name]));
   const resolvedItems = reg.item_selections
     ? Object.entries(reg.item_selections).filter(([id]) => !!itemNameMap[id])
