@@ -123,12 +123,7 @@ export function computePoolTrendingScores(events, now = new Date()) {
  * Accepts both 'official' and 'community' event types.
  */
 export function getTrendingEvents(events, now = new Date()) {
-  const today = new Date(now.toDateString());
-  const eligible = events.filter(e =>
-    e.status === 'open' &&
-    e.event_date &&
-    new Date(e.event_date) >= today
-  );
+  const eligible = events.filter(e => e.status === 'open');
   return computePoolTrendingScores(eligible, now);
 }
 
