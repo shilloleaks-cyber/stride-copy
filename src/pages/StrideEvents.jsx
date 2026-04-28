@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
@@ -7,6 +7,7 @@ import NotificationCenter from '@/components/notifications/NotificationCenter';
 import EventCard from '@/components/stride/EventCard';
 import { useAuthGate } from '@/hooks/useAuthGate';
 import LoginGateModal from '@/components/auth/LoginGateModal';
+import { getTrendingCommunityEvents } from '@/lib/trendingScore';
 
 
 
@@ -54,26 +55,20 @@ export default function StrideEvents() {
     enabled: !!user?.email,
   });
 
-  const { data: myMemberships = [] } = useQuery({
-    queryKey: ['my-group-memberships', user?.email],
-    queryFn: () => base44.entities.GroupMember.filter({ user_email: user.email, status: 'active' }),
-    enabled: !!user?.email,
-  });
-
-  const myGroupIds = new Set(myMemberships.map(m => m.group_id));
   const myRegMap = Object.fromEntries(myRegs.map(r => [r.event_id, r]));
+
+  const isAdmin = user?.role === 'admin';
 
   const filtered = events.filter(e =>
     !search || e.title.toLowerCase().includes(search.toLowerCase()) || e.location_name?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const isAdmin = user?.role === 'admin';
   const officialEvents = filtered.filter(e => e.event_type === 'official' || !e.event_type);
 
-  // Community: show if public OR user is in the group that created it
-  const communityEvents = filtered.filter(e =>
-    e.event_type === 'community' &&
-    (e.visibility === 'public' || myGroupIds.has(e.group_id))
+  // Community events: all open, not ended, sorted by trending score (same formula as Home)
+  const communityEvents = useMemo(
+    () => getTrendingCommunityEvents(filtered),
+    [filtered]
   );
 
   return (
