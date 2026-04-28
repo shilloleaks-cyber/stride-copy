@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, AlertTriangle, Loader2, ExternalLink, Clock, Building2, QrCode } from 'lucide-react';
 import { format } from 'date-fns';
 import { logActivity } from '@/lib/eventActivityLog';
+import { notifyPaymentApproved, notifyPaymentNeedsAttention } from '@/lib/notifications';
 
 const METHOD_LABELS = {
   bank_transfer: 'Bank Transfer',
@@ -71,6 +72,7 @@ export default function PaymentReviewPanel({ payment, reg, catMap, registrations
     },
     onSuccess: () => {
       logActivity({ eventId: eventId || reg.event_id, actorEmail: user.email, actionType: 'payment_approved', targetType: 'payment', targetId: payment.id, summary: `Approved payment for ${reg.first_name} ${reg.last_name} (฿${payment.amount})` });
+      notifyPaymentApproved({ user_email: reg.user_email, event_title: reg.event_title || '', event_id: reg.event_id, registration_id: reg.id });
       invalidate();
     },
   });
@@ -79,16 +81,22 @@ export default function PaymentReviewPanel({ payment, reg, catMap, registrations
     mutationFn: async () => {
       if (!canReview) throw new Error('Permission denied');
       const now = new Date().toISOString();
-      await base44.entities.EventPayment.update(payment.id, {
-        status: 'needs_attention',
-        reviewed_by: user.email,
-        reviewed_at: now,
-        admin_note: noteInput.trim() || null,
-      });
-      // Keep registration at pending so user is prompted to re-upload
+      const note = noteInput.trim() || null;
+      await Promise.all([
+        base44.entities.EventPayment.update(payment.id, {
+          status: 'needs_attention',
+          reviewed_by: user.email,
+          reviewed_at: now,
+          admin_note: note,
+        }),
+        // Keep reg consistent: reflect needs_attention at the registration level too
+        base44.entities.EventRegistration.update(reg.id, { payment_status: 'needs_attention' }),
+      ]);
     },
     onSuccess: () => {
-      logActivity({ eventId: eventId || reg.event_id, actorEmail: user.email, actionType: 'payment_needs_attention', targetType: 'payment', targetId: payment.id, summary: `Marked payment needs attention for ${reg.first_name} ${reg.last_name}`, meta: { note: noteInput.trim() || null } });
+      const note = noteInput.trim() || null;
+      logActivity({ eventId: eventId || reg.event_id, actorEmail: user.email, actionType: 'payment_needs_attention', targetType: 'payment', targetId: payment.id, summary: `Marked payment needs attention for ${reg.first_name} ${reg.last_name}`, meta: { note } });
+      notifyPaymentNeedsAttention({ user_email: reg.user_email, event_title: reg.event_title || '', event_id: reg.event_id, registration_id: reg.id, note });
       setShowNoteInput(false);
       setNoteInput('');
       setPendingAction(null);

@@ -126,6 +126,20 @@ Deno.serve(async (req) => {
       });
 
       // Success — the DB constraint confirmed this bib is unique in this category
+      // Send in-app registration success notification
+      try {
+        await base44.asServiceRole.entities.Notification.create({
+          user_email: user.email,
+          type: 'registration_success',
+          category: 'events',
+          title: 'Registration Confirmed! 🎉',
+          body: `You're registered for ${cat.name || 'the event'}. Check your ticket for details.`,
+          event_id,
+          registration_id: reg.id,
+          is_read: false,
+          action_url: '/StrideMyEvents',
+        });
+      } catch (_) { /* non-critical — don't fail the registration */ }
       return Response.json({ registration: reg });
 
     } catch (err) {

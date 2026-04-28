@@ -108,7 +108,7 @@ export default function EventCheckinPanel({ event, registrations, categories, on
       const skipped = selectedRows.filter(r => r.checked_in).length;
       const now = new Date().toISOString();
       const results = await Promise.allSettled(
-        targets.map(r => base44.entities.EventRegistration.update(r.id, { checked_in: true, checked_in_at: now }))
+        targets.map(r => base44.entities.EventRegistration.update(r.id, { checked_in: true, checked_in_at: now, checked_in_by: actorEmail }))
       );
       const succeeded = results.filter(r => r.status === 'fulfilled').length;
       const failed    = results.filter(r => r.status === 'rejected').length;

@@ -173,26 +173,34 @@ function Badge({ label, color, bg, border, Icon }) {
 }
 
 function PaymentCallout({ paymentStatus }) {
-  const needsPayment = paymentStatus !== 'not_required' && paymentStatus !== 'paid';
-  if (!needsPayment) return null;
-  // paymentStatus values here: 'pending' (no slip yet) OR 'pending' (slip uploaded, awaiting review)
-  // We distinguish via whether a slip has been submitted — PaymentUpload handles that internally.
-  // 'pending' with no slip = Awaiting Payment; 'pending' with slip = Pending Review.
-  const hasSubmittedSlip = paymentStatus === 'pending'; // any pending state shows upload UI
-  const isAwaitingApproval = paymentStatus === 'pending';
-  const color = 'rgba(255,200,80,1)';
-  const bg = 'rgba(255,200,80,0.06)';
-  const border = 'rgba(255,200,80,0.2)';
-  const msg = 'Payment is required to confirm your registration. Upload your payment slip below.';
+  if (!paymentStatus || paymentStatus === 'not_required' || paymentStatus === 'paid') return null;
+
+  const states = {
+    pending: {
+      color: 'rgba(255,200,80,1)',
+      bg: 'rgba(255,200,80,0.06)',
+      border: 'rgba(255,200,80,0.2)',
+      msg: 'Payment required — upload your slip below to confirm your registration.',
+    },
+    needs_attention: {
+      color: 'rgba(255,150,50,1)',
+      bg: 'rgba(255,120,0,0.07)',
+      border: 'rgba(255,120,0,0.25)',
+      msg: 'Your payment needs attention. Please check the note below and re-upload your slip.',
+    },
+  };
+
+  const s = states[paymentStatus] || states.pending;
+
   return (
     <div style={{
       display: 'flex', alignItems: 'flex-start', gap: 10,
       padding: '12px 14px', borderRadius: 12,
-      background: bg, border: `1px solid ${border}`,
+      background: s.bg, border: `1px solid ${s.border}`,
       marginBottom: 4,
     }}>
-      <AlertCircle style={{ width: 14, height: 14, color, flexShrink: 0, marginTop: 1 }} />
-      <p style={{ fontSize: 12, color, fontWeight: 600, margin: 0, lineHeight: 1.5 }}>{msg}</p>
+      <AlertCircle style={{ width: 14, height: 14, color: s.color, flexShrink: 0, marginTop: 1 }} />
+      <p style={{ fontSize: 12, color: s.color, fontWeight: 600, margin: 0, lineHeight: 1.5 }}>{s.msg}</p>
     </div>
   );
 }

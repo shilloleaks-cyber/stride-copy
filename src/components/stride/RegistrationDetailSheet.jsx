@@ -4,6 +4,7 @@ import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { X, Loader2, AlertCircle, ShieldAlert } from 'lucide-react';
 import { SHEET_CONTENT_PADDING_BOTTOM } from '@/lib/sheetLayout';
 import { logActivity } from '@/lib/eventActivityLog';
+import { notifyPaymentApproved, notifyPaymentNeedsAttention } from '@/lib/notifications';
 
 import { REG_STATUS as REG_STATUS_CFG, resolvePaymentCfg } from '@/lib/eventStatusConfig';
 
@@ -412,7 +413,10 @@ export default function RegistrationDetailSheet({ reg, eventMap, catMap, registr
                       confirmLabel: 'Approve Payment',
                       variant: 'lime',
                       action: () => update.mutate({ payment_status: 'paid', status: 'confirmed' }, {
-                        onSuccess: () => logActivity({ eventId: eId, actorEmail, actionType: 'manual_payment_approved', targetType: 'payment', targetId: reg.id, summary: `Manually approved payment for ${reg.first_name} ${reg.last_name}` })
+                        onSuccess: () => {
+                          logActivity({ eventId: eId, actorEmail, actionType: 'manual_payment_approved', targetType: 'payment', targetId: reg.id, summary: `Manually approved payment for ${reg.first_name} ${reg.last_name}` });
+                          notifyPaymentApproved({ user_email: reg.user_email, event_title: ev?.title || '', event_id: eId, registration_id: reg.id });
+                        }
                       }),
                     })}
                   />
@@ -454,7 +458,7 @@ export default function RegistrationDetailSheet({ reg, eventMap, catMap, registr
                           message: `Mark ${reg.first_name} ${reg.last_name} as Checked In. This action will be timestamped.`,
                           confirmLabel: 'Check In',
                           variant: 'green',
-                          action: () => update.mutate({ checked_in: true, checked_in_at: new Date().toISOString() }, {
+                          action: () => update.mutate({ checked_in: true, checked_in_at: new Date().toISOString(), checked_in_by: actorEmail }, {
                             onSuccess: () => logActivity({ eventId: eId, actorEmail, actionType: 'manual_checkin_force', targetType: 'registration', targetId: reg.id, summary: `Force checked in ${reg.first_name} ${reg.last_name}` })
                           }),
                         })}
@@ -472,7 +476,7 @@ export default function RegistrationDetailSheet({ reg, eventMap, catMap, registr
                           message: `This will remove the Checked In status for ${reg.first_name} ${reg.last_name}. Use only to correct a mistake.`,
                           confirmLabel: 'Undo Check-In',
                           variant: 'red',
-                          action: () => update.mutate({ checked_in: false, checked_in_at: null }, {
+                          action: () => update.mutate({ checked_in: false, checked_in_at: null, checked_in_by: null }, {
                             onSuccess: () => logActivity({ eventId: eId, actorEmail, actionType: 'manual_checkin_undo', targetType: 'registration', targetId: reg.id, summary: `Undid check-in for ${reg.first_name} ${reg.last_name}` })
                           }),
                         })}

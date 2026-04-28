@@ -89,7 +89,7 @@ export default function PaymentUpload({ registration, category }) {
           reviewed_by: null,
           reviewed_at: null,
         });
-        // Update registration payment_status back to pending
+        // Always reset registration payment_status to pending on re-upload
         await base44.entities.EventRegistration.update(registration.id, { payment_status: 'pending' });
       } else {
         await base44.entities.EventPayment.create({
