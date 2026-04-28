@@ -57,7 +57,7 @@ function downloadCSV(content, filename) {
   a.click();
 }
 
-export default function EventRegistrationsPanel({ event, registrations, categories, onRegsUpdated, canApprove = true, canReject = true, actorEmail }) {
+export default function EventRegistrationsPanel({ event, registrations, categories, onRegsUpdated, canApprove = true, canReject = true, actorEmail, isFullAdmin = false }) {
   const [search, setSearch]               = useState('');
   const [catFilter, setCatFilter]         = useState('all');
   const [statusFilter, setStatusFilter]   = useState('all');
@@ -354,6 +354,10 @@ export default function EventRegistrationsPanel({ event, registrations, categori
           eventMap={eventMap}
           catMap={catMap}
           registrations={registrations}
+          categories={categories}
+          eventId={event.id}
+          actorEmail={actorEmail}
+          isFullAdmin={isFullAdmin}
           onClose={() => setDetailReg(null)}
           onUpdated={() => { setDetailReg(null); if (onRegsUpdated) onRegsUpdated(); }}
         />

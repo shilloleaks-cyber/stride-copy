@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-import { X, Loader2, AlertCircle } from 'lucide-react';
+import { X, Loader2, AlertCircle, ShieldAlert } from 'lucide-react';
 import { SHEET_CONTENT_PADDING_BOTTOM } from '@/lib/sheetLayout';
+import { logActivity } from '@/lib/eventActivityLog';
 
 import { REG_STATUS as REG_STATUS_CFG, resolvePaymentCfg } from '@/lib/eventStatusConfig';
 
@@ -91,15 +92,19 @@ const HINT = ({ children }) => (
 );
 
 // ─── Main component ───────────────────────────────────────────────────────────
-export default function RegistrationDetailSheet({ reg, eventMap, catMap, registrations, onClose, onUpdated }) {
+export default function RegistrationDetailSheet({ reg, eventMap, catMap, registrations, categories = [], onClose, onUpdated, actorEmail, isFullAdmin = false, eventId }) {
   const queryClient = useQueryClient();
   const [bibInput, setBibInput] = useState('');
   const [showBibInput, setShowBibInput] = useState(false);
   const [adminNotes, setAdminNotes] = useState(reg.admin_notes || '');
   const [confirm, setConfirm] = useState(null); // { title, message, confirmLabel, variant, action }
+  const [showCatSelect, setShowCatSelect] = useState(false);
+  const [newCatId, setNewCatId] = useState('');
 
   const ev = eventMap[reg.event_id];
   const cat = catMap[reg.category_id];
+  // Only show categories belonging to the same event
+  const eventCategories = categories.filter(c => c.event_id === (eventId || reg.event_id));
 
   // Fetch CategoryItems to resolve item_selections keys → names
   const { data: categoryItems = [] } = useQuery({
@@ -118,6 +123,8 @@ export default function RegistrationDetailSheet({ reg, eventMap, catMap, registr
   const hasSlip = payments.length > 0 && !!payments[0]?.slip_image;
   const paymentNeedsAttention = payments[0]?.status === 'needs_attention';
 
+  const eId = eventId || reg.event_id;
+
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ['all-regs-admin'] });
     if (onUpdated) onUpdated();
@@ -128,12 +135,14 @@ export default function RegistrationDetailSheet({ reg, eventMap, catMap, registr
     onSuccess: invalidate,
   });
 
-  const generateBib = () => {
-    const prefix = cat?.bib_prefix || 'R';
-    const start  = cat?.bib_start  || 1;
+  const generateBib = (forCategoryId) => {
+    const targetCatId = forCategoryId || reg.category_id;
+    const targetCat = catMap[targetCatId] || categories.find(c => c.id === targetCatId);
+    const prefix = targetCat?.bib_prefix || 'R';
+    const start  = targetCat?.bib_start  || 1;
     const usedBibs = new Set(
       registrations
-        .filter(r => r.category_id === reg.category_id && r.bib_number && r.id !== reg.id)
+        .filter(r => r.category_id === targetCatId && r.bib_number && r.id !== reg.id)
         .map(r => r.bib_number)
     );
     let candidate = start;
@@ -147,10 +156,35 @@ export default function RegistrationDetailSheet({ reg, eventMap, catMap, registr
 
   const handleAssignBib = () => {
     const bib = bibInput.trim() || generateBib();
-    update.mutate({ bib_number: bib });
+    const oldBib = reg.bib_number;
+    update.mutate({ bib_number: bib }, {
+      onSuccess: () => {
+        logActivity({ eventId: eId, actorEmail, actionType: 'manual_bib_assign', targetType: 'registration', targetId: reg.id, summary: `Bib ${oldBib ? `reassigned from ${oldBib} to` : 'assigned as'} ${bib} for ${reg.first_name} ${reg.last_name}`, meta: { old_bib: oldBib || null, new_bib: bib } });
+      }
+    });
     setShowBibInput(false);
     setBibInput('');
   };
+
+  // Manual override: change category (full admin only)
+  const changeCategoryMutation = useMutation({
+    mutationFn: async (catId) => {
+      const newCat = categories.find(c => c.id === catId);
+      const oldCat = cat;
+      const newBib = generateBib(catId);
+      await base44.entities.EventRegistration.update(reg.id, {
+        category_id: catId,
+        bib_number: newBib,
+      });
+      return { oldCat, newCat, newBib };
+    },
+    onSuccess: ({ oldCat, newCat, newBib }) => {
+      logActivity({ eventId: eId, actorEmail, actionType: 'manual_category_change', targetType: 'registration', targetId: reg.id, summary: `Category changed from "${oldCat?.name || '?'}" to "${newCat?.name || '?'}" for ${reg.first_name} ${reg.last_name} (new bib: ${newBib})`, meta: { old_category_id: reg.category_id, new_category_id: newCat?.id, new_bib: newBib } });
+      setShowCatSelect(false);
+      setNewCatId('');
+      invalidate();
+    },
+  });
 
   // Derived state
   const canCheckIn = reg.status === 'confirmed' && (reg.payment_status === 'paid' || reg.payment_status === 'not_required');
@@ -285,7 +319,11 @@ export default function RegistrationDetailSheet({ reg, eventMap, catMap, registr
                   variant="green"
                   disabled={reg.status === 'confirmed' || reg.status === 'rejected'}
                   loading={update.isPending}
-                  onClick={() => update.mutate({ status: 'confirmed' })}
+                  onClick={() => {
+                    update.mutate({ status: 'confirmed' }, {
+                      onSuccess: () => logActivity({ eventId: eId, actorEmail, actionType: 'manual_registration_confirm', targetType: 'registration', targetId: reg.id, summary: `Confirmed registration for ${reg.first_name} ${reg.last_name}` })
+                    });
+                  }}
                 />
                 {reg.status === 'confirmed' && <HINT>Registration is already Confirmed.</HINT>}
 
@@ -299,7 +337,9 @@ export default function RegistrationDetailSheet({ reg, eventMap, catMap, registr
                     message: `${reg.first_name} ${reg.last_name}'s registration will be set to Rejected. This cannot be undone.`,
                     confirmLabel: 'Reject',
                     variant: 'red',
-                    action: () => update.mutate({ status: 'rejected' }),
+                    action: () => update.mutate({ status: 'rejected' }, {
+                      onSuccess: () => logActivity({ eventId: eId, actorEmail, actionType: 'manual_registration_reject', targetType: 'registration', targetId: reg.id, summary: `Rejected registration for ${reg.first_name} ${reg.last_name}` })
+                    }),
                   })}
                 />
 
@@ -349,7 +389,15 @@ export default function RegistrationDetailSheet({ reg, eventMap, catMap, registr
                     variant="lime"
                     disabled={reg.payment_status === 'paid' || reg.payment_status === 'not_required'}
                     loading={update.isPending}
-                    onClick={() => update.mutate({ payment_status: 'paid' })}
+                    onClick={() => withConfirm({
+                      title: 'Approve Payment Manually?',
+                      message: `Mark payment as Payment Approved for ${reg.first_name} ${reg.last_name}. Use only when slip verification has been done offline.`,
+                      confirmLabel: 'Approve Payment',
+                      variant: 'lime',
+                      action: () => update.mutate({ payment_status: 'paid', status: 'confirmed' }, {
+                        onSuccess: () => logActivity({ eventId: eId, actorEmail, actionType: 'manual_payment_approved', targetType: 'payment', targetId: reg.id, summary: `Manually approved payment for ${reg.first_name} ${reg.last_name}` })
+                      }),
+                    })}
                   />
                   {reg.payment_status === 'paid' && <HINT>Payment is already approved.</HINT>}
                   {reg.payment_status === 'not_required' && <HINT>No Payment Required for this registration.</HINT>}
@@ -365,7 +413,9 @@ export default function RegistrationDetailSheet({ reg, eventMap, catMap, registr
                         message: 'This will reset payment to "Awaiting Payment". Use only to undo an accidental approval.',
                         confirmLabel: 'Reset',
                         variant: 'amber',
-                        action: () => update.mutate({ payment_status: 'pending' }),
+                        action: () => update.mutate({ payment_status: 'pending' }, {
+                          onSuccess: () => logActivity({ eventId: eId, actorEmail, actionType: 'manual_payment_reset', targetType: 'payment', targetId: reg.id, summary: `Reset payment to Awaiting Payment for ${reg.first_name} ${reg.last_name}` })
+                        }),
                       })}
                     />
                     {reg.payment_status === 'pending' && <HINT>Status is already Awaiting Payment.</HINT>}
@@ -387,7 +437,9 @@ export default function RegistrationDetailSheet({ reg, eventMap, catMap, registr
                           message: `Mark ${reg.first_name} ${reg.last_name} as Checked In. This action will be timestamped.`,
                           confirmLabel: 'Check In',
                           variant: 'green',
-                          action: () => update.mutate({ checked_in: true, checked_in_at: new Date().toISOString() }),
+                          action: () => update.mutate({ checked_in: true, checked_in_at: new Date().toISOString() }, {
+                            onSuccess: () => logActivity({ eventId: eId, actorEmail, actionType: 'manual_checkin_force', targetType: 'registration', targetId: reg.id, summary: `Force checked in ${reg.first_name} ${reg.last_name}` })
+                          }),
                         })}
                       />
                       {checkInBlockReason && <HINT>{checkInBlockReason}</HINT>}
@@ -403,7 +455,9 @@ export default function RegistrationDetailSheet({ reg, eventMap, catMap, registr
                           message: `This will remove the Checked In status for ${reg.first_name} ${reg.last_name}. Use only to correct a mistake.`,
                           confirmLabel: 'Undo Check-In',
                           variant: 'red',
-                          action: () => update.mutate({ checked_in: false, checked_in_at: null }),
+                          action: () => update.mutate({ checked_in: false, checked_in_at: null }, {
+                            onSuccess: () => logActivity({ eventId: eId, actorEmail, actionType: 'manual_checkin_undo', targetType: 'registration', targetId: reg.id, summary: `Undid check-in for ${reg.first_name} ${reg.last_name}` })
+                          }),
                         })}
                       />
                     </div>
@@ -428,6 +482,73 @@ export default function RegistrationDetailSheet({ reg, eventMap, catMap, registr
                     Save Notes
                   </button>
                 </div>
+
+                {/* 6. Manual Overrides — Full Admin only */}
+                {isFullAdmin && (
+                  <div style={{ marginTop: 12 }}>
+                    {/* Section header with shield icon */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '4px 0 8px' }}>
+                      <ShieldAlert style={{ width: 11, height: 11, color: 'rgba(138,43,226,0.7)' }} />
+                      <p style={{ fontSize: 10, fontWeight: 700, color: 'rgba(138,43,226,0.7)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
+                        Manual Overrides · Full Admin Only
+                      </p>
+                    </div>
+
+                    <div style={{ background: 'rgba(138,43,226,0.04)', border: '1px solid rgba(138,43,226,0.18)', borderRadius: 14, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+
+                      {/* Change Category */}
+                      {eventCategories.length > 1 && (
+                        <div>
+                          {!showCatSelect ? (
+                            <ACTION_BTN
+                              label={`🔀 Change Category  ·  current: ${cat?.name || '?'}`}
+                              variant="default"
+                              onClick={() => { setShowCatSelect(true); setNewCatId(''); }}
+                            />
+                          ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                              <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: 0 }}>
+                                A new bib will be auto-generated for the target category.
+                              </p>
+                              <select
+                                value={newCatId}
+                                onChange={e => setNewCatId(e.target.value)}
+                                style={{ padding: '10px 12px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(138,43,226,0.3)', color: '#fff', fontSize: 13, outline: 'none', width: '100%' }}
+                              >
+                                <option value="">— Select new category —</option>
+                                {eventCategories.filter(c => c.id !== reg.category_id).map(c => (
+                                  <option key={c.id} value={c.id}>{c.name}{c.price > 0 ? ` (฿${c.price})` : ' (Free)'}</option>
+                                ))}
+                              </select>
+                              <div style={{ display: 'flex', gap: 8 }}>
+                                <button
+                                  disabled={!newCatId || changeCategoryMutation.isPending}
+                                  onClick={() => withConfirm({
+                                    title: 'Change Category?',
+                                    message: `Move ${reg.first_name} ${reg.last_name} from "${cat?.name}" to "${eventCategories.find(c => c.id === newCatId)?.name}". A new bib will be auto-assigned.`,
+                                    confirmLabel: 'Change Category',
+                                    variant: 'amber',
+                                    action: () => changeCategoryMutation.mutate(newCatId),
+                                  })}
+                                  style={{ flex: 1, padding: '10px 0', borderRadius: 12, background: 'rgba(138,43,226,0.15)', border: '1px solid rgba(138,43,226,0.35)', color: 'rgba(190,140,255,1)', fontSize: 13, fontWeight: 700, cursor: !newCatId ? 'not-allowed' : 'pointer', opacity: !newCatId ? 0.5 : 1 }}
+                                >
+                                  {changeCategoryMutation.isPending ? <Loader2 style={{ width: 13, height: 13, animation: 'spin 1s linear infinite', display: 'inline' }} /> : 'Confirm Change'}
+                                </button>
+                                <button
+                                  onClick={() => setShowCatSelect(false)}
+                                  style={{ padding: '10px 14px', borderRadius: 12, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.4)', fontSize: 13, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                    </div>
+                  </div>
+                )}
 
               </div>
             </div>

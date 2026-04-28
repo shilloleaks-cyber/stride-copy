@@ -24,7 +24,16 @@
         "category_created",
         "category_updated",
         "category_deleted",
-        "payment_setup_updated"
+        "payment_setup_updated",
+        "manual_category_change",
+        "manual_bib_assign",
+        "manual_payment_approved",
+        "manual_payment_reset",
+        "manual_checkin_force",
+        "manual_checkin_undo",
+        "manual_registration_add",
+        "manual_registration_confirm",
+        "manual_registration_reject"
       ],
       "description": "Type of action performed"
     },

@@ -207,6 +207,7 @@ export default function EventWorkspace() {
             canApprove={can('registrations')}
             canReject={can('registrations')}
             actorEmail={user?.email}
+            isFullAdmin={user?.role === 'admin' || role === 'full'}
             onRegsUpdated={() => queryClient.invalidateQueries({ queryKey: ['all-regs-admin'] })}
           />
         )}
