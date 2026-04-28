@@ -156,8 +156,8 @@ export default function CreateEventCategoryForm({ eventId, eventData, existingCa
         </div>
       </div>
 
-      {/* Payment enabled toggle — visible when price = 0 */}
-      {parseFloat(form.price) <= 0 && (
+      {/* Payment enabled toggle — visible when price is 0 or empty (i.e. not a paid category) */}
+      {!(parseFloat(form.price) > 0) && (
         <div
           onClick={() => set('payment_enabled', !form.payment_enabled)}
           style={{
