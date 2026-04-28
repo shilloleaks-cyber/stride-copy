@@ -127,6 +127,31 @@
     "payment_qr_image": {
       "type": "string",
       "description": "URL of QR code image for QR payment method"
+    },
+    "unique_views_7d": {
+      "type": "number",
+      "default": 0,
+      "description": "Unique detail-page views in the last 7 days (for trending)"
+    },
+    "detail_clicks": {
+      "type": "number",
+      "default": 0,
+      "description": "Total detail-page click count"
+    },
+    "saves_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Total number of times this event has been saved/bookmarked"
+    },
+    "shares_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Total number of times this event has been shared"
+    },
+    "join_clicks": {
+      "type": "number",
+      "default": 0,
+      "description": "Total number of times the Register/Join button was clicked"
     }
   },
   "required": [
