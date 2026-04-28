@@ -75,13 +75,13 @@ export default function EventSettingsPanel({ event, onUpdated, actorEmail }) {
 
       {/* Date + Time */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-        <div>
+        <div style={{ minWidth: 0, overflow: 'hidden' }}>
           <label style={labelStyle}>Date</label>
-          <input type="date" style={inputStyle} value={form.event_date} onChange={e => setForm(f => ({ ...f, event_date: e.target.value }))} />
+          <input type="date" style={{ ...inputStyle, minWidth: 0 }} value={form.event_date} onChange={e => setForm(f => ({ ...f, event_date: e.target.value }))} />
         </div>
-        <div>
+        <div style={{ minWidth: 0, overflow: 'hidden' }}>
           <label style={labelStyle}>Start Time</label>
-          <input type="time" style={inputStyle} value={form.start_time} onChange={e => setForm(f => ({ ...f, start_time: e.target.value }))} />
+          <input type="time" style={{ ...inputStyle, minWidth: 0 }} value={form.start_time} onChange={e => setForm(f => ({ ...f, start_time: e.target.value }))} />
         </div>
       </div>
 
