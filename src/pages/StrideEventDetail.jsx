@@ -5,6 +5,7 @@ import { checkPaymentReady } from '@/components/stride/EventPaymentSetup';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef } from 'react';
 import { ArrowLeft, Calendar, MapPin, Users, Loader2, CheckCircle2, ChevronRight, Settings } from 'lucide-react';
 import { format } from 'date-fns';
 import RegistrationForm from '@/components/stride/RegistrationForm';
@@ -35,12 +36,20 @@ export default function StrideEventDetail() {
     queryKey: ['stride-event', eventId],
     queryFn: async () => {
       const r = await base44.entities.StrideEvent.filter({ id: eventId });
-      const ev = r[0] || null;
-      if (ev) trackEventView(ev.id); // detail_clicks + unique_views_7d
-      return ev;
+      return r[0] || null;
     },
     enabled: !!eventId,
   });
+
+  // Track the view exactly once per mount, after the event has successfully loaded.
+  // useRef ensures this fires only once even if the query refetches in the background.
+  const viewTracked = useRef(false);
+  useEffect(() => {
+    if (event?.id && !viewTracked.current) {
+      viewTracked.current = true;
+      trackEventView(event.id);
+    }
+  }, [event?.id]);
 
   const { data: categories = [] } = useQuery({
     queryKey: ['event-categories', eventId],
