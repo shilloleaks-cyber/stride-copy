@@ -250,9 +250,8 @@ export default function Home() {
 
   const trendingEvents = useMemo(() => {
     const now = new Date();
-    const visibleEvents = communityEvents.filter(e =>
-      e.visibility === 'public' || myGroupIds.has(e.group_id)
-    );
+    // All open community events are platform-wide visible (no visibility field on StrideEvent)
+    const visibleEvents = communityEvents; // already filtered to event_type=community, status=open by query
     return visibleEvents
       .map(e => {
         const daysToEvent = (new Date(e.event_date) - now) / (1000 * 60 * 60 * 24);
