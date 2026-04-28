@@ -241,10 +241,10 @@ export default function Home() {
     queryFn: () => base44.entities.StrideEvent.list('-created_date', 100),
   });
 
-  const trendingEvents = useMemo(
-    () => getTrendingEvents(allEvents).slice(0, 5),
-    [allEvents]
-  );
+  const trendingEvents = useMemo(() => {
+    const ranked = getTrendingEvents(allEvents);
+    return ranked.length > 5 ? ranked.slice(0, 5) : ranked;
+  }, [allEvents]);
 
   // Game stats - derived from coin_balance (single source of truth)
   const coinBalance = user?.coin_balance ?? 0;
