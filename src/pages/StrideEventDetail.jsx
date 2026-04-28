@@ -13,6 +13,7 @@ import EventShareButton from '@/components/stride/EventShareButton';
 import EventInviteSheet from '@/components/stride/EventInviteSheet';
 import { useAuthGate } from '@/hooks/useAuthGate';
 import LoginGateModal from '@/components/auth/LoginGateModal';
+import { trackEventView } from '@/lib/eventMetrics';
 
 const CAT_COLORS = ['#BFFF00', '#8A2BE2', 'rgb(0,200,180)', 'rgb(255,180,0)', 'rgb(255,80,130)'];
 
@@ -34,7 +35,9 @@ export default function StrideEventDetail() {
     queryKey: ['stride-event', eventId],
     queryFn: async () => {
       const r = await base44.entities.StrideEvent.filter({ id: eventId });
-      return r[0] || null;
+      const ev = r[0] || null;
+      if (ev) trackEventView(ev.id); // detail_clicks + unique_views_7d
+      return ev;
     },
     enabled: !!eventId,
   });

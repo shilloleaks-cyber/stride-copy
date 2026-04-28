@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Share2, Check, X, Copy } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { trackShare } from '@/lib/eventMetrics';
 
 export default function EventShareButton({ event, user }) {
   const [state, setState] = useState('idle'); // 'idle' | 'copied' | 'modal'
@@ -18,6 +19,7 @@ export default function EventShareButton({ event, user }) {
       shared_at: new Date().toISOString(),
       channel,
     });
+    trackShare(event.id); // increment shares_count on StrideEvent
     // Reset dedup after 3s so a second deliberate share can still log
     setTimeout(() => { didCopy.current = false; }, 3000);
   };

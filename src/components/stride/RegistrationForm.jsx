@@ -4,6 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { X, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import CategoryItemsPicker from '@/components/stride/CategoryItemsPicker';
 import { SHEET_BOTTOM_PADDING } from '@/lib/sheetLayout';
+import { trackJoinClick } from '@/lib/eventMetrics';
 
 export default function RegistrationForm({ event, category, user, onClose, onSuccess }) {
   const [itemSelections, setItemSelections] = useState({});
@@ -104,8 +105,8 @@ export default function RegistrationForm({ event, category, user, onClose, onSuc
         {/* Submit */}
         <div className="px-6 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingBottom: SHEET_BOTTOM_PADDING }}>
           <button
-            onClick={() => registerMutation.mutate()}
-            disabled={!canSubmit || registerMutation.isPending}
+           onClick={() => { trackJoinClick(event.id); registerMutation.mutate(); }}
+           disabled={!canSubmit || registerMutation.isPending}
             className="w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2"
             style={canSubmit && !registerMutation.isPending
               ? { background: '#BFFF00', color: '#0A0A0A' }
