@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
     basePayload.item_selections = item_selections;
   }
 
-  const isFree = (cat.price || 0) <= 0;
+  const isFree = !(cat.payment_enabled === true || Number(cat.price || 0) > 0);
 
   // ── 5. PAID: no bib assigned now, stays pending ─────────────────────────────
   if (!isFree) {

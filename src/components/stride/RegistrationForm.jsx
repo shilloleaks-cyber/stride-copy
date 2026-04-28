@@ -115,7 +115,7 @@ export default function RegistrationForm({ event, category, user, onClose, onSuc
           >
             {registerMutation.isPending
               ? <><Loader2 className="w-5 h-5 animate-spin" /> Registering...</>
-              : category.price > 0 ? 'Register & Proceed to Payment' : 'Confirm Registration'
+              : (category.payment_enabled === true || Number(category.price || 0) > 0) ? 'Register & Proceed to Payment' : 'Confirm Registration'
             }
           </button>
         </div>

@@ -72,8 +72,9 @@ export default function StrideEventDetail() {
     setShowForm(false);
     queryClient.invalidateQueries({ queryKey: ['my-reg', eventId, user?.email] });
     queryClient.invalidateQueries({ queryKey: ['my-stride-regs', user?.email] });
-    if (selectedCategory?.price > 0 && reg) {
-      // Paid: open payment flow
+    const requiresPayment = selectedCategory && (selectedCategory.payment_enabled === true || Number(selectedCategory.price || 0) > 0);
+    if (requiresPayment && reg) {
+      // Requires payment: open payment flow
       setPaymentReg(reg);
     } else if (reg) {
       // Free: go straight to ticket
@@ -99,8 +100,8 @@ export default function StrideEventDetail() {
 
   // Pre-check payment readiness — used to block paid registration before it creates a record
   const { ready: paymentReady } = checkPaymentReady(event);
-  const selectedIsPaid = selectedCategory?.price > 0;
-  const paymentBlocked = selectedIsPaid && !paymentReady;
+  const selectedRequiresPayment = !!(selectedCategory && (selectedCategory.payment_enabled === true || Number(selectedCategory.price || 0) > 0));
+  const paymentBlocked = selectedRequiresPayment && !paymentReady;
 
   return (
     <div className="min-h-screen text-white" style={{ backgroundColor: '#0A0A0A', paddingBottom: `calc(${70 + 56 + 24}px + env(safe-area-inset-bottom, 0px))` }}>
@@ -361,7 +362,7 @@ export default function StrideEventDetail() {
         )}
 
         {/* Payment warning — shown below categories when a paid category is selected but payment isn't ready */}
-        {!isCommunityEvent && !alreadyRegistered && isOpen && selectedCategory?.price > 0 && !checkPaymentReady(event).ready && (
+        {!isCommunityEvent && !alreadyRegistered && isOpen && selectedRequiresPayment && !checkPaymentReady(event).ready && (
           <div style={{
             padding: '12px 14px', borderRadius: 14,
             background: 'rgba(255,120,0,0.08)', border: '1px solid rgba(255,120,0,0.3)',
