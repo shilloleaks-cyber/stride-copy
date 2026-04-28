@@ -284,7 +284,7 @@ export default function CreateOfficialEvent() {
           <div>
             <label style={labelStyle}>Date &amp; Time *</label>
             <input type="datetime-local" value={form.event_date} onChange={e => handleChange('event_date', e.target.value)}
-              required style={{ ...inputStyle, colorScheme: 'dark' }} />
+              required style={{ ...inputStyle, colorScheme: 'dark', minWidth: 0, maxWidth: '100%', WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none', fontSize: 13 }} />
           </div>
 
           <div>
