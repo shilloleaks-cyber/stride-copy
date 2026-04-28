@@ -45,7 +45,7 @@ export default function EventSettingsPanel({ event, onUpdated, actorEmail }) {
   };
 
   const inputStyle = {
-    width: '100%', boxSizing: 'border-box', padding: '10px 13px',
+    width: '100%', maxWidth: '100%', boxSizing: 'border-box', padding: '10px 13px',
     borderRadius: 10, background: 'rgba(0,230,118,0.04)', border: '1px solid rgba(0,230,118,0.15)',
     color: '#fff', fontSize: 13, outline: 'none',
   };
@@ -74,16 +74,21 @@ export default function EventSettingsPanel({ event, onUpdated, actorEmail }) {
       </div>
 
       {/* Date + Time */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-        <div>
+      <div className="form-two-col" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12, width: '100%' }}>
+        <div style={{ minWidth: 0, width: '100%' }}>
           <label style={labelStyle}>Date</label>
-          <input type="date" style={inputStyle} value={form.event_date} onChange={e => setForm(f => ({ ...f, event_date: e.target.value }))} />
+          <input type="date" style={{ ...inputStyle, maxWidth: '100%', colorScheme: 'dark' }} value={form.event_date} onChange={e => setForm(f => ({ ...f, event_date: e.target.value }))} />
         </div>
-        <div>
+        <div style={{ minWidth: 0, width: '100%' }}>
           <label style={labelStyle}>Start Time</label>
-          <input type="time" style={inputStyle} value={form.start_time} onChange={e => setForm(f => ({ ...f, start_time: e.target.value }))} />
+          <input type="time" style={{ ...inputStyle, maxWidth: '100%', colorScheme: 'dark' }} value={form.start_time} onChange={e => setForm(f => ({ ...f, start_time: e.target.value }))} />
         </div>
       </div>
+      <style>{`
+        @media (max-width: 390px) {
+          .form-two-col { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
 
       {/* Location */}
       <div>

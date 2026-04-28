@@ -165,7 +165,7 @@ export default function CreateOfficialEvent() {
   const inputStyle = {
     background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)',
     borderRadius: '14px', color: 'white', padding: '13px 16px',
-    width: '100%', outline: 'none', fontSize: '15px', boxSizing: 'border-box',
+    width: '100%', maxWidth: '100%', outline: 'none', fontSize: '15px', boxSizing: 'border-box',
   };
   const labelStyle = {
     fontSize: '11px', color: 'rgba(255,255,255,0.38)', textTransform: 'uppercase',
