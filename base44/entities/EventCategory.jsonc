@@ -1,0 +1,88 @@
+{
+  "name": "EventCategory",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "description": "Parent StrideEvent ID"
+    },
+    "name": {
+      "type": "string",
+      "description": "e.g. 5K, 10K, Half Marathon, VIP"
+    },
+    "description": {
+      "type": "string",
+      "description": "Category details"
+    },
+    "distance_km": {
+      "type": "number",
+      "description": "Race distance in km"
+    },
+    "price": {
+      "type": "number",
+      "default": 0,
+      "description": "Registration fee (THB)"
+    },
+    "payment_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether payment setup is enabled for this category. Auto-true when price > 0."
+    },
+    "max_slots": {
+      "type": "number",
+      "default": 0,
+      "description": "Max registrations for this category (0 = unlimited)"
+    },
+    "registered_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Cached registration count"
+    },
+    "bib_prefix": {
+      "type": "string",
+      "description": "e.g. A, B, VIP \u2014 prepended to bib number"
+    },
+    "bib_start": {
+      "type": "number",
+      "default": 1,
+      "description": "Starting bib number for this category"
+    },
+    "shirt_sizes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Available shirt sizes e.g. [XS, S, M, L, XL, XXL]"
+    },
+    "color": {
+      "type": "string",
+      "description": "Display color hex for UI"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "event_id",
+    "name"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -59,10 +59,10 @@ export default function CategoriesWithItemsManager({ eventId, onCategoryCountCha
   const getItemCount = (catId) => allItems.filter(i => i.event_category_id === catId).length;
   const catsWithNoItems = categories.filter(c => getItemCount(c.id) === 0);
 
-  // Payment readiness: any paid category requires valid payment config on the event
-  const hasPaidCategories = categories.some(c => (c.price || 0) > 0);
+  // Payment readiness: any category with payment_enabled (or price > 0) requires valid payment config
+  const hasPaymentEnabledCategories = categories.some(c => c.payment_enabled === true || (c.price || 0) > 0);
   const { ready: paymentReady } = checkPaymentReady(eventData);
-  const paymentBlocking = hasPaidCategories && !paymentReady;
+  const paymentBlocking = hasPaymentEnabledCategories && !paymentReady;
 
   useEffect(() => {
     if (onReadinessChange) {
@@ -106,6 +106,7 @@ export default function CategoriesWithItemsManager({ eventId, onCategoryCountCha
               max_slots: c.max_slots != null ? String(c.max_slots) : '',
               bib_prefix: c.bib_prefix || '',
               bib_start: String(c.bib_start || 1),
+              payment_enabled: c.payment_enabled === true || (c.price || 0) > 0,
             })}
             onDelete={handleDelete}
           />

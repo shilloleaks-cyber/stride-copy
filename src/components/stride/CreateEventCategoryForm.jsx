@@ -5,9 +5,13 @@ import { checkPaymentReady } from '@/components/stride/EventPaymentSetup';
 
 export default function CreateEventCategoryForm({ eventId, eventData, existingCategories, initial, editingId, onSaved, onCancel }) {
   const isEdit = !!editingId;
-  const [form, setForm] = useState(initial || {
-    name: '', distance_km: '', price: '', max_slots: '',
-    bib_prefix: '', bib_start: '1', color: '#BFFF00',
+  const [form, setForm] = useState(() => {
+    const base = initial || { name: '', distance_km: '', price: '', max_slots: '', bib_prefix: '', bib_start: '1', color: '#BFFF00', payment_enabled: false };
+    // Auto-set payment_enabled=true if editing a paid category
+    if (initial && parseFloat(initial.price) > 0) {
+      return { ...base, payment_enabled: base.payment_enabled !== false ? base.payment_enabled : true };
+    }
+    return base;
   });
   const [saving, setSaving] = useState(false);
 
@@ -40,7 +44,15 @@ export default function CreateEventCategoryForm({ eventId, eventData, existingCa
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const setP = (k, v) => setPayment(p => ({ ...p, [k]: v }));
 
-  const isPaid = parseFloat(form.price) > 0;
+  const price = parseFloat(form.price) || 0;
+  // Auto-force payment_enabled when price > 0
+  const isPaid = price > 0 || form.payment_enabled === true;
+
+  // When price changes to > 0, force payment_enabled on
+  const handlePriceChange = (v) => {
+    set('price', v);
+    if (parseFloat(v) > 0) set('payment_enabled', true);
+  };
 
   const togglePaymentMethod = (key) => {
     setPayment(prev => {
@@ -70,12 +82,14 @@ export default function CreateEventCategoryForm({ eventId, eventData, existingCa
     );
     if (isDup) { alert('A category with this name already exists.'); return; }
     setSaving(true);
-    const price = form.price !== '' ? parseFloat(form.price) : 0;
+    const savedPrice = form.price !== '' ? parseFloat(form.price) : 0;
+    const paymentEnabledFinal = savedPrice > 0 ? true : (form.payment_enabled === true);
     const payload = {
       event_id: eventId,
       name: form.name.trim(),
       distance_km: form.distance_km ? parseFloat(form.distance_km) : null,
-      price,
+      price: savedPrice,
+      payment_enabled: paymentEnabledFinal,
       max_slots: form.max_slots !== '' ? parseInt(form.max_slots) : 0,
       bib_prefix: form.bib_prefix.trim() || null,
       bib_start: parseInt(form.bib_start) || 1,
@@ -87,8 +101,8 @@ export default function CreateEventCategoryForm({ eventId, eventData, existingCa
     } else {
       await base44.entities.EventCategory.create(payload);
     }
-    // If paid, save payment settings to the event
-    if (price > 0) {
+    // Save payment settings to the event if payment is enabled (paid OR explicitly opted-in)
+    if (paymentEnabledFinal) {
       await base44.entities.StrideEvent.update(eventId, {
         payment_methods_enabled: payment.payment_methods_enabled,
         bank_name: payment.bank_name || null,
@@ -138,9 +152,44 @@ export default function CreateEventCategoryForm({ eventId, eventData, existingCa
         </div>
         <div>
           <label style={lbl}>Price (THB)</label>
-          <input type="number" value={form.price} onChange={e => set('price', e.target.value)} placeholder="0 = free" min="0" style={inp} />
+          <input type="number" value={form.price} onChange={e => handlePriceChange(e.target.value)} placeholder="0 = free" min="0" style={inp} />
         </div>
       </div>
+
+      {/* Payment enabled toggle — visible when price = 0 */}
+      {parseFloat(form.price) <= 0 && (
+        <div
+          onClick={() => set('payment_enabled', !form.payment_enabled)}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+            background: form.payment_enabled ? 'rgba(191,255,0,0.05)' : 'rgba(255,255,255,0.03)',
+            border: `1px solid ${form.payment_enabled ? 'rgba(191,255,0,0.22)' : 'rgba(255,255,255,0.08)'}`,
+          }}
+        >
+          <div>
+            <p style={{ fontSize: 12, fontWeight: 700, color: form.payment_enabled ? 'rgba(191,255,0,0.85)' : 'rgba(255,255,255,0.5)', margin: 0 }}>
+              Enable Payment Setup
+            </p>
+            <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.28)', margin: '2px 0 0', lineHeight: 1.4 }}>
+              Allow payment config even when price is ฿0
+            </p>
+          </div>
+          {/* Toggle pill */}
+          <div style={{
+            width: 38, height: 22, borderRadius: 11, flexShrink: 0,
+            background: form.payment_enabled ? '#BFFF00' : 'rgba(255,255,255,0.12)',
+            position: 'relative', transition: 'background 0.2s',
+          }}>
+            <div style={{
+              position: 'absolute', top: 3, width: 16, height: 16, borderRadius: 8,
+              background: form.payment_enabled ? '#0A0A0A' : 'rgba(255,255,255,0.5)',
+              left: form.payment_enabled ? 19 : 3,
+              transition: 'left 0.2s, background 0.2s',
+            }} />
+          </div>
+        </div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
         <div>
