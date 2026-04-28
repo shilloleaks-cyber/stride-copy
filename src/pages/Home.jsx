@@ -250,19 +250,43 @@ export default function Home() {
 
   const trendingEvents = useMemo(() => {
     const now = new Date();
-    // All open community events are platform-wide visible (no visibility field on StrideEvent)
-    const visibleEvents = communityEvents; // already filtered to event_type=community, status=open by query
-    return visibleEvents
+
+    return communityEvents
+      // Exclude events that have already passed (event_date < today)
+      .filter(e => e.event_date && new Date(e.event_date) >= new Date(now.toDateString()))
       .map(e => {
+        const registered = e.total_registered || 0;
+        const maxCap     = e.max_participants || 0;
         const daysToEvent = (new Date(e.event_date) - now) / (1000 * 60 * 60 * 24);
-        const isSoon = daysToEvent >= 0 && daysToEvent <= 7 ? 15 : 0;
-        const isNew = (now - new Date(e.created_date)) < 3 * 24 * 60 * 60 * 1000 ? 20 : 0;
-        const score = (e.total_registered || 0) * 5 + isSoon + isNew;
+        const ageMs       = now - new Date(e.created_date || 0);
+        const ageDays     = ageMs / (1000 * 60 * 60 * 24);
+
+        // 1. Registrations — primary signal (0–40 pts)
+        const registrationScore = Math.min(registered * 2, 40);
+
+        // 2. Fill-rate engagement — how full the event is (0–20 pts)
+        //    (only meaningful when max_participants is set)
+        const fillRate = maxCap > 0 ? registered / maxCap : 0;
+        const engagementScore = fillRate * 20;
+
+        // 3. Urgency — events happening soon rank higher (0–25 pts)
+        //    Peak at 1–3 days out, tapering off beyond 14 days
+        let urgencyScore = 0;
+        if (daysToEvent <= 1)       urgencyScore = 25;
+        else if (daysToEvent <= 3)  urgencyScore = 22;
+        else if (daysToEvent <= 7)  urgencyScore = 15;
+        else if (daysToEvent <= 14) urgencyScore = 8;
+        else if (daysToEvent <= 30) urgencyScore = 3;
+
+        // 4. Freshness — newer events get a boost that decays over 7 days (0–15 pts)
+        const freshnessScore = Math.max(0, 15 - (ageDays / 7) * 15);
+
+        const score = registrationScore + engagementScore + urgencyScore + freshnessScore;
         return { ...e, score };
       })
       .sort((a, b) => b.score - a.score)
       .slice(0, 5);
-  }, [communityEvents, myGroupIds]);
+  }, [communityEvents]);
 
   // Game stats - derived from coin_balance (single source of truth)
   const coinBalance = user?.coin_balance ?? 0;
