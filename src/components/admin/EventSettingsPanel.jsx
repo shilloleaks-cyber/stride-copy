@@ -47,7 +47,18 @@ export default function EventSettingsPanel({ event, onUpdated, actorEmail }) {
   const inputStyle = {
     width: '100%', boxSizing: 'border-box', padding: '10px 13px',
     borderRadius: 10, background: 'rgba(0,230,118,0.04)', border: '1px solid rgba(0,230,118,0.15)',
-    color: '#fff', fontSize: 13, outline: 'none',
+    color: '#fff', fontSize: 13, outline: 'none', minWidth: 0,
+  };
+
+  const dateInputStyle = {
+    ...inputStyle,
+    WebkitAppearance: 'none',
+    MozAppearance: 'none',
+    appearance: 'none',
+    display: 'block',
+    maxWidth: '100%',
+    fontSize: 12,
+    padding: '10px 8px',
   };
 
   const labelStyle = { fontSize: 10, fontWeight: 800, color: 'rgba(0,230,118,0.45)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 5px', display: 'block' };
@@ -77,11 +88,11 @@ export default function EventSettingsPanel({ event, onUpdated, actorEmail }) {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
         <div style={{ minWidth: 0, overflow: 'hidden' }}>
           <label style={labelStyle}>Date</label>
-          <input type="date" style={{ ...inputStyle, minWidth: 0 }} value={form.event_date} onChange={e => setForm(f => ({ ...f, event_date: e.target.value }))} />
+          <input type="date" style={dateInputStyle} value={form.event_date} onChange={e => setForm(f => ({ ...f, event_date: e.target.value }))} />
         </div>
         <div style={{ minWidth: 0, overflow: 'hidden' }}>
           <label style={labelStyle}>Start Time</label>
-          <input type="time" style={{ ...inputStyle, minWidth: 0 }} value={form.start_time} onChange={e => setForm(f => ({ ...f, start_time: e.target.value }))} />
+          <input type="time" style={dateInputStyle} value={form.start_time} onChange={e => setForm(f => ({ ...f, start_time: e.target.value }))} />
         </div>
       </div>
 
