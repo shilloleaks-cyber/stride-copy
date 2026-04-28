@@ -8,7 +8,7 @@ import { Calendar, MapPin, Users } from 'lucide-react';
 import { useAuthGate } from '@/hooks/useAuthGate';
 import LoginGateModal from '@/components/auth/LoginGateModal';
 import NotificationCenter from '@/components/notifications/NotificationCenter';
-import { getTrendingCommunityEvents } from '@/lib/trendingScore';
+import { getTrendingEvents } from '@/lib/trendingScore';
 
 // ===== Coin Pop Animation =====
 function CoinPopLayer({ pops }) {
@@ -235,15 +235,15 @@ export default function Home() {
 
 
 
-  // Trending community events
-  const { data: communityEvents = [] } = useQuery({
-    queryKey: ['community-events-home'],
-    queryFn: () => base44.entities.StrideEvent.filter({ event_type: 'community', status: 'open' }, '-created_date', 50),
+  // Trending events — all types combined
+  const { data: allEvents = [] } = useQuery({
+    queryKey: ['all-events-home'],
+    queryFn: () => base44.entities.StrideEvent.list('-created_date', 100),
   });
 
   const trendingEvents = useMemo(
-    () => getTrendingCommunityEvents(communityEvents).slice(0, 5),
-    [communityEvents]
+    () => getTrendingEvents(allEvents).slice(0, 5),
+    [allEvents]
   );
 
   // Game stats - derived from coin_balance (single source of truth)
@@ -1049,14 +1049,25 @@ function TrendingEventCard({ event, onClick }) {
 
       {/* Badges */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
-        <span style={{
-          display: 'inline-flex', alignItems: 'center', gap: 4,
-          background: 'rgba(138,43,226,0.15)', border: '1px solid rgba(138,43,226,0.3)',
-          color: 'rgba(180,120,255,1)', fontSize: 11, fontWeight: 700,
-          padding: '4px 10px', borderRadius: 99,
-        }}>
-          Group
-        </span>
+        {event.event_type === 'official' ? (
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 4,
+            background: 'rgba(0,210,110,0.12)', border: '1px solid rgba(0,210,110,0.3)',
+            color: 'rgba(0,210,110,1)', fontSize: 11, fontWeight: 700,
+            padding: '4px 10px', borderRadius: 99,
+          }}>
+            Official
+          </span>
+        ) : (
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 4,
+            background: 'rgba(138,43,226,0.15)', border: '1px solid rgba(138,43,226,0.3)',
+            color: 'rgba(180,120,255,1)', fontSize: 11, fontWeight: 700,
+            padding: '4px 10px', borderRadius: 99,
+          }}>
+            Community
+          </span>
+        )}
         <span style={{
           display: 'inline-flex', alignItems: 'center',
           background: 'rgba(255,100,0,0.1)', border: '1px solid rgba(255,100,0,0.25)',
