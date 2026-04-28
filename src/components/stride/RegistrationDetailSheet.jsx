@@ -154,9 +154,20 @@ export default function RegistrationDetailSheet({ reg, eventMap, catMap, registr
     return bib;
   };
 
+  const [bibError, setBibError] = useState('');
+
   const handleAssignBib = () => {
     const bib = bibInput.trim() || generateBib();
     const oldBib = reg.bib_number;
+    // Duplicate check: reject if bib already taken in this category by another registration
+    const isDuplicate = registrations.some(
+      r => r.category_id === reg.category_id && r.bib_number === bib && r.id !== reg.id
+    );
+    if (isDuplicate) {
+      setBibError(`Bib "${bib}" is already assigned in this category. Choose a different number.`);
+      return;
+    }
+    setBibError('');
     update.mutate({ bib_number: bib }, {
       onSuccess: () => {
         logActivity({ eventId: eId, actorEmail, actionType: 'manual_bib_assign', targetType: 'registration', targetId: reg.id, summary: `Bib ${oldBib ? `reassigned from ${oldBib} to` : 'assigned as'} ${bib} for ${reg.first_name} ${reg.last_name}`, meta: { old_bib: oldBib || null, new_bib: bib } });
@@ -175,6 +186,7 @@ export default function RegistrationDetailSheet({ reg, eventMap, catMap, registr
       await base44.entities.EventRegistration.update(reg.id, {
         category_id: catId,
         bib_number: newBib,
+        item_selections: {},  // clear stale item_selections from old category
       });
       return { oldCat, newCat, newBib };
     },
@@ -319,11 +331,15 @@ export default function RegistrationDetailSheet({ reg, eventMap, catMap, registr
                   variant="green"
                   disabled={reg.status === 'confirmed' || reg.status === 'rejected'}
                   loading={update.isPending}
-                  onClick={() => {
-                    update.mutate({ status: 'confirmed' }, {
+                  onClick={() => withConfirm({
+                    title: 'Confirm Registration?',
+                    message: `Set ${reg.first_name} ${reg.last_name}'s registration to Confirmed.${reg.payment_status === 'pending' ? ' Note: payment is still pending — confirm only if payment was verified offline.' : ''}`,
+                    confirmLabel: 'Confirm',
+                    variant: 'green',
+                    action: () => update.mutate({ status: 'confirmed' }, {
                       onSuccess: () => logActivity({ eventId: eId, actorEmail, actionType: 'manual_registration_confirm', targetType: 'registration', targetId: reg.id, summary: `Confirmed registration for ${reg.first_name} ${reg.last_name}` })
-                    });
-                  }}
+                    }),
+                  })}
                 />
                 {reg.status === 'confirmed' && <HINT>Registration is already Confirmed.</HINT>}
 
@@ -376,9 +392,10 @@ export default function RegistrationDetailSheet({ reg, eventMap, catMap, registr
                         style={{ flex: 1, padding: '10px 14px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,180,0,0.3)', color: '#fff', fontSize: 13, outline: 'none' }}
                       />
                       <button onClick={handleAssignBib} style={{ padding: '10px 16px', borderRadius: 12, background: 'rgba(255,180,0,0.12)', border: '1px solid rgba(255,180,0,0.3)', color: 'rgb(255,180,0)', fontWeight: 700, fontSize: 13, cursor: 'pointer', flexShrink: 0 }}>Save</button>
-                      <button onClick={() => setShowBibInput(false)} style={{ padding: '10px 14px', borderRadius: 12, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.4)', fontWeight: 700, fontSize: 13, cursor: 'pointer', flexShrink: 0 }}>Cancel</button>
+                      <button onClick={() => { setShowBibInput(false); setBibError(''); }} style={{ padding: '10px 14px', borderRadius: 12, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.4)', fontWeight: 700, fontSize: 13, cursor: 'pointer', flexShrink: 0 }}>Cancel</button>
                     </div>
                   )}
+                  {bibError && <p style={{ fontSize: 11, color: 'rgba(255,80,80,0.85)', marginTop: 5, display: 'flex', alignItems: 'center', gap: 5 }}><AlertCircle style={{ width: 11, height: 11, flexShrink: 0 }} />{bibError}</p>}
                 </div>
 
                 {/* 3. Payment */}
@@ -413,7 +430,7 @@ export default function RegistrationDetailSheet({ reg, eventMap, catMap, registr
                         message: 'This will reset payment to "Awaiting Payment". Use only to undo an accidental approval.',
                         confirmLabel: 'Reset',
                         variant: 'amber',
-                        action: () => update.mutate({ payment_status: 'pending' }, {
+                        action: () => update.mutate({ payment_status: 'pending', status: 'pending' }, {
                           onSuccess: () => logActivity({ eventId: eId, actorEmail, actionType: 'manual_payment_reset', targetType: 'payment', targetId: reg.id, summary: `Reset payment to Awaiting Payment for ${reg.first_name} ${reg.last_name}` })
                         }),
                       })}
@@ -508,8 +525,8 @@ export default function RegistrationDetailSheet({ reg, eventMap, catMap, registr
                           ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                               <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: 0 }}>
-                                A new bib will be auto-generated for the target category.
-                              </p>
+                                 A new bib will be auto-generated. Item selections will be cleared.
+                               </p>
                               <select
                                 value={newCatId}
                                 onChange={e => setNewCatId(e.target.value)}
@@ -525,7 +542,7 @@ export default function RegistrationDetailSheet({ reg, eventMap, catMap, registr
                                   disabled={!newCatId || changeCategoryMutation.isPending}
                                   onClick={() => withConfirm({
                                     title: 'Change Category?',
-                                    message: `Move ${reg.first_name} ${reg.last_name} from "${cat?.name}" to "${eventCategories.find(c => c.id === newCatId)?.name}". A new bib will be auto-assigned.`,
+                                    message: `Move ${reg.first_name} ${reg.last_name} from "${cat?.name}" to "${eventCategories.find(c => c.id === newCatId)?.name}". A new bib will be auto-assigned. Item selections will be cleared — participant may need to re-select.`,
                                     confirmLabel: 'Change Category',
                                     variant: 'amber',
                                     action: () => changeCategoryMutation.mutate(newCatId),
