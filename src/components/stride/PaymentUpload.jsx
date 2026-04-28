@@ -164,8 +164,7 @@ export default function PaymentUpload({ registration, category }) {
           onClick={() => {
             setSlipUrl('');
             setSlipPreview(null);
-            // Temporarily show upload form by resetting local state — handled by re-render
-            queryClient.setQueryData(['payment', registration.id], [{ ...existingPayment, slip_image: null }]);
+            queryClient.setQueryData(['payment', registration.id], [{ ...existingPayment, slip_image: null, status: 'pending' }]);
           }}
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px 0', borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.45)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
         >

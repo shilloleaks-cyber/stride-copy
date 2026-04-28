@@ -197,11 +197,16 @@ export default function EventPaymentsPanel({ event, registrations, payments, cat
       const targets = selectedPayments.filter(p => p.status !== 'needs_attention');
       const results = await Promise.allSettled(
         targets.map(p =>
-          base44.entities.EventPayment.update(p.id, {
-            status: 'needs_attention',
-            reviewed_by: actorEmail,
-            reviewed_at: now,
-          })
+          Promise.all([
+            base44.entities.EventPayment.update(p.id, {
+              status: 'needs_attention',
+              reviewed_by: actorEmail,
+              reviewed_at: now,
+            }),
+            base44.entities.EventRegistration.update(p.registration_id, {
+              payment_status: 'needs_attention',
+            }),
+          ])
         )
       );
       const succeeded = results.filter(r => r.status === 'fulfilled').length;
@@ -370,6 +375,7 @@ export default function EventPaymentsPanel({ event, registrations, payments, cat
                 onDone={onDone}
                 canReview={canReview}
                 eventId={event.id}
+                eventTitle={event.title}
               />
             </div>
           </div>

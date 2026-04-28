@@ -20,7 +20,7 @@ const STATUS_CFG = {
   needs_attention: { label: 'Payment Needs Attention', ...PAY_CFG_MAP.needs_attention,  border: PAY_CFG_MAP.needs_attention.border },
 };
 
-export default function PaymentReviewPanel({ payment, reg, catMap, registrations, user, onDone, canReview = true, eventId }) {
+export default function PaymentReviewPanel({ payment, reg, catMap, registrations, user, onDone, canReview = true, eventId, eventTitle }) {
   const queryClient = useQueryClient();
   const [noteInput, setNoteInput] = useState('');
   const [showNoteInput, setShowNoteInput] = useState(false);
@@ -72,7 +72,7 @@ export default function PaymentReviewPanel({ payment, reg, catMap, registrations
     },
     onSuccess: () => {
       logActivity({ eventId: eventId || reg.event_id, actorEmail: user.email, actionType: 'payment_approved', targetType: 'payment', targetId: payment.id, summary: `Approved payment for ${reg.first_name} ${reg.last_name} (฿${payment.amount})` });
-      notifyPaymentApproved({ user_email: reg.user_email, event_title: reg.event_title || '', event_id: reg.event_id, registration_id: reg.id });
+      notifyPaymentApproved({ user_email: reg.user_email, event_title: eventTitle || '', event_id: reg.event_id, registration_id: reg.id });
       invalidate();
     },
   });
@@ -96,7 +96,7 @@ export default function PaymentReviewPanel({ payment, reg, catMap, registrations
     onSuccess: () => {
       const note = noteInput.trim() || null;
       logActivity({ eventId: eventId || reg.event_id, actorEmail: user.email, actionType: 'payment_needs_attention', targetType: 'payment', targetId: payment.id, summary: `Marked payment needs attention for ${reg.first_name} ${reg.last_name}`, meta: { note } });
-      notifyPaymentNeedsAttention({ user_email: reg.user_email, event_title: reg.event_title || '', event_id: reg.event_id, registration_id: reg.id, note });
+      notifyPaymentNeedsAttention({ user_email: reg.user_email, event_title: eventTitle || '', event_id: reg.event_id, registration_id: reg.id, note });
       setShowNoteInput(false);
       setNoteInput('');
       setPendingAction(null);
