@@ -165,6 +165,7 @@ function Badge({ label, color, bg, border, Icon }) {
       padding: '5px 11px', borderRadius: 99,
       background: bg, border: `1px solid ${border}`,
       color, fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap',
+      alignSelf: 'flex-start',
     }}>
       {Icon && <Icon style={{ width: 11, height: 11 }} />}
       {label}
