@@ -118,7 +118,7 @@ export default function StrideEventDetail() {
         </button>
         {/* Share + Invite actions */}
         {user && (
-          <div className="absolute top-10 right-4 flex items-center gap-2">
+          <div className="absolute bottom-4 right-4 z-20 flex items-center gap-2">
             <EventShareButton event={event} user={user} />
             <button
               onClick={() => setShowInvite(true)}
