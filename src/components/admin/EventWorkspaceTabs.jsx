@@ -10,7 +10,7 @@ const ALL_TABS = [
   { key: 'categories',     label: 'Categories',     Icon: Tag },
   { key: 'checkin',        label: 'Check-in',       Icon: ScanLine },
   { key: 'staffs',         label: 'Staffs',         Icon: UserCog },
-  { key: 'settings',       label: 'Settings',       Icon: Settings },
+  { key: 'settings',       label: 'Edit',           Icon: Settings },
   { key: 'activity',       label: 'Activity',       Icon: Activity },
 ];
 

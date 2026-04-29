@@ -1,149 +1,322 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Loader2, Upload, Lock } from 'lucide-react';
+import { Loader2, ImagePlus, X, CheckCircle2, MapPin, ExternalLink, AlertCircle } from 'lucide-react';
 import { logActivity } from '@/lib/eventActivityLog';
 
 const ACCENT = '#00e676';
-const CARD_BG = 'rgba(10,30,18,0.9)';
 const BORDER = 'rgba(0,200,80,0.12)';
+
+const inp = {
+  background: 'rgba(255,255,255,0.05)',
+  border: '1px solid rgba(255,255,255,0.09)',
+  borderRadius: '16px',
+  color: 'white',
+  padding: '14px 16px',
+  width: '100%',
+  outline: 'none',
+  fontSize: '15px',
+  boxSizing: 'border-box',
+  boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.3)',
+  transition: 'border-color 0.2s',
+};
+
+const lbl = {
+  fontSize: '10px', color: 'rgba(255,255,255,0.32)', textTransform: 'uppercase',
+  letterSpacing: '0.13em', marginBottom: '9px', display: 'block', fontWeight: 800,
+};
+
+const divider = { height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent)' };
 
 export default function EventSettingsPanel({ event, onUpdated, actorEmail }) {
   const queryClient = useQueryClient();
+  const mapsLinkTimerRef = useRef(null);
 
   const [form, setForm] = useState({
     title: event.title || '',
+    banner_image: event.banner_image || '',
+    description: event.description || '',
+    location_name: event.location_name || '',
+    maps_link: event.maps_link || '',
     event_date: event.event_date || '',
     start_time: event.start_time || '',
-    location_name: event.location_name || '',
-    location_address: event.location_address || '',
-    description: event.description || '',
+    max_participants: event.max_participants != null ? String(event.max_participants) : '',
     status: event.status || 'draft',
-    banner_image: event.banner_image || '',
   });
-  const [uploading, setUploading] = useState(false);
+
+  const [bannerPreview, setBannerPreview] = useState(event.banner_image || null);
+  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+  const [coordStatus, setCoordStatus] = useState(
+    event.latitude && event.longitude ? 'found' : null
+  );
+  const [resolvedCoords, setResolvedCoords] = useState(
+    event.latitude && event.longitude ? { latitude: event.latitude, longitude: event.longitude } : null
+  );
   const [saved, setSaved] = useState(false);
+
+  const handleChange = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
+
+  const handleMapsLinkChange = (value) => {
+    handleChange('maps_link', value);
+    setCoordStatus(null);
+    setResolvedCoords(null);
+    if (mapsLinkTimerRef.current) clearTimeout(mapsLinkTimerRef.current);
+    if (!value) return;
+    mapsLinkTimerRef.current = setTimeout(async () => {
+      setCoordStatus('resolving');
+      try {
+        const res = await base44.functions.invoke('resolveMapsLinkCoordinates', { maps_link: value });
+        if (res.data?.success) {
+          setResolvedCoords({ latitude: res.data.latitude, longitude: res.data.longitude });
+          setCoordStatus('found');
+        } else {
+          setCoordStatus('not_found');
+        }
+      } catch {
+        setCoordStatus('not_found');
+      }
+    }, 800);
+  };
+
+  const handleBannerUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingBanner(true);
+    setBannerPreview(URL.createObjectURL(file));
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    handleChange('banner_image', file_url);
+    setBannerPreview(file_url);
+    setIsUploadingBanner(false);
+  };
+
+  const clearBanner = () => { setBannerPreview(null); handleChange('banner_image', ''); };
 
   const updateMutation = useMutation({
     mutationFn: (data) => base44.entities.StrideEvent.update(event.id, data),
     onSuccess: (_, data) => {
       logActivity({ eventId: event.id, actorEmail, actionType: 'event_settings_updated', targetType: 'event', targetId: event.id, summary: `Updated event settings for "${event.title}"`, meta: { status: data.status } });
       queryClient.invalidateQueries({ queryKey: ['admin-events-list'] });
+      queryClient.invalidateQueries({ queryKey: ['stride-event', event.id] });
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
       if (onUpdated) onUpdated();
     },
   });
 
-  const handleBannerUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    setForm(f => ({ ...f, banner_image: file_url }));
-    setUploading(false);
+  const handleSave = () => {
+    const payload = {
+      title: form.title,
+      banner_image: form.banner_image,
+      description: form.description,
+      location_name: form.location_name,
+      maps_link: form.maps_link || null,
+      latitude: resolvedCoords?.latitude ?? (form.maps_link === event.maps_link ? event.latitude : null),
+      longitude: resolvedCoords?.longitude ?? (form.maps_link === event.maps_link ? event.longitude : null),
+      event_date: form.event_date,
+      start_time: form.start_time,
+      max_participants: form.max_participants !== '' ? parseInt(form.max_participants) : 0,
+      status: form.status,
+    };
+    updateMutation.mutate(payload);
   };
-
-  const inputStyle = {
-    width: '100%', boxSizing: 'border-box', padding: '10px 13px',
-    borderRadius: 10, background: 'rgba(0,230,118,0.04)', border: '1px solid rgba(0,230,118,0.15)',
-    color: '#fff', fontSize: 13, outline: 'none', minWidth: 0,
-  };
-
-  const dateInputStyle = {
-    ...inputStyle,
-    WebkitAppearance: 'none',
-    MozAppearance: 'none',
-    appearance: 'none',
-    display: 'block',
-    maxWidth: '100%',
-    fontSize: 12,
-    padding: '10px 8px',
-  };
-
-  const labelStyle = { fontSize: 10, fontWeight: 800, color: 'rgba(0,230,118,0.45)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 5px', display: 'block' };
 
   return (
-    <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {/* Banner */}
+    <div style={{ padding: '0 20px 80px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+
+      {/* Event Name */}
       <div>
-        <label style={labelStyle}>Event Banner</label>
-        <div style={{ position: 'relative', height: 120, borderRadius: 14, overflow: 'hidden', background: 'rgba(0,0,0,0.3)', border: `1px solid ${BORDER}` }}>
-          {form.banner_image && <img src={form.banner_image} alt="banner" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
-          <label style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: 'pointer', background: form.banner_image ? 'rgba(0,0,0,0.45)' : 'transparent' }}>
-            {uploading ? <Loader2 style={{ width: 22, height: 22, color: ACCENT, animation: 'spin 1s linear infinite' }} /> : <Upload style={{ width: 22, height: 22, color: 'rgba(0,230,118,0.6)' }} />}
-            <span style={{ fontSize: 11, color: 'rgba(0,230,118,0.6)', fontWeight: 700 }}>{form.banner_image ? 'Change Banner' : 'Upload Banner'}</span>
+        <label style={lbl}>Event Name *</label>
+        <input
+          type="text"
+          value={form.title}
+          onChange={e => handleChange('title', e.target.value)}
+          placeholder="e.g. BoomX City Run 2026"
+          style={inp}
+        />
+      </div>
+
+      {/* Banner Image */}
+      <div>
+        <label style={lbl}>Banner Image</label>
+        {bannerPreview ? (
+          <div style={{ position: 'relative', borderRadius: 18, overflow: 'hidden', height: 170 }}>
+            <img src={bannerPreview} alt="Banner preview" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 60%)' }} />
+            {isUploadingBanner && (
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.6)' }}>
+                <Loader2 style={{ width: 26, height: 26, color: '#BFFF00', animation: 'spin 1s linear infinite' }} />
+              </div>
+            )}
+            {!isUploadingBanner && (
+              <button type="button" onClick={clearBanner}
+                style={{ position: 'absolute', top: 10, right: 10, width: 28, height: 28, borderRadius: 9, background: 'rgba(0,0,0,0.72)', border: '1px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <X style={{ width: 13, height: 13, color: 'white' }} />
+              </button>
+            )}
+          </div>
+        ) : (
+          <label style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12,
+            borderRadius: 18, cursor: 'pointer', height: 140,
+            background: 'rgba(191,255,0,0.02)',
+            border: '1.5px dashed rgba(191,255,0,0.18)',
+          }}>
+            <div style={{ width: 44, height: 44, borderRadius: 14, background: 'rgba(191,255,0,0.07)', border: '1px solid rgba(191,255,0,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <ImagePlus style={{ width: 18, height: 18, color: 'rgba(191,255,0,0.6)' }} />
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <p style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.55)', margin: 0 }}>Tap to upload banner</p>
+              <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.22)', margin: '4px 0 0' }}>Recommended: 1200 × 600 px</p>
+            </div>
             <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleBannerUpload} />
           </label>
-        </div>
+        )}
       </div>
 
-      {/* Title */}
-      <div>
-        <label style={labelStyle}>Event Title</label>
-        <input style={inputStyle} value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="Event title" />
-      </div>
-
-      {/* Date + Time */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-        <div style={{ minWidth: 0, overflow: 'hidden' }}>
-          <label style={labelStyle}>Date</label>
-          <input type="date" style={dateInputStyle} value={form.event_date} onChange={e => setForm(f => ({ ...f, event_date: e.target.value }))} />
-        </div>
-        <div style={{ minWidth: 0, overflow: 'hidden' }}>
-          <label style={labelStyle}>Start Time</label>
-          <input type="time" style={dateInputStyle} value={form.start_time} onChange={e => setForm(f => ({ ...f, start_time: e.target.value }))} />
-        </div>
-      </div>
-
-      {/* Location */}
-      <div>
-        <label style={labelStyle}>Location Name</label>
-        <input style={inputStyle} value={form.location_name} onChange={e => setForm(f => ({ ...f, location_name: e.target.value }))} placeholder="e.g. Lumpini Park" />
-      </div>
-      <div>
-        <label style={labelStyle}>Location Address</label>
-        <input style={inputStyle} value={form.location_address} onChange={e => setForm(f => ({ ...f, location_address: e.target.value }))} placeholder="Full address" />
-      </div>
+      <div style={divider} />
 
       {/* Description */}
       <div>
-        <label style={labelStyle}>Description</label>
+        <label style={lbl}>Description</label>
         <textarea
-          style={{ ...inputStyle, resize: 'none', minHeight: 80 }}
-          value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-          placeholder="Event description..."
-          rows={3}
+          value={form.description}
+          onChange={e => handleChange('description', e.target.value)}
+          placeholder="Tell participants about this event — route, highlights, what's included…"
+          rows={4}
+          style={{ ...inp, resize: 'none', lineHeight: 1.6 }}
+        />
+      </div>
+
+      {/* Location Name */}
+      <div>
+        <label style={lbl}>Location Name</label>
+        <input
+          type="text"
+          value={form.location_name}
+          onChange={e => handleChange('location_name', e.target.value)}
+          placeholder="e.g. Lumpini Park, Bangkok"
+          style={inp}
+        />
+      </div>
+
+      {/* Google Maps Link */}
+      <div>
+        <label style={lbl}>Google Maps Link</label>
+        <input
+          type="url"
+          value={form.maps_link}
+          onChange={e => handleMapsLinkChange(e.target.value)}
+          placeholder="https://maps.app.goo.gl/… or https://maps.google.com/…"
+          style={inp}
+        />
+        <div style={{ marginTop: 10 }}>
+          {coordStatus === 'resolving' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 14px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <Loader2 style={{ width: 13, height: 13, color: 'rgba(255,255,255,0.4)', animation: 'spin 1s linear infinite' }} />
+              <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.4)' }}>Detecting coordinates…</span>
+            </div>
+          )}
+          {coordStatus === 'found' && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 14px', borderRadius: 12, background: 'rgba(0,210,110,0.06)', border: '1px solid rgba(0,210,110,0.2)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                <CheckCircle2 style={{ width: 13, height: 13, color: 'rgb(0,210,110)', flexShrink: 0 }} />
+                <span style={{ fontSize: 12, fontWeight: 700, color: 'rgb(0,210,110)' }}>
+                  Coordinates detected ({resolvedCoords?.latitude?.toFixed(4)}, {resolvedCoords?.longitude?.toFixed(4)})
+                </span>
+              </div>
+              {form.maps_link && (
+                <a href={form.maps_link} target="_blank" rel="noreferrer"
+                  style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 8, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', textDecoration: 'none', flexShrink: 0 }}>
+                  <ExternalLink style={{ width: 10, height: 10 }} /> Open
+                </a>
+              )}
+            </div>
+          )}
+          {coordStatus === 'not_found' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 14px', borderRadius: 12, background: 'rgba(255,180,0,0.06)', border: '1px solid rgba(255,180,0,0.2)' }}>
+              <AlertCircle style={{ width: 13, height: 13, color: 'rgba(255,180,0,0.9)', flexShrink: 0 }} />
+              <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,180,0,0.9)' }}>Could not detect coordinates. Map preview may be inaccurate.</span>
+            </div>
+          )}
+          {!coordStatus && !form.maps_link && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+              <MapPin style={{ width: 12, height: 12, color: 'rgba(255,255,255,0.2)' }} />
+              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.22)', fontWeight: 600 }}>Paste a Google Maps link — coordinates auto-detected</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div style={divider} />
+
+      {/* Date & Time */}
+      <div>
+        <label style={lbl}>Date &amp; Time *</label>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <input
+            type="date"
+            value={form.event_date}
+            onChange={e => handleChange('event_date', e.target.value)}
+            style={{ ...inp, flex: 2, colorScheme: 'dark', fontSize: 14 }}
+          />
+          <input
+            type="time"
+            value={form.start_time}
+            onChange={e => handleChange('start_time', e.target.value)}
+            style={{ ...inp, flex: 1, colorScheme: 'dark', fontSize: 14 }}
+          />
+        </div>
+      </div>
+
+      {/* Max Participants */}
+      <div>
+        <label style={lbl}>Max Participants</label>
+        <input
+          type="number"
+          value={form.max_participants}
+          onChange={e => handleChange('max_participants', e.target.value)}
+          placeholder="0 = Unlimited"
+          min="0"
+          style={inp}
         />
       </div>
 
       {/* Publish Status */}
       <div>
-        <label style={labelStyle}>Publish Status</label>
-        <select style={inputStyle} value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value }))}>
+        <label style={lbl}>Publish Status</label>
+        <select
+          value={form.status}
+          onChange={e => handleChange('status', e.target.value)}
+          style={{ ...inp, appearance: 'none', WebkitAppearance: 'none' }}
+        >
           <option value="draft">Draft (hidden from public)</option>
-          <option value="open">Published (visible to all)</option>
+          <option value="open">Published (open for registration)</option>
           <option value="closed">Closed (no more registrations)</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
         </select>
       </div>
 
       {/* Save */}
       <button
-        onClick={() => updateMutation.mutate(form)}
-        disabled={updateMutation.isPending}
+        onClick={handleSave}
+        disabled={updateMutation.isPending || !form.title}
         style={{
-          width: '100%', padding: '14px 0', borderRadius: 14, fontSize: 14, fontWeight: 900, border: 'none', cursor: 'pointer',
+          width: '100%', padding: '16px 0', borderRadius: 18, fontSize: 15, fontWeight: 900, border: 'none', cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-          background: saved ? 'rgba(0,230,118,0.15)' : ACCENT,
-          color: saved ? ACCENT : '#050f08',
-          border: saved ? `1px solid rgba(0,230,118,0.4)` : 'none',
-          transition: 'all 0.3s',
+          background: saved ? 'rgba(0,230,118,0.12)' : (updateMutation.isPending || !form.title) ? 'rgba(255,255,255,0.07)' : '#BFFF00',
+          color: saved ? ACCENT : (updateMutation.isPending || !form.title) ? 'rgba(255,255,255,0.2)' : '#0A0A0A',
+          border: saved ? `1px solid rgba(0,230,118,0.35)` : 'none',
+          boxShadow: (!saved && !updateMutation.isPending && form.title) ? '0 0 28px rgba(191,255,0,0.25)' : 'none',
+          transition: 'all 0.2s',
         }}
       >
-        {updateMutation.isPending ? <><Loader2 style={{ width: 16, height: 16, animation: 'spin 1s linear infinite' }} /> Saving...</> : saved ? '✓ Saved' : 'Save Changes'}
+        {updateMutation.isPending
+          ? <><Loader2 style={{ width: 16, height: 16, animation: 'spin 1s linear infinite' }} /> Saving…</>
+          : saved ? '✓ Saved' : 'Save Changes'
+        }
       </button>
-
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
