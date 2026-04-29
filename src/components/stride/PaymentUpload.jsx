@@ -49,6 +49,7 @@ export default function PaymentUpload({ registration, category }) {
   const [method, setMethod] = useState(null); // set after event loads
   const [slipUrl, setSlipUrl] = useState('');
   const [slipPreview, setSlipPreview] = useState(null);
+  const [note, setNote] = useState('');
 
   // Fetch event payment config
   const { data: events = [] } = useQuery({
@@ -85,11 +86,11 @@ export default function PaymentUpload({ registration, category }) {
           payment_method: method,
           status: 'pending',
           submitted_at: now,
+          user_note: note || null,
           admin_note: null,
           reviewed_by: null,
           reviewed_at: null,
         });
-        // Always reset registration payment_status to pending on re-upload
         await base44.entities.EventRegistration.update(registration.id, { payment_status: 'pending' });
       } else {
         await base44.entities.EventPayment.create({
@@ -101,6 +102,7 @@ export default function PaymentUpload({ registration, category }) {
           slip_image: slipUrl,
           status: 'pending',
           submitted_at: now,
+          user_note: note || null,
         });
         await base44.entities.EventRegistration.update(registration.id, { payment_status: 'pending' });
       }
@@ -108,6 +110,7 @@ export default function PaymentUpload({ registration, category }) {
     onSuccess: () => {
       setSlipUrl('');
       setSlipPreview(null);
+      setNote('');
       queryClient.invalidateQueries({ queryKey: ['payment', registration.id] });
       queryClient.invalidateQueries({ queryKey: ['all-payments-admin'] });
     },
@@ -260,6 +263,27 @@ export default function PaymentUpload({ registration, category }) {
         ) : (
           <SlipUploader onUploaded={(url, preview) => { setSlipUrl(url); setSlipPreview(preview); }} />
         )}
+      </div>
+
+      {/* Note field */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
+          Note (optional)
+        </p>
+        <textarea
+          value={note}
+          onChange={e => setNote(e.target.value)}
+          placeholder="e.g. Transferred on Apr 29 at 10:00 AM"
+          rows={2}
+          style={{
+            width: '100%', boxSizing: 'border-box',
+            background: 'rgba(255,255,255,0.05)',
+            border: '1px solid rgba(255,255,255,0.09)',
+            borderRadius: 12, color: 'white',
+            padding: '10px 14px', fontSize: 13,
+            outline: 'none', resize: 'none', lineHeight: 1.5,
+          }}
+        />
       </div>
 
       {/* Submit button */}

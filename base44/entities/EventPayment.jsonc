@@ -41,6 +41,10 @@
       "default": "pending",
       "description": "pending = awaiting approval, approved = payment confirmed, needs_attention = admin requested re-upload"
     },
+    "user_note": {
+      "type": "string",
+      "description": "Optional note from participant when submitting payment"
+    },
     "reviewed_by": {
       "type": "string",
       "description": "Admin email who last reviewed"
