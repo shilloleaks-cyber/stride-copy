@@ -13,7 +13,7 @@ export default function EventShareSheet({ event, user, onClose }) {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const SIZE = 280;
+    const SIZE = 240;
     canvas.width = SIZE;
     canvas.height = SIZE;
     const ctx = canvas.getContext('2d');
@@ -104,67 +104,73 @@ export default function EventShareSheet({ event, user, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex flex-col justify-end"
-      style={{ backgroundColor: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)' }}
+      className="fixed inset-0 z-[9998] flex flex-col justify-end"
+      style={{ backgroundColor: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(3px)' }}
       onClick={onClose}
     >
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          background: 'rgba(18,18,18,0.97)',
-          border: '1px solid rgba(255,255,255,0.09)',
-          borderRadius: '24px 24px 0 0',
-          boxShadow: '0 -20px 60px rgba(0,0,0,0.6)',
-          paddingBottom: 'calc(16px + env(safe-area-inset-bottom, 0px))',
+          background: '#141414',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: '28px 28px 0 0',
+          boxShadow: '0 -16px 48px rgba(0,0,0,0.7)',
+          paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
         }}
       >
-        <div style={{ width: 36, height: 4, borderRadius: 99, background: 'rgba(255,255,255,0.18)', margin: '14px 0 20px' }} />
+        {/* Handle */}
+        <div style={{ width: 36, height: 4, borderRadius: 99, background: 'rgba(255,255,255,0.15)', margin: '12px 0 18px' }} />
 
-        <p style={{ fontSize: 18, fontWeight: 800, color: '#fff', margin: 0 }}>Event QR</p>
-        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', margin: '5px 0 20px' }}>Share or save this QR</p>
+        {/* Title */}
+        <p style={{ fontSize: 17, fontWeight: 800, color: '#fff', margin: 0 }}>Share Event</p>
+        <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', margin: '4px 0 16px' }}>Scan QR or copy the link</p>
 
-        <div style={{ background: '#fff', borderRadius: 20, padding: 12, boxShadow: '0 4px 32px rgba(0,0,0,0.4)', display: 'inline-flex' }}>
-          <canvas ref={canvasRef} style={{ display: 'block', borderRadius: 10 }} />
+        {/* QR */}
+        <div style={{ background: '#fff', borderRadius: 18, padding: 10, boxShadow: '0 4px 24px rgba(0,0,0,0.5)', display: 'inline-flex' }}>
+          <canvas ref={canvasRef} style={{ display: 'block', borderRadius: 8 }} />
         </div>
 
-        <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: '16px 0 20px', textAlign: 'center', padding: '0 24px' }}>
+        {/* Event title */}
+        <p style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.6)', margin: '12px 0 16px', textAlign: 'center', padding: '0 32px', lineHeight: 1.4 }}>
           {event.title}
         </p>
 
+        {/* Actions */}
         <div style={{ width: '100%', padding: '0 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <button
             onClick={handleSaveQR}
             style={{
-              width: '100%', padding: '15px 0', borderRadius: 99, border: 'none',
+              width: '100%', padding: '14px 0', borderRadius: 99, border: 'none',
               background: '#BFFF00', color: '#0A0A0A', fontSize: 15, fontWeight: 800,
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              cursor: 'pointer', boxShadow: '0 0 24px rgba(191,255,0,0.3)',
+              cursor: 'pointer', boxShadow: '0 0 20px rgba(191,255,0,0.25)',
             }}
           >
-            <Download style={{ width: 17, height: 17 }} /> Save QR
+            <Download style={{ width: 16, height: 16 }} /> Save QR
           </button>
 
           <button
             onClick={handleCopyLink}
             style={{
-              width: '100%', padding: '15px 0', borderRadius: 99,
-              background: 'transparent', border: '1px solid rgba(255,255,255,0.18)',
-              color: copied ? '#BFFF00' : '#fff', fontSize: 15, fontWeight: 700,
+              width: '100%', padding: '14px 0', borderRadius: 99,
+              background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)',
+              color: copied ? '#BFFF00' : 'rgba(255,255,255,0.85)', fontSize: 15, fontWeight: 700,
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               cursor: 'pointer', transition: 'color 0.2s',
             }}
           >
-            <Link style={{ width: 16, height: 16 }} /> {copied ? 'Link Copied!' : 'Copy Link'}
+            <Link style={{ width: 16, height: 16 }} /> {copied ? '✓ Copied!' : 'Copy Link'}
           </button>
 
           <button
             onClick={onClose}
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
-              color: 'rgba(255,255,255,0.35)', fontSize: 14, fontWeight: 600, padding: '10px 0',
+              color: 'rgba(255,255,255,0.3)', fontSize: 14, fontWeight: 600,
+              padding: '8px 0', letterSpacing: '0.01em',
             }}
           >
             Close
