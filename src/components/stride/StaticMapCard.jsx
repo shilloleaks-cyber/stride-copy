@@ -126,21 +126,28 @@ export default function StaticMapCard({ event }) {
         </div>
       </div>
 
-      {/* DEV: clickable URL for debugging */}
-      {IS_DEV && staticMapUrl && (
-        <a
-          href={staticMapUrl}
-          target="_blank"
-          rel="noreferrer"
-          style={{
-            display: 'block', marginBottom: 8, padding: '6px 10px', borderRadius: 8,
-            background: 'rgba(255,255,0,0.07)', border: '1px solid rgba(255,255,0,0.2)',
-            fontSize: 10, color: 'rgba(255,255,0,0.7)', wordBreak: 'break-all',
-            fontFamily: 'monospace',
-          }}
-        >
-          [DEV] Static Map URL (tap to test) ↗
-        </a>
+      {/* DEV: diagnostics */}
+      {IS_DEV && (
+        <div style={{
+          marginBottom: 8, padding: '8px 10px', borderRadius: 8,
+          background: 'rgba(255,255,0,0.07)', border: '1px solid rgba(255,255,0,0.2)',
+          fontSize: 10, color: 'rgba(255,255,0,0.85)', fontFamily: 'monospace',
+          display: 'flex', flexDirection: 'column', gap: 4,
+        }}>
+          <div>🔑 API_KEY: <strong>{API_KEY ? `"${API_KEY.slice(0,8)}…" ✅` : 'undefined ❌'}</strong></div>
+          <div>📍 mapQuery: <strong>{(() => {
+            if (event.latitude && event.longitude) return `${event.latitude},${event.longitude}`;
+            if (event.location_name) return event.location_name;
+            return 'none ❌';
+          })()}</strong></div>
+          <div>🖼 imgError: <strong>{imgError ? 'YES ❌' : 'no'}</strong></div>
+          {staticMapUrl && (
+            <a href={staticMapUrl} target="_blank" rel="noreferrer"
+              style={{ color: 'rgba(100,200,255,0.9)', textDecoration: 'underline', wordBreak: 'break-all' }}>
+              [tap to open raw URL ↗]
+            </a>
+          )}
+        </div>
       )}
     </>
   );
