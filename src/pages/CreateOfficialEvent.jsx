@@ -486,7 +486,7 @@ export default function CreateOfficialEvent() {
         <div style={{
           position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
           padding: '12px 20px',
-          paddingBottom: 'calc(12px + env(safe-area-inset-bottom))',
+          paddingBottom: 'calc(80px + env(safe-area-inset-bottom))',
           background: 'linear-gradient(to top, rgba(10,10,10,1) 65%, rgba(10,10,10,0))',
           backdropFilter: 'blur(2px)',
         }}>
