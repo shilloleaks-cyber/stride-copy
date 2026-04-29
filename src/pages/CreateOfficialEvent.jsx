@@ -221,7 +221,7 @@ export default function CreateOfficialEvent() {
   const canPublish = hasCategories && !paymentBlocking;
 
   return (
-    <div className="min-h-screen text-white" style={{ backgroundColor: '#0A0A0A', paddingBottom: 110 }}>
+    <div className="min-h-screen text-white" style={{ backgroundColor: '#0A0A0A' }}>
       <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
 
       {/* ── Header ── */}
@@ -476,48 +476,38 @@ export default function CreateOfficialEvent() {
             </p>
           </div>
 
-          {/* Spacer for sticky CTA */}
-          <div style={{ height: 16 }} />
+          {/* CTA Button */}
+          <div style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}>
+            <button
+              type="submit"
+              disabled={formDisabled}
+              style={{
+                width: '100%', padding: '16px 0', borderRadius: 18, border: 'none',
+                fontSize: 15, fontWeight: 900, letterSpacing: '0.02em',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                cursor: formDisabled ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s ease',
+                ...(formDisabled
+                  ? { background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.2)' }
+                  : {
+                      background: '#BFFF00',
+                      color: '#0A0A0A',
+                      boxShadow: '0 0 28px rgba(191,255,0,0.35), 0 4px 16px rgba(0,0,0,0.4)',
+                    }
+                ),
+              }}
+            >
+              {saving && <Loader2 style={{ width: 16, height: 16, animation: 'spin 1s linear infinite' }} />}
+              {saving
+                ? (isEditMode ? 'Saving…' : 'Saving Draft…')
+                : (isEditMode ? 'Update & Continue →' : 'Save Draft & Setup Categories →')
+              }
+            </button>
+          </div>
         </form>
       )}
 
-      {/* ── Sticky CTA (Phase 1) ── */}
-      {phase === 'form' && (
-        <div style={{
-          position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
-          padding: '12px 20px',
-          paddingBottom: 'calc(12px + env(safe-area-inset-bottom))',
-          background: 'linear-gradient(to top, rgba(10,10,10,1) 65%, rgba(10,10,10,0))',
-          backdropFilter: 'blur(2px)',
-        }}>
-          <button
-            type="button"
-            onClick={(e) => { isEditMode ? handleUpdateAndContinue(e) : handleSaveDraft(e); }}
-            disabled={formDisabled}
-            style={{
-              width: '100%', padding: '16px 0', borderRadius: 18, border: 'none',
-              fontSize: 15, fontWeight: 900, letterSpacing: '0.02em',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              cursor: formDisabled ? 'not-allowed' : 'pointer',
-              transition: 'all 0.2s ease',
-              ...(formDisabled
-                ? { background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.2)' }
-                : {
-                    background: '#BFFF00',
-                    color: '#0A0A0A',
-                    boxShadow: '0 0 28px rgba(191,255,0,0.35), 0 4px 16px rgba(0,0,0,0.4)',
-                  }
-              ),
-            }}
-          >
-            {saving && <Loader2 style={{ width: 16, height: 16, animation: 'spin 1s linear infinite' }} />}
-            {saving
-              ? (isEditMode ? 'Saving…' : 'Saving Draft…')
-              : (isEditMode ? 'Update & Continue →' : 'Save Draft & Setup Categories →')
-            }
-          </button>
-        </div>
-      )}
+
 
       {/* ── PHASE 2: Categories + Items + Publish ── */}
       {phase === 'categories' && draftEvent && (
