@@ -280,60 +280,94 @@ export default function StrideEventDetail() {
             {/* Map preview card */}
             {event.maps_link && (
               <div>
-                <button
-                  onClick={() => window.open(event.maps_link, '_blank')}
-                  style={{
-                    width: '100%', display: 'block', cursor: 'pointer',
-                    borderRadius: 16, overflow: 'hidden',
-                    border: '1px solid rgba(138,43,226,0.25)',
-                    background: 'rgba(138,43,226,0.06)',
-                    marginBottom: 10,
-                  }}
-                >
-                  {/* Static dark map placeholder with pin */}
-                  <div style={{
-                    height: 130, position: 'relative',
-                    background: 'linear-gradient(135deg, rgba(20,10,35,1) 0%, rgba(15,15,25,1) 100%)',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8,
-                  }}>
-                    {/* Grid overlay for map feel */}
-                    <div style={{
-                      position: 'absolute', inset: 0, opacity: 0.08,
-                      backgroundImage: 'linear-gradient(rgba(138,43,226,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(138,43,226,0.6) 1px, transparent 1px)',
-                      backgroundSize: '28px 28px',
-                    }} />
-                    {/* Radial glow under pin */}
-                    <div style={{
-                      position: 'absolute',
-                      width: 80, height: 80, borderRadius: '50%',
-                      background: 'radial-gradient(circle, rgba(138,43,226,0.25) 0%, transparent 70%)',
-                    }} />
-                    {/* Pin icon */}
-                    <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-                      <div style={{
-                        width: 40, height: 40, borderRadius: '50% 50% 50% 0%', transform: 'rotate(-45deg)',
-                        background: '#8A2BE2', border: '2px solid rgba(191,255,0,0.6)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        boxShadow: '0 0 18px rgba(138,43,226,0.5)',
-                      }}>
-                        <MapPin style={{ width: 18, height: 18, color: 'white', transform: 'rotate(45deg)' }} />
+                {(() => {
+                  // Build embed URL: prefer full google.com/maps URLs, fallback to location name query
+                  let embedUrl = null;
+                  try {
+                    const url = event.maps_link;
+                    if (url.includes('google.com/maps')) {
+                      // Already a full Google Maps URL — append output=embed
+                      const u = new URL(url);
+                      u.searchParams.set('output', 'embed');
+                      embedUrl = u.toString();
+                    } else if (event.location_name) {
+                      // Short link or unknown format — fallback to location name query
+                      embedUrl = `https://www.google.com/maps?q=${encodeURIComponent(event.location_name)}&output=embed`;
+                    }
+                  } catch (_) {
+                    if (event.location_name) {
+                      embedUrl = `https://www.google.com/maps?q=${encodeURIComponent(event.location_name)}&output=embed`;
+                    }
+                  }
+
+                  if (embedUrl) {
+                    return (
+                      <div
+                        onClick={() => window.open(event.maps_link, '_blank')}
+                        style={{
+                          position: 'relative', borderRadius: 16, overflow: 'hidden',
+                          border: '1px solid rgba(138,43,226,0.25)',
+                          height: 200, marginBottom: 10, cursor: 'pointer',
+                        }}
+                      >
+                        <iframe
+                          src={embedUrl}
+                          width="100%"
+                          height="100%"
+                          style={{ border: 'none', display: 'block', pointerEvents: 'none' }}
+                          loading="lazy"
+                          referrerPolicy="no-referrer-when-downgrade"
+                          title="Map preview"
+                        />
+                        {/* Tap overlay — forwards tap to open maps_link */}
+                        <div style={{ position: 'absolute', inset: 0, zIndex: 2 }} />
+                        {/* Bottom label */}
+                        <div style={{
+                          position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 3,
+                          padding: '8px 14px',
+                          background: 'linear-gradient(to top, rgba(10,5,20,0.85), transparent)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          pointerEvents: 'none',
+                        }}>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.6)' }}>
+                            {event.location_name || 'View on Google Maps'}
+                          </span>
+                          <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(191,255,0,0.7)', letterSpacing: '0.06em' }}>MAPS ↗</span>
+                        </div>
                       </div>
-                      <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.55)', margin: 0 }}>Tap to open map preview</p>
-                    </div>
-                    {/* Bottom label */}
-                    <div style={{
-                      position: 'absolute', bottom: 0, left: 0, right: 0,
-                      padding: '8px 14px',
-                      background: 'linear-gradient(to top, rgba(10,5,20,0.9), transparent)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.45)' }}>
-                        {event.location_name || 'View on Google Maps'}
-                      </span>
-                      <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(191,255,0,0.6)', letterSpacing: '0.06em' }}>MAPS ↗</span>
-                    </div>
-                  </div>
-                </button>
+                    );
+                  }
+
+                  // Fallback placeholder
+                  return (
+                    <button
+                      onClick={() => window.open(event.maps_link, '_blank')}
+                      style={{
+                        width: '100%', display: 'block', cursor: 'pointer',
+                        borderRadius: 16, overflow: 'hidden',
+                        border: '1px solid rgba(138,43,226,0.25)',
+                        background: 'rgba(138,43,226,0.06)',
+                        marginBottom: 10,
+                      }}
+                    >
+                      <div style={{
+                        height: 130, position: 'relative',
+                        background: 'linear-gradient(135deg, rgba(20,10,35,1) 0%, rgba(15,15,25,1) 100%)',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8,
+                      }}>
+                        <div style={{
+                          position: 'absolute', inset: 0, opacity: 0.08,
+                          backgroundImage: 'linear-gradient(rgba(138,43,226,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(138,43,226,0.6) 1px, transparent 1px)',
+                          backgroundSize: '28px 28px',
+                        }} />
+                        <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                          <MapPin style={{ width: 22, height: 22, color: '#8A2BE2' }} />
+                          <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.5)', margin: 0 }}>Open map preview</p>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })()}
 
                 {/* Action buttons */}
                 <div style={{ display: 'flex', gap: 10 }}>
