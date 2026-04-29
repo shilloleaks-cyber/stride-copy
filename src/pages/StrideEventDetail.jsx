@@ -164,7 +164,7 @@ export default function StrideEventDetail() {
             <Calendar className="w-5 h-5 flex-shrink-0" style={{ color: '#BFFF00' }} />
             <div>
               <p className="text-xs mb-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Race Day</p>
-              <p className="text-white font-semibold">{event.event_date ? format(new Date(event.event_date), 'EEEE, MMMM d, yyyy') : '—'}{event.start_time ? ` · ${format(new Date(`1970-01-01T${event.start_time}`), 'h:mm a')}` : ''}</p>
+              <p className="text-white font-semibold">{event.event_date ? format(new Date(event.event_date), 'EEEE, MMMM d, yyyy') : '—'}{event.start_time ? <><br />{format(new Date(`1970-01-01T${event.start_time}`), 'h:mm a')}</> : ''}</p>
             </div>
           </div>
           {event.location_address && (
