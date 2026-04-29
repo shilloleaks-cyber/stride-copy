@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Loader2, ImagePlus, X, CheckCircle2, Globe } from 'lucide-react';
+import { ArrowLeft, Loader2, ImagePlus, X, CheckCircle2, Globe, MapPin, ExternalLink } from 'lucide-react';
 import CategoriesWithItemsManager from '@/components/stride/CategoriesWithItemsManager';
 
 export default function CreateOfficialEvent() {
@@ -25,7 +25,7 @@ export default function CreateOfficialEvent() {
   const [paymentBlocking, setPaymentBlocking] = useState(false);
   const [draftLoaded, setDraftLoaded] = useState(false);
   const [form, setForm] = useState({
-    title: '', description: '', location_name: '', event_date: '', max_participants: '', banner_image: '',
+    title: '', description: '', location_name: '', maps_link: '', event_date: '', max_participants: '', banner_image: '',
   });
 
   const { data: user, isLoading: userLoading } = useQuery({
@@ -61,6 +61,7 @@ export default function CreateOfficialEvent() {
       title: draft.title || '',
       description: draft.description || '',
       location_name: draft.location_name || '',
+      maps_link: draft.maps_link || '',
       event_date: dateStr,
       max_participants: draft.max_participants ? String(draft.max_participants) : '',
       banner_image: draft.banner_image || '',
@@ -118,6 +119,7 @@ export default function CreateOfficialEvent() {
       description: form.description,
       banner_image: form.banner_image,
       location_name: form.location_name,
+      maps_link: form.maps_link || null,
       event_date: datePart,
       start_time: timePart,
       max_participants: form.max_participants ? parseInt(form.max_participants) : 0,
@@ -162,14 +164,22 @@ export default function CreateOfficialEvent() {
     navigate(`/StrideEventDetail?id=${draftEvent.id}`);
   };
 
-  const inputStyle = {
-    background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)',
-    borderRadius: '14px', color: 'white', padding: '13px 16px',
-    width: '100%', outline: 'none', fontSize: '15px', boxSizing: 'border-box',
+  const inp = {
+    background: 'rgba(255,255,255,0.05)',
+    border: '1px solid rgba(255,255,255,0.09)',
+    borderRadius: '16px',
+    color: 'white',
+    padding: '14px 16px',
+    width: '100%',
+    outline: 'none',
+    fontSize: '15px',
+    boxSizing: 'border-box',
+    boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.3)',
+    transition: 'border-color 0.2s',
   };
-  const labelStyle = {
-    fontSize: '11px', color: 'rgba(255,255,255,0.38)', textTransform: 'uppercase',
-    letterSpacing: '0.10em', marginBottom: '8px', display: 'block', fontWeight: 700,
+  const lbl = {
+    fontSize: '10px', color: 'rgba(255,255,255,0.32)', textTransform: 'uppercase',
+    letterSpacing: '0.13em', marginBottom: '9px', display: 'block', fontWeight: 800,
   };
 
   const saving = isSavingDraft || isUpdatingDraft;
@@ -178,41 +188,58 @@ export default function CreateOfficialEvent() {
   const canPublish = hasCategories && !paymentBlocking;
 
   return (
-    <div className="min-h-screen text-white pb-32" style={{ backgroundColor: '#0A0A0A' }}>
+    <div className="min-h-screen text-white" style={{ backgroundColor: '#0A0A0A', paddingBottom: 110 }}>
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
 
-      {/* Header */}
-      <div className="sticky top-0 z-50 px-5 pb-4 flex items-center gap-4"
-        style={{ paddingTop: 'calc(env(safe-area-inset-top) + 12px)', backgroundColor: 'rgba(10,10,10,0.96)', borderBottom: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(14px)' }}>
+      {/* ── Header ── */}
+      <div className="sticky top-0 z-50 flex items-center gap-3 px-5"
+        style={{
+          paddingTop: 'calc(env(safe-area-inset-top) + 14px)',
+          paddingBottom: 14,
+          backgroundColor: 'rgba(10,10,10,0.94)',
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          backdropFilter: 'blur(18px)',
+        }}>
+
+        {/* Back */}
         <button type="button" onClick={() => navigate(-1)}
-          className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
-          style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.09)' }}>
-          <ArrowLeft className="w-4 h-4" />
+          style={{
+            width: 36, height: 36, borderRadius: 12, flexShrink: 0,
+            background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+          <ArrowLeft style={{ width: 16, height: 16, color: 'rgba(255,255,255,0.85)' }} />
         </button>
-        <div className="flex-1 min-w-0">
-          <p style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0 }}>Admin · Official</p>
-          <h1 style={{ fontSize: 17, fontWeight: 800, color: '#fff', margin: 0, marginTop: 1 }}>
+
+        {/* Title block */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ fontSize: 9, fontWeight: 800, color: '#BFFF00', textTransform: 'uppercase', letterSpacing: '0.15em', margin: 0, opacity: 0.75 }}>
+            ADMIN · OFFICIAL
+          </p>
+          <h1 style={{ fontSize: 16, fontWeight: 900, color: '#fff', margin: 0, marginTop: 1, letterSpacing: '-0.2px' }}>
             {isEditMode ? 'Edit Draft Event' : 'Create Official Event'}
           </h1>
         </div>
-        {/* Step indicator */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+
+        {/* Step pills */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
           {[1, 2].map((stepNum, i) => {
             const active = (phase === 'form' && stepNum === 1) || (phase === 'categories' && stepNum === 2);
             const done = phase === 'categories' && stepNum === 1;
             return (
               <React.Fragment key={stepNum}>
-                {i > 0 && <div style={{ width: 16, height: 1, background: 'rgba(255,255,255,0.15)' }} />}
+                {i > 0 && <div style={{ width: 14, height: 1.5, borderRadius: 99, background: active || done ? 'rgba(191,255,0,0.4)' : 'rgba(255,255,255,0.12)' }} />}
                 <button
                   type="button"
-                  onClick={() => {
-                    if (stepNum === 1 && phase === 'categories') setPhase('form');
-                  }}
+                  onClick={() => { if (stepNum === 1 && phase === 'categories') setPhase('form'); }}
                   style={{
-                    width: 22, height: 22, borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 10, fontWeight: 800, border: 'none',
+                    width: 24, height: 24, borderRadius: 12,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 10, fontWeight: 900, border: 'none',
                     cursor: stepNum === 1 && phase === 'categories' ? 'pointer' : 'default',
-                    background: done ? 'rgba(0,210,110,0.2)' : active ? '#BFFF00' : 'rgba(255,255,255,0.08)',
-                    color: done ? 'rgb(0,210,110)' : active ? '#0A0A0A' : 'rgba(255,255,255,0.3)',
+                    background: done ? 'rgba(0,210,110,0.2)' : active ? '#BFFF00' : 'rgba(255,255,255,0.07)',
+                    color: done ? 'rgb(0,210,110)' : active ? '#0A0A0A' : 'rgba(255,255,255,0.25)',
+                    boxShadow: active ? '0 0 10px rgba(191,255,0,0.35)' : 'none',
                   }}
                 >
                   {done ? '✓' : stepNum}
@@ -226,101 +253,215 @@ export default function CreateOfficialEvent() {
       {/* ── PHASE 1: Event Details ── */}
       {phase === 'form' && (
         <form onSubmit={isEditMode ? handleUpdateAndContinue : handleSaveDraft}
-          style={{ padding: '28px 20px 0', display: 'flex', flexDirection: 'column', gap: 22 }}>
+          style={{ padding: '28px 20px 0', display: 'flex', flexDirection: 'column', gap: 24 }}>
 
+          {/* Event Name */}
           <div>
-            <label style={labelStyle}>Event Title *</label>
-            <input type="text" value={form.title} onChange={e => handleChange('title', e.target.value)}
-              placeholder="e.g. BoomX City Run 2026" required style={inputStyle} />
+            <label style={lbl}>Event Name *</label>
+            <input
+              type="text"
+              value={form.title}
+              onChange={e => handleChange('title', e.target.value)}
+              placeholder="e.g. BoomX City Run 2026"
+              required
+              style={inp}
+            />
           </div>
 
+          {/* Banner Image */}
           <div>
-            <label style={labelStyle}>Banner Image</label>
+            <label style={lbl}>Banner Image</label>
             {bannerPreview ? (
-              <div className="relative rounded-2xl overflow-hidden" style={{ height: 160 }}>
-                <img src={bannerPreview} alt="Banner preview" className="w-full h-full object-cover" />
+              <div style={{ position: 'relative', borderRadius: 18, overflow: 'hidden', height: 170 }}>
+                <img src={bannerPreview} alt="Banner preview" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 60%)' }} />
                 {isUploadingBanner && (
-                  <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.65)' }}>
-                    <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#BFFF00' }} />
+                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.6)' }}>
+                    <Loader2 style={{ width: 26, height: 26, color: '#BFFF00', animation: 'spin 1s linear infinite' }} />
                   </div>
                 )}
                 {!isUploadingBanner && (
-                  <button type="button" onClick={clearBanner} className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.75)' }}>
-                    <X className="w-3.5 h-3.5 text-white" />
+                  <button type="button" onClick={clearBanner}
+                    style={{ position: 'absolute', top: 10, right: 10, width: 28, height: 28, borderRadius: 9, background: 'rgba(0,0,0,0.72)', border: '1px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                    <X style={{ width: 13, height: 13, color: 'white' }} />
                   </button>
                 )}
               </div>
             ) : (
-              <label className="flex flex-col items-center justify-center gap-3 rounded-2xl cursor-pointer"
-                style={{ background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.12)', height: 110 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.09)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <ImagePlus style={{ width: 16, height: 16, color: 'rgba(255,255,255,0.35)' }} />
+              <label style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12,
+                borderRadius: 18, cursor: 'pointer', height: 140,
+                background: 'rgba(191,255,0,0.02)',
+                border: '1.5px dashed rgba(191,255,0,0.18)',
+                boxShadow: '0 0 30px rgba(191,255,0,0.03) inset',
+              }}>
+                <div style={{
+                  width: 44, height: 44, borderRadius: 14,
+                  background: 'rgba(191,255,0,0.07)', border: '1px solid rgba(191,255,0,0.15)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <ImagePlus style={{ width: 18, height: 18, color: 'rgba(191,255,0,0.6)' }} />
                 </div>
                 <div style={{ textAlign: 'center' }}>
-                  <p style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: 0 }}>Upload banner image</p>
-                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.22)', margin: '3px 0 0' }}>Recommended: 1200 × 600 px</p>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.55)', margin: 0 }}>Tap to upload banner</p>
+                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.22)', margin: '4px 0 0', letterSpacing: '0.03em' }}>Recommended: 1200 × 600 px</p>
                 </div>
-                <input type="file" accept="image/*" className="hidden" onChange={handleBannerUpload} />
+                <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleBannerUpload} />
               </label>
             )}
           </div>
 
-          <div style={{ height: 1, background: 'rgba(255,255,255,0.05)' }} />
+          {/* Divider */}
+          <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent)' }} />
 
+          {/* Description */}
           <div>
-            <label style={labelStyle}>Description</label>
-            <textarea value={form.description} onChange={e => handleChange('description', e.target.value)}
-              placeholder="Tell participants about this event…" rows={3} style={{ ...inputStyle, resize: 'none' }} />
+            <label style={lbl}>Description</label>
+            <textarea
+              value={form.description}
+              onChange={e => handleChange('description', e.target.value)}
+              placeholder="Tell participants about this event — route, highlights, what's included…"
+              rows={4}
+              style={{ ...inp, resize: 'none', lineHeight: 1.6 }}
+            />
           </div>
 
+          {/* Location Name */}
           <div>
-            <label style={labelStyle}>Location</label>
-            <input type="text" value={form.location_name} onChange={e => handleChange('location_name', e.target.value)}
-              placeholder="e.g. Lumpini Park, Bangkok" style={inputStyle} />
+            <label style={lbl}>Location Name</label>
+            <input
+              type="text"
+              value={form.location_name}
+              onChange={e => handleChange('location_name', e.target.value)}
+              placeholder="e.g. Lumpini Park, Bangkok"
+              style={inp}
+            />
           </div>
 
-          <div style={{ height: 1, background: 'rgba(255,255,255,0.05)' }} />
-
+          {/* Google Maps Link */}
           <div>
-            <label style={labelStyle}>Date &amp; Time *</label>
-            <input type="datetime-local" value={form.event_date} onChange={e => handleChange('event_date', e.target.value)}
-              required style={{ ...inputStyle, colorScheme: 'dark', minWidth: 0, maxWidth: '100%', WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none', fontSize: 13 }} />
+            <label style={lbl}>Google Maps Link</label>
+            <input
+              type="url"
+              value={form.maps_link}
+              onChange={e => handleChange('maps_link', e.target.value)}
+              placeholder="https://maps.google.com/…"
+              style={inp}
+            />
+            {/* Status row */}
+            {form.maps_link ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10, padding: '9px 14px', borderRadius: 12, background: 'rgba(0,210,110,0.06)', border: '1px solid rgba(0,210,110,0.18)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                  <MapPin style={{ width: 13, height: 13, color: 'rgb(0,210,110)', flexShrink: 0 }} />
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'rgb(0,210,110)' }}>Map link added</span>
+                </div>
+                <a
+                  href={form.maps_link}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={e => e.stopPropagation()}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 5,
+                    padding: '5px 11px', borderRadius: 8,
+                    background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+                    fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.6)',
+                    textDecoration: 'none', flexShrink: 0,
+                  }}
+                >
+                  <ExternalLink style={{ width: 11, height: 11 }} /> Preview
+                </a>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 8 }}>
+                <MapPin style={{ width: 12, height: 12, color: 'rgba(255,255,255,0.2)' }} />
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.22)', fontWeight: 600 }}>No map link yet</span>
+              </div>
+            )}
           </div>
 
+          {/* Divider */}
+          <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent)' }} />
+
+          {/* Date & Time */}
           <div>
-            <label style={labelStyle}>Max Participants</label>
-            <input type="number" value={form.max_participants} onChange={e => handleChange('max_participants', e.target.value)}
-              placeholder="Leave blank or 0 for unlimited" min="0" style={inputStyle} />
+            <label style={lbl}>Date &amp; Time *</label>
+            <input
+              type="datetime-local"
+              value={form.event_date}
+              onChange={e => handleChange('event_date', e.target.value)}
+              required
+              style={{ ...inp, colorScheme: 'dark', fontSize: 14 }}
+            />
           </div>
 
-          {!isEditMode && (
-            <div style={{ padding: '13px 16px', borderRadius: 14, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-              <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>📋</span>
-              <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: 1.6 }}>
-                Saves as a draft first. You'll add race categories &amp; included items next, then publish.
-              </p>
-            </div>
-          )}
-
-          <div style={{ paddingBottom: 16 }}>
-            <button type="submit" disabled={formDisabled} style={{
-              width: '100%', padding: '15px 0', borderRadius: 16, border: 'none',
-              fontSize: 15, fontWeight: 800, letterSpacing: '0.02em',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              cursor: formDisabled ? 'not-allowed' : 'pointer', transition: 'all 0.18s ease',
-              ...(formDisabled
-                ? { background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.25)' }
-                : { background: 'rgba(191,255,0,0.12)', border: '1px solid rgba(191,255,0,0.35)', color: '#BFFF00', boxShadow: '0 0 24px rgba(191,255,0,0.1)' }
-              ),
-            }}>
-              {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-              {saving
-                ? (isEditMode ? 'Saving…' : 'Saving Draft…')
-                : (isEditMode ? 'Update & Continue →' : 'Save Draft & Setup Categories →')
-              }
-            </button>
+          {/* Max Participants */}
+          <div>
+            <label style={lbl}>Max Participants</label>
+            <input
+              type="number"
+              value={form.max_participants}
+              onChange={e => handleChange('max_participants', e.target.value)}
+              placeholder="0 = Unlimited"
+              min="0"
+              style={inp}
+            />
           </div>
+
+          {/* Helper note */}
+          <div style={{
+            display: 'flex', alignItems: 'flex-start', gap: 12,
+            padding: '14px 16px', borderRadius: 16,
+            background: 'rgba(255,255,255,0.025)',
+            border: '1px solid rgba(255,255,255,0.07)',
+            boxShadow: '0 1px 12px rgba(0,0,0,0.25) inset',
+          }}>
+            <span style={{ fontSize: 17, flexShrink: 0, marginTop: 1 }}>📋</span>
+            <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.42)', margin: 0, lineHeight: 1.7 }}>
+              Saves as a draft first. You'll add race categories &amp; included items next, then publish.
+            </p>
+          </div>
+
+          {/* Spacer for sticky CTA */}
+          <div style={{ height: 16 }} />
         </form>
+      )}
+
+      {/* ── Sticky CTA (Phase 1) ── */}
+      {phase === 'form' && (
+        <div style={{
+          position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
+          padding: '12px 20px',
+          paddingBottom: 'calc(12px + env(safe-area-inset-bottom))',
+          background: 'linear-gradient(to top, rgba(10,10,10,1) 65%, rgba(10,10,10,0))',
+          backdropFilter: 'blur(2px)',
+        }}>
+          <button
+            type="button"
+            onClick={(e) => { isEditMode ? handleUpdateAndContinue(e) : handleSaveDraft(e); }}
+            disabled={formDisabled}
+            style={{
+              width: '100%', padding: '16px 0', borderRadius: 18, border: 'none',
+              fontSize: 15, fontWeight: 900, letterSpacing: '0.02em',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              cursor: formDisabled ? 'not-allowed' : 'pointer',
+              transition: 'all 0.2s ease',
+              ...(formDisabled
+                ? { background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.2)' }
+                : {
+                    background: '#BFFF00',
+                    color: '#0A0A0A',
+                    boxShadow: '0 0 28px rgba(191,255,0,0.35), 0 4px 16px rgba(0,0,0,0.4)',
+                  }
+              ),
+            }}
+          >
+            {saving && <Loader2 style={{ width: 16, height: 16, animation: 'spin 1s linear infinite' }} />}
+            {saving
+              ? (isEditMode ? 'Saving…' : 'Saving Draft…')
+              : (isEditMode ? 'Update & Continue →' : 'Save Draft & Setup Categories →')
+            }
+          </button>
+        </div>
       )}
 
       {/* ── PHASE 2: Categories + Items + Publish ── */}

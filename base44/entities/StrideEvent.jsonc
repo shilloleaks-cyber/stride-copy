@@ -22,6 +22,10 @@
       "type": "string",
       "description": "Full address"
     },
+    "maps_link": {
+      "type": "string",
+      "description": "Google Maps URL for the event location"
+    },
     "event_date": {
       "type": "string",
       "format": "date",
