@@ -10,6 +10,7 @@ import { ArrowLeft, Calendar, MapPin, Users, Loader2, CheckCircle2, ChevronRight
 import { format } from 'date-fns';
 import RegistrationForm from '@/components/stride/RegistrationForm';
 import CommunityRSVP from '@/components/stride/CommunityRSVP';
+import StaticMapCard from '@/components/stride/StaticMapCard';
 import EventShareButton from '@/components/stride/EventShareButton';
 import EventInviteSheet from '@/components/stride/EventInviteSheet';
 import { useAuthGate } from '@/hooks/useAuthGate';
@@ -280,81 +281,7 @@ export default function StrideEventDetail() {
             {/* Map preview card */}
             {event.maps_link && (
               <div>
-                {/* Clickable map placeholder — Google Maps & OpenStreetMap iframes are blocked by X-Frame-Options in web views.
-                    Instead we show a styled card that opens the real link on tap. */}
-                <div
-                  onClick={() => window.open(event.maps_link, '_blank')}
-                  style={{
-                    position: 'relative', borderRadius: 16, overflow: 'hidden',
-                    border: '1px solid rgba(138,43,226,0.3)',
-                    height: 160, marginBottom: 10, cursor: 'pointer',
-                    background: 'linear-gradient(135deg, #0d0620 0%, #0a0a14 60%, #0c1020 100%)',
-                  }}
-                >
-                  {/* Subtle road grid pattern */}
-                  <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.12 }} xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                      <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#8A2BE2" strokeWidth="0.8"/>
-                      </pattern>
-                    </defs>
-                    <rect width="100%" height="100%" fill="url(#grid)" />
-                    {/* Road lines */}
-                    <line x1="0" y1="50%" x2="100%" y2="50%" stroke="#BFFF00" strokeWidth="1.5" strokeDasharray="6,4" opacity="0.25"/>
-                    <line x1="30%" y1="0" x2="30%" y2="100%" stroke="#8A2BE2" strokeWidth="1" strokeDasharray="4,6" opacity="0.2"/>
-                    <line x1="70%" y1="0" x2="70%" y2="100%" stroke="#8A2BE2" strokeWidth="1" strokeDasharray="4,6" opacity="0.2"/>
-                  </svg>
-
-                  {/* Glow behind pin */}
-                  <div style={{
-                    position: 'absolute', top: '50%', left: '50%',
-                    transform: 'translate(-50%, -60%)',
-                    width: 80, height: 80, borderRadius: '50%',
-                    background: 'radial-gradient(circle, rgba(138,43,226,0.35) 0%, transparent 70%)',
-                  }} />
-
-                  {/* Pin */}
-                  <div style={{
-                    position: 'absolute', top: '50%', left: '50%',
-                    transform: 'translate(-50%, -70%)',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                  }}>
-                    <div style={{
-                      width: 36, height: 36, borderRadius: '50% 50% 50% 0%',
-                      transform: 'rotate(-45deg)',
-                      background: 'linear-gradient(135deg, #8A2BE2, #6010b0)',
-                      border: '2px solid rgba(191,255,0,0.5)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      boxShadow: '0 0 16px rgba(138,43,226,0.6)',
-                    }}>
-                      <MapPin style={{ width: 16, height: 16, color: 'white', transform: 'rotate(45deg)' }} />
-                    </div>
-                    {/* Pin stem */}
-                    <div style={{ width: 2, height: 8, background: 'rgba(138,43,226,0.6)', borderRadius: 2, marginTop: -2 }} />
-                  </div>
-
-                  {/* "Tap to open" hint */}
-                  <div style={{
-                    position: 'absolute', top: 10, right: 12,
-                    padding: '4px 9px', borderRadius: 8,
-                    background: 'rgba(191,255,0,0.1)', border: '1px solid rgba(191,255,0,0.2)',
-                  }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(191,255,0,0.8)', letterSpacing: '0.05em' }}>TAP TO OPEN ↗</span>
-                  </div>
-
-                  {/* Bottom label */}
-                  <div style={{
-                    position: 'absolute', bottom: 0, left: 0, right: 0,
-                    padding: '10px 14px',
-                    background: 'linear-gradient(to top, rgba(8,3,18,0.95) 60%, transparent)',
-                    display: 'flex', alignItems: 'center', gap: 6,
-                  }}>
-                    <MapPin style={{ width: 11, height: 11, color: '#8A2BE2', flexShrink: 0 }} />
-                    <span style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.7)' }}>
-                      {event.location_name || 'View on Google Maps'}
-                    </span>
-                  </div>
-                </div>
+                <StaticMapCard event={event} />
 
                 {/* Action buttons */}
                 <div style={{ display: 'flex', gap: 10 }}>
