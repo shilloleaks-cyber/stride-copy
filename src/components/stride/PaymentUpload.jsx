@@ -114,7 +114,8 @@ export default function PaymentUpload({ registration, category }) {
   });
 
   if (isLoading) return null;
-  if (!category || Number(category.price || 0) <= 0) return null;
+  const requiresPayment = category && (category.payment_enabled === true || Number(category.price || 0) > 0);
+  if (!requiresPayment) return null;
 
   const amount = category.price || 0;
 

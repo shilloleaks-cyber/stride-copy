@@ -72,7 +72,7 @@ export default function StrideEventDetail() {
     setShowForm(false);
     queryClient.invalidateQueries({ queryKey: ['my-reg', eventId, user?.email] });
     queryClient.invalidateQueries({ queryKey: ['my-stride-regs', user?.email] });
-    const requiresPayment = Number(selectedCategory?.price || 0) > 0;
+    const requiresPayment = selectedCategory && (selectedCategory.payment_enabled === true || Number(selectedCategory.price || 0) > 0);
     if (requiresPayment && reg) {
       // Requires payment: open payment flow
       setPaymentReg(reg);
@@ -100,7 +100,7 @@ export default function StrideEventDetail() {
 
   // Pre-check payment readiness — used to block paid registration before it creates a record
   const { ready: paymentReady } = checkPaymentReady(event);
-  const selectedRequiresPayment = Number(selectedCategory?.price || 0) > 0;
+  const selectedRequiresPayment = !!(selectedCategory && (selectedCategory.payment_enabled === true || Number(selectedCategory.price || 0) > 0));
   const paymentBlocked = selectedRequiresPayment && !paymentReady;
 
   return (
