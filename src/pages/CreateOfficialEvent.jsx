@@ -426,13 +426,27 @@ export default function CreateOfficialEvent() {
           {/* Date & Time */}
           <div>
             <label style={lbl}>Date &amp; Time *</label>
-            <input
-              type="datetime-local"
-              value={form.event_date}
-              onChange={e => handleChange('event_date', e.target.value)}
-              required
-              style={{ ...inp, colorScheme: 'dark', fontSize: 14 }}
-            />
+            <div style={{ display: 'flex', gap: 10 }}>
+              <input
+                type="date"
+                value={form.event_date ? form.event_date.split('T')[0] : ''}
+                onChange={e => {
+                  const timePart = form.event_date?.split('T')[1] || '00:00';
+                  handleChange('event_date', `${e.target.value}T${timePart}`);
+                }}
+                required
+                style={{ ...inp, flex: 2, colorScheme: 'dark', fontSize: 14 }}
+              />
+              <input
+                type="time"
+                value={form.event_date ? (form.event_date.split('T')[1] || '') : ''}
+                onChange={e => {
+                  const datePart = form.event_date?.split('T')[0] || '';
+                  handleChange('event_date', `${datePart}T${e.target.value}`);
+                }}
+                style={{ ...inp, flex: 1, colorScheme: 'dark', fontSize: 14 }}
+              />
+            </div>
           </div>
 
           {/* Max Participants */}
