@@ -11,7 +11,7 @@ import { format } from 'date-fns';
 import RegistrationForm from '@/components/stride/RegistrationForm';
 import CommunityRSVP from '@/components/stride/CommunityRSVP';
 import StaticMapCard from '@/components/stride/StaticMapCard';
-import EventShareButton from '@/components/stride/EventShareButton';
+import EventShareSheet from '@/components/stride/EventShareSheet.jsx';
 import EventInviteSheet from '@/components/stride/EventInviteSheet';
 import { useAuthGate } from '@/hooks/useAuthGate';
 import LoginGateModal from '@/components/auth/LoginGateModal';
@@ -28,6 +28,7 @@ export default function StrideEventDetail() {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [showInvite, setShowInvite] = useState(false);
+  const [showShareSheet, setShowShareSheet] = useState(false);
   const [paymentReg, setPaymentReg] = useState(null); // set when paid reg just created
 
   const { data: user } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
@@ -139,7 +140,18 @@ export default function StrideEventDetail() {
             </div>
             {user && (
               <div className="flex items-center gap-2">
-                <EventShareButton event={event} user={user} pill />
+                <button
+                  onClick={() => setShowShareSheet(true)}
+                  className="flex items-center gap-1 active:scale-95 transition-all"
+                  style={{
+                    height: 28, padding: '0 10px', borderRadius: 99,
+                    background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)',
+                    color: 'rgba(255,255,255,0.85)', fontSize: 11, fontWeight: 700,
+                  }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                  Share
+                </button>
                 <button
                   onClick={() => setShowInvite(true)}
                   className="flex items-center gap-1 active:scale-95 transition-all"
@@ -621,6 +633,11 @@ export default function StrideEventDetail() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Share Sheet */}
+      {showShareSheet && event && (
+        <EventShareSheet event={event} user={user} onClose={() => setShowShareSheet(false)} />
       )}
 
       {/* Invite Sheet */}
