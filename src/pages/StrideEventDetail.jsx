@@ -167,13 +167,13 @@ export default function StrideEventDetail() {
               <p className="text-white font-semibold">{event.event_date ? format(new Date(event.event_date), 'EEEE, MMMM d, yyyy') : '—'}{event.start_time ? ` · ${event.start_time}` : ''}</p>
             </div>
           </div>
-          {event.location_name && (
+          {event.location_address && (
             <div className="flex items-center gap-3">
               <MapPin className="w-5 h-5 flex-shrink-0" style={{ color: '#8A2BE2' }} />
               <div>
                 <p className="text-xs mb-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Location</p>
                 <p className="text-white font-semibold">{event.location_name}</p>
-                {event.location_address && <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>{event.location_address}</p>}
+                <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>{event.location_address}</p>
               </div>
             </div>
           )}

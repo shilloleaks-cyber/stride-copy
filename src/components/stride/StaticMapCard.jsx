@@ -77,15 +77,6 @@ export default function StaticMapCard({ event }) {
         </>
       )}
 
-      {/* Tap badge */}
-      <div style={{
-        position: 'absolute', top: 10, right: 12, zIndex: 2,
-        padding: '4px 9px', borderRadius: 8,
-        background: 'rgba(0,0,0,0.55)', border: '1px solid rgba(191,255,0,0.25)',
-      }}>
-        <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(191,255,0,0.85)', letterSpacing: '0.05em' }}>TAP TO OPEN ↗</span>
-      </div>
-
       {/* Bottom label */}
       <div style={{
         position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 2,
