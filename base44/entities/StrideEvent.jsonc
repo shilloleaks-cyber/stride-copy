@@ -26,6 +26,14 @@
       "type": "string",
       "description": "Google Maps URL for the event location"
     },
+    "latitude": {
+      "type": "number",
+      "description": "Latitude extracted from maps_link"
+    },
+    "longitude": {
+      "type": "number",
+      "description": "Longitude extracted from maps_link"
+    },
     "event_date": {
       "type": "string",
       "format": "date",

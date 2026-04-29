@@ -7,19 +7,19 @@ export default function StaticMapCard({ event }) {
   const [imgError, setImgError] = useState(false);
 
   useEffect(() => {
-    const hasLocation = (event.latitude && event.longitude) || event.location_name;
+    const hasCoords = event.latitude && event.longitude;
+    const hasLocation = hasCoords || event.location_name;
     if (!hasLocation) return;
 
     base44.functions.invoke('getStaticMapUrl', {
-      latitude: event.latitude,
-      longitude: event.longitude,
-      location_name: event.location_name,
+      // Prefer precise coordinates; only fall back to name if missing
+      latitude: hasCoords ? event.latitude : undefined,
+      longitude: hasCoords ? event.longitude : undefined,
+      location_name: !hasCoords ? event.location_name : undefined,
     }).then(res => {
       if (res.data?.url) setMapUrl(res.data.url);
-    }).catch(() => {
-      // silently fall back to placeholder
-    });
-  }, [event.id]);
+    }).catch(() => {});
+  }, [event.id, event.latitude, event.longitude]);
 
   const showRealMap = !!mapUrl && !imgError;
 

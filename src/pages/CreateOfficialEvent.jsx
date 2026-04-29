@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Loader2, ImagePlus, X, CheckCircle2, Globe, MapPin, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Loader2, ImagePlus, X, CheckCircle2, Globe, MapPin, ExternalLink, AlertCircle } from 'lucide-react';
 import CategoriesWithItemsManager from '@/components/stride/CategoriesWithItemsManager';
 
 export default function CreateOfficialEvent() {
@@ -27,6 +27,9 @@ export default function CreateOfficialEvent() {
   const [form, setForm] = useState({
     title: '', description: '', location_name: '', maps_link: '', event_date: '', max_participants: '', banner_image: '',
   });
+  const [coordStatus, setCoordStatus] = useState(null); // null | 'resolving' | 'found' | 'not_found'
+  const [resolvedCoords, setResolvedCoords] = useState(null); // { latitude, longitude }
+  const mapsLinkTimerRef = useRef(null);
 
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['me'],
@@ -66,6 +69,11 @@ export default function CreateOfficialEvent() {
       max_participants: draft.max_participants ? String(draft.max_participants) : '',
       banner_image: draft.banner_image || '',
     });
+    // Restore coords from draft
+    if (draft.latitude && draft.longitude) {
+      setResolvedCoords({ latitude: draft.latitude, longitude: draft.longitude });
+      setCoordStatus('found');
+    }
 
     if (draft.banner_image) setBannerPreview(draft.banner_image);
     setDraftEvent(draft);
@@ -99,6 +107,29 @@ export default function CreateOfficialEvent() {
 
   const handleChange = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
 
+  // Debounced maps_link resolver
+  const handleMapsLinkChange = (value) => {
+    handleChange('maps_link', value);
+    setCoordStatus(null);
+    setResolvedCoords(null);
+    if (mapsLinkTimerRef.current) clearTimeout(mapsLinkTimerRef.current);
+    if (!value) return;
+    mapsLinkTimerRef.current = setTimeout(async () => {
+      setCoordStatus('resolving');
+      try {
+        const res = await base44.functions.invoke('resolveMapsLinkCoordinates', { maps_link: value });
+        if (res.data?.success) {
+          setResolvedCoords({ latitude: res.data.latitude, longitude: res.data.longitude });
+          setCoordStatus('found');
+        } else {
+          setCoordStatus('not_found');
+        }
+      } catch {
+        setCoordStatus('not_found');
+      }
+    }, 800);
+  };
+
   const handleBannerUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -120,6 +151,8 @@ export default function CreateOfficialEvent() {
       banner_image: form.banner_image,
       location_name: form.location_name,
       maps_link: form.maps_link || null,
+      latitude: resolvedCoords?.latitude ?? null,
+      longitude: resolvedCoords?.longitude ?? null,
       event_date: datePart,
       start_time: timePart,
       max_participants: form.max_participants ? parseInt(form.max_participants) : 0,
@@ -344,39 +377,47 @@ export default function CreateOfficialEvent() {
             <input
               type="url"
               value={form.maps_link}
-              onChange={e => handleChange('maps_link', e.target.value)}
-              placeholder="https://maps.google.com/…"
+              onChange={e => handleMapsLinkChange(e.target.value)}
+              placeholder="https://maps.app.goo.gl/… or https://maps.google.com/…"
               style={inp}
             />
-            {/* Status row */}
-            {form.maps_link ? (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10, padding: '9px 14px', borderRadius: 12, background: 'rgba(0,210,110,0.06)', border: '1px solid rgba(0,210,110,0.18)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                  <MapPin style={{ width: 13, height: 13, color: 'rgb(0,210,110)', flexShrink: 0 }} />
-                  <span style={{ fontSize: 12, fontWeight: 700, color: 'rgb(0,210,110)' }}>Map link added</span>
+            {/* Coordinate status row */}
+            <div style={{ marginTop: 10 }}>
+              {coordStatus === 'resolving' && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 14px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <Loader2 style={{ width: 13, height: 13, color: 'rgba(255,255,255,0.4)', animation: 'spin 1s linear infinite' }} />
+                  <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.4)' }}>Detecting coordinates…</span>
                 </div>
-                <a
-                  href={form.maps_link}
-                  target="_blank"
-                  rel="noreferrer"
-                  onClick={e => e.stopPropagation()}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 5,
-                    padding: '5px 11px', borderRadius: 8,
-                    background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
-                    fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.6)',
-                    textDecoration: 'none', flexShrink: 0,
-                  }}
-                >
-                  <ExternalLink style={{ width: 11, height: 11 }} /> Preview
-                </a>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 8 }}>
-                <MapPin style={{ width: 12, height: 12, color: 'rgba(255,255,255,0.2)' }} />
-                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.22)', fontWeight: 600 }}>No map link yet</span>
-              </div>
-            )}
+              )}
+              {coordStatus === 'found' && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 14px', borderRadius: 12, background: 'rgba(0,210,110,0.06)', border: '1px solid rgba(0,210,110,0.2)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                    <CheckCircle2 style={{ width: 13, height: 13, color: 'rgb(0,210,110)', flexShrink: 0 }} />
+                    <span style={{ fontSize: 12, fontWeight: 700, color: 'rgb(0,210,110)' }}>
+                      Map coordinates detected ({resolvedCoords?.latitude?.toFixed(4)}, {resolvedCoords?.longitude?.toFixed(4)})
+                    </span>
+                  </div>
+                  {form.maps_link && (
+                    <a href={form.maps_link} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
+                      style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 8, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', textDecoration: 'none', flexShrink: 0 }}>
+                      <ExternalLink style={{ width: 10, height: 10 }} /> Open
+                    </a>
+                  )}
+                </div>
+              )}
+              {coordStatus === 'not_found' && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 14px', borderRadius: 12, background: 'rgba(255,180,0,0.06)', border: '1px solid rgba(255,180,0,0.2)' }}>
+                  <AlertCircle style={{ width: 13, height: 13, color: 'rgba(255,180,0,0.9)', flexShrink: 0 }} />
+                  <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,180,0,0.9)' }}>Could not detect coordinates. Map preview may be inaccurate.</span>
+                </div>
+              )}
+              {!coordStatus && !form.maps_link && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                  <MapPin style={{ width: 12, height: 12, color: 'rgba(255,255,255,0.2)' }} />
+                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.22)', fontWeight: 600 }}>Paste a Google Maps link — coordinates auto-detected</span>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Divider */}
