@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
-import { ArrowLeft, Calendar, MapPin, Users, Loader2, CheckCircle2, ChevronRight, Settings } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, Loader2, CheckCircle2, ChevronRight, Settings, ExternalLink, Navigation } from 'lucide-react';
 import { format } from 'date-fns';
 import RegistrationForm from '@/components/stride/RegistrationForm';
 import CommunityRSVP from '@/components/stride/CommunityRSVP';
@@ -255,6 +255,113 @@ export default function StrideEventDetail() {
           <div>
             <p className="text-xs uppercase tracking-widest mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>About</p>
             <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>{event.description}</p>
+          </div>
+        )}
+
+        {/* Location section */}
+        {(event.location_name || event.maps_link) && (
+          <div>
+            <p style={{ fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.13em', margin: '0 0 12px' }}>Location</p>
+
+            {/* Location name */}
+            {event.location_name && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: event.maps_link ? 14 : 0 }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: 12, flexShrink: 0,
+                  background: 'rgba(138,43,226,0.15)', border: '1px solid rgba(138,43,226,0.3)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <MapPin style={{ width: 16, height: 16, color: '#8A2BE2' }} />
+                </div>
+                <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: 0 }}>{event.location_name}</p>
+              </div>
+            )}
+
+            {/* Map preview card */}
+            {event.maps_link && (
+              <div>
+                <button
+                  onClick={() => window.open(event.maps_link, '_blank')}
+                  style={{
+                    width: '100%', display: 'block', cursor: 'pointer',
+                    borderRadius: 16, overflow: 'hidden',
+                    border: '1px solid rgba(138,43,226,0.25)',
+                    background: 'rgba(138,43,226,0.06)',
+                    marginBottom: 10,
+                  }}
+                >
+                  {/* Static dark map placeholder with pin */}
+                  <div style={{
+                    height: 130, position: 'relative',
+                    background: 'linear-gradient(135deg, rgba(20,10,35,1) 0%, rgba(15,15,25,1) 100%)',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  }}>
+                    {/* Grid overlay for map feel */}
+                    <div style={{
+                      position: 'absolute', inset: 0, opacity: 0.08,
+                      backgroundImage: 'linear-gradient(rgba(138,43,226,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(138,43,226,0.6) 1px, transparent 1px)',
+                      backgroundSize: '28px 28px',
+                    }} />
+                    {/* Radial glow under pin */}
+                    <div style={{
+                      position: 'absolute',
+                      width: 80, height: 80, borderRadius: '50%',
+                      background: 'radial-gradient(circle, rgba(138,43,226,0.25) 0%, transparent 70%)',
+                    }} />
+                    {/* Pin icon */}
+                    <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                      <div style={{
+                        width: 40, height: 40, borderRadius: '50% 50% 50% 0%', transform: 'rotate(-45deg)',
+                        background: '#8A2BE2', border: '2px solid rgba(191,255,0,0.6)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        boxShadow: '0 0 18px rgba(138,43,226,0.5)',
+                      }}>
+                        <MapPin style={{ width: 18, height: 18, color: 'white', transform: 'rotate(45deg)' }} />
+                      </div>
+                      <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.55)', margin: 0 }}>Tap to open map preview</p>
+                    </div>
+                    {/* Bottom label */}
+                    <div style={{
+                      position: 'absolute', bottom: 0, left: 0, right: 0,
+                      padding: '8px 14px',
+                      background: 'linear-gradient(to top, rgba(10,5,20,0.9), transparent)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.45)' }}>
+                        {event.location_name || 'View on Google Maps'}
+                      </span>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(191,255,0,0.6)', letterSpacing: '0.06em' }}>MAPS ↗</span>
+                    </div>
+                  </div>
+                </button>
+
+                {/* Action buttons */}
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button
+                    onClick={() => window.open(event.maps_link, '_blank')}
+                    style={{
+                      flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+                      padding: '11px 12px', borderRadius: 12, cursor: 'pointer',
+                      background: 'rgba(191,255,0,0.06)', border: '1px solid rgba(191,255,0,0.25)',
+                      fontSize: 13, fontWeight: 700, color: '#BFFF00',
+                    }}
+                  >
+                    <ExternalLink style={{ width: 14, height: 14 }} /> Open in Maps
+                  </button>
+                  <button
+                    onClick={() => window.open(event.maps_link, '_blank')}
+                    style={{
+                      flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+                      padding: '11px 12px', borderRadius: 12, cursor: 'pointer',
+                      background: 'rgba(138,43,226,0.08)', border: '1px solid rgba(138,43,226,0.3)',
+                      fontSize: 13, fontWeight: 700, color: 'rgba(180,130,255,1)',
+                    }}
+                  >
+                    <Navigation style={{ width: 14, height: 14 }} /> Directions
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
