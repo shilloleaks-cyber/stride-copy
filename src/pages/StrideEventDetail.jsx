@@ -53,36 +53,6 @@ export default function StrideEventDetail() {
     }
   }, [event?.id]);
 
-  // Set dynamic page title for browser tab and social share previews
-  useEffect(() => {
-    if (event?.title) {
-      const pageTitle = `BoomX | ${event.title}`;
-      document.title = pageTitle;
-
-      // Update Open Graph meta tags for social share previews
-      const setMeta = (property, content) => {
-        let el = document.querySelector(`meta[property="${property}"]`);
-        if (!el) {
-          el = document.createElement('meta');
-          el.setAttribute('property', property);
-          document.head.appendChild(el);
-        }
-        el.setAttribute('content', content);
-      };
-
-      setMeta('og:title', pageTitle);
-      setMeta('og:site_name', 'BoomX');
-      if (event.description) setMeta('og:description', event.description);
-      if (event.banner_image) setMeta('og:image', event.banner_image);
-      setMeta('og:url', `${window.location.origin}/StrideEventDetail?id=${event.id}`);
-    }
-
-    // Restore title on unmount
-    return () => {
-      document.title = 'BoomX';
-    };
-  }, [event?.title, event?.id]);
-
   const { data: categories = [] } = useQuery({
     queryKey: ['event-categories', eventId],
     queryFn: () => base44.entities.EventCategory.filter({ event_id: eventId, is_active: true }),

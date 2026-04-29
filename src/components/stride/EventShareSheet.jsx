@@ -162,7 +162,7 @@ export default function EventShareSheet({ event, user, onClose }) {
               cursor: 'pointer', transition: 'color 0.2s',
             }}
           >
-            <Link style={{ width: 16, height: 16 }} /> {copied ? '✓ BoomX event link copied' : 'Copy Link'}
+            <Link style={{ width: 16, height: 16 }} /> {copied ? '✓ Copied!' : 'Copy Link'}
           </button>
 
           <button
