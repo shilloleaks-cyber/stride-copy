@@ -30,7 +30,12 @@ export default function EventCard({ event, isRegistered, onClick }) {
     if (event.event_date) {
       const d = new Date(event.event_date);
       dateStr = d.toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric' });
-      if (event.start_time) dateStr += ` · ${event.start_time}`;
+      if (event.start_time) {
+        const [h, m] = event.start_time.split(':').map(Number);
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        const h12 = h % 12 || 12;
+        dateStr += ` · ${h12}:${String(m).padStart(2, '0')} ${ampm}`;
+      }
     }
   } catch (_) {}
 
