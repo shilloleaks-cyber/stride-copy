@@ -3,7 +3,7 @@ import { Share2, Check, X, Copy } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { trackShare } from '@/lib/eventMetrics';
 
-export default function EventShareButton({ event, user }) {
+export default function EventShareButton({ event, user, pill = false }) {
   const [state, setState] = useState('idle'); // 'idle' | 'copied' | 'modal'
   const didCopy = useRef(false); // dedup: only one log per "share session"
 
@@ -84,21 +84,23 @@ export default function EventShareButton({ event, user }) {
     <>
       <button
         onClick={handleShare}
-        className="flex items-center justify-center gap-2 transition-all active:scale-95"
-        style={{
+        className="flex items-center justify-center gap-1 transition-all active:scale-95"
+        style={pill ? {
+          height: 28, padding: '0 10px', borderRadius: 99,
+          background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)',
+          color: state === 'copied' ? '#BFFF00' : 'rgba(255,255,255,0.85)',
+          fontSize: 11, fontWeight: 700,
+        } : {
           background: 'rgba(255,255,255,0.07)',
           border: '1px solid rgba(255,255,255,0.12)',
-          borderRadius: 14,
-          padding: '10px 16px',
+          borderRadius: 14, padding: '10px 16px',
           color: state === 'copied' ? '#BFFF00' : 'rgba(255,255,255,0.8)',
-          fontSize: 13,
-          fontWeight: 700,
-          minHeight: 44,
+          fontSize: 13, fontWeight: 700, minHeight: 44,
         }}
       >
         {state === 'copied'
-          ? <><Check style={{ width: 15, height: 15 }} /> Copied!</>
-          : <><Share2 style={{ width: 15, height: 15 }} /> Share</>
+          ? <><Check style={{ width: pill ? 12 : 15, height: pill ? 12 : 15 }} /> Copied!</>
+          : <><Share2 style={{ width: pill ? 12 : 15, height: pill ? 12 : 15 }} /> Share</>
         }
       </button>
 

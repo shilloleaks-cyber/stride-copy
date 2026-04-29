@@ -116,45 +116,42 @@ export default function StrideEventDetail() {
         <button onClick={() => navigate(-1)} className="absolute top-10 left-4 w-9 h-9 rounded-full flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)' }}>
           <ArrowLeft className="w-5 h-5 text-white" />
         </button>
-        {/* Share + Invite actions */}
-        {user && (
-          <div className="absolute bottom-4 right-4 z-20 flex items-center gap-2">
-            <EventShareButton event={event} user={user} />
-            <button
-              onClick={() => setShowInvite(true)}
-              className="flex items-center justify-center gap-2 transition-all active:scale-95"
-              style={{
-                background: '#BFFF00',
-                border: 'none',
-                borderRadius: 14,
-                padding: '10px 16px',
-                color: '#0A0A0A',
-                fontSize: 13,
-                fontWeight: 700,
-                minHeight: 44,
-              }}
-            >
-              <Users style={{ width: 15, height: 15 }} /> Invite
-            </button>
-          </div>
-        )}
       </div>
 
       <div className="px-6 pt-4 space-y-6">
         {/* Title + status */}
         <div>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-xs font-bold px-2.5 py-1 rounded-full capitalize" style={{
-              background: isOpen ? 'rgba(0,210,110,0.15)' : 'rgba(255,255,255,0.06)',
-              color: isOpen ? 'rgb(0,210,110)' : 'rgba(255,255,255,0.4)',
-              border: `1px solid ${isOpen ? 'rgba(0,210,110,0.3)' : 'rgba(255,255,255,0.1)'}`
-            }}>
-              {event.status}
-            </span>
-            {alreadyRegistered && (
-              <span className="text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1" style={{ background: 'rgba(191,255,0,0.12)', color: '#BFFF00', border: '1px solid rgba(191,255,0,0.25)' }}>
-                <CheckCircle2 className="w-3 h-3" /> Registered
+          {/* Status badges row + Share/Invite actions */}
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold px-2.5 py-1 rounded-full capitalize" style={{
+                background: isOpen ? 'rgba(0,210,110,0.15)' : 'rgba(255,255,255,0.06)',
+                color: isOpen ? 'rgb(0,210,110)' : 'rgba(255,255,255,0.4)',
+                border: `1px solid ${isOpen ? 'rgba(0,210,110,0.3)' : 'rgba(255,255,255,0.1)'}`
+              }}>
+                {event.status}
               </span>
+              {alreadyRegistered && (
+                <span className="text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1" style={{ background: 'rgba(191,255,0,0.12)', color: '#BFFF00', border: '1px solid rgba(191,255,0,0.25)' }}>
+                  <CheckCircle2 className="w-3 h-3" /> Registered
+                </span>
+              )}
+            </div>
+            {user && (
+              <div className="flex items-center gap-2">
+                <EventShareButton event={event} user={user} pill />
+                <button
+                  onClick={() => setShowInvite(true)}
+                  className="flex items-center gap-1 active:scale-95 transition-all"
+                  style={{
+                    height: 28, padding: '0 10px', borderRadius: 99,
+                    background: '#BFFF00', border: 'none',
+                    color: '#0A0A0A', fontSize: 11, fontWeight: 700,
+                  }}
+                >
+                  <Users style={{ width: 12, height: 12 }} /> Invite
+                </button>
+              </div>
             )}
           </div>
           <h1 className="text-2xl font-bold text-white">{event.title}</h1>
