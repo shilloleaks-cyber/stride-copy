@@ -63,7 +63,9 @@ export default function RegistrationForm({ event, category, user, onClose, onSuc
           <div>
             <p className="font-bold text-white text-base">{event.title}</p>
             <p className="text-xs mt-0.5 font-semibold" style={{ color: '#BFFF00' }}>
-              {category.name}{category.price > 0 ? ` · ฿${category.price}` : ' · Free'}
+              {category.name}{(category.payment_enabled === true || Number(category.price || 0) > 0)
+                ? (category.price > 0 ? ` · ฿${category.price}` : ' · Payment Required')
+                : ' · Free'}
             </p>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.08)' }}>
@@ -115,7 +117,9 @@ export default function RegistrationForm({ event, category, user, onClose, onSuc
           >
             {registerMutation.isPending
               ? <><Loader2 className="w-5 h-5 animate-spin" /> Registering...</>
-              : (category.payment_enabled === true || Number(category.price || 0) > 0) ? 'Register & Proceed to Payment' : 'Confirm Registration'
+              : (category.payment_enabled === true || Number(category.price || 0) > 0)
+                  ? 'Register & Proceed to Payment'
+                  : 'Confirm Registration'
             }
           </button>
         </div>

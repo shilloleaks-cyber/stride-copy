@@ -239,7 +239,9 @@ export default function TicketDetail({ reg, event, category, onClose, onRemoved 
   const payCfg = PAY_STATUS[paymentState] || PAY_STATUS.not_required;
   const hasQR = !!reg.qr_code && !isCancelled;
   const userName = [reg.first_name, reg.last_name].filter(Boolean).join(' ') || '—';
-  const needsPayment = category?.price > 0 && paymentState !== 'paid' && paymentState !== 'not_required' && !isCancelled;
+  // Canonical rule: payment required if payment_enabled=true OR price > 0
+  const requiresPayment = !!(category && (category.payment_enabled === true || Number(category.price || 0) > 0));
+  const needsPayment = requiresPayment && paymentState !== 'paid' && paymentState !== 'not_required' && !isCancelled;
   const itemNameMap = Object.fromEntries(categoryItems.map(i => [i.id, i.name]));
   const resolvedItems = reg.item_selections
     ? Object.entries(reg.item_selections).filter(([id]) => !!itemNameMap[id])

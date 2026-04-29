@@ -331,7 +331,11 @@ export default function StrideEventDetail() {
                             Full
                           </span>
                         ) : (
-                          <p className="font-black text-base" style={{ color }}>{cat.price === 0 ? 'Free' : `฿${cat.price}`}</p>
+                          <p className="font-black text-base" style={{ color }}>
+            {(cat.payment_enabled === true || Number(cat.price || 0) > 0)
+              ? (cat.price > 0 ? `฿${cat.price}` : 'Paid')
+              : 'Free'}
+          </p>
                         )}
                         {slotLabel && (
                           <p className="text-xs" style={{ color: slotColor }}>{slotLabel}</p>
