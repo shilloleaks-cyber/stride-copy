@@ -389,6 +389,27 @@ export default function TicketDetail({ reg, event, category, onClose, onRemoved 
               </div>
             </div>
 
+            {/* ── EVENT DETAILS ── */}
+            <Section>Event Details</Section>
+            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: '4px 14px' }}>
+              {event?.event_date && (
+                <Row icon={Calendar} label="Date"
+                  value={`${format(new Date(event.event_date), 'EEEE, MMMM d, yyyy')}${event.start_time ? ` · ${event.start_time.replace(/^(\d{1,2}):(\d{2})$/, (_, h, m) => { const hh = parseInt(h); const ampm = hh >= 12 ? 'PM' : 'AM'; const h12 = hh % 12 || 12; return `${h12}:${m} ${ampm}`; })}` : ''}`}
+                />
+              )}
+              {event?.location_name && (
+                <Row icon={MapPin} label="Location">
+                  <p style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.85)', margin: '3px 0 0' }}>{event.location_name}</p>
+                  {event.location_address && (
+                    <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '2px 0 0' }}>{event.location_address}</p>
+                  )}
+                </Row>
+              )}
+              {event?.organizer_name && (
+                <Row icon={User} label="Organizer" value={event.organizer_name} last />
+              )}
+            </div>
+
             {/* ── ITEM SELECTIONS ── */}
             {hasItems && (
               <>
@@ -442,27 +463,6 @@ export default function TicketDetail({ reg, event, category, onClose, onRemoved 
                 </div>
               </>
             )}
-
-            {/* ── EVENT DETAILS ── */}
-            <Section>Event Details</Section>
-            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: '4px 14px' }}>
-              {event?.event_date && (
-                <Row icon={Calendar} label="Date"
-                  value={`${format(new Date(event.event_date), 'EEEE, MMMM d, yyyy')}${event.start_time ? ` · ${event.start_time}` : ''}`}
-                />
-              )}
-              {event?.location_name && (
-                <Row icon={MapPin} label="Location">
-                  <p style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.85)', margin: '3px 0 0' }}>{event.location_name}</p>
-                  {event.location_address && (
-                    <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '2px 0 0' }}>{event.location_address}</p>
-                  )}
-                </Row>
-              )}
-              {event?.organizer_name && (
-                <Row icon={User} label="Organizer" value={event.organizer_name} last />
-              )}
-            </div>
 
             {/* ── PARTICIPANT INFO ── */}
             {hasAnyExtra && (
