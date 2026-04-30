@@ -62,10 +62,12 @@ export default function QRScanner({ onScan, onClose }) {
           if (decodedText === lastScannedRef.current) return;
           lastScannedRef.current = decodedText;
 
-          // Fully stop (releases camera + turns off iPhone indicator) before notifying parent
-          stopScanner().then(() => {
-            if (mountedRef.current) onScan(decodedText);
-          });
+          // Capture the callback before stopping (stopScanner sets mountedRef side-effects)
+          const cb = onScan;
+          // Stop camera then notify parent — do NOT guard with mountedRef here,
+          // because the parent's handleQRScan calls setShowScanner(false) which unmounts
+          // this component, making mountedRef false before the promise resolves.
+          stopScanner().then(() => { cb(decodedText); });
         },
         () => {} // per-frame decode errors are normal — suppress
       );

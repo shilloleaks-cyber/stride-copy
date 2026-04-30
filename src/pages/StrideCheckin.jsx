@@ -374,9 +374,11 @@ export default function StrideCheckin() {
     // Debounce: ignore repeat scans within 2 seconds
     if (scanDebounceRef.current) return;
     scanDebounceRef.current = setTimeout(() => { scanDebounceRef.current = null; }, 2000);
+    // Close scanner first, then kick off search in a microtask so React has
+    // flushed the state update before the async search begins.
     setShowScanner(false);
     setInput(v);
-    handleSearchWithValue(v);
+    setTimeout(() => handleSearchWithValue(v), 0);
   };
 
   const handleReset  = ()  => {
@@ -471,6 +473,11 @@ export default function StrideCheckin() {
                 <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: 1.6 }}>
                   {scanError || 'This ticket belongs to a different event and cannot be checked in here.'}
                 </p>
+                {foundReg && (
+                  <p style={{ fontSize: 12, color: 'rgba(255,180,0,0.6)', margin: '6px 0 0', fontFamily: 'monospace' }}>
+                    Ticket: {foundReg.first_name} {foundReg.last_name} · Bib {foundReg.bib_number || '—'}
+                  </p>
+                )}
               </div>
             </div>
           )}
