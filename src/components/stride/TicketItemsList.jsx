@@ -107,15 +107,7 @@ export default function TicketItemsList({ categoryId, itemSelections }) {
                     />
                   </button>
                   {/* Eye icon — below thumbnail */}
-                  <div style={{
-                    width: 21, height: 21, borderRadius: 6,
-                    background: 'rgba(90,30,160,0.45)',
-                    border: '1px solid rgba(180,100,255,0.45)',
-                    boxShadow: '0 0 6px rgba(150,80,255,0.4)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <Eye style={{ width: 11, height: 11, color: 'rgba(210,160,255,1)' }} />
-                  </div>
+                  <Eye style={{ width: 12, height: 12, color: 'rgba(180,120,255,0.8)' }} />
                 </div>
               ) : (
                 <div style={{
