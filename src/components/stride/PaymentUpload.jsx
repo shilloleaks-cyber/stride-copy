@@ -3,15 +3,16 @@ import { base44 } from '@/api/base44Client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Upload, CheckCircle2, Clock, Loader2, ImageIcon, AlertTriangle, RefreshCw, Building2, QrCode } from 'lucide-react';
 import { format } from 'date-fns';
+import { useLanguage } from '@/lib/LanguageContext';
 
-// ─── Method config ────────────────────────────────────────────────────────────
-const METHODS = [
-  { key: 'bank_transfer', label: 'Bank Transfer', Icon: Building2 },
-  { key: 'qr_scan',       label: 'QR Scan',       Icon: QrCode },
+// ─── Method config (labels resolved at render time) ───────────────────────────
+const METHOD_KEYS = [
+  { key: 'bank_transfer', labelKey: 'payment_method_bank', Icon: Building2 },
+  { key: 'qr_scan',       labelKey: 'payment_method_qr',   Icon: QrCode },
 ];
 
 // ─── Slip uploader sub-component ──────────────────────────────────────────────
-function SlipUploader({ onUploaded }) {
+function SlipUploader({ onUploaded, tFn }) {
   const [preview, setPreview] = useState(null);
   const [uploading, setUploading] = useState(false);
 
@@ -36,7 +37,7 @@ function SlipUploader({ onUploaded }) {
         : <ImageIcon style={{ width: 18, height: 18, color: 'rgba(191,255,0,0.35)' }} />
       }
       <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', fontWeight: 600 }}>
-        {uploading ? 'Uploading…' : 'Tap to upload slip image'}
+        {uploading ? tFn('payment_uploading') : tFn('payment_tap_upload')}
       </span>
       <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFile} />
     </label>
@@ -45,6 +46,7 @@ function SlipUploader({ onUploaded }) {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function PaymentUpload({ registration, category }) {
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
   const [method, setMethod] = useState(null); // set after event loads
   const [slipUrl, setSlipUrl] = useState('');
@@ -61,6 +63,7 @@ export default function PaymentUpload({ registration, category }) {
   const enabledMethods = event?.payment_methods_enabled?.length > 0
     ? event.payment_methods_enabled
     : ['bank_transfer'];
+  const METHODS = METHOD_KEYS.map(m => ({ ...m, label: t(m.labelKey) }));
   const availableMethods = METHODS.filter(m => enabledMethods.includes(m.key));
 
   // Sync method to first available once event loads
@@ -129,7 +132,7 @@ export default function PaymentUpload({ registration, category }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', borderRadius: 14, background: 'rgba(0,210,110,0.08)', border: '1px solid rgba(0,210,110,0.22)' }}>
         <CheckCircle2 style={{ width: 18, height: 18, color: 'rgb(0,210,110)', flexShrink: 0 }} />
         <div>
-          <p style={{ fontSize: 13, fontWeight: 800, color: 'rgb(0,210,110)', margin: 0 }}>Payment Approved</p>
+          <p style={{ fontSize: 13, fontWeight: 800, color: 'rgb(0,210,110)', margin: 0 }}>{t('payment_approved')}</p>
           <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '3px 0 0' }}>
             ฿{amount?.toLocaleString()} · {existingPayment.payment_method === 'qr_scan' ? 'QR Scan' : 'Bank Transfer'}
           </p>
@@ -145,9 +148,9 @@ export default function PaymentUpload({ registration, category }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 14, background: 'rgba(255,200,80,0.07)', border: '1px solid rgba(255,200,80,0.2)' }}>
           <Clock style={{ width: 16, height: 16, color: 'rgba(255,200,80,1)', flexShrink: 0 }} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontSize: 13, fontWeight: 800, color: 'rgba(255,200,80,1)', margin: 0 }}>Awaiting Payment Approval</p>
+            <p style={{ fontSize: 13, fontWeight: 800, color: 'rgba(255,200,80,1)', margin: 0 }}>{t('payment_awaiting')}</p>
             <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '3px 0 0' }}>
-              Your slip has been submitted and is waiting for admin review.
+              {t('payment_awaiting_sub')}
             </p>
           </div>
         </div>
@@ -173,7 +176,7 @@ export default function PaymentUpload({ registration, category }) {
           }}
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px 0', borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.45)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
         >
-          <RefreshCw style={{ width: 13, height: 13 }} /> Replace Slip
+          <RefreshCw style={{ width: 13, height: 13 }} /> {t('payment_replace_slip')}
         </button>
       </div>
     );
@@ -192,20 +195,20 @@ export default function PaymentUpload({ registration, category }) {
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 14px', borderRadius: 14, background: 'rgba(255,120,0,0.07)', border: '1px solid rgba(255,120,0,0.25)' }}>
           <AlertTriangle style={{ width: 15, height: 15, color: 'rgba(255,150,50,1)', flexShrink: 0, marginTop: 1 }} />
           <div>
-            <p style={{ fontSize: 13, fontWeight: 800, color: 'rgba(255,150,50,1)', margin: 0 }}>Payment Needs Attention</p>
+            <p style={{ fontSize: 13, fontWeight: 800, color: 'rgba(255,150,50,1)', margin: 0 }}>{t('payment_needs_attn_title')}</p>
             {existingPayment.admin_note && (
               <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: '4px 0 0', lineHeight: 1.5 }}>
                 {existingPayment.admin_note}
               </p>
             )}
-            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: '6px 0 0' }}>Please upload a new payment slip.</p>
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: '6px 0 0' }}>{t('payment_needs_attn_sub')}</p>
           </div>
         </div>
       )}
 
       {/* Amount due */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: 14, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
-        <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Amount Due</p>
+        <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>{t('payment_amount')}</p>
         <p style={{ fontSize: 22, fontWeight: 900, color: '#BFFF00', margin: 0, letterSpacing: '-0.5px', textShadow: '0 0 16px rgba(191,255,0,0.3)' }}>
           ฿{amount?.toLocaleString()}
         </p>
@@ -248,7 +251,7 @@ export default function PaymentUpload({ registration, category }) {
       {/* Slip upload area */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
-          Upload Payment Slip
+          {t('payment_upload_slip')}
         </p>
         {slipPreview ? (
           <div style={{ position: 'relative', borderRadius: 12, overflow: 'hidden' }}>
@@ -261,19 +264,19 @@ export default function PaymentUpload({ registration, category }) {
             </button>
           </div>
         ) : (
-          <SlipUploader onUploaded={(url, preview) => { setSlipUrl(url); setSlipPreview(preview); }} />
+          <SlipUploader onUploaded={(url, preview) => { setSlipUrl(url); setSlipPreview(preview); }} tFn={t} />
         )}
       </div>
 
       {/* Note field */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
-          Note (optional)
+          {t('payment_note_label')}
         </p>
         <textarea
           value={note}
           onChange={e => setNote(e.target.value)}
-          placeholder="e.g. Transferred on Apr 29 at 10:00 AM"
+          placeholder={t('payment_note_hint')}
           rows={2}
           style={{
             width: '100%', boxSizing: 'border-box',
@@ -300,8 +303,8 @@ export default function PaymentUpload({ registration, category }) {
         }}
       >
         {submitMutation.isPending
-          ? <><Loader2 style={{ width: 16, height: 16, animation: 'spin 1s linear infinite' }} /> Submitting…</>
-          : <><Upload style={{ width: 16, height: 16 }} /> {isNeedsAttention ? 'Resubmit Payment' : 'Submit Payment'}</>
+          ? <><Loader2 style={{ width: 16, height: 16, animation: 'spin 1s linear infinite' }} /> {t('payment_submitting')}</>
+          : <><Upload style={{ width: 16, height: 16 }} /> {isNeedsAttention ? t('payment_resubmit') : t('payment_submit')}</>
         }
       </button>
     </div>
@@ -310,6 +313,7 @@ export default function PaymentUpload({ registration, category }) {
 
 // ─── Bank Transfer Instructions ───────────────────────────────────────────────
 function BankTransferInstructions({ event, amount }) {
+  const { t } = useLanguage();
   const hasBankInfo = event?.bank_name || event?.account_name || event?.account_number;
   return (
     <div style={{ borderRadius: 14, overflow: 'hidden', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
@@ -335,7 +339,7 @@ function BankTransferInstructions({ event, amount }) {
         </div>
       ) : (
         <div style={{ padding: '14px 16px', textAlign: 'center' }}>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', margin: 0 }}>Bank transfer details will be provided by the organizer.</p>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', margin: 0 }}>{t('payment_bank_hint')}</p>
         </div>
       )}
     </div>
@@ -383,6 +387,7 @@ function QRImageLightbox({ url, onClose }) {
 
 // ─── QR Scan Instructions ─────────────────────────────────────────────────────
 function QRScanInstructions({ event, amount }) {
+  const { t } = useLanguage();
   const [lightbox, setLightbox] = useState(false);
   return (
     <div style={{ borderRadius: 14, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', padding: '14px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
@@ -398,12 +403,12 @@ function QRScanInstructions({ event, amount }) {
               style={{ width: 180, height: 180, objectFit: 'contain', borderRadius: 14, background: 'white', padding: 8, boxShadow: '0 0 20px rgba(191,255,0,0.1)' }}
             />
             <span style={{ fontSize: 11, color: 'rgba(180,120,255,0.8)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
-              👁 Tap to view full QR
+              {t('payment_tap_qr')}
             </span>
           </button>
           {amount && (
             <p style={{ fontSize: 13, fontWeight: 800, color: '#BFFF00', margin: 0 }}>
-              Scan and pay ฿{amount.toLocaleString()}
+              {t('payment_scan_pay')} ฿{amount.toLocaleString()}
             </p>
           )}
           {event.payment_note && (
@@ -415,7 +420,7 @@ function QRScanInstructions({ event, amount }) {
         </>
       ) : (
         <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', margin: 0, textAlign: 'center' }}>
-          QR payment image will be provided by the organizer.
+        {t('payment_qr_hint')}
         </p>
       )}
     </div>

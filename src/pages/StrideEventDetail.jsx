@@ -16,12 +16,14 @@ import EventInviteSheet from '@/components/stride/EventInviteSheet';
 import { useAuthGate } from '@/hooks/useAuthGate';
 import LoginGateModal from '@/components/auth/LoginGateModal';
 import { trackEventView } from '@/lib/eventMetrics';
+import { useLanguage } from '@/lib/LanguageContext';
 
 const CAT_COLORS = ['#BFFF00', '#8A2BE2', 'rgb(0,200,180)', 'rgb(255,180,0)', 'rgb(255,80,130)'];
 
 export default function StrideEventDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { t } = useLanguage();
   const params = new URLSearchParams(window.location.search);
   const eventId = params.get('id');
 
@@ -179,7 +181,7 @@ export default function StrideEventDetail() {
           <div className="flex items-center gap-3">
             <Calendar className="w-5 h-5 flex-shrink-0" style={{ color: '#BFFF00' }} />
             <div>
-              <p className="text-xs mb-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Race Day</p>
+              <p className="text-xs mb-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>{t('event_race_day')}</p>
               <p className="text-white font-semibold">{event.event_date ? format(new Date(event.event_date), 'EEEE, MMMM d, yyyy') : '—'}{event.start_time ? <><br />{format(new Date(`1970-01-01T${event.start_time}`), 'h:mm a')}</> : ''}</p>
             </div>
           </div>
@@ -187,7 +189,7 @@ export default function StrideEventDetail() {
             <div className="flex items-center gap-3">
               <MapPin className="w-5 h-5 flex-shrink-0" style={{ color: '#8A2BE2' }} />
               <div>
-                <p className="text-xs mb-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Location</p>
+                <p className="text-xs mb-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>{t('event_location')}</p>
                 <p className="text-white font-semibold">{event.location_name}</p>
                 <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>{event.location_address}</p>
               </div>
@@ -209,8 +211,8 @@ export default function StrideEventDetail() {
               <div>
                 <p className="text-xs mb-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Registered</p>
                 <p className="text-white font-semibold">
-                  {event.total_registered || 0} registered
-                  {event.max_participants > 0 && ` · ${Math.max(0, event.max_participants - (event.total_registered || 0))} spots left`}
+                  {event.total_registered || 0} {t('home_registered')}
+                  {event.max_participants > 0 && ` · ${Math.max(0, event.max_participants - (event.total_registered || 0))} ${t('event_spots_left')}`}
                 </p>
               </div>
             </div>
@@ -307,7 +309,7 @@ export default function StrideEventDetail() {
                       fontSize: 13, fontWeight: 700, color: '#BFFF00',
                     }}
                   >
-                    <ExternalLink style={{ width: 14, height: 14 }} /> Open in Maps
+                    <ExternalLink style={{ width: 14, height: 14 }} /> {t('event_open_maps')}
                   </button>
                   <button
                     onClick={() => window.open(event.maps_link, '_blank')}
@@ -318,7 +320,7 @@ export default function StrideEventDetail() {
                       fontSize: 13, fontWeight: 700, color: 'rgba(180,130,255,1)',
                     }}
                   >
-                    <Navigation style={{ width: 14, height: 14 }} /> Directions
+                    <Navigation style={{ width: 14, height: 14 }} /> {t('event_directions')}
                   </button>
                 </div>
               </div>
@@ -507,7 +509,7 @@ export default function StrideEventDetail() {
               className="w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
               style={{ background: 'rgba(191,255,0,0.12)', border: '1px solid rgba(191,255,0,0.35)', color: '#BFFF00' }}
             >
-              View My Ticket <ChevronRight className="w-5 h-5" />
+              {t('event_view_ticket')} <ChevronRight className="w-5 h-5" />
             </button>
           ) : isOpen && categories.length > 0 ? (
             paymentBlocked ? (
@@ -528,7 +530,7 @@ export default function StrideEventDetail() {
                   : { background: 'rgba(191,255,0,0.15)', color: 'rgba(191,255,0,0.4)' }
                 }
               >
-                {selectedCategory ? `Register for ${selectedCategory.name}` : 'Select a Category'}
+                {selectedCategory ? `${t('btn_register')} ${selectedCategory.name}` : t('event_select_cat')}
               </button>
             )
           ) : null}

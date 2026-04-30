@@ -79,10 +79,10 @@ export default function StrideEvents() {
       {/* Header */}
       <div style={{ padding: '52px 20px 16px' }}>
         <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4 }}>
-          Discover
+          {t('event_discover')}
         </p>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-          <h1 style={{ fontSize: 32, fontWeight: 900, color: '#fff', margin: 0, lineHeight: 1.1 }}>Events</h1>
+          <h1 style={{ fontSize: 32, fontWeight: 900, color: '#fff', margin: 0, lineHeight: 1.1 }}>{t('event_events')}</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
             {user && <NotificationCenter user={user} />}
             <button
@@ -96,7 +96,7 @@ export default function StrideEvents() {
                 minHeight: 36,
               }}
             >
-              My Events
+              {t('event_my_events')}
             </button>
           </div>
         </div>
@@ -109,7 +109,7 @@ export default function StrideEvents() {
           type="text"
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="Search events..."
+          placeholder={t('event_search')}
           style={{
             width: '100%', boxSizing: 'border-box',
             background: 'rgba(255,255,255,0.06)',
@@ -123,7 +123,7 @@ export default function StrideEvents() {
       {/* Loading */}
       {isLoading && (
         <div style={{ textAlign: 'center', padding: '48px 20px', color: 'rgba(255,255,255,0.3)', fontSize: 14 }}>
-          Loading events...
+          {t('event_loading')}
         </div>
       )}
 
@@ -135,7 +135,7 @@ export default function StrideEvents() {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-                  Official Events
+                  {t('event_official')}
                 </span>
                 {officialEvents.length > 0 && (
                   <span style={{
@@ -160,7 +160,7 @@ export default function StrideEvents() {
                     WebkitTapHighlightColor: 'transparent',
                   }}
                 >
-                  <span style={{ fontSize: 14, lineHeight: 1 }}>+</span> New Official
+                  <span style={{ fontSize: 14, lineHeight: 1 }}>+</span> {t('event_new_official')}
                 </button>
               )}
             </div>
@@ -170,8 +170,8 @@ export default function StrideEvents() {
                 background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.08)',
               }}>
                 <p style={{ fontSize: 28, marginBottom: 8 }}>🏃</p>
-                <p style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>No open events</p>
-                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>Check back soon for upcoming races</p>
+                <p style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>{t('event_no_open')}</p>
+                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>{t('event_check_back')}</p>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -211,7 +211,7 @@ export default function StrideEvents() {
                       <p style={{ fontSize: 14, fontWeight: 800, color: '#fff', margin: 0 }}>{ev.title}</p>
                       {ev.event_date && <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '3px 0 0' }}>{ev.event_date}</p>}
                     </div>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,180,0,0.8)', flexShrink: 0 }}>Continue →</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,180,0,0.8)', flexShrink: 0 }}>{t('event_continue')}</span>
                   </button>
                 ))}
               </div>
@@ -220,15 +220,15 @@ export default function StrideEvents() {
 
           {/* Community Events */}
           <div style={{ marginBottom: 16 }}>
-            <SectionHeader label="Community Events" count={communityEvents.length} />
+            <SectionHeader label={t('event_community')} count={communityEvents.length} />
             {communityEvents.length === 0 ? (
               <div style={{
                 borderRadius: 18, padding: '40px 20px', textAlign: 'center',
                 background: '#1A1A1A', border: '1px solid rgba(255,255,255,0.07)',
               }}>
                 <p style={{ fontSize: 34, marginBottom: 10 }}>🏃‍♂️</p>
-                <p style={{ fontSize: 16, fontWeight: 700, color: 'rgba(255,255,255,0.7)', marginBottom: 6 }}>No community events</p>
-                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)', lineHeight: 1.5 }}>Join a group to see community events</p>
+                <p style={{ fontSize: 16, fontWeight: 700, color: 'rgba(255,255,255,0.7)', marginBottom: 6 }}>{t('event_no_community')}</p>
+                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)', lineHeight: 1.5 }}>{t('event_join_group')}</p>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

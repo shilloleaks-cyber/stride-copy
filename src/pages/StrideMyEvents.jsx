@@ -5,12 +5,18 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import PremiumTicketCard from '@/components/stride/PremiumTicketCard';
 import TicketDetail from '@/components/stride/TicketDetail';
+import { useLanguage } from '@/lib/LanguageContext';
 
-const FILTERS = ['All', 'Official', 'Group'];
+const FILTER_KEYS = [
+  { key: 'All',      labelKey: 'filter_all' },
+  { key: 'Official', labelKey: 'filter_official' },
+  { key: 'Group',    labelKey: 'filter_group' },
+];
 
 export default function StrideMyEvents() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { t } = useLanguage();
   const [filter, setFilter] = useState('All');
   const [index, setIndex] = useState(0);
   const [selectedReg, setSelectedReg] = useState(null);
@@ -92,30 +98,30 @@ export default function StrideMyEvents() {
               <p style={{ fontSize: 9, fontWeight: 800, color: 'rgba(255,255,255,0.22)', letterSpacing: '0.2em', textTransform: 'uppercase', margin: '0 0 2px' }}>
                 BoomX
               </p>
-              <h1 style={{ fontSize: 22, fontWeight: 900, color: '#fff', margin: 0, lineHeight: 1 }}>My Tickets</h1>
+              <h1 style={{ fontSize: 22, fontWeight: 900, color: '#fff', margin: 0, lineHeight: 1 }}>{t('my_tickets_title')}</h1>
             </div>
           </div>
 
           <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', margin: '0 0 20px', fontWeight: 500 }}>
-            Tap card to open details
+            {t('my_tickets_tap')}
           </p>
 
           {/* Filter tabs */}
           <div style={{ display: 'flex', gap: 8, marginBottom: 28 }}>
-            {FILTERS.map(f => (
+            {FILTER_KEYS.map(({ key, labelKey }) => (
               <button
-                key={f}
-                onClick={() => setFilter(f)}
+                key={key}
+                onClick={() => setFilter(key)}
                 style={{
                   padding: '7px 18px', borderRadius: 99, fontSize: 12, fontWeight: 700,
                   cursor: 'pointer', transition: 'all 0.15s',
-                  ...(filter === f
+                  ...(filter === key
                     ? { background: '#fff', color: '#0A0A0A', border: '1px solid transparent' }
                     : { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.45)' }
                   ),
                 }}
               >
-                {f}
+                {t(labelKey)}
               </button>
             ))}
           </div>
@@ -131,15 +137,15 @@ export default function StrideMyEvents() {
           {isEmpty && !isLoading && (
             <div style={{ textAlign: 'center', padding: 40 }}>
               <p style={{ fontSize: 40, margin: '0 0 12px' }}>🎟</p>
-              <p style={{ fontSize: 16, fontWeight: 700, color: 'rgba(255,255,255,0.6)', margin: '0 0 6px' }}>No tickets yet</p>
+              <p style={{ fontSize: 16, fontWeight: 700, color: 'rgba(255,255,255,0.6)', margin: '0 0 6px' }}>{t('empty_no_tickets')}</p>
               <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.28)', margin: '0 0 20px' }}>
-                {filter !== 'All' ? `No ${filter.toLowerCase()} tickets found` : 'Register for an event to get started'}
+                {filter !== 'All' ? t('my_tickets_no_filter').replace('{filter}', filter.toLowerCase()) : t('my_tickets_register')}
               </p>
               <button
                 onClick={() => navigate('/StrideEvents')}
                 style={{ padding: '10px 24px', borderRadius: 12, background: 'rgba(191,255,0,0.1)', border: '1px solid rgba(191,255,0,0.25)', color: '#BFFF00', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
               >
-                Browse Events →
+                {t('my_tickets_browse')}
               </button>
             </div>
           )}

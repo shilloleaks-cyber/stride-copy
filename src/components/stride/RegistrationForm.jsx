@@ -5,8 +5,10 @@ import { X, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import CategoryItemsPicker from '@/components/stride/CategoryItemsPicker';
 import { SHEET_BOTTOM_PADDING } from '@/lib/sheetLayout';
 import { trackJoinClick } from '@/lib/eventMetrics';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export default function RegistrationForm({ event, category, user, onClose, onSuccess }) {
+  const { t } = useLanguage();
   const [itemSelections, setItemSelections] = useState({});
   const [requiredItemsMissing, setRequiredItemsMissing] = useState(false);
   const [blockReason, setBlockReason] = useState(null);
@@ -64,8 +66,8 @@ export default function RegistrationForm({ event, category, user, onClose, onSuc
             <p className="font-bold text-white text-base">{event.title}</p>
             <p className="text-xs mt-0.5 font-semibold" style={{ color: '#BFFF00' }}>
               {category.name}{(category.payment_enabled === true || Number(category.price || 0) > 0)
-                ? (category.price > 0 ? ` · ฿${category.price}` : ' · Payment Required')
-                : ' · Free'}
+                ? (category.price > 0 ? ` · ฿${category.price}` : ` · ${t('reg_payment_required')}`)
+                : ` · ${t('reg_free')}`}
             </p>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.08)' }}>
@@ -116,10 +118,10 @@ export default function RegistrationForm({ event, category, user, onClose, onSuc
             }
           >
             {registerMutation.isPending
-              ? <><Loader2 className="w-5 h-5 animate-spin" /> Registering...</>
+              ? <><Loader2 className="w-5 h-5 animate-spin" /> {t('reg_registering')}</>
               : (category.payment_enabled === true || Number(category.price || 0) > 0)
-                  ? 'Register & Proceed to Payment'
-                  : 'Confirm Registration'
+                  ? t('reg_register_pay')
+                  : t('reg_confirm')
             }
           </button>
         </div>
