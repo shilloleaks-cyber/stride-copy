@@ -85,7 +85,7 @@ export default function CategoryItemsPicker({ categoryId, selections, onChange, 
                       <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 6, background: 'rgba(255,180,0,0.1)', color: 'rgba(255,180,0,0.9)' }}>Choose required</span>
                     )}
                   </div>
-                  {item.description && <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '2px 0 0' }}>{item.description}</p>}
+                  {item.description && <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '2px 0 0', whiteSpace: 'pre-line' }}>{item.description}</p>}
                 </div>
                 {item.detail_image_url && (
                   <button type="button" onClick={() => setViewingImage(item.detail_image_url)}

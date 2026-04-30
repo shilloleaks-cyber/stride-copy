@@ -143,8 +143,10 @@ function ItemForm({ categoryId, initial, editingId, sortOrderNext, onSaved, onCa
       {/* Description */}
       <div>
         <label style={lbl}>Description</label>
-        <input value={form.description} onChange={e => set('description', e.target.value)}
-          placeholder="Short description of the item" style={inp(false)} />
+        <textarea value={form.description} onChange={e => set('description', e.target.value)}
+          placeholder="Short description of the item"
+          rows={3}
+          style={{ ...inp(false), resize: 'vertical', lineHeight: 1.55, whiteSpace: 'pre-wrap' }} />
       </div>
 
       {/* Variant toggle */}
@@ -390,7 +392,7 @@ export default function CategoryItemsManager({ categoryId, onItemsChanged }) {
             <span style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>{ITEM_TYPE_EMOJI[item.item_type] || '📦'}</span>
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ fontSize: 13, fontWeight: 800, color: '#fff', margin: 0 }}>{item.name}</p>
-              {item.description && <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '2px 0 0' }}>{item.description}</p>}
+              {item.description && <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '2px 0 0', whiteSpace: 'pre-line' }}>{item.description}</p>}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
                 <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 6, background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' }}>
                   {item.item_type}
