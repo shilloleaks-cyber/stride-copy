@@ -90,7 +90,7 @@ export default function TicketItemsList({ categoryId, itemSelections }) {
             >
               {/* Thumbnail — detail image or emoji fallback */}
               {item.detail_image_url ? (
-                <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
+                <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 5, alignSelf: 'center' }}>
                   <button
                     onClick={() => setLightboxUrl(item.detail_image_url)}
                     style={{
