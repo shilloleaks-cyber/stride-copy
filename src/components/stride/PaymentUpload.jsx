@@ -342,17 +342,65 @@ function BankTransferInstructions({ event, amount }) {
   );
 }
 
+// ─── QR Image Fullscreen Lightbox ─────────────────────────────────────────────
+function QRImageLightbox({ url, onClose }) {
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 99999,
+        background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(12px)',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        padding: 24,
+      }}
+    >
+      <button
+        onClick={onClose}
+        style={{
+          position: 'absolute', top: 16, right: 16,
+          width: 36, height: 36, borderRadius: 10,
+          background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)',
+          color: 'rgba(255,255,255,0.7)', fontSize: 18, fontWeight: 700,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+        }}
+      >
+        ✕
+      </button>
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{ maxWidth: '90vw', maxHeight: '80vh', background: 'white', borderRadius: 20, padding: 12, boxShadow: '0 0 60px rgba(191,255,0,0.15)' }}
+      >
+        <img
+          src={url}
+          alt="Payment QR"
+          style={{ display: 'block', maxWidth: '80vw', maxHeight: '70vh', objectFit: 'contain', borderRadius: 12 }}
+        />
+      </div>
+      <p style={{ marginTop: 16, fontSize: 12, color: 'rgba(255,255,255,0.3)' }}>Tap outside to close</p>
+    </div>
+  );
+}
+
 // ─── QR Scan Instructions ─────────────────────────────────────────────────────
 function QRScanInstructions({ event, amount }) {
+  const [lightbox, setLightbox] = useState(false);
   return (
     <div style={{ borderRadius: 14, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', padding: '14px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
       {event?.payment_qr_image ? (
         <>
-          <img
-            src={event.payment_qr_image}
-            alt="Payment QR"
-            style={{ width: 180, height: 180, objectFit: 'contain', borderRadius: 14, background: 'white', padding: 8 }}
-          />
+          <button
+            onClick={() => setLightbox(true)}
+            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}
+          >
+            <img
+              src={event.payment_qr_image}
+              alt="Payment QR"
+              style={{ width: 180, height: 180, objectFit: 'contain', borderRadius: 14, background: 'white', padding: 8, boxShadow: '0 0 20px rgba(191,255,0,0.1)' }}
+            />
+            <span style={{ fontSize: 11, color: 'rgba(180,120,255,0.8)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
+              👁 Tap to view full QR
+            </span>
+          </button>
           {amount && (
             <p style={{ fontSize: 13, fontWeight: 800, color: '#BFFF00', margin: 0 }}>
               Scan and pay ฿{amount.toLocaleString()}
@@ -363,6 +411,7 @@ function QRScanInstructions({ event, amount }) {
               {event.payment_note}
             </p>
           )}
+          {lightbox && <QRImageLightbox url={event.payment_qr_image} onClose={() => setLightbox(false)} />}
         </>
       ) : (
         <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', margin: 0, textAlign: 'center' }}>
