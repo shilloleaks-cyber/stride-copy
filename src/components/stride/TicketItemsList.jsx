@@ -71,95 +71,73 @@ export default function TicketItemsList({ categoryId, itemSelections }) {
 
   return (
     <>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {displayItems.map((item, idx) => {
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14, padding: '10px 0' }}>
+        {displayItems.map((item) => {
           const selectionValue = itemSelections[item.id];
           const isIncluded = selectionValue === 'included' || !item.has_variant;
           const variantLabel = !isIncluded ? selectionValue : null;
-          const isLast = idx === displayItems.length - 1;
           const emoji = ITEM_TYPE_EMOJI[item.item_type] || '📦';
 
           return (
             <div
               key={item.id}
               style={{
-                display: 'flex', alignItems: 'center', gap: 12,
-                padding: '12px 0',
-                borderBottom: isLast ? 'none' : '1px solid rgba(255,255,255,0.05)',
+                borderRadius: 16,
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                overflow: 'hidden',
+                display: 'flex', flexDirection: 'column',
               }}
             >
-              {/* Thumbnail — detail image or emoji fallback */}
+              {/* Header: name + badge */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px 10px' }}>
+                <p style={{ fontSize: 13, fontWeight: 800, color: 'rgba(255,255,255,0.9)', margin: 0 }}>
+                  {item.name}
+                </p>
+                {variantLabel ? (
+                  <span style={{ fontSize: 11, fontWeight: 800, padding: '4px 10px', borderRadius: 8, background: 'rgba(191,255,0,0.1)', color: '#BFFF00', border: '1px solid rgba(191,255,0,0.2)', whiteSpace: 'nowrap' }}>
+                    {variantLabel}
+                  </span>
+                ) : (
+                  <span style={{ fontSize: 11, fontWeight: 800, padding: '4px 10px', borderRadius: 8, background: 'rgba(0,210,110,0.1)', color: 'rgb(0,210,110)', border: '1px solid rgba(0,210,110,0.2)', whiteSpace: 'nowrap' }}>
+                    Included
+                  </span>
+                )}
+              </div>
+
+              {/* Image area */}
               {item.detail_image_url ? (
-                <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 5, alignSelf: 'center' }}>
-                  <button
-                    onClick={() => setLightboxUrl(item.detail_image_url)}
-                    style={{
-                      width: 48, height: 48, borderRadius: 12,
-                      overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)',
-                      cursor: 'pointer', padding: 0, background: 'rgba(255,255,255,0.05)',
-                      WebkitTapHighlightColor: 'transparent',
-                    }}
-                  >
+                <button
+                  onClick={() => setLightboxUrl(item.detail_image_url)}
+                  style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'center',
+                    background: 'none', border: 'none', cursor: 'pointer', padding: '0 14px 10px',
+                    WebkitTapHighlightColor: 'transparent',
+                  }}
+                >
+                  <div style={{ width: '100%', background: 'white', borderRadius: 12, padding: 8, boxShadow: '0 0 16px rgba(191,255,0,0.06)' }}>
                     <img
                       src={item.detail_image_url}
                       alt={item.name}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                      style={{ width: '100%', maxHeight: 240, objectFit: 'contain', borderRadius: 8, display: 'block' }}
                     />
-                  </button>
-                  {/* Eye icon — below thumbnail */}
-                  <Eye style={{ width: 12, height: 12, color: 'rgba(180,120,255,0.8)' }} />
-                </div>
+                  </div>
+                  <span style={{ marginTop: 7, fontSize: 11, color: 'rgba(180,120,255,0.8)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <Eye style={{ width: 11, height: 11 }} /> Tap to view full image
+                  </span>
+                </button>
               ) : (
-                <div style={{
-                  flexShrink: 0, width: 48, height: 48, borderRadius: 12,
-                  background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 20,
-                }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '18px 14px', fontSize: 40 }}>
                   {emoji}
                 </div>
               )}
 
-              {/* Name + description */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.9)', margin: 0, lineHeight: 1.3 }}>
-                  {item.name}
+              {/* Description */}
+              {item.description && (
+                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', margin: 0, padding: '0 14px 14px', lineHeight: 1.55, whiteSpace: 'pre-line' }}>
+                  {item.description}
                 </p>
-                {item.description && (
-                  <p style={{
-                    fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '4px 0 0',
-                    lineHeight: 1.55, whiteSpace: 'pre-line',
-                  }}>
-                    {item.description}
-                  </p>
-                )}
-              </div>
-
-              {/* Badge: variant or Included + Eye */}
-              <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, paddingTop: 2 }}>
-                {variantLabel ? (
-                  <span style={{
-                    fontSize: 11, fontWeight: 800,
-                    padding: '4px 10px', borderRadius: 8,
-                    background: 'rgba(191,255,0,0.1)', color: '#BFFF00',
-                    border: '1px solid rgba(191,255,0,0.2)',
-                    whiteSpace: 'nowrap',
-                  }}>
-                    {variantLabel}
-                  </span>
-                ) : (
-                  <span style={{
-                    fontSize: 11, fontWeight: 800,
-                    padding: '4px 10px', borderRadius: 8,
-                    background: 'rgba(0,210,110,0.1)', color: 'rgb(0,210,110)',
-                    border: '1px solid rgba(0,210,110,0.2)',
-                    whiteSpace: 'nowrap',
-                  }}>
-                    Included
-                  </span>
-                )}
-
-              </div>
+              )}
             </div>
           );
         })}
