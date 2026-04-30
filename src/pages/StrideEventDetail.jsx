@@ -268,7 +268,7 @@ export default function StrideEventDetail() {
         {event.description && (
           <div>
             <p className="text-xs uppercase tracking-widest mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>About</p>
-            <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>{event.description}</p>
+            <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)', whiteSpace: 'pre-line' }}>{event.description}</p>
           </div>
         )}
 
