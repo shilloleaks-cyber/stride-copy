@@ -97,6 +97,7 @@ export default function TicketItemsList({ categoryId, itemSelections }) {
                     overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)',
                     cursor: 'pointer', padding: 0, background: 'rgba(255,255,255,0.05)',
                     WebkitTapHighlightColor: 'transparent',
+                    position: 'relative',
                   }}
                 >
                   <img
@@ -104,6 +105,22 @@ export default function TicketItemsList({ categoryId, itemSelections }) {
                     alt={item.name}
                     style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                   />
+                  {/* Eye overlay — centered on image */}
+                  <div style={{
+                    position: 'absolute', inset: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: 'rgba(50,10,100,0.45)',
+                  }}>
+                    <div style={{
+                      width: 21, height: 21, borderRadius: 6,
+                      background: 'rgba(90,30,160,0.6)',
+                      border: '1px solid rgba(180,100,255,0.5)',
+                      boxShadow: '0 0 6px rgba(150,80,255,0.5)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <Eye style={{ width: 11, height: 11, color: 'rgba(210,160,255,1)' }} />
+                    </div>
+                  </div>
                 </button>
               ) : (
                 <div style={{
@@ -154,18 +171,7 @@ export default function TicketItemsList({ categoryId, itemSelections }) {
                     Included
                   </span>
                 )}
-                {/* Eye icon — neon purple, centered below badge */}
-                {item.detail_image_url && (
-                  <div style={{
-                    width: 30, height: 30, borderRadius: 8,
-                    background: 'rgba(90,30,160,0.35)',
-                    border: '1px solid rgba(180,100,255,0.4)',
-                    boxShadow: '0 0 8px rgba(150,80,255,0.35)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <Eye style={{ width: 15, height: 15, color: 'rgba(200,150,255,1)' }} />
-                  </div>
-                )}
+
               </div>
             </div>
           );
