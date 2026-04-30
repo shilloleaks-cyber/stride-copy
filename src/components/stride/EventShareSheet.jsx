@@ -9,10 +9,10 @@ export default function EventShareSheet({ event, user, onClose }) {
 
   const PUBLIC_APP_URL = "https://boomx.run";
   const shareUrl = `${PUBLIC_APP_URL}/StrideEventDetail?id=${event.id}`;
+  const BX_LOGO_URL = 'https://media.base44.com/images/public/6978a104229753cd677d6b25/8cd272a94_IMG_7104.jpg';
   const slug = (event.title || 'event').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
+  const drawQR = (canvas) => {
     if (!canvas) return;
     const SIZE = 240;
     canvas.width = SIZE;
@@ -26,49 +26,58 @@ export default function EventShareSheet({ event, user, onClose }) {
       errorCorrectionLevel: 'H',
     }, (err) => {
       if (err) return;
-      const LOGO = 52;
+
+      // Logo occupies ~24% of QR width
+      const LOGO = Math.round(SIZE * 0.24);
+      const PAD = 4; // white padding around logo for readability
       const cx = SIZE / 2 - LOGO / 2;
       const cy = SIZE / 2 - LOGO / 2;
+      const r = 8;
 
+      // White rounded-square background
       ctx.save();
       ctx.beginPath();
-      const r = 10;
-      ctx.moveTo(cx + r, cy);
-      ctx.lineTo(cx + LOGO - r, cy);
-      ctx.quadraticCurveTo(cx + LOGO, cy, cx + LOGO, cy + r);
-      ctx.lineTo(cx + LOGO, cy + LOGO - r);
-      ctx.quadraticCurveTo(cx + LOGO, cy + LOGO, cx + LOGO - r, cy + LOGO);
-      ctx.lineTo(cx + r, cy + LOGO);
-      ctx.quadraticCurveTo(cx, cy + LOGO, cx, cy + LOGO - r);
-      ctx.lineTo(cx, cy + r);
-      ctx.quadraticCurveTo(cx, cy, cx + r, cy);
+      ctx.moveTo(cx - PAD + r, cy - PAD);
+      ctx.lineTo(cx + LOGO + PAD - r, cy - PAD);
+      ctx.quadraticCurveTo(cx + LOGO + PAD, cy - PAD, cx + LOGO + PAD, cy - PAD + r);
+      ctx.lineTo(cx + LOGO + PAD, cy + LOGO + PAD - r);
+      ctx.quadraticCurveTo(cx + LOGO + PAD, cy + LOGO + PAD, cx + LOGO + PAD - r, cy + LOGO + PAD);
+      ctx.lineTo(cx - PAD + r, cy + LOGO + PAD);
+      ctx.quadraticCurveTo(cx - PAD, cy + LOGO + PAD, cx - PAD, cy + LOGO + PAD - r);
+      ctx.lineTo(cx - PAD, cy - PAD + r);
+      ctx.quadraticCurveTo(cx - PAD, cy - PAD, cx - PAD + r, cy - PAD);
       ctx.closePath();
-      ctx.fillStyle = '#0A0A0A';
+      ctx.fillStyle = '#ffffff';
       ctx.fill();
       ctx.restore();
 
-      ctx.save();
-      const gB = ctx.createLinearGradient(cx + 4, cy + 8, cx + 4, cy + LOGO - 8);
-      gB.addColorStop(0, '#BFFF00');
-      gB.addColorStop(1, '#6DBF00');
-      ctx.fillStyle = gB;
-      ctx.font = `bold ${LOGO - 16}px sans-serif`;
-      ctx.textBaseline = 'middle';
-      ctx.textAlign = 'left';
-      ctx.fillText('B', cx + 5, cy + LOGO / 2);
-      ctx.restore();
-
-      ctx.save();
-      const gX = ctx.createLinearGradient(cx + LOGO / 2 + 2, cy + 8, cx + LOGO / 2 + 2, cy + LOGO - 8);
-      gX.addColorStop(0, '#C060FF');
-      gX.addColorStop(1, '#8A2BE2');
-      ctx.fillStyle = gX;
-      ctx.font = `bold ${LOGO - 16}px sans-serif`;
-      ctx.textBaseline = 'middle';
-      ctx.textAlign = 'left';
-      ctx.fillText('X', cx + LOGO / 2 + 1, cy + LOGO / 2);
-      ctx.restore();
+      // Draw the actual BX logo image
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        // Clip to rounded square
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(cx + r, cy);
+        ctx.lineTo(cx + LOGO - r, cy);
+        ctx.quadraticCurveTo(cx + LOGO, cy, cx + LOGO, cy + r);
+        ctx.lineTo(cx + LOGO, cy + LOGO - r);
+        ctx.quadraticCurveTo(cx + LOGO, cy + LOGO, cx + LOGO - r, cy + LOGO);
+        ctx.lineTo(cx + r, cy + LOGO);
+        ctx.quadraticCurveTo(cx, cy + LOGO, cx, cy + LOGO - r);
+        ctx.lineTo(cx, cy + r);
+        ctx.quadraticCurveTo(cx, cy, cx + r, cy);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(img, cx, cy, LOGO, LOGO);
+        ctx.restore();
+      };
+      img.src = BX_LOGO_URL;
     });
+  };
+
+  useEffect(() => {
+    drawQR(canvasRef.current);
   }, [shareUrl]);
 
   const handleSaveQR = () => {
@@ -82,10 +91,43 @@ export default function EventShareSheet({ event, user, onClose }) {
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, out.width, out.height);
     ctx.drawImage(canvas, pad, pad);
-    const link = document.createElement('a');
-    link.download = `${slug}-qr.png`;
-    link.href = out.toDataURL('image/png');
-    link.click();
+    // Re-composite the logo onto the output canvas to ensure it's captured
+    const SIZE = canvas.width;
+    const LOGO = Math.round(SIZE * 0.24);
+    const cx = pad + SIZE / 2 - LOGO / 2;
+    const cy = pad + SIZE / 2 - LOGO / 2;
+    const r = 8;
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(cx + r, cy);
+      ctx.lineTo(cx + LOGO - r, cy);
+      ctx.quadraticCurveTo(cx + LOGO, cy, cx + LOGO, cy + r);
+      ctx.lineTo(cx + LOGO, cy + LOGO - r);
+      ctx.quadraticCurveTo(cx + LOGO, cy + LOGO, cx + LOGO - r, cy + LOGO);
+      ctx.lineTo(cx + r, cy + LOGO);
+      ctx.quadraticCurveTo(cx, cy + LOGO, cx, cy + LOGO - r);
+      ctx.lineTo(cx, cy + r);
+      ctx.quadraticCurveTo(cx, cy, cx + r, cy);
+      ctx.closePath();
+      ctx.clip();
+      ctx.drawImage(img, cx, cy, LOGO, LOGO);
+      ctx.restore();
+      const link = document.createElement('a');
+      link.download = `${slug}-qr.png`;
+      link.href = out.toDataURL('image/png');
+      link.click();
+    };
+    img.onerror = () => {
+      // Fallback: download without logo
+      const link = document.createElement('a');
+      link.download = `${slug}-qr.png`;
+      link.href = out.toDataURL('image/png');
+      link.click();
+    };
+    img.src = BX_LOGO_URL;
   };
 
   const handleCopyLink = async () => {
