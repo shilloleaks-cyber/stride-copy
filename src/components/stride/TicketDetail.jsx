@@ -389,6 +389,19 @@ export default function TicketDetail({ reg, event, category, onClose, onRemoved 
               </div>
             </div>
 
+            {/* ── ITEM SELECTIONS ── */}
+            {hasItems && (
+              <>
+                <Section>Your Items</Section>
+                <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: '4px 14px' }}>
+                  <TicketItemsList
+                    categoryId={reg.category_id}
+                    itemSelections={reg.item_selections}
+                  />
+                </div>
+              </>
+            )}
+
             {/* ── STATUS SECTION ── */}
             <Section>Status</Section>
             <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: '4px 14px' }}>
@@ -450,19 +463,6 @@ export default function TicketDetail({ reg, event, category, onClose, onRemoved 
                 <Row icon={User} label="Organizer" value={event.organizer_name} last />
               )}
             </div>
-
-            {/* ── ITEM SELECTIONS ── */}
-            {hasItems && (
-              <>
-                <Section>Your Items</Section>
-                <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: '4px 14px' }}>
-                  <TicketItemsList
-                    categoryId={reg.category_id}
-                    itemSelections={reg.item_selections}
-                  />
-                </div>
-              </>
-            )}
 
             {/* ── PARTICIPANT INFO ── */}
             {hasAnyExtra && (
