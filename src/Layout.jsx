@@ -4,11 +4,13 @@ import { createPageUrl } from '@/utils';
 import { Home, BarChart2, User, Users, CalendarDays } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { useLanguage } from '@/lib/LanguageContext';
 import './globals.css';
 
 export default function Layout({ children }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   // Detect system color scheme and toggle .dark class
   useEffect(() => {
@@ -53,11 +55,11 @@ export default function Layout({ children }) {
   }, [navigate]);
   
   const navItems = [
-    { name: 'หน้าหลัก', icon: Home, page: 'Home' },
-    { name: 'เทรน', icon: BarChart2, page: 'Training' },
-    { name: 'ฟีด', icon: Users, page: 'Feed' },
-    { name: 'Events', icon: CalendarDays, page: 'Events' },
-    { name: 'โปรไฟล์', icon: User, page: 'Profile' },
+    { nameKey: 'nav_home',    icon: Home,        page: 'Home' },
+    { nameKey: 'nav_train',   icon: BarChart2,   page: 'Training' },
+    { nameKey: 'nav_feed',    icon: Users,        page: 'Feed' },
+    { nameKey: 'nav_events',  icon: CalendarDays, page: 'Events' },
+    { nameKey: 'nav_profile', icon: User,         page: 'Profile' },
   ];
 
   const { data: user } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
@@ -94,7 +96,7 @@ export default function Layout({ children }) {
               const isActive = isActivePage(item.page);
               return (
                 <Link
-                  key={item.name}
+                  key={item.nameKey}
                   to={createPageUrl(item.page)}
                   onClick={(e) => handleNavTap(e, item)}
                   className={`flex flex-col items-center gap-1 transition-colors min-w-[44px] min-h-[44px] justify-center ${
@@ -103,7 +105,7 @@ export default function Layout({ children }) {
                   style={isActive ? { color: '#BFFF00' } : {}}
                 >
                   <item.icon className="w-6 h-6" />
-                  <span className="text-xs">{item.name}</span>
+                  <span className="text-xs">{t(item.nameKey)}</span>
                 </Link>
               );
             })}

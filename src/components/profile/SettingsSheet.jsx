@@ -372,7 +372,7 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
                   <Globe style={{ width: 16, height: 16, color: 'rgba(255,255,255,0.4)', flexShrink: 0 }} />
                   <span style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                    Language
+                    {language === 'th' ? 'ภาษา' : 'Language'}
                   </span>
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>

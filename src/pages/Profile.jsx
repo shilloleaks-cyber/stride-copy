@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import ProfileAvatar from '@/components/shared/ProfileAvatar';
+import { useLanguage } from '@/lib/LanguageContext';
 import SkinsShop from '@/components/skins/SkinsShop';
 import AchievementBadgesSection from '@/components/profile/AchievementBadgesSection';
 import SettingsSheet from '@/components/profile/SettingsSheet';
@@ -37,6 +38,7 @@ import {
 export default function Profile() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { t } = useLanguage();
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [editBioOpen, setEditBioOpen] = useState(false);
   const [bio, setBio] = useState('');
@@ -286,7 +288,7 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
 
       {/* Sticky page header */}
       <div className="profilePageHeader">
-        <span className="profilePageTitle">Profile</span>
+        <span className="profilePageTitle">{t('profile_title')}</span>
         <button
           onClick={() => setSettingsOpen(true)}
           className="profileSettingsBtn"
@@ -316,12 +318,9 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
         <div className="heroFollowRow">
           <button onClick={() => { setActiveFollowTab('following'); setFollowSheetOpen(true); }} className="heroPill">
             <span className="heroPillVal">{followingUsers.length}</span>
-            <span className="heroPillLbl">Following</span>
-          </button>
-          <div className="heroPillDivider" />
-          <button onClick={() => { setActiveFollowTab('followers'); setFollowSheetOpen(true); }} className="heroPill">
-            <span className="heroPillVal">{followerUsers.length}</span>
-            <span className="heroPillLbl">Followers</span>
+            <span className="heroPillLbl">{t('profile_following')}</span>
+...
+            <span className="heroPillLbl">{t('profile_followers')}</span>
           </button>
         </div>
 
@@ -343,22 +342,22 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
 
       {/* ── SECTION: PERFORMANCE ── */}
       <div className="section">
-        <div className="sectionLabel">PERFORMANCE</div>
+        <div className="sectionLabel">{t('profile_performance')}</div>
         <div className="grid2">
           <div className="statCard activeGlow">
-            <div className="statTop"><div className="statLabel">DISTANCE</div><div className="statBadge">📍</div></div>
+            <div className="statTop"><div className="statLabel">{t('profile_distance')}</div><div className="statBadge">📍</div></div>
             <div className="statValue">{stats.totalDistance.toFixed(1)}<span className="unit"> km</span></div>
           </div>
           <div className="statCard">
-            <div className="statTop"><div className="statLabel">RUNS</div><div className="statBadge">🏃</div></div>
+            <div className="statTop"><div className="statLabel">{t('profile_runs')}</div><div className="statBadge">🏃</div></div>
             <div className="statValue">{stats.totalRuns}<span className="unit"> runs</span></div>
           </div>
           <div className="statCard">
-            <div className="statTop"><div className="statLabel">AVG PACE</div><div className="statBadge">⚡</div></div>
+            <div className="statTop"><div className="statLabel">{t('profile_avg_pace')}</div><div className="statBadge">⚡</div></div>
             <div className="statValue">{formatPace(stats.avgPace)}<span className="unit"> /km</span></div>
           </div>
           <div className="statCard activeGlow">
-            <div className="statTop"><div className="statLabel">STREAK</div><div className="statBadge">🔥</div></div>
+            <div className="statTop"><div className="statLabel">{t('profile_streak')}</div><div className="statBadge">🔥</div></div>
             <div className="statValue">{currentStreak}<span className="unit"> days</span></div>
           </div>
         </div>
@@ -367,12 +366,12 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
         <div className="perfSummaryCard">
           <div className="perfRow">
             <div className="perfItem">
-              <div className="perfLabel">TOTAL TIME</div>
+              <div className="perfLabel">{t('profile_total_time')}</div>
               <div className="perfValue">{Math.floor(stats.totalTime / 3600)}<span className="perfUnit"> hrs</span></div>
             </div>
             <div className="perfDivider" />
             <div className="perfItem">
-              <div className="perfLabel">CALORIES</div>
+              <div className="perfLabel">{t('profile_calories')}</div>
               <div className="perfValue">{(stats.totalCalories / 1000).toFixed(1)}<span className="perfUnit">k kcal</span></div>
             </div>
           </div>
@@ -381,11 +380,11 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
 
       {/* ── SECTION: GAME ── */}
       <div className="section">
-        <div className="sectionLabel">GAME</div>
+        <div className="sectionLabel">{t('profile_game')}</div>
         <div className="coinCard">
           <div className="coinLabelRow">
             <span className="coinEmoji">🪙</span>
-            <span className="coinTitle">COIN BALANCE</span>
+            <span className="coinTitle">{t('profile_coin_balance')}</span>
           </div>
           <div className="coinBalance">{Math.floor(currentCoins)}</div>
           <div className="coinSub">Run → Earn → Redeem</div>
@@ -395,7 +394,7 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
       {/* ── SECTION: ACHIEVEMENTS ── */}
       <div className="section">
         <div className="achievementsHeaderRow">
-          <div className="sectionLabel" style={{ margin: 0 }}>ACHIEVEMENTS</div>
+          <div className="sectionLabel" style={{ margin: 0 }}>{t('profile_achievements')}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span className="achCount">{unlockedAchievements.length}/8</span>
             <button onClick={() => setIsAchievementsOpen(true)} className="achDetailsBtn">Details</button>

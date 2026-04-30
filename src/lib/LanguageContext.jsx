@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
+import { translate } from './i18n';
 
 const LanguageContext = createContext();
 
-const STORAGE_KEY = 'stride_language';
+const STORAGE_KEY = 'boomx_language';
 
 export const LANGUAGES = [
   { code: 'en', label: 'English', native: 'English' },
@@ -19,8 +20,10 @@ export function LanguageProvider({ children }) {
     setLanguageState(code);
   };
 
+  const t = useCallback((key) => translate(language, key), [language]);
+
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, languages: LANGUAGES }}>
+    <LanguageContext.Provider value={{ language, setLanguage, languages: LANGUAGES, t }}>
       {children}
     </LanguageContext.Provider>
   );
