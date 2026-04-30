@@ -7,6 +7,7 @@ import { logActivity } from '@/lib/eventActivityLog';
 import { notifyPaymentApproved, notifyPaymentNeedsAttention } from '@/lib/notifications';
 
 import { REG_STATUS as REG_STATUS_CFG, resolvePaymentCfg } from '@/lib/eventStatusConfig';
+import TicketQRDisplay from '@/components/stride/TicketQRDisplay';
 
 // ─── Tiny confirm modal ──────────────────────────────────────────────────────
 function ConfirmModal({ title, message, confirmLabel, confirmVariant = 'red', onConfirm, onCancel }) {
@@ -288,7 +289,14 @@ export default function RegistrationDetailSheet({ reg, eventMap, catMap, registr
               <ROW label="Event"    value={ev?.title} />
               <ROW label="Category" value={cat?.name} accent="#BFFF00" />
               <ROW label="Bib"      value={reg.bib_number} accent="#BFFF00" />
-              <ROW label="QR Code"  value={reg.qr_code} />
+              {reg.qr_code && (
+                <div style={{ padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 10 }}>QR Code</span>
+                  <div style={{ display: 'inline-block', padding: 10, background: 'white', borderRadius: 12 }}>
+                    <TicketQRDisplay value={reg.qr_code} size={160} />
+                  </div>
+                </div>
+              )}
               <ROW label="Phone"    value={reg.phone} />
               <ROW label="Date of Birth" value={reg.date_of_birth} />
               <ROW label="Gender"   value={reg.gender} />

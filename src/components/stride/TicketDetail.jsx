@@ -27,8 +27,8 @@ function QRFullscreen({ reg, event, category, onClose }) {
       }}
     >
       <div onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
-        <div style={{ padding: 16, background: 'white', borderRadius: 22, boxShadow: '0 0 60px rgba(191,255,0,0.2)' }}>
-          <TicketQRDisplay value={reg.qr_code} size={220} />
+        <div style={{ padding: 14, background: 'white', borderRadius: 22, boxShadow: '0 0 60px rgba(191,255,0,0.2)' }}>
+          <TicketQRDisplay value={reg.qr_code} size={260} />
         </div>
 
         <div style={{
@@ -372,7 +372,7 @@ export default function TicketDetail({ reg, event, category, onClose, onRemoved 
                       WebkitTapHighlightColor: 'transparent',
                     }}
                   >
-                    <TicketQRDisplay value={reg.qr_code} size={76} />
+                    <TicketQRDisplay value={reg.qr_code} size={80} />
                     <div style={{
                       position: 'absolute', bottom: 4, right: 4,
                       width: 18, height: 18, borderRadius: 5,

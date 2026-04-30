@@ -76,7 +76,8 @@ Deno.serve(async (req) => {
   // Canonical rule: requires payment if payment_enabled=true OR price > 0
   const isFree = !(cat.payment_enabled === true || Number(cat.price || 0) > 0);
 
-  // ── Helper: build JSON QR payload string ────────────────────────────────────
+  // ── Helper: build standardized JSON QR payload string ──────────────────────
+  // Single source of truth — mirrors lib/qrPayload.js on the frontend.
   const buildQrPayload = (regId, bibNumber) => JSON.stringify({
     type: 'event_registration',
     registration_id: regId,
