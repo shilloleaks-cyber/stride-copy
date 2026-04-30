@@ -11,16 +11,37 @@ import QRScanner from '@/components/stride/QRScanner';
 
 // ─── State keys ───────────────────────────────────────────────────────────────
 const S = {
-  IDLE:      'idle',
-  SEARCHING: 'searching',
-  RESULTS:   'results',    // multiple matches — show list to pick from
-  READY:     'ready',      // confirmed + payment ok + not yet checked in
-  ALREADY:   'already',    // checked_in === true
-  PAYMENT:   'payment',    // confirmed but payment not approved
-  BLOCKED:   'blocked',    // rejected / cancelled / not confirmed
-  NOT_FOUND: 'not_found',
-  SUCCESS:   'success',
+  IDLE:        'idle',
+  SEARCHING:   'searching',
+  RESULTS:     'results',      // multiple matches — show list to pick from
+  READY:       'ready',        // confirmed + payment ok + not yet checked in
+  ALREADY:     'already',      // checked_in === true
+  PAYMENT:     'payment',      // confirmed but payment not approved
+  BLOCKED:     'blocked',      // rejected / cancelled / not confirmed
+  NOT_FOUND:   'not_found',
+  WRONG_EVENT: 'wrong_event',  // QR is valid but belongs to a different event
+  INVALID_QR:  'invalid_qr',   // QR is not a valid BoomX ticket
+  SUCCESS:     'success',
 };
+
+// ─── Parse QR string → structured payload ────────────────────────────────────
+// Supports:
+//   1. New format: JSON { type, registration_id, event_id, bib_number }
+//   2. Legacy: plain qr_code string (e.g. "QR-ABC123-1234")
+function parseQRValue(raw) {
+  if (!raw || typeof raw !== 'string') return { format: 'invalid', raw };
+  const trimmed = raw.trim();
+  if (trimmed.startsWith('{')) {
+    try {
+      const obj = JSON.parse(trimmed);
+      if (obj.type === 'event_registration' && obj.registration_id) {
+        return { format: 'json', ...obj, raw: trimmed };
+      }
+    } catch (_) {}
+  }
+  // Legacy: treat as a raw qr_code / bib lookup string
+  return { format: 'legacy', raw: trimmed };
+}
 
 // ─── Payment label helper ─────────────────────────────────────────────────────
 function getPayLabel(payment_status, hasSlip) {
@@ -176,6 +197,12 @@ export default function StrideCheckin() {
   const [foundCat, setFoundCat]       = useState(null);
   const [hasSlip, setHasSlip]         = useState(false);
   const [showScanner, setShowScanner] = useState(false);
+  const [scanError, setScanError]     = useState('');   // detail message for error states
+  const scanDebounceRef               = useRef(null);   // debounce for repeated QR scans
+
+  // Optional: event_id from URL to restrict check-in to a specific event
+  const urlParams = new URLSearchParams(window.location.search);
+  const scopedEventId = urlParams.get('event_id') || null;
 
   const { data: user, isLoading: loadingUser } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
 
@@ -267,19 +294,47 @@ export default function StrideCheckin() {
     setState(S.READY);
   };
 
-  // ── Main search — QR exact → bib exact → multi-field fuzzy ────────────────
+  // ── Main search — JSON QR first, then legacy QR/bib/name ──────────────────
   const handleSearchWithValue = async (q) => {
     q = (q || '').trim();
     if (!q) return;
     setState(S.SEARCHING);
+    setScanError('');
     setFoundReg(null); setFoundEvent(null); setFoundCat(null);
     setHasSlip(false); setResults([]);
+
+    const parsed = parseQRValue(q);
+
+    // ── A. New JSON format: lookup by registration_id directly ───────────────
+    if (parsed.format === 'json') {
+      const regs = await base44.entities.EventRegistration.filter({ id: parsed.registration_id });
+      if (!regs.length) { setState(S.NOT_FOUND); return; }
+      const reg = regs[0];
+
+      // Wrong event guard (only enforce if scopedEventId is set OR if payload carries event_id)
+      if (parsed.event_id && scopedEventId && parsed.event_id !== scopedEventId) {
+        setFoundReg(reg);
+        setScanError(`This QR belongs to a different event.`);
+        setState(S.WRONG_EVENT);
+        return;
+      }
+
+      await resolveReg(reg);
+      return;
+    }
+
+    // ── B. Legacy / manual entry: qr_code exact → bib exact → fuzzy ─────────
 
     // 1. QR code exact
     let regs = await base44.entities.EventRegistration.filter({ qr_code: q });
 
-    // 2. Bib exact
-    if (!regs.length) regs = await base44.entities.EventRegistration.filter({ bib_number: q.toUpperCase() });
+    // 2. Bib exact (scope to event if known)
+    if (!regs.length) {
+      const bibFilter = scopedEventId
+        ? { bib_number: q.toUpperCase(), event_id: scopedEventId }
+        : { bib_number: q.toUpperCase() };
+      regs = await base44.entities.EventRegistration.filter(bibFilter);
+    }
 
     // 3. Broad fetch + client-side filter by name / email
     if (!regs.length) {
@@ -313,10 +368,19 @@ export default function StrideCheckin() {
     setState(S.RESULTS);
   };
 
-  const handleSearch = ()  => handleSearchWithValue(input);
-  const handleQRScan = (v) => { setShowScanner(false); setInput(v); handleSearchWithValue(v); };
+  const handleSearch = () => handleSearchWithValue(input);
+
+  const handleQRScan = (v) => {
+    // Debounce: ignore repeat scans within 2 seconds
+    if (scanDebounceRef.current) return;
+    scanDebounceRef.current = setTimeout(() => { scanDebounceRef.current = null; }, 2000);
+    setShowScanner(false);
+    setInput(v);
+    handleSearchWithValue(v);
+  };
+
   const handleReset  = ()  => {
-    setInput(''); setState(S.IDLE);
+    setInput(''); setState(S.IDLE); setScanError('');
     setFoundReg(null); setFoundEvent(null); setFoundCat(null);
     setResults([]);
     setTimeout(() => inputRef.current?.focus(), 100);
@@ -391,7 +455,22 @@ export default function StrideCheckin() {
               </div>
               <div>
                 <p style={{ fontSize: 16, fontWeight: 800, color: '#fff', margin: '0 0 4px' }}>No Participant Found</p>
-                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: 1.6 }}>No registration matches this bib, name, or email. Double-check and try again.</p>
+                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: 1.6 }}>No registration matches this QR, bib, name, or email.</p>
+              </div>
+            </div>
+          )}
+
+          {/* ── WRONG EVENT ── */}
+          {state === S.WRONG_EVENT && (
+            <div style={{ borderRadius: 20, padding: 20, background: 'rgba(255,140,0,0.07)', border: '1px solid rgba(255,140,0,0.3)', display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(255,140,0,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <AlertCircle style={{ width: 20, height: 20, color: 'rgba(255,160,0,1)' }} />
+              </div>
+              <div>
+                <p style={{ fontSize: 16, fontWeight: 800, color: '#fff', margin: '0 0 4px' }}>Wrong Event QR</p>
+                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: 1.6 }}>
+                  {scanError || 'This ticket belongs to a different event and cannot be checked in here.'}
+                </p>
               </div>
             </div>
           )}
@@ -549,6 +628,7 @@ export default function StrideCheckin() {
                 <div>
                   <p style={{ fontSize: 24, fontWeight: 900, color: '#fff', margin: 0 }}>Check-In Complete!</p>
                   <p style={{ fontSize: 17, fontWeight: 800, color: '#BFFF00', margin: '6px 0 0' }}>{foundReg.first_name} {foundReg.last_name}</p>
+                  {foundCat && <p style={{ fontSize: 13, color: 'rgba(191,255,0,0.7)', margin: '4px 0 0', fontWeight: 700 }}>{foundCat.name}</p>}
                   {foundReg.bib_number && <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', margin: '4px 0 0' }}>Bib #{foundReg.bib_number}</p>}
                   {foundEvent && <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', margin: '4px 0 0' }}>{foundEvent.title}</p>}
                 </div>

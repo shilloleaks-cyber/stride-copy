@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { SHEET_CONTENT_PADDING_BOTTOM } from '@/lib/sheetLayout';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -12,40 +12,7 @@ import PaymentUpload from './PaymentUpload';
 import RewardSection from './RewardSection';
 import PostEventResult from './PostEventResult';
 
-// ─── QR canvas renderer ───────────────────────────────────────────────────────
-function QRDisplay({ value, size = 180 }) {
-  const canvasRef = useRef(null);
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || !value) return;
-    const ctx = canvas.getContext('2d');
-    const cellSize = size / 21;
-    const hash = (str) => {
-      let h = 0;
-      for (let i = 0; i < str.length; i++) h = (Math.imul(31, h) + str.charCodeAt(i)) | 0;
-      return Math.abs(h);
-    };
-    ctx.clearRect(0, 0, size, size);
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(0, 0, size, size);
-    ctx.fillStyle = '#000000';
-    const seed = hash(value);
-    for (let row = 0; row < 21; row++) {
-      for (let col = 0; col < 21; col++) {
-        const isCorner = (row < 7 && col < 7) || (row < 7 && col > 13) || (row > 13 && col < 7);
-        let filled;
-        if (isCorner) {
-          filled = (row === 0 || row === 6 || col === 0 || col === 6 ||
-            (row >= 2 && row <= 4 && col >= 2 && col <= 4));
-        } else {
-          filled = ((hash(value + row * 100 + col * 13) + seed) % 3 === 0);
-        }
-        if (filled) ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
-      }
-    }
-  }, [value, size]);
-  return <canvas ref={canvasRef} width={size} height={size} style={{ borderRadius: size > 100 ? 14 : 8, display: 'block' }} />;
-}
+import TicketQRDisplay from './TicketQRDisplay';
 
 // ─── Fullscreen QR overlay ────────────────────────────────────────────────────
 function QRFullscreen({ reg, event, category, onClose }) {
@@ -61,7 +28,7 @@ function QRFullscreen({ reg, event, category, onClose }) {
     >
       <div onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
         <div style={{ padding: 16, background: 'white', borderRadius: 22, boxShadow: '0 0 60px rgba(191,255,0,0.2)' }}>
-          <QRDisplay value={reg.qr_code} size={220} />
+          <TicketQRDisplay value={reg.qr_code} size={220} />
         </div>
 
         <div style={{
@@ -405,7 +372,7 @@ export default function TicketDetail({ reg, event, category, onClose, onRemoved 
                       WebkitTapHighlightColor: 'transparent',
                     }}
                   >
-                    <QRDisplay value={reg.qr_code} size={76} />
+                    <TicketQRDisplay value={reg.qr_code} size={76} />
                     <div style={{
                       position: 'absolute', bottom: 4, right: 4,
                       width: 18, height: 18, borderRadius: 5,

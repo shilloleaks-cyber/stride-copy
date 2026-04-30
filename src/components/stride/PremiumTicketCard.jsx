@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React from 'react';
 import { format } from 'date-fns';
 import { CheckCircle2, Clock, XCircle } from 'lucide-react';
 
@@ -8,40 +8,7 @@ function getCoverImage(event) {
   return event.cover_image || event.banner_url || event.event_image || event.image || event.banner_image || null;
 }
 
-// ── Minimal QR canvas renderer ──────────────────────────────────────────────
-function QRDisplay({ value, size = 140 }) {
-  const canvasRef = useRef(null);
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || !value) return;
-    const ctx = canvas.getContext('2d');
-    const cellSize = size / 21;
-    const hash = (str) => {
-      let h = 0;
-      for (let i = 0; i < str.length; i++) h = (Math.imul(31, h) + str.charCodeAt(i)) | 0;
-      return Math.abs(h);
-    };
-    ctx.clearRect(0, 0, size, size);
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(0, 0, size, size);
-    ctx.fillStyle = '#000000';
-    const seed = hash(value);
-    for (let row = 0; row < 21; row++) {
-      for (let col = 0; col < 21; col++) {
-        const isCorner = (row < 7 && col < 7) || (row < 7 && col > 13) || (row > 13 && col < 7);
-        let filled;
-        if (isCorner) {
-          filled = (row === 0 || row === 6 || col === 0 || col === 6 ||
-            (row >= 2 && row <= 4 && col >= 2 && col <= 4));
-        } else {
-          filled = ((hash(value + row * 100 + col * 13) + seed) % 3 === 0);
-        }
-        if (filled) ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
-      }
-    }
-  }, [value, size]);
-  return <canvas ref={canvasRef} width={size} height={size} style={{ borderRadius: 10, display: 'block' }} />;
-}
+import TicketQRDisplay from './TicketQRDisplay';
 
 import { REG_STATUS as REG_STATUS_MAP } from '@/lib/eventStatusConfig';
 
@@ -173,7 +140,7 @@ export default function PremiumTicketCard({ reg, event, category }) {
       <div style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
         {hasQR ? (
           <div style={{ padding: 10, background: 'white', borderRadius: 16, boxShadow: isOfficial ? '0 0 30px rgba(191,255,0,0.15)' : '0 0 30px rgba(138,43,226,0.2)' }}>
-            <QRDisplay value={reg.qr_code} size={140} />
+            <TicketQRDisplay value={reg.qr_code} size={140} />
           </div>
         ) : (
           <div style={{

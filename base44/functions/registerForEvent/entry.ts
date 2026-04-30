@@ -43,6 +43,8 @@ Deno.serve(async (req) => {
   }
 
   // ── 4. Shared payload builder ───────────────────────────────────────────────
+  // qr_code will be updated to a JSON payload after the record is created and we have the ID.
+  // Use a temporary random string as placeholder — overwritten below.
   const qr = 'QR-' + Math.random().toString(36).substring(2, 10).toUpperCase() + '-' + Date.now();
   const displayName = user.full_name || user.email.split('@')[0] || 'User';
   const nameParts = String(displayName).trim().split(/\s+/).filter(Boolean);
@@ -74,6 +76,14 @@ Deno.serve(async (req) => {
   // Canonical rule: requires payment if payment_enabled=true OR price > 0
   const isFree = !(cat.payment_enabled === true || Number(cat.price || 0) > 0);
 
+  // ── Helper: build JSON QR payload string ────────────────────────────────────
+  const buildQrPayload = (regId, bibNumber) => JSON.stringify({
+    type: 'event_registration',
+    registration_id: regId,
+    event_id,
+    bib_number: bibNumber || null,
+  });
+
   // ── 5. PAID: no bib assigned now, stays pending ─────────────────────────────
   if (!isFree) {
     const paidReg = await base44.asServiceRole.entities.EventRegistration.create({
@@ -81,7 +91,10 @@ Deno.serve(async (req) => {
       status: 'pending',
       payment_status: 'pending',
     });
-    return Response.json({ registration: paidReg });
+    // Update qr_code to the standardized JSON payload now that we have the ID
+    const qrPayload = buildQrPayload(paidReg.id, null);
+    const updatedPaidReg = await base44.asServiceRole.entities.EventRegistration.update(paidReg.id, { qr_code: qrPayload });
+    return Response.json({ registration: { ...paidReg, ...updatedPaidReg, qr_code: qrPayload } });
   }
 
   // ── 6. FREE: assign bib with optimistic-create retry ───────────────────────
@@ -119,14 +132,18 @@ Deno.serve(async (req) => {
     const bib = `${prefix}${String(candidateNum).padStart(3, '0')}`;
 
     try {
-      const reg = await base44.asServiceRole.entities.EventRegistration.create({
+      let reg = await base44.asServiceRole.entities.EventRegistration.create({
         ...basePayload,
         status: 'confirmed',
         payment_status: 'not_required',
         bib_number: bib,
       });
 
-      // Success — the DB constraint confirmed this bib is unique in this category
+      // Success — update qr_code to standardized JSON payload now that we have the ID + bib
+      const qrPayload = buildQrPayload(reg.id, bib);
+      await base44.asServiceRole.entities.EventRegistration.update(reg.id, { qr_code: qrPayload });
+      reg = { ...reg, qr_code: qrPayload };
+
       // Send in-app registration success notification
       try {
         await base44.asServiceRole.entities.Notification.create({
