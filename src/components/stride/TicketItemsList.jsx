@@ -83,7 +83,7 @@ export default function TicketItemsList({ categoryId, itemSelections }) {
             <div
               key={item.id}
               style={{
-                display: 'flex', alignItems: 'flex-start', gap: 12,
+                display: 'flex', alignItems: 'center', gap: 12,
                 padding: '12px 0',
                 borderBottom: isLast ? 'none' : '1px solid rgba(255,255,255,0.05)',
               }}
