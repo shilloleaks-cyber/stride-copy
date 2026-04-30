@@ -329,7 +329,7 @@ function BankTransferInstructions({ event, amount }) {
           )}
           {event.payment_note && (
             <div style={{ marginTop: 2, padding: '8px 12px', borderRadius: 10, background: 'rgba(191,255,0,0.05)', border: '1px solid rgba(191,255,0,0.12)' }}>
-              <p style={{ fontSize: 11, color: 'rgba(191,255,0,0.7)', margin: 0, lineHeight: 1.5 }}>📋 {event.payment_note}</p>
+              <p style={{ fontSize: 11, color: 'rgba(191,255,0,0.7)', margin: 0, lineHeight: 1.6, whiteSpace: 'pre-line' }}>📋 {event.payment_note}</p>
             </div>
           )}
         </div>
@@ -407,7 +407,7 @@ function QRScanInstructions({ event, amount }) {
             </p>
           )}
           {event.payment_note && (
-            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: 0, textAlign: 'center', lineHeight: 1.5 }}>
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: 0, textAlign: 'left', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
               {event.payment_note}
             </p>
           )}

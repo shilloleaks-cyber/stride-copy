@@ -238,7 +238,7 @@ export default function EventPaymentSetup({ eventId }) {
           onChange={e => set('payment_note', e.target.value)}
           placeholder="e.g. Please include your full name as the transfer reference. Contact LINE @boomxrun for any issues."
           rows={3}
-          style={{ ...inp, resize: 'none', lineHeight: 1.6 }}
+          style={{ ...inp, resize: 'vertical', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}
         />
       </div>
 

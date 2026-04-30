@@ -177,7 +177,7 @@ export default function PaymentReviewPanel({ payment, reg, catMap, registrations
         {isNeedsAttention && payment.admin_note && (
           <div style={{ padding: '10px 12px', borderRadius: 12, background: 'rgba(255,120,0,0.07)', border: '1px solid rgba(255,120,0,0.2)' }}>
             <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,150,50,0.9)', margin: '0 0 3px' }}>Admin note to participant:</p>
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.5 }}>{payment.admin_note}</p>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.6, whiteSpace: 'pre-line' }}>{payment.admin_note}</p>
           </div>
         )}
 
