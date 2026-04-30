@@ -90,38 +90,33 @@ export default function TicketItemsList({ categoryId, itemSelections }) {
             >
               {/* Thumbnail — detail image or emoji fallback */}
               {item.detail_image_url ? (
-                <button
-                  onClick={() => setLightboxUrl(item.detail_image_url)}
-                  style={{
-                    flexShrink: 0, width: 48, height: 48, borderRadius: 12,
-                    overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)',
-                    cursor: 'pointer', padding: 0, background: 'rgba(255,255,255,0.05)',
-                    WebkitTapHighlightColor: 'transparent',
-                    position: 'relative',
-                  }}
-                >
-                  <img
-                    src={item.detail_image_url}
-                    alt={item.name}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                  />
-                  {/* Eye overlay — centered on image */}
+                <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
+                  <button
+                    onClick={() => setLightboxUrl(item.detail_image_url)}
+                    style={{
+                      width: 48, height: 48, borderRadius: 12,
+                      overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)',
+                      cursor: 'pointer', padding: 0, background: 'rgba(255,255,255,0.05)',
+                      WebkitTapHighlightColor: 'transparent',
+                    }}
+                  >
+                    <img
+                      src={item.detail_image_url}
+                      alt={item.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                    />
+                  </button>
+                  {/* Eye icon — below thumbnail */}
                   <div style={{
-                    position: 'absolute', inset: 0,
+                    width: 21, height: 21, borderRadius: 6,
+                    background: 'rgba(90,30,160,0.45)',
+                    border: '1px solid rgba(180,100,255,0.45)',
+                    boxShadow: '0 0 6px rgba(150,80,255,0.4)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: 'rgba(50,10,100,0.45)',
                   }}>
-                    <div style={{
-                      width: 21, height: 21, borderRadius: 6,
-                      background: 'rgba(90,30,160,0.6)',
-                      border: '1px solid rgba(180,100,255,0.5)',
-                      boxShadow: '0 0 6px rgba(150,80,255,0.5)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>
-                      <Eye style={{ width: 11, height: 11, color: 'rgba(210,160,255,1)' }} />
-                    </div>
+                    <Eye style={{ width: 11, height: 11, color: 'rgba(210,160,255,1)' }} />
                   </div>
-                </button>
+                </div>
               ) : (
                 <div style={{
                   flexShrink: 0, width: 48, height: 48, borderRadius: 12,
