@@ -153,9 +153,9 @@ export default function TicketItemsList({ categoryId, itemSelections }) {
                     Included
                   </span>
                 )}
-                {/* Eye hint when tappable image is available */}
+                {/* Eye icon when tappable image is available */}
                 {item.detail_image_url && (
-                  <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.22)', fontWeight: 600 }}>tap to view</span>
+                  <span style={{ fontSize: 14 }}>👁️</span>
                 )}
               </div>
             </div>
