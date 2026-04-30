@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Eye } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { X, Package } from 'lucide-react';
@@ -130,8 +131,8 @@ export default function TicketItemsList({ categoryId, itemSelections }) {
                 )}
               </div>
 
-              {/* Badge: variant or Included */}
-              <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5, paddingTop: 2 }}>
+              {/* Badge: variant or Included + Eye */}
+              <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, paddingTop: 2 }}>
                 {variantLabel ? (
                   <span style={{
                     fontSize: 11, fontWeight: 800,
@@ -153,9 +154,17 @@ export default function TicketItemsList({ categoryId, itemSelections }) {
                     Included
                   </span>
                 )}
-                {/* Eye icon when tappable image is available */}
+                {/* Eye icon — neon purple, centered below badge */}
                 {item.detail_image_url && (
-                  <span style={{ fontSize: 14 }}>👁️</span>
+                  <div style={{
+                    width: 30, height: 30, borderRadius: 8,
+                    background: 'rgba(90,30,160,0.35)',
+                    border: '1px solid rgba(180,100,255,0.4)',
+                    boxShadow: '0 0 8px rgba(150,80,255,0.35)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <Eye style={{ width: 15, height: 15, color: 'rgba(200,150,255,1)' }} />
+                  </div>
                 )}
               </div>
             </div>
