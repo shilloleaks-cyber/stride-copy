@@ -9,6 +9,7 @@ import { useAuthGate } from '@/hooks/useAuthGate';
 import LoginGateModal from '@/components/auth/LoginGateModal';
 import NotificationCenter from '@/components/notifications/NotificationCenter';
 import { getTrendingEvents } from '@/lib/trendingScore';
+import { useLanguage } from '@/lib/LanguageContext';
 
 // ===== Coin Pop Animation =====
 function CoinPopLayer({ pops }) {
@@ -75,6 +76,7 @@ function getDailyQuote() {
 
 export default function Home() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   
   // Coin pop animation state
   const [coinPops, setCoinPops] = useState([]);
@@ -339,16 +341,16 @@ export default function Home() {
       </div>
 
       <header className="topHeader">
-        <div className="welcome">WELCOME BACK</div>
-        <div className="title">Your Running</div>
+        <div className="welcome">{t('home_welcome')}</div>
+        <div className="title">{t('home_your_running')}</div>
         <div className="dailyQuote">"{dailyQuote}"</div>
       </header>
 
       {/* HERO / START */}
       <section className="heroCard" role="region" aria-label="Start new run">
         <div className="heroLeft">
-          <div className="heroSmall">Ready to run?</div>
-          <div className="heroBig">Start New Run</div>
+          <div className="heroSmall">{t('home_ready')}</div>
+          <div className="heroBig">{t('home_start_run')}</div>
         </div>
         <button className="heroPlay" onClick={handleStartRun} aria-label="Start run">
           ▶
@@ -357,11 +359,11 @@ export default function Home() {
 
       {/* TODAY */}
       <section className="section">
-        <div className="sectionLabel">TODAY</div>
+        <div className="sectionLabel">{t('home_today')}</div>
         <div className="grid2">
           <div className="statCard activeGlow">
             <div className="statTop">
-              <div className="statLabel">DISTANCE</div>
+              <div className="statLabel">{t('home_distance')}</div>
               <div className="statBadge">📍</div>
             </div>
             <div className="statValue">
@@ -371,13 +373,13 @@ export default function Home() {
 
           <div className="statCard">
             <div className="statTop">
-              <div className="statLabel">STREAK</div>
+              <div className="statLabel">{t('home_streak')}</div>
               <div className={`streakFlame tier-${streakTier}`} title="Streak tier">
                 🔥
               </div>
             </div>
             <div className="statValue">
-              {streakDays} <span className="unit">days</span>
+              {streakDays} <span className="unit">{t('home_days')}</span>
             </div>
             <div className="subNote">
               {streakTier === 14
@@ -394,42 +396,42 @@ export default function Home() {
 
       {/* PERFORMANCE */}
       <section className="section">
-        <div className="sectionLabel">PERFORMANCE</div>
+        <div className="sectionLabel">{t('home_performance')}</div>
         <div className="grid2">
           <button className="statCard tappable" onClick={() => setShowPaceHistory(true)}>
             <div className="statTop">
-              <div className="statLabel">AVG PACE (WEEK)</div>
+              <div className="statLabel">{t('home_avg_pace_week')}</div>
               <div className="statBadge">⚡</div>
             </div>
             <div className="statValue">
               {avgPaceWeek} <span className="unit">/km</span>
             </div>
-            <div className="subNote">Tap to see pace history</div>
+            <div className="subNote">{t('home_tap_pace_hist')}</div>
           </button>
 
           <div className="statCard activeGlow">
             <div className="statTop">
-              <div className="statLabel">BEST PACE</div>
+              <div className="statLabel">{t('home_best_pace')}</div>
               <div className="statBadge">🏅</div>
             </div>
             <div className="statValue">
               {bestPacePR} <span className="unit">/km</span>
             </div>
-            <div className="subNote">Personal record</div>
+            <div className="subNote">{t('home_personal_record')}</div>
           </div>
         </div>
       </section>
 
       {/* GAME */}
       <section className="section">
-        <div className="sectionLabel">GAME</div>
+        <div className="sectionLabel">{t('home_game')}</div>
 
         <div className="grid2">
           <button className="levelCard" onClick={() => navigate(createPageUrl('LevelProgress'))}>
             <div className="levelTop">
               <div className="levelIcon">⚡</div>
               <div>
-                <div className="statLabel">LEVEL</div>
+                <div className="statLabel">{t('home_level')}</div>
                 <div className="levelValue">{level}</div>
               </div>
             </div>
@@ -450,20 +452,20 @@ export default function Home() {
 
           <div className="statCard activeGlow">
             <div className="statTop">
-              <div className="statLabel">COIN BALANCE</div>
+              <div className="statLabel">{t('home_coin_balance')}</div>
               <div className="statBadge">🪙</div>
             </div>
             <div className="statValue">
               {coinBalance} <span className="unit">coins</span>
             </div>
-            <div className="subNote">Run → Earn → Redeem</div>
+            <div className="subNote">{t('home_run_earn_redeem')}</div>
           </div>
         </div>
       </section>
 
       {/* DAILY */}
       <section className="section">
-        <div className="sectionLabel">DAILY</div>
+        <div className="sectionLabel">{t('home_daily')}</div>
         <div className="grid2">
           <button className="pillCard goldish" onClick={() => navigate(createPageUrl('Leaderboard'))}>
             <span className="pillIcon">🏆</span>
@@ -487,9 +489,9 @@ export default function Home() {
       <section className="section">
         <div className="chartCard">
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
-            <div className="sectionLabel" style={{ margin: 0 }}>WEEKLY DISTANCE</div>
+            <div className="sectionLabel" style={{ margin: 0 }}>{t('home_weekly_dist')}</div>
             <span style={{ fontSize: 16, fontWeight: 800, color: '#BFFF00' }}>
-              {weekly.reduce((s, v) => s + v, 0).toFixed(1)} <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.45)' }}>km this week</span>
+              {weekly.reduce((s, v) => s + v, 0).toFixed(1)} <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.45)' }}>{t('home_km_this_week')}</span>
             </span>
           </div>
           <WeeklyBarChart data={weekly} />
@@ -500,8 +502,8 @@ export default function Home() {
       {trendingEvents.length > 0 && (
         <section className="section">
           <div className="rowBetween" style={{ marginBottom: 10 }}>
-            <div className="sectionLabel">🔥 TRENDING EVENTS</div>
-            <button className="seeAll" onClick={() => navigate('/StrideEvents')}>See all</button>
+            <div className="sectionLabel">{t('home_trending_events')}</div>
+            <button className="seeAll" onClick={() => navigate('/StrideEvents')}>{t('home_see_all')}</button>
           </div>
           <div style={{
             display: 'flex', gap: 12,
@@ -510,7 +512,7 @@ export default function Home() {
             marginLeft: -16, marginRight: -16, paddingLeft: 16, paddingRight: 16,
           }}>
             {trendingEvents.map(event => (
-              <TrendingEventCard key={event.id} event={event} onClick={() => navigate(`/StrideEventDetail?id=${event.id}`)} />
+              <TrendingEventCard key={event.id} event={event} tFn={t} onClick={() => navigate(`/StrideEventDetail?id=${event.id}`)} />
             ))}
           </div>
         </section>
@@ -519,9 +521,9 @@ export default function Home() {
       {/* RECENT RUNS */}
       <section className="section">
         <div className="rowBetween">
-          <div className="sectionLabel">RECENT RUNS</div>
+          <div className="sectionLabel">{t('home_recent_runs')}</div>
           <button className="seeAll" onClick={() => navigate(createPageUrl('History'))}>
-            See all
+            {t('home_see_all')}
           </button>
         </div>
 
@@ -536,7 +538,7 @@ export default function Home() {
 
       {/* Pace history modal */}
       {showPaceHistory && (
-        <Modal title="Pace History" onClose={() => setShowPaceHistory(false)}>
+        <Modal title={t('home_pace_history')} onClose={() => setShowPaceHistory(false)}>
           <div className="modalBody">
             <div className="subNote" style={{ marginBottom: 10 }}>
               Avg Pace (week) — ดูกราฟเพื่อเห็นการพัฒนา
@@ -1002,7 +1004,8 @@ const homeStyles = `
 .trendingScroll::-webkit-scrollbar { display: none; }
 `;
 
-function TrendingEventCard({ event, onClick }) {
+function TrendingEventCard({ event, onClick, tFn }) {
+  const t = tFn;
   let dateStr = '';
   try {
     if (event.event_date) {
@@ -1105,7 +1108,7 @@ function TrendingEventCard({ event, onClick }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
           <Users style={{ width: 13, height: 13, color: 'rgba(255,255,255,0.3)', flexShrink: 0 }} />
           <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>
-            {event.total_registered || 0} registered
+            {event.total_registered || 0} {t('home_registered')}
             {event.max_participants > 0 ? ` · max ${event.max_participants}` : ''}
           </span>
         </div>

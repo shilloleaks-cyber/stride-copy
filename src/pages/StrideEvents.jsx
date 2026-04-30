@@ -8,6 +8,7 @@ import EventCard from '@/components/stride/EventCard';
 import { useAuthGate } from '@/hooks/useAuthGate';
 import LoginGateModal from '@/components/auth/LoginGateModal';
 import { getTrendingCommunityEvents } from '@/lib/trendingScore';
+import { useLanguage } from '@/lib/LanguageContext';
 
 
 
@@ -33,6 +34,7 @@ function SectionHeader({ label, count }) {
 
 export default function StrideEvents() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [search, setSearch] = useState('');
 
   const { data: user } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
