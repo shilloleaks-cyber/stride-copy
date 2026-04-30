@@ -51,7 +51,11 @@ export default function StrideEventDetail() {
       viewTracked.current = true;
       trackEventView(event.id);
     }
-  }, [event?.id]);
+    if (event?.title) {
+      document.title = `BoomX | ${event.title}`;
+    }
+    return () => { document.title = 'BoomX'; };
+  }, [event?.id, event?.title]);
 
   const { data: categories = [] } = useQuery({
     queryKey: ['event-categories', eventId],

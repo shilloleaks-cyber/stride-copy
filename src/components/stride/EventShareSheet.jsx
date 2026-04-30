@@ -7,7 +7,8 @@ export default function EventShareSheet({ event, user, onClose }) {
   const canvasRef = useRef(null);
   const [copied, setCopied] = useState(false);
 
-  const shareUrl = `${window.location.origin}/StrideEventDetail?id=${event.id}`;
+  const PUBLIC_APP_URL = "https://boomx.run";
+  const shareUrl = `${PUBLIC_APP_URL}/StrideEventDetail?id=${event.id}`;
   const slug = (event.title || 'event').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
   useEffect(() => {
@@ -99,7 +100,7 @@ export default function EventShareSheet({ event, user, onClose }) {
     }
     if (user?.email) trackShare(event.id);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
+    setTimeout(() => setCopied(false), 3000);
   };
 
   return (
@@ -162,7 +163,7 @@ export default function EventShareSheet({ event, user, onClose }) {
               cursor: 'pointer', transition: 'color 0.2s',
             }}
           >
-            <Link style={{ width: 16, height: 16 }} /> {copied ? '✓ Copied!' : 'Copy Link'}
+            <Link style={{ width: 16, height: 16 }} /> {copied ? '✓ BoomX event link copied' : 'Copy Link'}
           </button>
 
           <button
