@@ -4,7 +4,7 @@ import { SHEET_CONTENT_PADDING_BOTTOM } from '@/lib/sheetLayout';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   X, Calendar, MapPin, User, CreditCard, ScanLine,
-  CheckCircle2, Clock, XCircle, QrCode, Package,
+  CheckCircle2, Clock, XCircle, QrCode,
   Phone, Droplets, AlertCircle, Maximize2
 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -13,6 +13,7 @@ import RewardSection from './RewardSection';
 import PostEventResult from './PostEventResult';
 
 import TicketQRDisplay from './TicketQRDisplay';
+import TicketItemsList from './TicketItemsList';
 
 // ─── Fullscreen QR overlay ────────────────────────────────────────────────────
 function QRFullscreen({ reg, event, category, onClose }) {
@@ -192,11 +193,7 @@ export default function TicketDetail({ reg, event, category, onClose, onRemoved 
     onSuccess: () => { if (onRemoved) onRemoved(); },
   });
 
-  const { data: categoryItems = [] } = useQuery({
-    queryKey: ['cat-items-ticket', reg?.category_id],
-    queryFn: () => base44.entities.CategoryItem.filter({ event_category_id: reg.category_id }),
-    enabled: !!reg?.category_id && !!reg?.item_selections && Object.keys(reg?.item_selections || {}).length > 0,
-  });
+  // categoryItems query removed — TicketItemsList handles its own data fetching
 
   if (!reg) return null;
 
@@ -210,11 +207,7 @@ export default function TicketDetail({ reg, event, category, onClose, onRemoved 
   // Canonical rule: payment required if payment_enabled=true OR price > 0
   const requiresPayment = !!(category && (category.payment_enabled === true || Number(category.price || 0) > 0));
   const needsPayment = requiresPayment && paymentState !== 'paid' && paymentState !== 'not_required' && !isCancelled;
-  const itemNameMap = Object.fromEntries(categoryItems.map(i => [i.id, i.name]));
-  const resolvedItems = reg.item_selections
-    ? Object.entries(reg.item_selections).filter(([id]) => !!itemNameMap[id])
-    : [];
-  const hasItems = resolvedItems.length > 0;
+  const hasItems = !!(reg.item_selections && Object.keys(reg.item_selections).length > 0);
   const hasPhone = !!reg.phone;
   const hasBloodType = !!reg.blood_type && reg.blood_type !== 'unknown';
   const hasEmergencyName = !!reg.emergency_contact_name;
@@ -463,31 +456,10 @@ export default function TicketDetail({ reg, event, category, onClose, onRemoved 
               <>
                 <Section>Your Items</Section>
                 <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: '4px 14px' }}>
-                  {resolvedItems.map(([itemId, val], idx) => {
-                    const name = itemNameMap[itemId];
-                    const isIncluded = val === 'included';
-                    const isLast = idx === resolvedItems.length - 1;
-                    return (
-                      <div key={itemId} style={{
-                        display: 'flex', alignItems: 'center', gap: 12,
-                        padding: '10px 0',
-                        borderBottom: isLast ? 'none' : '1px solid rgba(255,255,255,0.05)',
-                      }}>
-                        <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <Package style={{ width: 12, height: 12, color: 'rgba(255,255,255,0.3)' }} />
-                        </div>
-                        <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>{name}</span>
-                        <span style={{
-                          fontSize: 12, fontWeight: 700,
-                          padding: '3px 10px', borderRadius: 6,
-                          background: isIncluded ? 'rgba(255,255,255,0.05)' : 'rgba(191,255,0,0.1)',
-                          color: isIncluded ? 'rgba(255,255,255,0.4)' : '#BFFF00',
-                        }}>
-                          {isIncluded ? 'Included' : val}
-                        </span>
-                      </div>
-                    );
-                  })}
+                  <TicketItemsList
+                    categoryId={reg.category_id}
+                    itemSelections={reg.item_selections}
+                  />
                 </div>
               </>
             )}
