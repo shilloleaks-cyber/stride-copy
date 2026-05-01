@@ -195,12 +195,13 @@ export default function Feed() {
       className="text-white"
       style={{
         backgroundColor: '#0A0A0A',
-        minHeight: '100dvh',
-        paddingBottom: 'calc(160px + env(safe-area-inset-bottom))',
-        overscrollBehaviorY: 'none',
-        WebkitOverflowScrolling: 'touch',
-        position: 'relative',
+        height: '100dvh',
+        overflowY: 'auto',
         overflowX: 'hidden',
+        WebkitOverflowScrolling: 'touch',
+        overscrollBehaviorY: 'auto',
+        paddingBottom: 'calc(160px + env(safe-area-inset-bottom))',
+        position: 'relative',
       }}
     >
       <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
@@ -397,19 +398,23 @@ export default function Feed() {
       </div>
 
       {/* Floating Action Button */}
-      <button
-        onClick={() => requireAuth(() => setShowCreatePost(true))}
-        className="fixed right-6 w-14 h-14 rounded-full flex items-center justify-center shadow-lg z-20"
-        style={{
-          bottom: 'calc(72px + env(safe-area-inset-bottom))',
-          background: 'linear-gradient(135deg, #BFFF00 0%, #8A2BE2 100%)',
-          border: 'none',
-          cursor: 'pointer',
-          touchAction: 'manipulation',
-        }}
+      <div
+        className="fixed right-6 z-20 pointer-events-none"
+        style={{ bottom: 'calc(72px + env(safe-area-inset-bottom))' }}
       >
-        <Plus className="w-6 h-6" style={{ color: '#0A0A0A' }} />
-      </button>
+        <button
+          onClick={() => requireAuth(() => setShowCreatePost(true))}
+          className="pointer-events-auto w-14 h-14 rounded-full flex items-center justify-center shadow-lg"
+          style={{
+            background: 'linear-gradient(135deg, #BFFF00 0%, #8A2BE2 100%)',
+            border: 'none',
+            cursor: 'pointer',
+            touchAction: 'manipulation',
+          }}
+        >
+          <Plus className="w-6 h-6" style={{ color: '#0A0A0A' }} />
+        </button>
+      </div>
 
       {/* Create Post Modal */}
       <CreatePostModal

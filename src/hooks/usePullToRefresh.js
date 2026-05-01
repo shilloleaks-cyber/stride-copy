@@ -31,12 +31,8 @@ export default function usePullToRefresh(onRefresh, { threshold = 72 } = {}) {
     const onTouchMove = (e) => {
       if (!pulling.current || startY.current === null) return;
       const delta = e.touches[0].clientY - startY.current;
-      if (delta > 0) {
+      if (delta > 0 && getScrollTop() <= 0) {
         setPullDistance(Math.min(delta * 0.45, threshold * 1.5));
-        if (delta > 8 && getScrollTop() <= 0) {
-          // prevent native scroll bounce from interfering
-          try { e.preventDefault(); } catch (_) {}
-        }
       } else {
         pulling.current = false;
         startY.current = null;
@@ -64,7 +60,7 @@ export default function usePullToRefresh(onRefresh, { threshold = 72 } = {}) {
 
     const target = containerRef.current || document;
     target.addEventListener('touchstart', onTouchStart, { passive: true });
-    target.addEventListener('touchmove', onTouchMove, { passive: false });
+    target.addEventListener('touchmove', onTouchMove, { passive: true });
     target.addEventListener('touchend', onTouchEnd, { passive: true });
 
     return () => {
