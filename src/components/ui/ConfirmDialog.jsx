@@ -72,7 +72,12 @@ export default function ConfirmDialog({
             className="flex-1 py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2"
             style={confirmStyle}
           >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : confirmLabel}
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Deleting...
+              </span>
+            ) : confirmLabel}
           </button>
         </div>
       </div>

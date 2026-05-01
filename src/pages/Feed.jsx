@@ -428,7 +428,8 @@ export default function Feed() {
       <ConfirmDialog
         open={!!deleteTargetPostId}
         title="Delete this post?"
-        confirmLabel="Confirm"
+        description="This action cannot be undone."
+        confirmLabel="Delete"
         cancelLabel="Cancel"
         confirmVariant="destructive"
         loading={deleteMutation.isPending}
