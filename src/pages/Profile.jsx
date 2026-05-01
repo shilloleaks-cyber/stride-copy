@@ -628,6 +628,10 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
           onClose={() => setSettingsOpen(false)}
           onLogout={() => { setSettingsOpen(false); handleLogout(); }}
           onDeleteRequest={() => { setSettingsOpen(false); setDeleteConfirmOpen(true); }}
+          onNameSaved={() => {
+            refetchUser();
+            queryClient.invalidateQueries({ queryKey: ['me'] });
+          }}
         />
       )}
 

@@ -64,7 +64,7 @@ function RedirectingOverlay() {
   );
 }
 
-export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest }) {
+export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest, onNameSaved }) {
   const isAuthenticated = !!user;
   const [isRedirecting, setIsRedirecting] = useState(false);
   const { language, setLanguage } = useLanguage();
@@ -127,13 +127,19 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
     if (!trimmed) { toast.error('กรุณาใส่ชื่อ'); return; }
     if (trimmed.length < 2 || trimmed.length > 30) { toast.error('ชื่อต้องมี 2–30 ตัวอักษร'); return; }
     setNameSaving(true);
-    await base44.auth.updateMe({
-      display_name: trimmed,
-      display_name_updated_at: new Date().toISOString(),
-    });
-    setNameSaving(false);
-    setNameEditOpen(false);
-    toast.success('เปลี่ยนชื่อสำเร็จ ✓');
+    try {
+      await base44.auth.updateMe({
+        display_name: trimmed,
+        display_name_updated_at: new Date().toISOString(),
+      });
+      setNameEditOpen(false);
+      toast.success('เปลี่ยนชื่อสำเร็จ ✓');
+      if (onNameSaved) onNameSaved();
+    } catch (err) {
+      toast.error('บันทึกไม่สำเร็จ กรุณาลองใหม่');
+    } finally {
+      setNameSaving(false);
+    }
   };
 
 
