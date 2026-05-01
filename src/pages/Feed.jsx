@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import usePullToRefresh from '@/hooks/usePullToRefresh';
 import PullToRefreshIndicator from '@/components/mobile/PullToRefreshIndicator';
@@ -33,7 +33,7 @@ export default function Feed() {
   const urlParams = new URLSearchParams(window.location.search);
   const tabParam = urlParams.get('tab');
   
-  const [activeTab, setActiveTab] = useState(tabParam === 'groups' ? 'groups' : tabParam === 'challenges' ? 'challenges' : 'following');
+  const [activeTab, setActiveTab] = useState(tabParam === 'groups' ? 'groups' : tabParam === 'following' ? 'following' : 'discover');
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
   const [showComments, setShowComments] = useState(false);
@@ -160,7 +160,7 @@ export default function Feed() {
     },
   });
 
-  const handleLike = (postId, isLiked) => {
+  const handleLike = useCallback((postId, isLiked) => {
     requireAuth(() => {
       const post = activePosts.find(p => p.id === postId);
       const currentLikes = post?.likes || [];
@@ -180,17 +180,17 @@ export default function Feed() {
         },
       });
     });
-  };
+  }, [currentUser, followingEmails, requireAuth, activePosts, likeMutation]);
 
-  const handleViewComments = (post) => {
+  const handleViewComments = useCallback((post) => {
     requireAuth(() => {
       setSelectedPost(post);
       setShowComments(true);
     });
-  };
+  }, [requireAuth]);
 
   return (
-    <div ref={pullRef} className="min-h-screen text-white pb-28" style={{ backgroundColor: '#0A0A0A', position: 'relative' }}>
+    <div ref={pullRef} className="min-h-screen text-white pb-32" style={{ backgroundColor: '#0A0A0A', position: 'relative', WebkitOverflowScrolling: 'touch' }}>
       <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
       {/* Header */}
       <div className="sticky top-0 z-10 backdrop-blur-lg border-b border-white/5" style={{ backgroundColor: 'rgba(10, 10, 10, 0.95)' }}>
@@ -301,15 +301,6 @@ export default function Feed() {
           >
             <TabsList className="w-full bg-white/5 p-1">
               <TabsTrigger 
-                value="following" 
-                className="flex-1 data-[state=active]:text-black"
-                style={{ 
-                  backgroundColor: activeTab === 'following' ? '#BFFF00' : 'transparent'
-                }}
-              >
-                กำลังติดตาม
-              </TabsTrigger>
-              <TabsTrigger 
                 value="discover" 
                 className="flex-1 data-[state=active]:text-black"
                 style={{ 
@@ -319,13 +310,22 @@ export default function Feed() {
                 <Compass className="w-4 h-4 mr-1" />
                 สำรวจ
               </TabsTrigger>
+              <TabsTrigger 
+                value="following" 
+                className="flex-1 data-[state=active]:text-black"
+                style={{ 
+                  backgroundColor: activeTab === 'following' ? '#BFFF00' : 'transparent'
+                }}
+              >
+                กำลังติดตาม
+              </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
       </div>
 
       {/* Content */}
-      <div className="px-6 py-6 space-y-6">
+      <div className="px-4 py-4 space-y-4">
         {activeTab === 'groups' ? (
           <GroupsPanel embedded={true} />
         ) : activeTab === 'challenges' ? (

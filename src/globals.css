@@ -138,53 +138,23 @@ button, a {
 /* Feed Card Neon Glass Styles */
 .feedCard {
   position: relative;
-  background: rgba(20, 20, 20, 0.65);
-  backdrop-filter: blur(12px);
+  background: rgba(22, 22, 22, 0.92);
   border-radius: 20px;
-  border: 1px solid transparent;
-  background-image: 
-    linear-gradient(rgba(20, 20, 20, 0.65), rgba(20, 20, 20, 0.65)),
-    linear-gradient(135deg, rgba(138, 43, 226, 0.15) 0%, rgba(191, 255, 0, 0.15) 100%);
-  background-origin: border-box;
-  background-clip: padding-box, border-box;
-  box-shadow: 
-    0 0 30px rgba(138, 43, 226, 0.08),
-    0 0 50px rgba(191, 255, 0, 0.06),
-    0 20px 40px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(138, 43, 226, 0.18);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
   overflow: hidden;
-  transition: all 0.3s ease;
+  contain: layout style;
 }
 
 .feedCard:hover {
-  box-shadow: 
-    0 0 35px rgba(138, 43, 226, 0.12),
-    0 0 60px rgba(191, 255, 0, 0.10),
-    0 24px 48px rgba(0, 0, 0, 0.5);
-  transform: translateY(-2px);
-}
-
-.feedCard::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    rgba(191, 255, 0, 0.3) 50%, 
-    transparent 100%);
-  opacity: 0.5;
+  border-color: rgba(191, 255, 0, 0.18);
 }
 
 .feedAvatarGlow {
   position: relative;
   border-radius: 50%;
   padding: 2px;
-  background: linear-gradient(135deg, rgba(138, 43, 226, 0.4), rgba(191, 255, 0, 0.4));
-  box-shadow: 
-    0 0 16px rgba(138, 43, 226, 0.3),
-    0 0 24px rgba(191, 255, 0, 0.2);
+  background: linear-gradient(135deg, rgba(138, 43, 226, 0.35), rgba(191, 255, 0, 0.3));
 }
 
 .feedGlassPanel {

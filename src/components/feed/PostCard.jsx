@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { timeAgo } from '@/components/utils/timeUtils';
 import { 
@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-export default function PostCard({ 
+function PostCard({ 
   post, 
   currentUserEmail, 
   onLike, 
@@ -50,11 +50,7 @@ export default function PostCard({
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="feedCard"
-    >
+    <div className="feedCard" style={{ willChange: 'auto' }}>
       {/* Header */}
       <div className="p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -200,7 +196,10 @@ export default function PostCard({
           <img 
             src={post.image_url} 
             alt="Post image" 
-            className="w-full rounded-xl object-cover max-h-80 feedGlassPanel"
+            loading="lazy"
+            decoding="async"
+            className="w-full rounded-xl object-cover feedGlassPanel"
+            style={{ maxHeight: 320, display: 'block' }}
           />
         </div>
       )}
@@ -240,6 +239,8 @@ export default function PostCard({
           <span className="text-sm">{post.comments_count > 0 ? post.comments_count : ''}</span>
         </button>
       </div>
-    </motion.div>
+    </div>
   );
 }
+
+export default memo(PostCard);
