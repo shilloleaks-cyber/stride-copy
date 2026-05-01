@@ -129,7 +129,8 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
     if (trimmed.length < 2 || trimmed.length > 30) { toast.error('ชื่อต้องมี 2–30 ตัวอักษร'); return; }
     setNameSaving(true);
     try {
-      const normalizedEmail = String(user?.email || '').toLowerCase().trim();
+      const rawEmail = user?.email || '';
+      const normalizedEmail = rawEmail.toLowerCase().trim();
 
       // 1. Update auth user record
       await base44.auth.updateMe({
@@ -137,11 +138,17 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
         display_name_updated_at: new Date().toISOString(),
       });
 
-      // 2. Upsert PublicUserProfile — global source of truth for Feed/Comments
+      // 2. Upsert PublicUserProfile — try both normalized and raw email
       if (normalizedEmail) {
-        const existing = await base44.entities.PublicUserProfile.filter({ user_email: normalizedEmail });
+        let existing = await base44.entities.PublicUserProfile.filter({ user_email: normalizedEmail });
+        if (existing.length === 0 && rawEmail !== normalizedEmail) {
+          existing = await base44.entities.PublicUserProfile.filter({ user_email: rawEmail });
+        }
         if (existing.length > 0) {
-          await base44.entities.PublicUserProfile.update(existing[0].id, { display_name: trimmed });
+          await base44.entities.PublicUserProfile.update(existing[0].id, {
+            display_name: trimmed,
+            user_email: normalizedEmail,
+          });
         } else {
           await base44.entities.PublicUserProfile.create({
             user_email: normalizedEmail,
@@ -152,25 +159,24 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
       }
 
       // 3. Backfill Post.author_name snapshots so old posts also show the new name
-      if (normalizedEmail) {
-        try {
-          const myPosts = await base44.entities.Post.filter({ author_email: user.email });
-          await Promise.all(
-            myPosts.map(p =>
-              base44.entities.Post.update(p.id, {
-                author_name: trimmed,
-                author_display_name: trimmed,
-              })
-            )
-          );
-        } catch (_) { /* non-critical */ }
+      if (rawEmail) {
+        const myPosts = await base44.entities.Post.filter({ author_email: rawEmail });
+        await Promise.all(
+          myPosts.map(p =>
+            base44.entities.Post.update(p.id, {
+              author_name: trimmed,
+              author_display_name: trimmed,
+            })
+          )
+        );
       }
 
       setNameEditOpen(false);
       toast.success('เปลี่ยนชื่อสำเร็จ ✓');
       if (onNameSaved) onNameSaved();
     } catch (err) {
-      toast.error('บันทึกไม่สำเร็จ กรุณาลองใหม่');
+      console.error('handleNameSave error:', err);
+      toast.error('บันทึกไม่สำเร็จ: ' + (err?.message || 'กรุณาลองใหม่'));
     } finally {
       setNameSaving(false);
     }
