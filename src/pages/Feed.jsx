@@ -5,7 +5,7 @@ import PullToRefreshIndicator from '@/components/mobile/PullToRefreshIndicator';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Plus, Users, Compass, RefreshCw, TrendingUp, Clock, Target } from 'lucide-react';
 import NotificationCenter from '@/components/notifications/NotificationCenter';
 import { notifyPostLiked, notifyMentioned, extractMentions } from '@/lib/notifications';
@@ -190,7 +190,19 @@ export default function Feed() {
   }, [requireAuth]);
 
   return (
-    <div ref={pullRef} className="min-h-screen text-white pb-32" style={{ backgroundColor: '#0A0A0A', position: 'relative', WebkitOverflowScrolling: 'touch' }}>
+    <div
+      ref={pullRef}
+      className="text-white"
+      style={{
+        backgroundColor: '#0A0A0A',
+        minHeight: '100dvh',
+        paddingBottom: 'calc(160px + env(safe-area-inset-bottom))',
+        overscrollBehaviorY: 'none',
+        WebkitOverflowScrolling: 'touch',
+        position: 'relative',
+        overflowX: 'hidden',
+      }}
+    >
       <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
       {/* Header */}
       <div className="sticky top-0 z-10 backdrop-blur-lg border-b border-white/5" style={{ backgroundColor: 'rgba(10, 10, 10, 0.95)' }}>
@@ -341,7 +353,7 @@ export default function Feed() {
             ))}
           </div>
         ) : sortedPosts.length > 0 ? (
-          <AnimatePresence>
+          <div className="space-y-4">
             {sortedPosts.map((post) => (
               <PostCard
                 key={post.id}
@@ -352,7 +364,7 @@ export default function Feed() {
                 onViewComments={handleViewComments}
               />
             ))}
-          </AnimatePresence>
+          </div>
         ) : (
           <motion.div
             initial={{ opacity: 0 }}
@@ -385,17 +397,19 @@ export default function Feed() {
       </div>
 
       {/* Floating Action Button */}
-      <motion.button
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
+      <button
         onClick={() => requireAuth(() => setShowCreatePost(true))}
-        className="fixed bottom-24 right-6 w-14 h-14 rounded-full flex items-center justify-center shadow-lg z-20 neon-glow"
-        style={{ background: 'linear-gradient(135deg, #BFFF00 0%, #8A2BE2 100%)' }}
+        className="fixed right-6 w-14 h-14 rounded-full flex items-center justify-center shadow-lg z-20"
+        style={{
+          bottom: 'calc(72px + env(safe-area-inset-bottom))',
+          background: 'linear-gradient(135deg, #BFFF00 0%, #8A2BE2 100%)',
+          border: 'none',
+          cursor: 'pointer',
+          touchAction: 'manipulation',
+        }}
       >
         <Plus className="w-6 h-6" style={{ color: '#0A0A0A' }} />
-      </motion.button>
+      </button>
 
       {/* Create Post Modal */}
       <CreatePostModal
