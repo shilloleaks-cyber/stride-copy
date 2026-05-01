@@ -14,6 +14,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { notifyPostCommented, notifyCommentReplied, notifyMentioned, extractMentions } from '@/lib/notifications';
+import { resolveDisplayName, buildProfileMap, getDisplayName } from '@/lib/displayName';
 
 export default function CommentsSheet({ open, onClose, post, currentUser, entityType = 'post', groupId }) {
   const [newComment, setNewComment] = useState('');
@@ -29,6 +30,15 @@ export default function CommentsSheet({ open, onClose, post, currentUser, entity
     enabled: entityType === 'group' && !!groupId,
     staleTime: 60000,
   });
+
+  // Fetch all public profiles for comment author name resolution
+  const { data: commentProfiles = [] } = useQuery({
+    queryKey: ['public-profiles-all'],
+    queryFn: () => base44.entities.PublicUserProfile.list(),
+    staleTime: 60000,
+    enabled: open,
+  });
+  const commentProfileMap = buildProfileMap(commentProfiles);
 
   const { data: comments = [], isLoading } = useQuery({
     queryKey: ['comments', postId],
@@ -81,7 +91,7 @@ export default function CommentsSheet({ open, onClose, post, currentUser, entity
       const newCommentData = await base44.entities.Comment.create({
         post_id: postId,
         content,
-        author_name: currentUser?.full_name || 'Runner',
+        author_name: getDisplayName(currentUser),
         author_email: currentUser?.email,
       });
 
@@ -110,7 +120,7 @@ export default function CommentsSheet({ open, onClose, post, currentUser, entity
         queryClient.invalidateQueries({ queryKey: ['posts'] });
       }
 
-      const actorName = currentUser?.full_name || 'Someone';
+      const actorName = getDisplayName(currentUser);
       const preview = content.length > 80 ? content.slice(0, 80) + '…' : content;
 
       if (entityType !== 'group') {
@@ -231,13 +241,13 @@ export default function CommentsSheet({ open, onClose, post, currentUser, entity
                 >
                   <Avatar className="w-8 h-8 flex-shrink-0 commentAvatar">
                     <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-purple-700 text-white font-bold">
-                      {getInitials(comment.author_name)}
+                      {getInitials(resolveDisplayName(comment, commentProfileMap))}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
                     <div className="commentBubble">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-semibold text-white">{comment.author_name}</p>
+                        <p className="text-sm font-semibold text-white">{resolveDisplayName(comment, commentProfileMap)}</p>
                         <span className="text-xs" style={{ color: 'var(--muted)' }}>•</span>
                         <span 
                           className="text-[10px] whitespace-nowrap overflow-hidden" 

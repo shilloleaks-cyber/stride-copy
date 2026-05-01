@@ -24,7 +24,7 @@ import CommentsSheet from '@/components/feed/CommentsSheet';
 import GroupsPanel from '@/components/group/GroupsPanel';
 import { useAuthGate } from '@/hooks/useAuthGate';
 import LoginGateModal from '@/components/auth/LoginGateModal';
-import { getDisplayName } from '@/lib/displayName';
+import { getDisplayName, buildProfileMap } from '@/lib/displayName';
 
 export default function Feed() {
   const navigate = useNavigate();
@@ -84,6 +84,16 @@ export default function Feed() {
 
   const isLoading = activeTab === 'discover' ? discoverLoading : followingLoading;
   const activePosts = activeTab === 'discover' ? discoverPosts : followingPosts;
+
+  // Collect unique author emails from active posts to batch-fetch their public profiles
+  const authorEmails = [...new Set(activePosts.map(p => p.author_email).filter(Boolean))];
+  const { data: authorProfiles = [] } = useQuery({
+    queryKey: ['public-profiles', authorEmails.join(',')],
+    queryFn: () => base44.entities.PublicUserProfile.list(),
+    staleTime: 60000, // 1 min
+    enabled: authorEmails.length > 0,
+  });
+  const profileMap = buildProfileMap(authorProfiles);
 
   const refetch = () => { refetchDiscover(); refetchFollowing(); };
 
@@ -362,6 +372,7 @@ export default function Feed() {
                 post={post}
                 currentUserEmail={currentUser?.email}
                 currentUser={currentUser}
+                profileMap={profileMap}
                 onLike={handleLike}
                 onDelete={(id) => setDeleteTargetPostId(id)}
                 onViewComments={handleViewComments}

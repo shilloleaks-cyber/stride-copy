@@ -1,0 +1,64 @@
+{
+  "name": "PublicUserProfile",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "User email \u2014 primary lookup key"
+    },
+    "display_name": {
+      "type": "string",
+      "description": "Public display name (source of truth for all UI)"
+    },
+    "avatar_url": {
+      "type": "string",
+      "description": "Public avatar image URL"
+    },
+    "bio": {
+      "type": "string",
+      "description": "Short public bio"
+    }
+  },
+  "required": [
+    "user_email"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {},
+    "update": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

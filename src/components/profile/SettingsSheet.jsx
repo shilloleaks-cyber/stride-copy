@@ -129,20 +129,27 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
     if (trimmed.length < 2 || trimmed.length > 30) { toast.error('ชื่อต้องมี 2–30 ตัวอักษร'); return; }
     setNameSaving(true);
     try {
+      // 1. Update auth user record
       await base44.auth.updateMe({
         display_name: trimmed,
         display_name_updated_at: new Date().toISOString(),
       });
 
-      // Backfill author_name on all existing posts by this user so Feed reflects the new name
+      // 2. Upsert PublicUserProfile — global source of truth for other users
       if (user?.email) {
         try {
-          const myPosts = await base44.entities.Post.filter({ author_email: user.email });
-          await Promise.all(
-            myPosts.map(p => base44.entities.Post.update(p.id, { author_name: trimmed }))
-          );
+          const existing = await base44.entities.PublicUserProfile.filter({ user_email: user.email });
+          if (existing.length > 0) {
+            await base44.entities.PublicUserProfile.update(existing[0].id, { display_name: trimmed });
+          } else {
+            await base44.entities.PublicUserProfile.create({
+              user_email: user.email,
+              display_name: trimmed,
+              avatar_url: user.avatar_url || null,
+            });
+          }
         } catch (_) {
-          // Non-critical: silently ignore post backfill failures
+          // Non-critical: silently ignore profile upsert failures
         }
       }
 

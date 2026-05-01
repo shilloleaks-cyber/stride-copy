@@ -634,6 +634,8 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
             queryClient.invalidateQueries({ queryKey: ['currentUser'] });
             queryClient.invalidateQueries({ queryKey: ['posts-discover'] });
             queryClient.invalidateQueries({ queryKey: ['posts-following'] });
+            queryClient.invalidateQueries({ queryKey: ['public-profiles'] });
+            queryClient.invalidateQueries({ queryKey: ['public-profiles-all'] });
           }}
         />
       )}

@@ -1,6 +1,6 @@
 import React, { useState, memo, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { getPostAuthorName } from '@/lib/displayName';
+import { resolveDisplayName, resolveAvatar } from '@/lib/displayName';
 import { timeAgo } from '@/components/utils/timeUtils';
 import { 
   Heart, MessageCircle, MapPin, Clock, Flame, Zap, Trash2, MoreHorizontal
@@ -11,6 +11,7 @@ function PostCard({
   post, 
   currentUserEmail, 
   currentUser,
+  profileMap = {},
   onLike, 
   onComment, 
   onDelete,
@@ -58,16 +59,16 @@ function PostCard({
         <div className="flex items-center gap-3">
           <div className="feedAvatarGlow">
             <Avatar className="w-12 h-12">
-              {post.author_image ? (
-                <AvatarImage src={post.author_image} alt={post.author_name} className="object-cover" />
+              {resolveAvatar(post, profileMap) ? (
+                <AvatarImage src={resolveAvatar(post, profileMap)} alt={resolveDisplayName(post, profileMap)} className="object-cover" />
               ) : null}
               <AvatarFallback className="text-sm bg-gradient-to-br from-purple-500 to-purple-700 text-white font-bold">
-                {getInitials(post.author_name)}
+                {getInitials(resolveDisplayName(post, profileMap))}
               </AvatarFallback>
             </Avatar>
           </div>
           <div>
-            <p className="font-bold text-white">{getPostAuthorName(post, currentUser || { email: currentUserEmail })}</p>
+            <p className="font-bold text-white">{resolveDisplayName(post, profileMap)}</p>
             <p className="text-xs" style={{ color: 'var(--muted)' }}>
               {timeAgo(post.created_date)}
             </p>

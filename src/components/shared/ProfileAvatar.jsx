@@ -34,6 +34,19 @@ export default function ProfileAvatar({
     setIsUploading(true);
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
     await base44.auth.updateMe({ profile_image: file_url });
+
+    // Sync avatar to PublicUserProfile (global source of truth)
+    if (user?.email) {
+      try {
+        const existing = await base44.entities.PublicUserProfile.filter({ user_email: user.email });
+        if (existing.length > 0) {
+          await base44.entities.PublicUserProfile.update(existing[0].id, { avatar_url: file_url });
+        } else {
+          await base44.entities.PublicUserProfile.create({ user_email: user.email, avatar_url: file_url });
+        }
+      } catch (_) { /* non-critical */ }
+    }
+
     if (onImageUpdate) onImageUpdate(file_url);
     setIsUploading(false);
   };
