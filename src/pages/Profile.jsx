@@ -319,7 +319,10 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
           <button onClick={() => { setActiveFollowTab('following'); setFollowSheetOpen(true); }} className="heroPill">
             <span className="heroPillVal">{followingUsers.length}</span>
             <span className="heroPillLbl">{t('profile_following')}</span>
-...
+          </button>
+          <div className="heroPillDivider" />
+          <button onClick={() => { setActiveFollowTab('followers'); setFollowSheetOpen(true); }} className="heroPill">
+            <span className="heroPillVal">{followerUsers.length}</span>
             <span className="heroPillLbl">{t('profile_followers')}</span>
           </button>
         </div>
@@ -826,17 +829,17 @@ const profileStyles = `
     color: var(--text);
   }
   .heroPillVal {
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--muted);
+    font-size: 18px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.92);
     line-height: 1;
   }
   .heroPillLbl {
     font-size: 9px;
     color: var(--muted2);
     text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin-top: 2px;
+    letter-spacing: 0.08em;
+    margin-top: 3px;
   }
   .heroPillDivider {
     width: 1px;
