@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
@@ -7,6 +7,8 @@ import { format } from 'date-fns';
 import { ArrowLeft } from 'lucide-react';
 import RouteMap from '../components/running/RouteMap';
 import ShareRunModal from '../components/running/ShareRunModal';
+import { useLanguage } from '@/lib/LanguageContext';
+import { getQuoteById, getLocalizedQuote, getRandomQuoteByCategory } from '@/lib/i18nQuotes';
 
 const fmt2 = (n) => Number(n || 0).toFixed(2);
 
@@ -39,6 +41,7 @@ const getPace = (run) => {
 export default function RunSummary() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { t, language } = useLanguage();
   const params = new URLSearchParams(window.location.search);
   const runId = params.get('id');
 
@@ -65,6 +68,22 @@ export default function RunSummary() {
   });
 
   const run = runs?.[0];
+
+  // Resolve the quote to display.
+  // Priority: quote_id saved on run (new) → quote_text saved on run (legacy) → random fallback
+  const displayQuote = useMemo(() => {
+    if (run?.quote_id) {
+      const q = getQuoteById(run.quote_id);
+      if (q) return getLocalizedQuote(q, language);
+    }
+    if (run?.quote_text) {
+      // Legacy: plain text saved before quote_id existed — show as-is
+      return run.quote_text;
+    }
+    // Fallback: pick a random run_complete quote (stable only within this session)
+    const fallback = getRandomQuoteByCategory('run_complete', { rarity: 'common' });
+    return fallback ? getLocalizedQuote(fallback, language) : 'No excuses. Just progress.';
+  }, [run?.quote_id, run?.quote_text, language]);
 
   // Parse breakdown from WalletLog.note
   let breakdown = { distance: 0, streak: 0, daily: 0 };
@@ -174,10 +193,8 @@ export default function RunSummary() {
 
           {/* Quote block */}
           <div style={s.quoteCard}>
-            <div style={s.quoteLabel}>🔥 Today's vibe</div>
-            <div style={s.quoteText}>
-              "{run.quote_text || 'No excuses. Just progress.'}"
-            </div>
+            <div style={s.quoteLabel}>{t('quote_todays_vibe')}</div>
+            <div style={s.quoteText}>"{displayQuote}"</div>
           </div>
 
           {/* BX Earned card */}

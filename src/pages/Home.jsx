@@ -10,6 +10,7 @@ import LoginGateModal from '@/components/auth/LoginGateModal';
 import NotificationCenter from '@/components/notifications/NotificationCenter';
 import { getTrendingEvents } from '@/lib/trendingScore';
 import { useLanguage } from '@/lib/LanguageContext';
+import { getPersistedDailyQuoteId, getQuoteTextById, getQuoteById, getLocalizedQuote } from '@/lib/i18nQuotes';
 
 // ===== Coin Pop Animation =====
 function CoinPopLayer({ pops }) {
@@ -45,45 +46,24 @@ function CoinPopLayer({ pops }) {
   );
 }
 
-// Daily Quote Generator
-function getDailyQuote() {
-  const quotes = [
-    "วิ่งวันนี้ พรุ่งนี้แข็งแรงขึ้น 💪",
-    "ก้าวเล็กๆ นำไปสู่ชัยชนะใหญ่ 🏆",
-    "วิ่งไป ชีวิตก็ดีขึ้น ✨",
-    "ทุกก้าวคือความภาคภูมิใจ 🎯",
-    "อย่าหยุดเมื่อเหนื่อย หยุดเมื่อสำเร็จ 🔥",
-    "วิ่งเพื่อสุขภาพ วิ่งเพื่อชีวิตที่ดีขึ้น 🌟",
-    "ความสำเร็จเริ่มจากก้าวแรก 🚀",
-  ];
-
-  const today = new Date().toDateString();
-  const cachedDate = localStorage.getItem('daily_quote_date');
-  const cachedQuote = localStorage.getItem('daily_quote_text');
-
-  if (cachedDate === today && cachedQuote) {
-    return cachedQuote;
-  }
-
-  const dayIndex = new Date().getDate() % quotes.length;
-  const newQuote = quotes[dayIndex];
-  
-  localStorage.setItem('daily_quote_date', today);
-  localStorage.setItem('daily_quote_text', newQuote);
-  
-  return newQuote;
+// Daily Quote — stable ID persisted in localStorage; text re-derived from registry each render
+function useDailyQuote(language) {
+  // Memoize the ID so it doesn't re-select on every render (only on mount)
+  const quoteId = React.useMemo(() => getPersistedDailyQuoteId(), []);
+  const quote = getQuoteById(quoteId);
+  return quote ? getLocalizedQuote(quote, language) : '';
 }
 
 export default function Home() {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   
   // Coin pop animation state
   const [coinPops, setCoinPops] = useState([]);
   const popId = useRef(0);
 
-  // Daily quote
-  const dailyQuote = getDailyQuote();
+  // Daily quote — ID is stable; text re-derives when language changes
+  const dailyQuote = useDailyQuote(language);
 
   const triggerCoinPop = (amount = 10, opts = {}) => {
     const x = opts.x ?? "90%";
@@ -383,12 +363,12 @@ export default function Home() {
             </div>
             <div className="subNote">
               {streakTier === 14
-                ? "Beast mode (14d)"
+                ? getQuoteTextById('streak_beast_mode', language)
                 : streakTier === 7
-                ? "Hot streak (7d)"
+                ? getQuoteTextById('streak_hot', language)
                 : streakTier === 3
-                ? "Warming up (3d)"
-                : "Start your streak"}
+                ? getQuoteTextById('streak_warming_up', language)
+                : getQuoteTextById('streak_start', language)}
             </div>
           </div>
         </div>
@@ -470,16 +450,16 @@ export default function Home() {
           <button className="pillCard goldish" onClick={() => navigate(createPageUrl('Leaderboard'))}>
             <span className="pillIcon">🏆</span>
             <div>
-              <div className="pillTitle">อันดับ</div>
-              <div className="pillSub">ดูอันดับผู้เล่น</div>
+              <div className="pillTitle">{t('home_leaderboard_title')}</div>
+              <div className="pillSub">{t('home_leaderboard_sub')}</div>
             </div>
           </button>
 
           <button className="pillCard purplish" onClick={() => navigate(createPageUrl('Challenges'))}>
             <span className="pillIcon">🎯</span>
             <div>
-              <div className="pillTitle">Challenges</div>
-              <div className="pillSub">เข้าร่วมกิจกรรม</div>
+              <div className="pillTitle">{t('home_challenges_title')}</div>
+              <div className="pillSub">{t('home_challenges_sub')}</div>
             </div>
           </button>
         </div>
@@ -541,7 +521,7 @@ export default function Home() {
         <Modal title={t('home_pace_history')} onClose={() => setShowPaceHistory(false)}>
           <div className="modalBody">
             <div className="subNote" style={{ marginBottom: 10 }}>
-              Avg Pace (week) — ดูกราฟเพื่อเห็นการพัฒนา
+              {t('quote_pace_chart_sub')}
             </div>
             <SimpleLineGraph
               points={paceHistory}
@@ -549,7 +529,7 @@ export default function Home() {
               muted="var(--purple)"
             />
             <div className="subNote" style={{ marginTop: 10 }}>
-              Tip: pace ต่ำลง = เร็วขึ้น 😄
+              {t('quote_pace_tip')}
             </div>
           </div>
         </Modal>

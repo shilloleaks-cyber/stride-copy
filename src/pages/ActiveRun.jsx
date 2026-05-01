@@ -4,6 +4,8 @@ import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, MapPin, Zap, Heart, Flame, Timer } from 'lucide-react';
+import { getQuoteTextById } from '@/lib/i18nQuotes';
+import { useLanguage } from '@/lib/LanguageContext';
 import {
   haversineDistance,
   getValidDistanceKm,
@@ -27,6 +29,7 @@ import AchievementRevealModal from '@/components/running/AchievementRevealModal'
 
 export default function ActiveRun() {
   const navigate = useNavigate();
+  const { language } = useLanguage();
   // Run state
   const [runStatus, setRunStatus] = useState('IDLE'); // IDLE, RUNNING, PAUSED
   const [seconds, setSeconds] = useState(0);
@@ -570,7 +573,7 @@ export default function ActiveRun() {
       
       {/* Game HUD - Top Right */}
       {runStatus === 'RUNNING' && (
-        <FloatingGameHUD distance={distance} seconds={seconds} />
+        <FloatingGameHUD distance={distance} seconds={seconds} language={language} />
       )}
 
       {/* Ghost Run Options */}
@@ -670,7 +673,9 @@ export default function ActiveRun() {
       {locationStatus === 'denied' && (
         <div className="px-6 pt-4">
           <div className="bg-red-500/20 border border-red-500/30 rounded-xl p-4">
-            <p className="text-red-400 text-sm mb-2">กรุณาอนุญาตการเข้าถึงตำแหน่ง GPS</p>
+            <p className="text-red-400 text-sm mb-2">
+              {language === 'th' ? 'กรุณาอนุญาตการเข้าถึงตำแหน่ง GPS' : 'Please allow GPS location access'}
+            </p>
             <button
               onClick={() => window.location.reload()}
               className="px-3 py-1 bg-red-500/30 hover:bg-red-500/40 rounded-lg text-xs text-red-300 transition-colors"
@@ -683,7 +688,9 @@ export default function ActiveRun() {
       {locationStatus === 'error' && (
         <div className="px-6 pt-4">
           <div className="bg-orange-500/20 border border-orange-500/30 rounded-xl p-4">
-            <p className="text-orange-400 text-sm">ไม่สามารถรับสัญญาณ GPS ได้</p>
+            <p className="text-orange-400 text-sm">
+              {language === 'th' ? 'ไม่สามารถรับสัญญาณ GPS ได้' : 'Unable to get GPS signal'}
+            </p>
           </div>
         </div>
       )}
@@ -913,7 +920,7 @@ export default function ActiveRun() {
   );
 }
 
-function FloatingGameHUD({ distance, seconds }) {
+function FloatingGameHUD({ distance, seconds, language }) {
   const [notifications, setNotifications] = useState([]);
   const notifIdRef = useRef(0);
   
@@ -927,8 +934,8 @@ function FloatingGameHUD({ distance, seconds }) {
       
       const messages = [
         { icon: '🪙', text: `+${coinGain} coins`, type: 'coin' },
-        { icon: '🔥', text: 'streak', type: 'streak' },
-        { icon: '⚡', text: 'combo', type: 'combo' },
+        { icon: '🔥', text: getQuoteTextById('hud_streak', language), type: 'streak' },
+        { icon: '⚡', text: getQuoteTextById('hud_combo', language), type: 'combo' },
       ];
       
       const msg = messages[Math.floor(Math.random() * messages.length)];

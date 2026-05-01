@@ -215,6 +215,22 @@ export const translations = {
     checkin_wrong_event:  'Wrong Event QR',
     checkin_payment_warn: 'Payment Pending',
 
+    // ── Quote labels ──
+    quote_daily_motivation:  'Daily Motivation',
+    quote_todays_vibe:       "🔥 Today's vibe",
+    quote_rare_label:        'Rare Quote ✨',
+    quote_run_complete:      'Run Complete',
+    quote_keep_going:        'Keep going',
+    quote_unlocked_rare:     'You unlocked a rare quote',
+    quote_pace_tip:          'Lower pace = faster 😄',
+    quote_pace_chart_sub:    'Avg Pace (week) — see your progress',
+
+    // ── Home pill labels ──
+    home_leaderboard_title:  'Leaderboard',
+    home_leaderboard_sub:    'View rankings',
+    home_challenges_title:   'Challenges',
+    home_challenges_sub:     'Join activities',
+
     // ── Error / empty states ──
     error_generic:        'Something went wrong. Please try again.',
     empty_no_events:      'No events yet',
@@ -430,6 +446,22 @@ export const translations = {
     checkin_scan_next:    'สแกนคนต่อไป',
     checkin_wrong_event:  'QR ไม่ตรงกับอีเวนต์นี้',
     checkin_payment_warn: 'ค้างชำระเงิน',
+
+    // ── Quote labels ──
+    quote_daily_motivation:  'แรงบันดาลใจประจำวัน',
+    quote_todays_vibe:       '🔥 วันนี้ฟีลแบบนี้',
+    quote_rare_label:        'คำคมพิเศษ ✨',
+    quote_run_complete:      'วิ่งเสร็จแล้ว',
+    quote_keep_going:        'สู้ต่อไป',
+    quote_unlocked_rare:     'คุณปลดล็อกคำคมพิเศษแล้ว',
+    quote_pace_tip:          'เพซต่ำลง = เร็วขึ้น 😄',
+    quote_pace_chart_sub:    'เพซเฉลี่ย (สัปดาห์) — ดูกราฟเพื่อเห็นการพัฒนา',
+
+    // ── Home pill labels ──
+    home_leaderboard_title:  'อันดับ',
+    home_leaderboard_sub:    'ดูอันดับผู้เล่น',
+    home_challenges_title:   'Challenges',
+    home_challenges_sub:     'เข้าร่วมกิจกรรม',
 
     // ── Error / empty states ──
     error_generic:        'เกิดข้อผิดพลาด กรุณาลองใหม่',
