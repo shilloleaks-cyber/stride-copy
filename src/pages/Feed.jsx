@@ -63,23 +63,36 @@ export default function Feed() {
 
   const followingEmails = follows.map(f => f.following_email);
 
-  const { data: allPosts = [], isLoading, refetch } = useQuery({
-    queryKey: ['posts'],
-    queryFn: () => base44.entities.Post.list('-created_date', 100),
+  // Discover: all public posts (open read RLS)
+  const { data: discoverPosts = [], isLoading: discoverLoading, refetch: refetchDiscover } = useQuery({
+    queryKey: ['posts-discover'],
+    queryFn: () => base44.entities.Post.list('-created_date', 50),
   });
+
+  // Following: posts from followed users + own posts
+  const { data: followingPosts = [], isLoading: followingLoading, refetch: refetchFollowing } = useQuery({
+    queryKey: ['posts-following', currentUser?.email, followingEmails.join(',')],
+    queryFn: async () => {
+      const all = await base44.entities.Post.list('-created_date', 100);
+      return all.filter(p =>
+        followingEmails.includes(p.author_email) || p.author_email === currentUser?.email
+      );
+    },
+    enabled: !!currentUser?.email,
+  });
+
+  const isLoading = activeTab === 'discover' ? discoverLoading : followingLoading;
+  const activePosts = activeTab === 'discover' ? discoverPosts : followingPosts;
+
+  const refetch = () => { refetchDiscover(); refetchFollowing(); };
 
   const { containerRef: pullRef, pullDistance, isRefreshing } = usePullToRefresh(
     () => refetch(),
     { threshold: 72 }
   );
 
-  // Filter posts based on active tab
-  const filteredPosts = activeTab === 'following' 
-    ? allPosts.filter(p => followingEmails.includes(p.author_email) || p.author_email === currentUser?.email)
-    : allPosts;
-
   // Sort posts based on sortBy
-  const sortedPosts = [...filteredPosts].sort((a, b) => {
+  const sortedPosts = [...activePosts].sort((a, b) => {
     if (sortBy === 'engagement') {
       const engagementA = (a.likes?.length || 0) + (a.comments_count || 0);
       const engagementB = (b.likes?.length || 0) + (b.comments_count || 0);
@@ -92,7 +105,7 @@ export default function Feed() {
   const createPostMutation = useMutation({
     mutationFn: (postData) => base44.entities.Post.create(postData),
     onSuccess: (createdPost, postData) => {
-      queryClient.invalidateQueries(['posts']);
+      invalidatePosts();
 
       // Detect @mentions in the post content and notify each mentioned user (not self)
       const mentionTokens = extractMentions(postData?.content || '');
@@ -117,44 +130,39 @@ export default function Feed() {
     },
   });
 
+  const invalidatePosts = () => {
+    queryClient.invalidateQueries({ queryKey: ['posts-discover'] });
+    queryClient.invalidateQueries({ queryKey: ['posts-following'] });
+  };
+
   const likeMutation = useMutation({
     mutationFn: async ({ postId, newLikes }) => {
       await base44.entities.Post.update(postId, { likes: newLikes });
     },
     onMutate: async ({ postId, newLikes }) => {
-      await queryClient.cancelQueries({ queryKey: ['posts'] });
-      const previous = queryClient.getQueryData(['posts']);
-      queryClient.setQueryData(['posts'], (old = []) =>
-        old.map(p => p.id === postId ? { ...p, likes: newLikes } : p)
-      );
-      return { previous };
+      const updater = (old = []) => old.map(p => p.id === postId ? { ...p, likes: newLikes } : p);
+      queryClient.setQueryData(['posts-discover'], updater);
+      queryClient.setQueryData(['posts-following', currentUser?.email, followingEmails.join(',')], updater);
     },
-    onError: (_err, _vars, ctx) => {
-      if (ctx?.previous) queryClient.setQueryData(['posts'], ctx.previous);
-    },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['posts'] }),
+    onSettled: () => invalidatePosts(),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (postId) => base44.entities.Post.delete(postId),
     onMutate: async (postId) => {
-      await queryClient.cancelQueries({ queryKey: ['posts'] });
-      const previous = queryClient.getQueryData(['posts']);
-      queryClient.setQueryData(['posts'], (old = []) => old.filter(p => p.id !== postId));
-      return { previous };
-    },
-    onError: (_err, _vars, ctx) => {
-      if (ctx?.previous) queryClient.setQueryData(['posts'], ctx.previous);
+      const updater = (old = []) => old.filter(p => p.id !== postId);
+      queryClient.setQueryData(['posts-discover'], updater);
+      queryClient.setQueryData(['posts-following', currentUser?.email, followingEmails.join(',')], updater);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      invalidatePosts();
       setDeleteTargetPostId(null);
     },
   });
 
   const handleLike = (postId, isLiked) => {
     requireAuth(() => {
-      const post = allPosts.find(p => p.id === postId);
+      const post = activePosts.find(p => p.id === postId);
       const currentLikes = post?.likes || [];
       const newLikes = isLiked
         ? currentLikes.filter(email => email !== currentUser?.email)
