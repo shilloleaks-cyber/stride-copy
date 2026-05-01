@@ -173,6 +173,14 @@ export default function PaymentReviewPanel({ payment, reg, catMap, registrations
           )}
         </div>
 
+        {/* User note from participant */}
+        <div style={{ padding: '10px 12px', borderRadius: 12, background: 'rgba(191,255,0,0.04)', border: '1px solid rgba(191,255,0,0.12)' }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(191,255,0,0.6)', margin: '0 0 3px', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Order / Payment Note</p>
+          <p style={{ fontSize: 13, color: payment.user_note ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.25)', margin: 0, lineHeight: 1.6, whiteSpace: 'pre-line', fontStyle: payment.user_note ? 'normal' : 'italic' }}>
+            {payment.user_note || 'No note provided'}
+          </p>
+        </div>
+
         {/* Admin note (needs_attention) */}
         {isNeedsAttention && payment.admin_note && (
           <div style={{ padding: '10px 12px', borderRadius: 12, background: 'rgba(255,120,0,0.07)', border: '1px solid rgba(255,120,0,0.2)' }}>
