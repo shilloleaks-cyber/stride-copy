@@ -153,6 +153,23 @@ export default function Profile() {
     if (user?.bio) setBio(user.bio);
   }, [user?.bio]);
 
+  // Auto-ensure PublicUserProfile exists for this user
+  React.useEffect(() => {
+    if (!user?.email) return;
+    const ensureProfile = async () => {
+      const normalizedEmail = user.email.toLowerCase().trim();
+      const existing = await base44.entities.PublicUserProfile.filter({ user_email: normalizedEmail });
+      if (existing.length === 0) {
+        await base44.entities.PublicUserProfile.create({
+          user_email: normalizedEmail,
+          display_name: user.display_name || user.full_name || '',
+          avatar_url: user.profile_image || null,
+        });
+      }
+    };
+    ensureProfile().catch(() => {});
+  }, [user?.email]);
+
   const handleSaveBio = async () => {
     await base44.auth.updateMe({ bio });
     refetchUser();
