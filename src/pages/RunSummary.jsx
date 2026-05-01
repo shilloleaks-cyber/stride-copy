@@ -8,7 +8,7 @@ import { ArrowLeft } from 'lucide-react';
 import RouteMap from '../components/running/RouteMap';
 import ShareRunModal from '../components/running/ShareRunModal';
 import { useLanguage } from '@/lib/LanguageContext';
-import { getQuoteById, getLocalizedQuote, getRandomQuoteByCategory } from '@/lib/i18nQuotes';
+import { getQuoteById, getLocalizedQuote, getRandomQuoteByCategory, GLOBAL_QUOTES } from '@/lib/i18nQuotes';
 
 const fmt2 = (n) => Number(n || 0).toFixed(2);
 
@@ -82,7 +82,7 @@ export default function RunSummary() {
     }
     // Fallback: pick a random run_complete quote (stable only within this session)
     const fallback = getRandomQuoteByCategory('run_complete', { rarity: 'common' });
-    return fallback ? getLocalizedQuote(fallback, language) : 'No excuses. Just progress.';
+    return getLocalizedQuote(fallback || getQuoteById('no_excuses_just_progress') || GLOBAL_QUOTES.find(q => q.category === 'run_complete'), language);
   }, [run?.quote_id, run?.quote_text, language]);
 
   // Parse breakdown from WalletLog.note
