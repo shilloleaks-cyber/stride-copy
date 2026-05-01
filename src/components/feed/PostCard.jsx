@@ -1,5 +1,6 @@
 import React, { useState, memo, useCallback } from 'react';
 import { motion } from 'framer-motion';
+import { getPostAuthorName } from '@/lib/displayName';
 import { timeAgo } from '@/components/utils/timeUtils';
 import { 
   Heart, MessageCircle, MapPin, Clock, Flame, Zap, Trash2, MoreHorizontal
@@ -9,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 function PostCard({ 
   post, 
   currentUserEmail, 
+  currentUser,
   onLike, 
   onComment, 
   onDelete,
@@ -65,7 +67,7 @@ function PostCard({
             </Avatar>
           </div>
           <div>
-            <p className="font-bold text-white">{post.author_name}</p>
+            <p className="font-bold text-white">{getPostAuthorName(post, currentUser || { email: currentUserEmail })}</p>
             <p className="text-xs" style={{ color: 'var(--muted)' }}>
               {timeAgo(post.created_date)}
             </p>

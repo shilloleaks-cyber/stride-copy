@@ -5,19 +5,20 @@ import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { useLanguage, LANGUAGES } from '@/lib/LanguageContext';
 import { differenceInDays } from 'date-fns';
+import { getDisplayName } from '@/lib/displayName';
 
 // Detect if user just returned from a successful login
 // The platform redirects back to the same URL after login
 function useJustLoggedIn(user) {
-  const [justLoggedIn, setJustLoggedIn] = useState(false);
+const [justLoggedIn, setJustLoggedIn] = useState(false);
 
-  useEffect(() => {
-    if (!user) return;
-    const key = '__stride_login_pending__';
-    if (sessionStorage.getItem(key)) {
-      sessionStorage.removeItem(key);
-      setJustLoggedIn(true);
-      toast.success(`Welcome back, ${user.full_name || 'Runner'}! 👋`, {
+useEffect(() => {
+  if (!user) return;
+  const key = '__stride_login_pending__';
+  if (sessionStorage.getItem(key)) {
+    sessionStorage.removeItem(key);
+    setJustLoggedIn(true);
+    toast.success(`Welcome back, ${getDisplayName(user)}! 👋`, {
         description: user.email,
         duration: 3500,
       });
@@ -132,6 +133,19 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
         display_name: trimmed,
         display_name_updated_at: new Date().toISOString(),
       });
+
+      // Backfill author_name on all existing posts by this user so Feed reflects the new name
+      if (user?.email) {
+        try {
+          const myPosts = await base44.entities.Post.filter({ author_email: user.email });
+          await Promise.all(
+            myPosts.map(p => base44.entities.Post.update(p.id, { author_name: trimmed }))
+          );
+        } catch (_) {
+          // Non-critical: silently ignore post backfill failures
+        }
+      }
+
       setNameEditOpen(false);
       toast.success('เปลี่ยนชื่อสำเร็จ ✓');
       if (onNameSaved) onNameSaved();
@@ -236,7 +250,7 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
 
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontSize: 16, fontWeight: 700, color: '#fff', margin: '0 0 4px' }}>
-                    {user?.full_name || 'Runner'}
+                    {getDisplayName(user)}
                   </p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                     <Mail style={{ width: 11, height: 11, flexShrink: 0, color: 'rgba(255,255,255,0.3)' }} />

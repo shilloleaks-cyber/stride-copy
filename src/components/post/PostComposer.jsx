@@ -12,6 +12,7 @@ import {
 } from '@/lib/notifications';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { getDisplayName } from '@/lib/displayName';
 import {
   Select,
   SelectContent,
@@ -98,7 +99,7 @@ export default function PostComposer({ mode = 'feed', groupId, groupName = '', u
         const postData = {
           group_id: groupId,
           author_email: user?.email || '',
-          author_name: user?.full_name || 'Runner',
+          author_name: getDisplayName(user),
           author_image: user?.profile_image || '',
           content: content.trim() || '',
           image_url: uploadedImageUrl,
@@ -121,7 +122,7 @@ export default function PostComposer({ mode = 'feed', groupId, groupName = '', u
           if (isAnnouncement) {
             notifyGroupAnnouncement({
               group_member_emails: memberEmails,
-              actor_name: user?.full_name || 'Someone',
+              actor_name: getDisplayName(user),
               group_id: groupId,
               group_name: resolvedGroupName,
               message: content.trim().slice(0, 120) || 'New announcement in your group.',
@@ -129,7 +130,7 @@ export default function PostComposer({ mode = 'feed', groupId, groupName = '', u
           } else {
             notifyGroupPostCreated({
               group_member_emails: memberEmails,
-              actor_name: user?.full_name || 'Someone',
+              actor_name: getDisplayName(user),
               group_id: groupId,
               group_name: resolvedGroupName,
               post_id: createdPost?.id,
@@ -155,7 +156,7 @@ export default function PostComposer({ mode = 'feed', groupId, groupName = '', u
             seen.add(m.user_email);
             notifyMentioned({
               user_email: m.user_email,
-              actor_name: user?.full_name || 'Someone',
+              actor_name: getDisplayName(user),
               post_id: createdPost?.id,
               context: content.trim().slice(0, 100),
               group_id: groupId,
@@ -177,7 +178,7 @@ export default function PostComposer({ mode = 'feed', groupId, groupName = '', u
 
         const postData = {
           content: content.trim(),
-          author_name: user?.full_name || 'Runner',
+          author_name: getDisplayName(user),
           author_email: user?.email,
           author_image: user?.profile_image || '',
           likes: [],
@@ -221,7 +222,7 @@ export default function PostComposer({ mode = 'feed', groupId, groupName = '', u
         <Avatar className="w-10 h-10 flex-shrink-0">
           {user?.profile_image && <AvatarImage src={user.profile_image} />}
           <AvatarFallback className="text-white text-sm font-semibold" style={{ background: 'linear-gradient(135deg, #8A2BE2, #BFFF00)' }}>
-            {user?.full_name?.[0] || 'U'}
+            {getDisplayName(user)[0]?.toUpperCase() || 'U'}
           </AvatarFallback>
         </Avatar>
 

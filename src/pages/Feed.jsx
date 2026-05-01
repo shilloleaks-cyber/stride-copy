@@ -24,6 +24,7 @@ import CommentsSheet from '@/components/feed/CommentsSheet';
 import GroupsPanel from '@/components/group/GroupsPanel';
 import { useAuthGate } from '@/hooks/useAuthGate';
 import LoginGateModal from '@/components/auth/LoginGateModal';
+import { getDisplayName } from '@/lib/displayName';
 
 export default function Feed() {
   const navigate = useNavigate();
@@ -360,6 +361,7 @@ export default function Feed() {
                 key={post.id}
                 post={post}
                 currentUserEmail={currentUser?.email}
+                currentUser={currentUser}
                 onLike={handleLike}
                 onDelete={(id) => setDeleteTargetPostId(id)}
                 onViewComments={handleViewComments}
