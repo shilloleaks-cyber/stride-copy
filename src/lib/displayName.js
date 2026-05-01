@@ -5,6 +5,11 @@
  * Fallback chain: profileMap → display_name → author_display_name → author_name → full_name → email prefix → "Runner"
  */
 
+/** Normalize email to lowercase trimmed string for consistent map lookups */
+export function normalizeEmail(email) {
+  return String(email || '').toLowerCase().trim();
+}
+
 /**
  * Resolve a user's display name from their profile object.
  * Priority: display_name → full_name → name → email prefix → "Runner"
@@ -22,10 +27,10 @@ export function getDisplayName(user) {
 
 /**
  * Resolve display name for a post/comment author using a live profileMap.
- * profileMap: { [email]: PublicUserProfile }
+ * profileMap keys are normalized (lowercase) emails.
  *
  * Priority:
- * 1. profileMap[author_email].display_name  (live global profile)
+ * 1. profileMap[normalizeEmail(author_email)].display_name  (live global profile)
  * 2. record.author_display_name             (legacy snapshot)
  * 3. record.author_name                     (legacy snapshot)
  * 4. email prefix
@@ -33,7 +38,8 @@ export function getDisplayName(user) {
  */
 export function resolveDisplayName(record, profileMap = {}) {
   if (!record) return 'Runner';
-  const email = record.author_email || record.user_email || record.email;
+  const rawEmail = record.author_email || record.user_email || record.email;
+  const email = normalizeEmail(rawEmail);
   const profile = email ? profileMap[email] : null;
 
   return (
@@ -42,29 +48,31 @@ export function resolveDisplayName(record, profileMap = {}) {
     record.author_display_name ||
     record.author_name ||
     record.full_name ||
-    (email ? email.split('@')[0] : null) ||
+    (rawEmail ? rawEmail.split('@')[0] : null) ||
     'Runner'
   );
 }
 
 /**
  * Resolve a user's avatar from profileMap or record fallback.
+ * profileMap keys are normalized (lowercase) emails.
  */
 export function resolveAvatar(record, profileMap = {}) {
   if (!record) return null;
-  const email = record.author_email || record.user_email || record.email;
+  const rawEmail = record.author_email || record.user_email || record.email;
+  const email = normalizeEmail(rawEmail);
   const profile = email ? profileMap[email] : null;
   return profile?.avatar_url || record.author_image || record.avatar_url || null;
 }
 
 /**
  * Build a profileMap from an array of PublicUserProfile records.
- * Returns: { [email]: profile }
+ * Keys are normalized (lowercase) emails for consistent lookups.
  */
 export function buildProfileMap(profiles = []) {
   const map = {};
   for (const p of profiles) {
-    if (p.user_email) map[p.user_email] = p;
+    if (p.user_email) map[normalizeEmail(p.user_email)] = p;
   }
   return map;
 }
@@ -74,7 +82,7 @@ export function buildProfileMap(profiles = []) {
  */
 export function getPostAuthorName(post, currentUser) {
   if (!post) return 'Runner';
-  if (currentUser?.email && post.author_email === currentUser.email) {
+  if (currentUser?.email && normalizeEmail(post.author_email) === normalizeEmail(currentUser.email)) {
     return getDisplayName(currentUser);
   }
   return post.author_name || (post.author_email ? post.author_email.split('@')[0] : 'Runner');
