@@ -403,7 +403,7 @@ export default function StrideEventDetail() {
                         ) : (
                           <p className="font-black text-base" style={{ color }}>
             {(cat.payment_enabled === true || Number(cat.price || 0) > 0)
-              ? (cat.price > 0 ? `฿${cat.price}` : 'Paid')
+              ? (cat.price > 0 ? `฿${cat.price}` : 'Rock n Roll')
               : 'Free'}
           </p>
                         )}
