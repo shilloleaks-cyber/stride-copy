@@ -26,11 +26,26 @@ export function getDisplayName(user) {
 }
 
 /**
+ * Get the best identity key from a record for profileMap lookup.
+ * Tries author_email, user_email, created_by (platform field), email in that order.
+ */
+export function getRecordIdentityKey(record) {
+  if (!record) return '';
+  return normalizeEmail(
+    record.author_email ||
+    record.user_email ||
+    record.created_by ||
+    record.email ||
+    ''
+  );
+}
+
+/**
  * Resolve display name for a post/comment author using a live profileMap.
  * profileMap keys are normalized (lowercase) emails.
  *
  * Priority:
- * 1. profileMap[normalizeEmail(author_email)].display_name  (live global profile)
+ * 1. profileMap[getRecordIdentityKey(record)].display_name  (live global profile)
  * 2. record.author_display_name             (legacy snapshot)
  * 3. record.author_name                     (legacy snapshot)
  * 4. email prefix
@@ -38,9 +53,9 @@ export function getDisplayName(user) {
  */
 export function resolveDisplayName(record, profileMap = {}) {
   if (!record) return 'Runner';
-  const rawEmail = record.author_email || record.user_email || record.email;
-  const email = normalizeEmail(rawEmail);
-  const profile = email ? profileMap[email] : null;
+  const key = getRecordIdentityKey(record);
+  const profile = key ? profileMap[key] : null;
+  const rawEmail = record.author_email || record.user_email || record.created_by || record.email;
 
   return (
     profile?.display_name ||
@@ -59,9 +74,8 @@ export function resolveDisplayName(record, profileMap = {}) {
  */
 export function resolveAvatar(record, profileMap = {}) {
   if (!record) return null;
-  const rawEmail = record.author_email || record.user_email || record.email;
-  const email = normalizeEmail(rawEmail);
-  const profile = email ? profileMap[email] : null;
+  const key = getRecordIdentityKey(record);
+  const profile = key ? profileMap[key] : null;
   return profile?.avatar_url || record.author_avatar_url || record.author_image || record.avatar_url || null;
 }
 

@@ -14,7 +14,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { notifyPostCommented, notifyCommentReplied, notifyMentioned, extractMentions } from '@/lib/notifications';
-import { resolveDisplayName, resolveAvatar, buildProfileMap, getDisplayName, normalizeEmail } from '@/lib/displayName';
+import { resolveDisplayName, resolveAvatar, buildProfileMap, getDisplayName, normalizeEmail, getRecordIdentityKey } from '@/lib/displayName';
 
 export default function CommentsSheet({ open, onClose, post, currentUser, entityType = 'post', groupId }) {
   const [newComment, setNewComment] = useState('');
@@ -34,8 +34,8 @@ export default function CommentsSheet({ open, onClose, post, currentUser, entity
   // Fetch all public profiles for comment author name resolution
   const { data: commentProfiles = [] } = useQuery({
     queryKey: ['public-profiles-all'],
-    queryFn: () => base44.entities.PublicUserProfile.list(),
-    staleTime: 60000,
+    queryFn: () => base44.entities.PublicUserProfile.list('-updated_date', 200),
+    staleTime: 30000,
     enabled: open,
   });
   const commentProfileMap = buildProfileMap(commentProfiles);
@@ -88,11 +88,11 @@ export default function CommentsSheet({ open, onClose, post, currentUser, entity
 
   const addCommentMutation = useMutation({
     mutationFn: async ({ content, replyTarget }) => {
-      const authorEmail = (currentUser?.email || '').toLowerCase().trim();
+      const authorEmail = normalizeEmail(currentUser?.email || '');
       const authorName = getDisplayName(currentUser);
-      const authorAvatar = commentProfileMap[authorEmail]?.avatar_url || currentUser?.profile_image || null;
+      const authorAvatar = (authorEmail && commentProfileMap[authorEmail]?.avatar_url) || currentUser?.profile_image || null;
 
-      // Ensure PublicUserProfile exists for this commenter
+      // Ensure PublicUserProfile exists for this commenter (upsert)
       if (authorEmail) {
         const existing = await base44.entities.PublicUserProfile.filter({ user_email: authorEmail });
         if (existing.length === 0) {
@@ -100,6 +100,12 @@ export default function CommentsSheet({ open, onClose, post, currentUser, entity
             user_email: authorEmail,
             display_name: authorName,
             avatar_url: authorAvatar,
+          }).catch(() => {});
+        } else {
+          // Update display_name so it stays current
+          await base44.entities.PublicUserProfile.update(existing[0].id, {
+            display_name: authorName,
+            ...(authorAvatar ? { avatar_url: authorAvatar } : {}),
           }).catch(() => {});
         }
       }
@@ -249,7 +255,12 @@ export default function CommentsSheet({ open, onClose, post, currentUser, entity
             </div>
           ) : comments.length > 0 ? (
             <AnimatePresence>
-              {comments.map((comment) => (
+              {comments.map((comment) => {
+                const identityKey = getRecordIdentityKey(comment);
+                const profile = commentProfileMap[identityKey];
+                const resolvedName = profile?.display_name || comment.author_display_name || comment.author_name || (identityKey ? identityKey.split('@')[0] : 'Runner');
+                const resolvedAvatar = profile?.avatar_url || comment.author_avatar_url || comment.author_image || null;
+                return (
                 <motion.div
                   key={comment.id}
                   initial={{ opacity: 0, y: 10 }}
@@ -258,17 +269,17 @@ export default function CommentsSheet({ open, onClose, post, currentUser, entity
                   className="flex gap-3 mb-4"
                 >
                   <Avatar className="w-8 h-8 flex-shrink-0 commentAvatar">
-                    {resolveAvatar(comment, commentProfileMap) && (
-                      <AvatarImage src={resolveAvatar(comment, commentProfileMap)} alt={resolveDisplayName(comment, commentProfileMap)} className="object-cover" />
+                    {resolvedAvatar && (
+                      <AvatarImage src={resolvedAvatar} alt={resolvedName} className="object-cover" />
                     )}
                     <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-purple-700 text-white font-bold">
-                      {getInitials(resolveDisplayName(comment, commentProfileMap))}
+                      {getInitials(resolvedName)}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
                     <div className="commentBubble">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-semibold text-white">{resolveDisplayName(comment, commentProfileMap)}</p>
+                        <p className="text-sm font-semibold text-white">{resolvedName}</p>
                         <span className="text-xs" style={{ color: 'var(--muted)' }}>•</span>
                         <span 
                           className="text-[10px] whitespace-nowrap overflow-hidden" 
@@ -285,16 +296,16 @@ export default function CommentsSheet({ open, onClose, post, currentUser, entity
                       <p className="text-sm text-white mt-1" style={{ lineHeight: '1.5' }}>{comment.content}</p>
                     </div>
                     <div className="flex items-center gap-3 mt-1 px-2">
-                      {comment.author_email !== currentUser?.email && (
+                      {identityKey !== normalizeEmail(currentUser?.email) && (
                         <button
-                          onClick={() => setReplyToComment({ id: comment.id, author_email: comment.author_email, author_name: comment.author_name })}
+                          onClick={() => setReplyToComment({ id: comment.id, author_email: comment.author_email || comment.created_by, author_name: resolvedName })}
                           className="text-xs transition-colors"
                           style={{ color: 'rgba(191,255,0,0.6)' }}
                         >
                           ↩ Reply
                         </button>
                       )}
-                      {comment.author_email === currentUser?.email && (
+                      {identityKey === normalizeEmail(currentUser?.email) && (
                         <button 
                           onClick={() => deleteCommentMutation.mutate(comment.id)}
                           className="text-xs text-red-400 hover:text-red-300 transition-colors"
@@ -305,7 +316,8 @@ export default function CommentsSheet({ open, onClose, post, currentUser, entity
                     </div>
                   </div>
                 </motion.div>
-              ))}
+                );
+              })}
             </AnimatePresence>
           ) : (
             <div className="commentsEmpty">
