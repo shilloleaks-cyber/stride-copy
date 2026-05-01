@@ -88,7 +88,16 @@ export default function ConfirmDialog({
           >
             {loading ? (
               <>
-                <Loader2 style={{ width: 16, height: 16, flexShrink: 0, background: 'transparent' }} className="animate-spin" />
+                <svg
+                  style={{ width: 16, height: 16, flexShrink: 0, background: 'none', animation: 'spin 1s linear infinite' }}
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582M20 20v-5h-.581M5.635 19A9 9 0 1 0 4.582 9H4" />
+                </svg>
                 <span>Deleting...</span>
               </>
             ) : (
