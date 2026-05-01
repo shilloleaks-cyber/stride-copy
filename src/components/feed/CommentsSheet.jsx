@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { shortTimeAgo } from '@/components/utils/timeUtils';
 import { X, Send, Trash2 } from 'lucide-react';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -14,7 +14,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { notifyPostCommented, notifyCommentReplied, notifyMentioned, extractMentions } from '@/lib/notifications';
-import { resolveDisplayName, buildProfileMap, getDisplayName } from '@/lib/displayName';
+import { resolveDisplayName, resolveAvatar, buildProfileMap, getDisplayName, normalizeEmail } from '@/lib/displayName';
 
 export default function CommentsSheet({ open, onClose, post, currentUser, entityType = 'post', groupId }) {
   const [newComment, setNewComment] = useState('');
@@ -88,11 +88,29 @@ export default function CommentsSheet({ open, onClose, post, currentUser, entity
 
   const addCommentMutation = useMutation({
     mutationFn: async ({ content, replyTarget }) => {
+      const authorEmail = (currentUser?.email || '').toLowerCase().trim();
+      const authorName = getDisplayName(currentUser);
+      const authorAvatar = commentProfileMap[authorEmail]?.avatar_url || currentUser?.profile_image || null;
+
+      // Ensure PublicUserProfile exists for this commenter
+      if (authorEmail) {
+        const existing = await base44.entities.PublicUserProfile.filter({ user_email: authorEmail });
+        if (existing.length === 0) {
+          await base44.entities.PublicUserProfile.create({
+            user_email: authorEmail,
+            display_name: authorName,
+            avatar_url: authorAvatar,
+          }).catch(() => {});
+        }
+      }
+
       const newCommentData = await base44.entities.Comment.create({
         post_id: postId,
         content,
-        author_name: getDisplayName(currentUser),
-        author_email: currentUser?.email,
+        author_name: authorName,
+        author_display_name: authorName,
+        author_email: authorEmail,
+        author_avatar_url: authorAvatar,
       });
 
       const nextCount = (post?.comments_count || 0) + 1;
@@ -240,6 +258,9 @@ export default function CommentsSheet({ open, onClose, post, currentUser, entity
                   className="flex gap-3 mb-4"
                 >
                   <Avatar className="w-8 h-8 flex-shrink-0 commentAvatar">
+                    {resolveAvatar(comment, commentProfileMap) && (
+                      <AvatarImage src={resolveAvatar(comment, commentProfileMap)} alt={resolveDisplayName(comment, commentProfileMap)} className="object-cover" />
+                    )}
                     <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-purple-700 text-white font-bold">
                       {getInitials(resolveDisplayName(comment, commentProfileMap))}
                     </AvatarFallback>

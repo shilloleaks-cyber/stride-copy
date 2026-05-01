@@ -3,8 +3,13 @@ import { motion } from 'framer-motion';
 import { UserPlus, UserMinus, MapPin, Activity, Coins } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { normalizeEmail } from '@/lib/displayName';
 
-export default function UserCard({ user, isFollowing, onFollow, onUnfollow, stats }) {
+export default function UserCard({ user, isFollowing, onFollow, onUnfollow, stats, profileMap = {} }) {
+  const profile = profileMap[normalizeEmail(user.email)] || null;
+  const displayName = profile?.display_name || user.display_name || user.full_name || (user.email ? user.email.split('@')[0] : 'Runner');
+  const avatarUrl = profile?.avatar_url || user.profile_image || null;
+
   const getInitials = (name) => {
     if (!name) return 'U';
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -19,15 +24,15 @@ export default function UserCard({ user, isFollowing, onFollow, onUnfollow, stat
     >
       <div className="flex items-center gap-3">
         <Avatar className="w-12 h-12">
-          {user.profile_image ? (
-            <AvatarImage src={user.profile_image} alt={user.full_name} className="object-cover" />
+          {avatarUrl ? (
+            <AvatarImage src={avatarUrl} alt={displayName} className="object-cover" />
           ) : null}
           <AvatarFallback className="text-sm font-bold" style={{ background: 'rgba(138,43,226,0.3)', color: '#BFFF00' }}>
-            {getInitials(user.full_name)}
+            {getInitials(displayName)}
           </AvatarFallback>
         </Avatar>
         <div>
-          <p className="font-medium text-white">{user.full_name || 'Runner'}</p>
+          <p className="font-medium text-white">{displayName}</p>
           {user.bio && (
             <p className="text-xs text-gray-500 line-clamp-1 max-w-[150px]">{user.bio}</p>
           )}

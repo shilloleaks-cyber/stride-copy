@@ -171,9 +171,22 @@ export default function SettingsSheet({ user, onClose, onLogout, onDeleteRequest
         );
       }
 
+      // 4. Backfill Comment.author_name snapshots for comments by this user
+      if (normalizedEmail) {
+        const myComments = await base44.entities.Comment.filter({ author_email: normalizedEmail });
+        await Promise.all(
+          myComments.map(c =>
+            base44.entities.Comment.update(c.id, {
+              author_name: trimmed,
+              author_display_name: trimmed,
+            })
+          )
+        );
+      }
+
       setNameEditOpen(false);
       toast.success('เปลี่ยนชื่อสำเร็จ ✓');
-      if (onNameSaved) onNameSaved();
+      if (onNameSaved) onNameSaved(); // triggers cache invalidation in Profile page
     } catch (err) {
       console.error('handleNameSave error:', err);
       toast.error('บันทึกไม่สำเร็จ: ' + (err?.message || 'กรุณาลองใหม่'));

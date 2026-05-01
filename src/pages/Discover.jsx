@@ -8,6 +8,7 @@ import { ArrowLeft, Search, Users, TrendingUp } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import UserCard from '@/components/feed/UserCard';
+import { buildProfileMap, normalizeEmail } from '@/lib/displayName';
 
 export default function Discover() {
   const navigate = useNavigate();
@@ -42,6 +43,13 @@ export default function Discover() {
     queryFn: () => base44.entities.Run.filter({ status: 'completed' }),
   });
 
+  const { data: allProfiles = [] } = useQuery({
+    queryKey: ['public-profiles-all'],
+    queryFn: () => base44.entities.PublicUserProfile.list(),
+    staleTime: 60000,
+  });
+  const profileMap = buildProfileMap(allProfiles);
+
   const followingEmails = follows.map(f => f.following_email);
   const followerEmails = followers.map(f => f.follower_email);
 
@@ -63,11 +71,16 @@ export default function Discover() {
   
   const followerUsers = otherUsers.filter(u => followerEmails.includes(u.email));
 
-  const searchResults = searchQuery.trim() 
-    ? otherUsers.filter(u => 
-        u.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        u.email?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+  const searchResults = searchQuery.trim()
+    ? otherUsers.filter(u => {
+        const profile = profileMap[normalizeEmail(u.email)];
+        const displayName = profile?.display_name || u.display_name || u.full_name || '';
+        const q = searchQuery.toLowerCase();
+        return (
+          displayName.toLowerCase().includes(q) ||
+          u.email?.toLowerCase().includes(q)
+        );
+      })
     : [];
 
   const followMutation = useMutation({
@@ -147,6 +160,7 @@ export default function Discover() {
                   onFollow={handleFollow}
                   onUnfollow={handleUnfollow}
                   stats={getUserStats(user.email)}
+                  profileMap={profileMap}
                 />
               ))}
             </div>
@@ -200,6 +214,7 @@ export default function Discover() {
                         onFollow={handleFollow}
                         onUnfollow={handleUnfollow}
                         stats={getUserStats(user.email)}
+                        profileMap={profileMap}
                       />
                     </motion.div>
                   ))}
@@ -228,6 +243,7 @@ export default function Discover() {
                         onFollow={handleFollow}
                         onUnfollow={handleUnfollow}
                         stats={getUserStats(user.email)}
+                        profileMap={profileMap}
                       />
                     </motion.div>
                   ))}
@@ -257,6 +273,7 @@ export default function Discover() {
                         onFollow={handleFollow}
                         onUnfollow={handleUnfollow}
                         stats={getUserStats(user.email)}
+                        profileMap={profileMap}
                       />
                     </motion.div>
                   ))}

@@ -62,7 +62,7 @@ export function resolveAvatar(record, profileMap = {}) {
   const rawEmail = record.author_email || record.user_email || record.email;
   const email = normalizeEmail(rawEmail);
   const profile = email ? profileMap[email] : null;
-  return profile?.avatar_url || record.author_image || record.avatar_url || null;
+  return profile?.avatar_url || record.author_avatar_url || record.author_image || record.avatar_url || null;
 }
 
 /**
