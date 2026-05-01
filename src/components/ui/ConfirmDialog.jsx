@@ -67,17 +67,33 @@ export default function ConfirmDialog({
           </button>
 
           <button
+            type="button"
             disabled={loading}
             onClick={onConfirm}
-            className="flex-1 py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-            style={confirmStyle}
+            style={{
+              ...confirmStyle,
+              opacity: loading ? 0.75 : 1,
+              cursor: loading ? 'not-allowed' : 'pointer',
+              flex: 1,
+              padding: '12px 0',
+              borderRadius: 12,
+              fontSize: 14,
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              transition: 'opacity 0.2s',
+            }}
           >
             {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Deleting...
-              </span>
-            ) : confirmLabel}
+              <>
+                <Loader2 style={{ width: 16, height: 16, flexShrink: 0, background: 'transparent' }} className="animate-spin" />
+                <span>Deleting...</span>
+              </>
+            ) : (
+              <span>{confirmLabel}</span>
+            )}
           </button>
         </div>
       </div>
