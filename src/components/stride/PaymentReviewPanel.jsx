@@ -126,12 +126,12 @@ export default function PaymentReviewPanel({ payment, reg, catMap, registrations
           </a>
           {/* Status tint overlay */}
           {isApproved && (
-            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,210,110,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,210,110,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
               <CheckCircle2 style={{ width: 44, height: 44, color: 'rgb(0,210,110)' }} />
             </div>
           )}
           {isNeedsAttention && (
-            <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,120,0,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,120,0,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
               <AlertTriangle style={{ width: 44, height: 44, color: 'rgba(255,150,50,1)' }} />
             </div>
           )}
