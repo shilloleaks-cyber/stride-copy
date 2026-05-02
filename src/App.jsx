@@ -21,6 +21,8 @@ import CreateOfficialEvent from './pages/CreateOfficialEvent';
 import ManageCategories from './pages/ManageCategories';
 import AdminEvents from './pages/AdminEvents';
 import EventWorkspace from './pages/EventWorkspace';
+import StrideAdminEvents from './pages/StrideAdminEvents';
+import StrideStaffDashboard from './pages/StrideStaffDashboard';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRef } from 'react';
@@ -137,6 +139,8 @@ const AuthenticatedApp = () => {
         <Route path="/ManageCategories" element={<LayoutWrapper currentPageName="ManageCategories"><ManageCategories /></LayoutWrapper>} />
         <Route path="/AdminEvents" element={<LayoutWrapper currentPageName="AdminEvents"><AdminEvents /></LayoutWrapper>} />
         <Route path="/EventWorkspace" element={<LayoutWrapper currentPageName="EventWorkspace"><EventWorkspace /></LayoutWrapper>} />
+        <Route path="/StrideAdminEvents" element={<LayoutWrapper currentPageName="StrideAdminEvents"><StrideAdminEvents /></LayoutWrapper>} />
+        <Route path="/StrideStaffDashboard" element={<LayoutWrapper currentPageName="StrideStaffDashboard"><StrideStaffDashboard /></LayoutWrapper>} />
         <Route path="*" element={<PageNotFound />} />
       </Routes>
     </AnimatedRoutes>

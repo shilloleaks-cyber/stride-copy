@@ -9,9 +9,7 @@ import { useAuthGate } from '@/hooks/useAuthGate';
 import LoginGateModal from '@/components/auth/LoginGateModal';
 import { getTrendingCommunityEvents } from '@/lib/trendingScore';
 import { useLanguage } from '@/lib/LanguageContext';
-
-
-
+import { isEventOwner } from '@/lib/eventOwner';
 
 function SectionHeader({ label, count }) {
   return (
@@ -22,8 +20,7 @@ function SectionHeader({ label, count }) {
       {count > 0 && (
         <span style={{
           fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)',
-          background: 'rgba(255,255,255,0.08)', borderRadius: 99,
-          padding: '2px 7px',
+          background: 'rgba(255,255,255,0.08)', borderRadius: 99, padding: '2px 7px',
         }}>
           {count}
         </span>
@@ -57,21 +54,33 @@ export default function StrideEvents() {
     enabled: !!user?.email,
   });
 
-  const myRegMap = Object.fromEntries(myRegs.map(r => [r.event_id, r]));
+  // Admin Hub visibility: check if user owns any event
+  const { data: allEventsForOwnerCheck = [] } = useQuery({
+    queryKey: ['admin-owned-check', user?.email],
+    queryFn: () => base44.entities.StrideEvent.list('-created_date', 100),
+    enabled: !!user?.email,
+    staleTime: 60000,
+  });
 
+  // Staff button visibility: any accepted assignment
+  const { data: myStaffAssignments = [] } = useQuery({
+    queryKey: ['staff-assignments-check', user?.email],
+    queryFn: () => base44.entities.EventStaffAssignment.filter({ staff_email: user.email, status: 'accepted' }, '-accepted_at', 1),
+    enabled: !!user?.email,
+    staleTime: 60000,
+  });
+
+  const myRegMap = Object.fromEntries(myRegs.map(r => [r.event_id, r]));
   const isAdmin = user?.role === 'admin';
+  const showAdminHub = allEventsForOwnerCheck.some(ev => isEventOwner(ev, user));
+  const showStaff = myStaffAssignments.length > 0;
 
   const filtered = events.filter(e =>
     !search || e.title.toLowerCase().includes(search.toLowerCase()) || e.location_name?.toLowerCase().includes(search.toLowerCase())
   );
 
   const officialEvents = filtered.filter(e => e.event_type === 'official' || !e.event_type);
-
-  // Community events: all open, not ended, sorted by trending score (same formula as Home)
-  const communityEvents = useMemo(
-    () => getTrendingCommunityEvents(filtered),
-    [filtered]
-  );
+  const communityEvents = useMemo(() => getTrendingCommunityEvents(filtered), [filtered]);
 
   return (
     <div className="min-h-screen text-white pb-32" style={{ backgroundColor: '#0D0D0D' }}>
@@ -83,17 +92,41 @@ export default function StrideEvents() {
         </p>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
           <h1 style={{ fontSize: 32, fontWeight: 900, color: '#fff', margin: 0, lineHeight: 1.1 }}>{t('event_events')}</h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
             {user && <NotificationCenter user={user} />}
+            {showStaff && (
+              <button
+                onClick={() => navigate('/StrideStaffDashboard')}
+                style={{
+                  background: 'rgba(138,43,226,0.12)', border: '1px solid rgba(138,43,226,0.35)',
+                  color: 'rgba(180,100,255,0.95)', fontSize: 12, fontWeight: 700,
+                  padding: '7px 13px', borderRadius: 99, minHeight: 34,
+                  cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
+                }}
+              >
+                🎟️ Staff
+              </button>
+            )}
+            {showAdminHub && (
+              <button
+                onClick={() => navigate('/StrideAdminEvents')}
+                style={{
+                  background: 'rgba(191,255,0,0.08)', border: '1px solid rgba(191,255,0,0.3)',
+                  color: '#BFFF00', fontSize: 12, fontWeight: 700,
+                  padding: '7px 13px', borderRadius: 99, minHeight: 34,
+                  cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
+                }}
+              >
+                ⚡ Admin Hub
+              </button>
+            )}
             <button
               onClick={() => navigate('/StrideMyEvents')}
               style={{
-                background: 'rgba(255,255,255,0.07)',
-                border: '1px solid rgba(255,255,255,0.12)',
-                color: 'rgba(255,255,255,0.75)',
-                fontSize: 13, fontWeight: 700,
-                padding: '8px 16px', borderRadius: 99,
-                minHeight: 36,
+                background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)',
+                color: 'rgba(255,255,255,0.75)', fontSize: 12, fontWeight: 700,
+                padding: '7px 13px', borderRadius: 99, minHeight: 34,
+                cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
               }}
             >
               {t('event_my_events')}
@@ -112,15 +145,13 @@ export default function StrideEvents() {
           placeholder={t('event_search')}
           style={{
             width: '100%', boxSizing: 'border-box',
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.09)',
+            background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.09)',
             borderRadius: 14, padding: '11px 14px 11px 38px',
             color: 'white', fontSize: 14, outline: 'none',
           }}
         />
       </div>
 
-      {/* Loading */}
       {isLoading && (
         <div style={{ textAlign: 'center', padding: '48px 20px', color: 'rgba(255,255,255,0.3)', fontSize: 14 }}>
           {t('event_loading')}
@@ -151,13 +182,9 @@ export default function StrideEvents() {
                   onClick={() => navigate('/CreateOfficialEvent')}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 6,
-                    fontSize: 12, fontWeight: 700,
-                    padding: '7px 13px', borderRadius: 10,
-                    background: 'rgba(191,255,0,0.08)',
-                    border: '1px solid rgba(191,255,0,0.25)',
-                    color: '#BFFF00',
-                    cursor: 'pointer',
-                    WebkitTapHighlightColor: 'transparent',
+                    fontSize: 12, fontWeight: 700, padding: '7px 13px', borderRadius: 10,
+                    background: 'rgba(191,255,0,0.08)', border: '1px solid rgba(191,255,0,0.25)',
+                    color: '#BFFF00', cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
                   }}
                 >
                   <span style={{ fontSize: 14, lineHeight: 1 }}>+</span> {t('event_new_official')}
@@ -186,9 +213,7 @@ export default function StrideEvents() {
           {isAdmin && draftEvents.length > 0 && (
             <div style={{ marginBottom: 32 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,180,0,0.7)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-                  Drafts
-                </span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,180,0,0.7)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Drafts</span>
                 <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,180,0,0.7)', background: 'rgba(255,180,0,0.1)', borderRadius: 99, padding: '2px 7px' }}>
                   {draftEvents.length}
                 </span>
