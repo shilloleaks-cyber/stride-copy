@@ -38,12 +38,23 @@ export function useEventRole(eventId, user) {
   const { data: staffRecord, isLoading } = useQuery({
     queryKey: ['event-staff-me', eventId, user?.email],
     queryFn: async () => {
-      const records = await base44.entities.EventStaff.filter({
+      // Check EventStaffAssignment (accepted only) for this user
+      const records = await base44.entities.EventStaffAssignment.filter({
         event_id: eventId,
-        user_email: user.email,
-        status: 'active',
+        staff_email: user.email.toLowerCase().trim(),
+        status: 'accepted',
       });
-      return records[0] || null;
+      if (records.length > 0) {
+        // Map multi-role assignment → single role string for backwards compatibility
+        // Use 'full' if full_admin_view is in roles, otherwise pick most privileged
+        const roles = records[0].roles || [];
+        if (roles.includes('full_admin_view')) return { role: 'full' };
+        for (const r of ['payments', 'registrations', 'checkin']) {
+          if (roles.includes(r)) return { role: r };
+        }
+        return { role: roles[0] || 'checkin' };
+      }
+      return null;
     },
     enabled: !!eventId && !!user?.email && !isGlobalAdmin,
     staleTime: 30000,
