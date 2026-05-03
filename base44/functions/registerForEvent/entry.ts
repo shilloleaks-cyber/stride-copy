@@ -73,7 +73,9 @@ Deno.serve(async (req) => {
     basePayload.item_selections = item_selections;
   }
 
-  // Canonical rule: requires payment if payment_enabled=true OR price > 0
+  // Canonical rule: requires payment if payment_enabled=true
+  // Backward compat: also requires payment if price > 0 even without payment_enabled
+  // user_entered_amount mode (price=0, payment_enabled=true) is NOT free
   const isFree = !(cat.payment_enabled === true || Number(cat.price || 0) > 0);
 
   // ── Helper: build standardized JSON QR payload string ──────────────────────

@@ -73,7 +73,7 @@ function CategoryForm({ eventId, eventData, existingCategories, initial, editing
     if (eventData.payment_qr_image) setQrPreview(eventData.payment_qr_image);
   }, [eventData?.id]);
 
-  const isPaid = parseFloat(form.price) > 0;
+  const isPaid = parseFloat(form.price) > 0 || form.payment_enabled === true;
 
   const set = (field, val) => {
     setForm(prev => ({ ...prev, [field]: val }));
@@ -123,12 +123,16 @@ function CategoryForm({ eventId, eventData, existingCategories, initial, editing
     }
 
     setSaving(true);
-    const price = form.price !== '' ? parseFloat(form.price) : 0;
+    const paymentModeFinal = form.payment_mode || (form.payment_enabled && parseFloat(form.price || 0) === 0 ? 'user_entered_amount' : 'fixed_price');
+    const price = paymentModeFinal === 'user_entered_amount' ? 0 : (form.price !== '' ? parseFloat(form.price) : 0);
+    const paymentEnabledFinal = price > 0 ? true : (form.payment_enabled === true);
     const payload = {
       event_id: eventId,
       name: form.name.trim(),
       distance_km: form.distance_km !== '' ? parseFloat(form.distance_km) : null,
       price,
+      payment_enabled: paymentEnabledFinal,
+      payment_mode: paymentModeFinal,
       max_slots: form.max_slots !== '' ? parseInt(form.max_slots) : 0,
       bib_prefix: form.bib_prefix.trim() || null,
       bib_start: parseInt(form.bib_start) || 1,
@@ -144,7 +148,7 @@ function CategoryForm({ eventId, eventData, existingCategories, initial, editing
     }
 
     // If paid, also save payment settings to the event
-    if (price > 0) {
+    if (paymentEnabledFinal) {
       await base44.entities.StrideEvent.update(eventId, {
         payment_methods_enabled: payment.payment_methods_enabled,
         bank_name: payment.bank_name || null,
@@ -291,7 +295,38 @@ function CategoryForm({ eventId, eventData, existingCategories, initial, editing
         </div>
       </div>
 
-      {/* Payment Setup — only shown when price > 0 */}
+      {/* Payment mode selector */}
+      <div>
+        <label style={labelStyle}>Payment</label>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {[
+            { key: 'none', label: 'Free', desc: 'No payment needed', icon: '🎁' },
+            { key: 'fixed_price', label: 'Fixed Price', desc: 'Set a price', icon: '💳' },
+            { key: 'user_entered_amount', label: 'User Enters Amount', desc: 'User types amount + uploads slip', icon: '✏️' },
+          ].map(opt => {
+            const isActive = opt.key === 'none'
+              ? !form.payment_enabled
+              : (form.payment_enabled && (form.payment_mode || 'fixed_price') === opt.key);
+            return (
+              <button key={opt.key} type="button"
+                onClick={() => {
+                  if (opt.key === 'none') { set('payment_enabled', false); set('payment_mode', 'fixed_price'); set('price', '0'); }
+                  else { set('payment_enabled', true); set('payment_mode', opt.key); if (opt.key === 'user_entered_amount') set('price', '0'); }
+                }}
+                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 10, cursor: 'pointer', textAlign: 'left', background: isActive ? 'rgba(191,255,0,0.06)' : 'rgba(255,255,255,0.03)', border: `1px solid ${isActive ? 'rgba(191,255,0,0.25)' : 'rgba(255,255,255,0.07)'}` }}>
+                <span style={{ fontSize: 14, flexShrink: 0 }}>{opt.icon}</span>
+                <div>
+                  <p style={{ fontSize: 12, fontWeight: 700, color: isActive ? '#BFFF00' : 'rgba(255,255,255,0.5)', margin: 0 }}>{opt.label}</p>
+                  <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', margin: '1px 0 0' }}>{opt.desc}</p>
+                </div>
+                {isActive && <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#BFFF00', flexShrink: 0, marginLeft: 'auto' }} />}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Payment Setup — shown when payment is enabled */}
       {isPaid && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 14, borderRadius: 14, background: 'rgba(191,255,0,0.03)', border: '1px solid rgba(191,255,0,0.15)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
@@ -690,7 +725,11 @@ export default function ManageCategories() {
                       <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>📍 {cat.distance_km} km</span>
                     )}
                     <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
-                      💰 {cat.price === 0 ? 'Free' : `฿${cat.price?.toLocaleString()}`}
+                      💰 {
+                        !cat.payment_enabled ? 'Free'
+                        : (cat.payment_mode === 'user_entered_amount' || (!cat.payment_mode && Number(cat.price || 0) === 0)) ? 'User Enters Amount'
+                        : `฿${cat.price?.toLocaleString()}`
+                      }
                     </span>
                     {/* Occupancy — uses backend-synced registered_count */}
                     <span style={{ fontSize: 12, fontWeight: 700, color: occupancyColor }}>
@@ -760,8 +799,8 @@ export default function ManageCategories() {
                 </div>
               )}
 
-              {/* Payment readiness badge — shown on card for paid categories */}
-              {cat.price > 0 && !isEditingThis && (() => {
+              {/* Payment readiness badge — shown on card for payment-enabled categories */}
+              {cat.payment_enabled && !isEditingThis && (() => {
                 const { ready } = checkPaymentReady(event);
                 return (
                   <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6 }}>

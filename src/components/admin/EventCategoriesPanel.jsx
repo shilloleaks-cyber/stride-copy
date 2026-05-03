@@ -12,7 +12,7 @@ export default function EventCategoriesPanel({ event, categories, canManage = tr
   const navigate = useNavigate();
   const eventCats = categories.filter(c => c.event_id === event.id && c.is_active !== false);
   const { ready: paymentReady } = checkPaymentReady(event);
-  const hasPaidCats = eventCats.some(c => c.price > 0);
+  const hasPaidCats = eventCats.some(c => c.payment_enabled === true || c.price > 0);
 
   return (
     <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -69,8 +69,11 @@ export default function EventCategoriesPanel({ event, categories, canManage = tr
                   {cat.distance_km && <p style={{ fontSize: 11, color: 'rgba(182,255,0,0.6)', margin: '2px 0 0', fontWeight: 600 }}>{cat.distance_km} km</p>}
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <p style={{ fontSize: 16, fontWeight: 900, color: cat.price > 0 ? 'rgba(255,200,80,1)' : ACCENT, margin: 0 }}>
-                    {cat.price > 0 ? `฿${cat.price}` : 'Free'}
+                  <p style={{ fontSize: 16, fontWeight: 900, color: (cat.payment_enabled || cat.price > 0) ? 'rgba(255,200,80,1)' : ACCENT, margin: 0 }}>
+                    {cat.payment_enabled && (cat.payment_mode === 'user_entered_amount' || (!cat.payment_mode && Number(cat.price || 0) === 0))
+                      ? <span style={{ fontSize: 11 }}>User Entered</span>
+                      : cat.price > 0 ? `฿${cat.price}` : 'Free'
+                    }
                   </p>
 
                 </div>

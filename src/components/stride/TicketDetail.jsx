@@ -69,6 +69,7 @@ function QRFullscreen({ reg, event, category, onClose }) {
 }
 
 import { REG_STATUS as REG_STATUS_MAP, PAY_STATUS as PAY_STATUS_MAP } from '@/lib/eventStatusConfig';
+import { getCategoryPaymentRule } from '@/lib/categoryPaymentRule';
 
 // ─── Status configs (with Icon injected) ────────────────────────────────────
 const REG_STATUS = {
@@ -204,8 +205,7 @@ export default function TicketDetail({ reg, event, category, onClose, onRemoved 
   const payCfg = PAY_STATUS[paymentState] || PAY_STATUS.not_required;
   const hasQR = !!reg.qr_code && !isCancelled;
   const userName = [reg.first_name, reg.last_name].filter(Boolean).join(' ') || '—';
-  // Canonical rule: payment required if payment_enabled=true OR price > 0
-  const requiresPayment = !!(category && (category.payment_enabled === true || Number(category.price || 0) > 0));
+  const { paymentRequired: requiresPayment } = getCategoryPaymentRule(category);
   const needsPayment = requiresPayment && paymentState !== 'paid' && paymentState !== 'not_required' && !isCancelled;
   const hasItems = !!(reg.item_selections && Object.keys(reg.item_selections).length > 0);
   const hasPhone = !!reg.phone;

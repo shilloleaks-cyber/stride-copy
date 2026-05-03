@@ -191,6 +191,12 @@ export const translations = {
     payment_bank_hint:        'Bank transfer details will be provided by the organizer.',
     payment_qr_hint:          'QR payment image will be provided by the organizer.',
     payment_tap_full_image:   'Tap to view full image',
+    payment_user_entered_badge:   'User Entered Amount',
+    payment_user_entered_hint:    'This category has no fixed price. Enter the exact amount you paid and upload your slip.',
+    payment_enter_amount_label:   'Amount You Paid',
+    payment_enter_amount_error:   'Please enter a valid amount greater than 0',
+    payment_submit_to_admin:      'Submit Payment to Admin',
+    amount_submitted:             'Amount submitted',
 
     // ── My Tickets ──
     my_tickets_title:     'My Tickets',
@@ -468,6 +474,12 @@ export const translations = {
     payment_bank_hint:        'ผู้จัดจะแจ้งข้อมูลบัญชีธนาคารเร็วๆ นี้',
     payment_qr_hint:          'ผู้จัดจะแจ้ง QR สำหรับชำระเงินเร็วๆ นี้',
     payment_tap_full_image:   'แตะเพื่อดูรูปแบบเต็ม',
+    payment_user_entered_badge:   'ผู้ใช้กรอกจำนวนเงินเอง',
+    payment_user_entered_hint:    'หมวดหมู่นี้ไม่มีราคาคงที่ กรุณากรอกจำนวนเงินที่คุณโอนและแนบสลิปชำระเงิน',
+    payment_enter_amount_label:   'จำนวนเงินที่ชำระ',
+    payment_enter_amount_error:   'กรุณากรอกจำนวนเงินที่มากกว่า 0',
+    payment_submit_to_admin:      'ส่งหลักฐานให้แอดมินตรวจสอบ',
+    amount_submitted:             'ยอดที่ส่งตรวจสอบ',
 
     // ── My Tickets ──
     my_tickets_title:     'ตั๋วของฉัน',

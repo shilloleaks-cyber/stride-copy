@@ -6,10 +6,12 @@ import { checkPaymentReady } from '@/components/stride/EventPaymentSetup';
 export default function CreateEventCategoryForm({ eventId, eventData, existingCategories, initial, editingId, onSaved, onCancel }) {
   const isEdit = !!editingId;
   const [form, setForm] = useState(() => {
-    const base = initial || { name: '', distance_km: '', price: '', max_slots: '', bib_prefix: '', bib_start: '1', color: '#BFFF00', payment_enabled: false };
-    // Auto-set payment_enabled=true if editing a paid category
+    const base = initial || { name: '', distance_km: '', price: '', max_slots: '', bib_prefix: '', bib_start: '1', color: '#BFFF00', payment_enabled: false, payment_mode: 'fixed_price' };
     if (initial && parseFloat(initial.price) > 0) {
-      return { ...base, payment_enabled: base.payment_enabled !== false ? base.payment_enabled : true };
+      return { ...base, payment_enabled: base.payment_enabled !== false ? base.payment_enabled : true, payment_mode: base.payment_mode || 'fixed_price' };
+    }
+    if (initial && initial.payment_enabled && !initial.payment_mode) {
+      return { ...base, payment_mode: Number(initial.price || 0) === 0 ? 'user_entered_amount' : 'fixed_price' };
     }
     return base;
   });
@@ -82,7 +84,8 @@ export default function CreateEventCategoryForm({ eventId, eventData, existingCa
     );
     if (isDup) { alert('A category with this name already exists.'); return; }
     setSaving(true);
-    const savedPrice = form.price !== '' ? parseFloat(form.price) : 0;
+    const paymentModeFinal = form.payment_mode || 'fixed_price';
+    const savedPrice = paymentModeFinal === 'user_entered_amount' ? 0 : (form.price !== '' ? parseFloat(form.price) : 0);
     const paymentEnabledFinal = savedPrice > 0 ? true : (form.payment_enabled === true);
     const payload = {
       event_id: eventId,
@@ -90,6 +93,7 @@ export default function CreateEventCategoryForm({ eventId, eventData, existingCa
       distance_km: form.distance_km ? parseFloat(form.distance_km) : null,
       price: savedPrice,
       payment_enabled: paymentEnabledFinal,
+      payment_mode: paymentModeFinal,
       max_slots: form.max_slots !== '' ? parseInt(form.max_slots) : 0,
       bib_prefix: form.bib_prefix.trim() || null,
       bib_start: parseInt(form.bib_start) || 1,
@@ -145,48 +149,54 @@ export default function CreateEventCategoryForm({ eventId, eventData, existingCa
         <input value={form.name} onChange={e => set('name', e.target.value)} placeholder="e.g. 10K, Half Marathon" style={inp} />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-        <div>
-          <label style={lbl}>Distance (km)</label>
-          <input type="number" value={form.distance_km} onChange={e => set('distance_km', e.target.value)} placeholder="e.g. 10" min="0" style={inp} />
-        </div>
-        <div>
-          <label style={lbl}>Price (THB)</label>
-          <input type="number" value={form.price} onChange={e => handlePriceChange(e.target.value)} placeholder="0 = free" min="0" style={inp} />
+      <div>
+        <label style={lbl}>Distance (km)</label>
+        <input type="number" value={form.distance_km} onChange={e => set('distance_km', e.target.value)} placeholder="e.g. 10" min="0" style={inp} />
+      </div>
+
+      {/* Payment mode selector */}
+      <div>
+        <label style={lbl}>Payment</label>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {[
+            { key: 'none', label: 'Free', desc: 'No payment needed', icon: '🎁' },
+            { key: 'fixed_price', label: 'Fixed Price', desc: 'Set a price, users pay that amount', icon: '💳' },
+            { key: 'user_entered_amount', label: 'User Enters Amount', desc: 'Users enter amount + upload slip', icon: '✏️' },
+          ].map(opt => {
+            const isActive = opt.key === 'none'
+              ? !form.payment_enabled
+              : (form.payment_enabled && (form.payment_mode || 'fixed_price') === opt.key);
+            return (
+              <button key={opt.key} type="button"
+                onClick={() => {
+                  if (opt.key === 'none') { set('payment_enabled', false); set('payment_mode', 'fixed_price'); set('price', '0'); }
+                  else { set('payment_enabled', true); set('payment_mode', opt.key); if (opt.key === 'user_entered_amount') set('price', '0'); }
+                }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10, padding: '9px 11px',
+                  borderRadius: 10, cursor: 'pointer', textAlign: 'left',
+                  background: isActive ? 'rgba(191,255,0,0.06)' : 'rgba(255,255,255,0.02)',
+                  border: `1px solid ${isActive ? 'rgba(191,255,0,0.28)' : 'rgba(255,255,255,0.07)'}`,
+                }}>
+                <span style={{ fontSize: 15, flexShrink: 0 }}>{opt.icon}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 12, fontWeight: 700, color: isActive ? '#BFFF00' : 'rgba(255,255,255,0.5)', margin: 0 }}>{opt.label}</p>
+                  <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', margin: '1px 0 0' }}>{opt.desc}</p>
+                </div>
+                {isActive && <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#BFFF00', flexShrink: 0 }} />}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Payment enabled toggle — visible when price is 0 or empty (i.e. not a paid category) */}
-      {!(parseFloat(form.price) > 0) && (
-        <div
-          onClick={() => set('payment_enabled', !form.payment_enabled)}
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
-            background: form.payment_enabled ? 'rgba(191,255,0,0.05)' : 'rgba(255,255,255,0.03)',
-            border: `1px solid ${form.payment_enabled ? 'rgba(191,255,0,0.22)' : 'rgba(255,255,255,0.08)'}`,
-          }}
-        >
-          <div>
-            <p style={{ fontSize: 12, fontWeight: 700, color: form.payment_enabled ? 'rgba(191,255,0,0.85)' : 'rgba(255,255,255,0.5)', margin: 0 }}>
-              Enable Payment Setup
-            </p>
-            <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.28)', margin: '2px 0 0', lineHeight: 1.4 }}>
-              Allow payment config even when price is ฿0
-            </p>
-          </div>
-          {/* Toggle pill */}
-          <div style={{
-            width: 38, height: 22, borderRadius: 11, flexShrink: 0,
-            background: form.payment_enabled ? '#BFFF00' : 'rgba(255,255,255,0.12)',
-            position: 'relative', transition: 'background 0.2s',
-          }}>
-            <div style={{
-              position: 'absolute', top: 3, width: 16, height: 16, borderRadius: 8,
-              background: form.payment_enabled ? '#0A0A0A' : 'rgba(255,255,255,0.5)',
-              left: form.payment_enabled ? 19 : 3,
-              transition: 'left 0.2s, background 0.2s',
-            }} />
+      {/* Price input (only for fixed_price mode) */}
+      {form.payment_enabled && form.payment_mode === 'fixed_price' && (
+        <div>
+          <label style={lbl}>Price (THB)</label>
+          <div style={{ position: 'relative' }}>
+            <span style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: 'rgba(191,255,0,0.6)', fontWeight: 800 }}>฿</span>
+            <input type="number" value={form.price} onChange={e => set('price', e.target.value)} placeholder="0" min="0" style={{ ...inp, paddingLeft: 28 }} />
           </div>
         </div>
       )}

@@ -71,7 +71,8 @@ export default function PaymentReviewPanel({ payment, reg, catMap, registrations
       ]);
     },
     onSuccess: () => {
-      logActivity({ eventId: eventId || reg.event_id, actorEmail: user.email, actionType: 'payment_approved', targetType: 'payment', targetId: payment.id, summary: `Approved payment for ${reg.first_name} ${reg.last_name} (฿${payment.amount})` });
+      const displayAmt = payment.user_entered_amount ?? payment.amount_paid ?? payment.amount;
+      logActivity({ eventId: eventId || reg.event_id, actorEmail: user.email, actionType: 'payment_approved', targetType: 'payment', targetId: payment.id, summary: `Approved payment for ${reg.first_name} ${reg.last_name} (฿${displayAmt})${payment.payment_mode === 'user_entered_amount' ? ' [user-entered]' : ''}` });
       notifyPaymentApproved({ user_email: reg.user_email, event_title: eventTitle || '', event_id: reg.event_id, registration_id: reg.id });
       invalidate();
     },
@@ -147,7 +148,23 @@ export default function PaymentReviewPanel({ payment, reg, catMap, registrations
             <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '3px 0 0' }}>{reg.user_email}</p>
           </div>
           <div style={{ textAlign: 'right', flexShrink: 0 }}>
-            <p style={{ fontSize: 20, fontWeight: 900, color: '#BFFF00', margin: 0 }}>฿{payment.amount?.toLocaleString()}</p>
+            {/* Show user-entered or fixed amount */}
+            {payment.payment_mode === 'user_entered_amount' ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3 }}>
+                {(payment.user_entered_amount != null || payment.amount_paid != null) ? (
+                  <p style={{ fontSize: 20, fontWeight: 900, color: '#BFFF00', margin: 0 }}>
+                    ฿{(payment.user_entered_amount ?? payment.amount_paid ?? payment.amount)?.toLocaleString()}
+                  </p>
+                ) : (
+                  <p style={{ fontSize: 12, fontWeight: 800, color: 'rgba(255,80,80,0.9)', margin: 0 }}>⚠ Missing amount</p>
+                )}
+                <span style={{ fontSize: 9, fontWeight: 800, padding: '2px 7px', borderRadius: 99, background: 'rgba(138,43,226,0.15)', color: 'rgba(190,140,255,0.9)', border: '1px solid rgba(138,43,226,0.35)', whiteSpace: 'nowrap' }}>
+                  User Entered
+                </span>
+              </div>
+            ) : (
+              <p style={{ fontSize: 20, fontWeight: 900, color: '#BFFF00', margin: 0 }}>฿{(payment.amount_paid ?? payment.amount)?.toLocaleString()}</p>
+            )}
             <div style={{ display: 'flex', alignItems: 'center', gap: 5, justifyContent: 'flex-end', marginTop: 3 }}>
               {payment.payment_method === 'qr_scan'
                 ? <QrCode style={{ width: 11, height: 11, color: 'rgba(255,255,255,0.3)' }} />

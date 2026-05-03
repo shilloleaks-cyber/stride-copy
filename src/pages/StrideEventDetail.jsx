@@ -18,6 +18,7 @@ import LoginGateModal from '@/components/auth/LoginGateModal';
 import { trackEventView } from '@/lib/eventMetrics';
 import { useLanguage } from '@/lib/LanguageContext';
 import { isEventOwner } from '@/lib/eventOwner';
+import { getCategoryPaymentRule } from '@/lib/categoryPaymentRule';
 
 const CAT_COLORS = ['#BFFF00', '#8A2BE2', 'rgb(0,200,180)', 'rgb(255,180,0)', 'rgb(255,80,130)'];
 
@@ -96,7 +97,7 @@ export default function StrideEventDetail() {
     setShowForm(false);
     queryClient.invalidateQueries({ queryKey: ['my-reg', eventId, user?.email] });
     queryClient.invalidateQueries({ queryKey: ['my-stride-regs', user?.email] });
-    const requiresPayment = selectedCategory && (selectedCategory.payment_enabled === true || Number(selectedCategory.price || 0) > 0);
+    const { paymentRequired: requiresPayment } = getCategoryPaymentRule(selectedCategory);
     if (requiresPayment && reg) {
       // Requires payment: open payment flow
       setPaymentReg(reg);
@@ -124,7 +125,7 @@ export default function StrideEventDetail() {
 
   // Pre-check payment readiness — used to block paid registration before it creates a record
   const { ready: paymentReady } = checkPaymentReady(event);
-  const selectedRequiresPayment = !!(selectedCategory && (selectedCategory.payment_enabled === true || Number(selectedCategory.price || 0) > 0));
+  const { paymentRequired: selectedRequiresPayment } = getCategoryPaymentRule(selectedCategory);
   const paymentBlocked = selectedRequiresPayment && !paymentReady;
 
   return (
@@ -456,9 +457,11 @@ export default function StrideEventDetail() {
                           </span>
                         ) : (
                           <p className="font-black text-base" style={{ color }}>
-            {(cat.payment_enabled === true || Number(cat.price || 0) > 0)
-              ? (cat.price > 0 ? `฿${cat.price}` : 'Rock n Roll')
-              : 'Free'}
+            {(() => {
+              if (!cat.payment_enabled) return 'Free';
+              if (cat.payment_mode === 'user_entered_amount' || (cat.payment_enabled && Number(cat.price || 0) === 0 && !cat.payment_mode)) return 'Pay what you paid';
+              return cat.price > 0 ? `฿${cat.price}` : 'Free';
+            })()}
           </p>
                         )}
                         {slotLabel && (

@@ -16,7 +16,35 @@
     },
     "amount": {
       "type": "number",
-      "description": "Amount paid (THB)"
+      "description": "Amount paid (THB) \u2014 legacy field, equals amount_paid"
+    },
+    "amount_due": {
+      "type": "number",
+      "description": "Amount due: category.price for fixed_price, or user-entered value for user_entered_amount"
+    },
+    "amount_paid": {
+      "type": "number",
+      "description": "Amount actually paid (same as amount_due in normal flow)"
+    },
+    "user_entered_amount": {
+      "type": "number",
+      "description": "The amount entered by the user when payment_mode=user_entered_amount"
+    },
+    "payment_mode": {
+      "type": "string",
+      "enum": [
+        "fixed_price",
+        "user_entered_amount"
+      ],
+      "description": "Payment mode snapshot at time of payment submission"
+    },
+    "category_price_snapshot": {
+      "type": "number",
+      "description": "Category price at time of registration (for audit)"
+    },
+    "payment_enabled_snapshot": {
+      "type": "boolean",
+      "description": "Category payment_enabled at time of registration"
     },
     "payment_method": {
       "type": "string",
@@ -56,7 +84,7 @@
     },
     "admin_note": {
       "type": "string",
-      "description": "Admin note shown to participant (e.g. reason for needs_attention)"
+      "description": "Admin note shown to participant"
     },
     "submitted_at": {
       "type": "string",
