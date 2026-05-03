@@ -9,13 +9,14 @@ import BulkResultBanner from './BulkResultBanner';
 import SelectionBar from './SelectionBar';
 import { logActivity } from '@/lib/eventActivityLog';
 
-const ACCENT = '#00e676';
-const CARD_BG = 'rgba(10,30,18,0.9)';
-const BORDER  = 'rgba(0,200,80,0.12)';
+const LIME    = '#B6FF00';
+const ACCENT  = LIME;
+const CARD_BG = 'rgba(255,255,255,0.04)';
+const BORDER  = 'rgba(255,255,255,0.09)';
 
 const selectStyle = {
   padding: '8px 10px', borderRadius: 10,
-  background: 'rgba(0,230,118,0.05)', border: '1px solid rgba(0,230,118,0.15)',
+  background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
   color: 'rgba(255,255,255,0.7)', fontSize: 12, outline: 'none',
 };
 
@@ -134,11 +135,11 @@ export default function EventCheckinPanel({ event, registrations, categories, on
     <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
       {/* Progress card */}
-      <div style={{ padding: '20px', background: CARD_BG, border: `1px solid ${BORDER}`, borderRadius: 18, textAlign: 'center' }}>
-        <p style={{ fontSize: 52, fontWeight: 900, color: ACCENT, margin: 0, lineHeight: 1 }}>{checkedInCount}</p>
+      <div style={{ padding: '20px', background: CARD_BG, border: `1px solid ${BORDER}`, borderRadius: 20, textAlign: 'center' }}>
+        <p style={{ fontSize: 52, fontWeight: 900, color: LIME, margin: 0, lineHeight: 1 }}>{checkedInCount}</p>
         <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', margin: '6px 0 16px', fontWeight: 600 }}>of {total} confirmed checked in</p>
         <div style={{ height: 6, borderRadius: 99, background: 'rgba(255,255,255,0.07)', overflow: 'hidden' }}>
-          <div style={{ height: '100%', borderRadius: 99, background: ACCENT, width: total > 0 ? `${(checkedInCount / total) * 100}%` : '0%', transition: 'width 0.5s' }} />
+          <div style={{ height: '100%', borderRadius: 99, background: LIME, width: total > 0 ? `${(checkedInCount / total) * 100}%` : '0%', transition: 'width 0.5s' }} />
         </div>
       </div>
 
@@ -146,8 +147,8 @@ export default function EventCheckinPanel({ event, registrations, categories, on
       <button onClick={() => navigate(`/StrideCheckin?event_id=${event.id}`)}
         style={{
           width: '100%', padding: '16px 0', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-          background: ACCENT, color: '#050f08', fontSize: 15, fontWeight: 900, border: 'none', cursor: 'pointer',
-          boxShadow: '0 0 28px rgba(0,230,118,0.25)',
+          background: LIME, color: '#080808', fontSize: 15, fontWeight: 900, border: 'none', cursor: 'pointer',
+          boxShadow: '0 0 28px rgba(182,255,0,0.25)',
         }}
       >
         <ScanLine style={{ width: 20, height: 20 }} /> Open QR Scanner
@@ -158,13 +159,13 @@ export default function EventCheckinPanel({ event, registrations, categories, on
 
       {/* Search */}
       <div style={{ position: 'relative' }}>
-        <Search style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, color: 'rgba(0,230,118,0.4)' }} />
+        <Search style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, color: 'rgba(182,255,0,0.4)' }} />
         <input
           value={search} onChange={e => { setSearch(e.target.value); clearSelection(); }}
           placeholder="Search bib, name, email..."
           style={{
             width: '100%', boxSizing: 'border-box', paddingLeft: 36, paddingRight: 12, paddingTop: 10, paddingBottom: 10,
-            borderRadius: 12, background: 'rgba(0,230,118,0.05)', border: '1px solid rgba(0,230,118,0.15)',
+            borderRadius: 12, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
             color: '#fff', fontSize: 13, outline: 'none',
           }}
         />
@@ -200,14 +201,14 @@ export default function EventCheckinPanel({ event, registrations, categories, on
         />
       ) : (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button onClick={toggleAll} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(0,230,118,0.6)', fontSize: 11, fontWeight: 700, padding: 0 }}>
-            {allSelected ? <CheckSquare style={{ width: 14, height: 14, color: ACCENT }} /> : <Square style={{ width: 14, height: 14 }} />}
+          <button onClick={toggleAll} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(182,255,0,0.6)', fontSize: 11, fontWeight: 700, padding: 0 }}>
+            {allSelected ? <CheckSquare style={{ width: 14, height: 14, color: LIME }} /> : <Square style={{ width: 14, height: 14 }} />}
             {allSelected ? 'Deselect all' : 'Select all'}
           </button>
-          <span style={{ fontSize: 10, fontWeight: 800, color: 'rgba(0,230,118,0.5)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
+          <span style={{ fontSize: 10, fontWeight: 800, color: 'rgba(182,255,0,0.45)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
             {filtered.length} participants
           </span>
-          <button onClick={exportFiltered} style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 99, fontSize: 11, fontWeight: 700, cursor: 'pointer', background: 'rgba(0,230,118,0.08)', border: '1px solid rgba(0,230,118,0.2)', color: ACCENT }}>
+          <button onClick={exportFiltered} style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 99, fontSize: 11, fontWeight: 700, cursor: 'pointer', background: 'rgba(182,255,0,0.08)', border: '1px solid rgba(182,255,0,0.22)', color: LIME }}>
             <Download style={{ width: 12, height: 12 }} /> Export
           </button>
         </div>
@@ -235,26 +236,26 @@ export default function EventCheckinPanel({ event, registrations, categories, on
               <button onClick={(e) => toggleSelect(reg.id, e)}
                 style={{
                   flexShrink: 0, width: 36, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: isSel ? 'rgba(0,230,118,0.08)' : 'transparent',
-                  border: `1px solid ${isSel ? 'rgba(0,230,118,0.3)' : BORDER}`,
+                  background: isSel ? 'rgba(182,255,0,0.07)' : 'transparent',
+                  border: `1px solid ${isSel ? 'rgba(182,255,0,0.28)' : BORDER}`,
                   borderRight: 'none', borderRadius: '10px 0 0 10px', cursor: 'pointer',
                 }}
               >
                 {isSel
-                  ? <CheckSquare style={{ width: 13, height: 13, color: ACCENT }} />
+                  ? <CheckSquare style={{ width: 13, height: 13, color: LIME }} />
                   : <Square style={{ width: 13, height: 13, color: 'rgba(255,255,255,0.2)' }} />
                 }
               </button>
               {/* Row */}
               <div style={{
                 flex: 1, display: 'flex', alignItems: 'center', gap: 12, padding: '11px 14px',
-                background: isSel ? 'rgba(0,230,118,0.04)' : CARD_BG,
-                border: `1px solid ${reg.checked_in ? 'rgba(0,230,118,0.25)' : isSel ? 'rgba(0,230,118,0.25)' : BORDER}`,
+                background: isSel ? 'rgba(182,255,0,0.04)' : CARD_BG,
+                  border: `1px solid ${reg.checked_in ? 'rgba(182,255,0,0.25)' : isSel ? 'rgba(182,255,0,0.25)' : BORDER}`,
                 borderRadius: '0 10px 10px 0',
               }}>
-                <div style={{ width: 30, height: 30, borderRadius: 8, background: reg.checked_in ? 'rgba(0,230,118,0.15)' : 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  {reg.checked_in
-                    ? <CheckCircle2 style={{ width: 15, height: 15, color: ACCENT }} />
+                <div style={{ width: 30, height: 30, borderRadius: 8, background: reg.checked_in ? 'rgba(182,255,0,0.12)' : 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                {reg.checked_in
+                  ? <CheckCircle2 style={{ width: 15, height: 15, color: LIME }} />
                     : <span style={{ fontSize: 11, fontWeight: 900, color: 'rgba(255,255,255,0.4)' }}>{reg.bib_number?.slice(-3) || '?'}</span>
                   }
                 </div>
@@ -264,9 +265,9 @@ export default function EventCheckinPanel({ event, registrations, categories, on
                 </div>
                 {reg.checked_in && (
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <span style={{ fontSize: 10, fontWeight: 800, color: ACCENT, display: 'block' }}>✓ In</span>
+                    <span style={{ fontSize: 10, fontWeight: 800, color: LIME, display: 'block' }}>✓ In</span>
                     {reg.checked_in_at && (
-                      <span style={{ fontSize: 9, color: 'rgba(0,230,118,0.5)' }}>{format(new Date(reg.checked_in_at), 'HH:mm')}</span>
+                      <span style={{ fontSize: 9, color: 'rgba(182,255,0,0.5)' }}>{format(new Date(reg.checked_in_at), 'HH:mm')}</span>
                     )}
                   </div>
                 )}

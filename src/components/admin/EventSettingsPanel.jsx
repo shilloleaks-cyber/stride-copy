@@ -4,12 +4,12 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Loader2, ImagePlus, X, CheckCircle2, MapPin, ExternalLink, AlertCircle } from 'lucide-react';
 import { logActivity } from '@/lib/eventActivityLog';
 
-const ACCENT = '#00e676';
-const BORDER = 'rgba(0,200,80,0.12)';
+const LIME   = '#B6FF00';
+const ACCENT = LIME;
 
 const inp = {
   background: 'rgba(255,255,255,0.05)',
-  border: '1px solid rgba(255,255,255,0.09)',
+  border: '1px solid rgba(255,255,255,0.1)',
   borderRadius: '16px',
   color: 'white',
   padding: '14px 16px',
@@ -305,10 +305,10 @@ export default function EventSettingsPanel({ event, onUpdated, actorEmail }) {
         style={{
           width: '100%', padding: '16px 0', borderRadius: 18, fontSize: 15, fontWeight: 900, border: 'none', cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-          background: saved ? 'rgba(0,230,118,0.12)' : (updateMutation.isPending || !form.title) ? 'rgba(255,255,255,0.07)' : '#BFFF00',
-          color: saved ? ACCENT : (updateMutation.isPending || !form.title) ? 'rgba(255,255,255,0.2)' : '#0A0A0A',
-          border: saved ? `1px solid rgba(0,230,118,0.35)` : 'none',
-          boxShadow: (!saved && !updateMutation.isPending && form.title) ? '0 0 28px rgba(191,255,0,0.25)' : 'none',
+          background: saved ? 'rgba(182,255,0,0.1)' : (updateMutation.isPending || !form.title) ? 'rgba(255,255,255,0.07)' : LIME,
+          color: saved ? LIME : (updateMutation.isPending || !form.title) ? 'rgba(255,255,255,0.2)' : '#080808',
+          border: saved ? `1px solid rgba(182,255,0,0.35)` : 'none',
+          boxShadow: (!saved && !updateMutation.isPending && form.title) ? '0 0 28px rgba(182,255,0,0.25)' : 'none',
           transition: 'all 0.2s',
         }}
       >

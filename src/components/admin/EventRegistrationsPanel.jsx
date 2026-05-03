@@ -9,9 +9,10 @@ import BulkResultBanner from './BulkResultBanner';
 import SelectionBar from './SelectionBar';
 import { logActivity } from '@/lib/eventActivityLog';
 
-const ACCENT = '#00e676';
-const CARD_BG = 'rgba(10,30,18,0.9)';
-const BORDER  = 'rgba(0,200,80,0.12)';
+const LIME    = '#B6FF00';
+const ACCENT  = LIME;
+const CARD_BG = 'rgba(255,255,255,0.04)';
+const BORDER  = 'rgba(255,255,255,0.09)';
 
 import { REG_STATUS as STATUS_CFG, PAY_STATUS } from '@/lib/eventStatusConfig';
 
@@ -25,7 +26,7 @@ const PAYMENT_STATUS_CFG = {
 
 const selectStyle = {
   padding: '8px 10px', borderRadius: 10,
-  background: 'rgba(0,230,118,0.05)', border: '1px solid rgba(0,230,118,0.15)',
+  background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
   color: 'rgba(255,255,255,0.7)', fontSize: 12, outline: 'none',
 };
 
@@ -197,15 +198,15 @@ export default function EventRegistrationsPanel({ event, registrations, categori
               flexShrink: 0, padding: '6px 12px', borderRadius: 99, fontSize: 12, fontWeight: 700,
               cursor: 'pointer', border: 'none', display: 'flex', alignItems: 'center', gap: 5,
               ...(quickFilter === f.key
-                ? { background: ACCENT, color: '#050f08' }
-                : { background: 'rgba(0,230,118,0.07)', color: 'rgba(0,230,118,0.55)', border: '1px solid rgba(0,230,118,0.15)' }),
+                ? { background: LIME, color: '#080808' }
+                : { background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.45)', border: '1px solid rgba(255,255,255,0.1)' }),
             }}
           >
             {f.label}
             <span style={{
               fontSize: 10, fontWeight: 900, padding: '1px 5px', borderRadius: 99,
-              background: quickFilter === f.key ? 'rgba(5,15,8,0.25)' : 'rgba(0,230,118,0.15)',
-              color: quickFilter === f.key ? '#050f08' : ACCENT,
+              background: quickFilter === f.key ? 'rgba(8,8,8,0.3)' : 'rgba(182,255,0,0.15)',
+              color: quickFilter === f.key ? '#080808' : LIME,
             }}>{f.value}</span>
           </button>
         ))}
@@ -213,13 +214,13 @@ export default function EventRegistrationsPanel({ event, registrations, categori
 
       {/* Search */}
       <div style={{ padding: '0 16px', position: 'relative' }}>
-        <Search style={{ position: 'absolute', left: 28, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, color: 'rgba(0,230,118,0.4)' }} />
+        <Search style={{ position: 'absolute', left: 28, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, color: 'rgba(182,255,0,0.4)' }} />
         <input
           value={search} onChange={e => { setSearch(e.target.value); clearSelection(); }}
           placeholder="Search name, email, bib, phone..."
           style={{
             width: '100%', boxSizing: 'border-box', paddingLeft: 36, paddingRight: 12, paddingTop: 10, paddingBottom: 10,
-            borderRadius: 12, background: 'rgba(0,230,118,0.05)', border: '1px solid rgba(0,230,118,0.15)',
+            borderRadius: 12, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
             color: '#fff', fontSize: 13, outline: 'none',
           }}
         />
@@ -273,12 +274,12 @@ export default function EventRegistrationsPanel({ event, registrations, categori
       ) : (
         /* Toolbar when nothing selected */
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 16px' }}>
-          <button onClick={toggleAll} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(0,230,118,0.6)', fontSize: 11, fontWeight: 700, padding: 0 }}>
-            {allSelected ? <CheckSquare style={{ width: 14, height: 14, color: ACCENT }} /> : <Square style={{ width: 14, height: 14 }} />}
+          <button onClick={toggleAll} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(182,255,0,0.6)', fontSize: 11, fontWeight: 700, padding: 0 }}>
+            {allSelected ? <CheckSquare style={{ width: 14, height: 14, color: LIME }} /> : <Square style={{ width: 14, height: 14 }} />}
             {allSelected ? 'Deselect all' : 'Select all'}
           </button>
-          <span style={{ fontSize: 11, color: 'rgba(0,230,118,0.4)', fontWeight: 600 }}>{filtered.length} shown</span>
-          <button onClick={exportFiltered} style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 99, fontSize: 11, fontWeight: 700, cursor: 'pointer', background: 'rgba(0,230,118,0.08)', border: '1px solid rgba(0,230,118,0.2)', color: ACCENT }}>
+          <span style={{ fontSize: 11, color: 'rgba(182,255,0,0.4)', fontWeight: 600 }}>{filtered.length} shown</span>
+          <button onClick={exportFiltered} style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 99, fontSize: 11, fontWeight: 700, cursor: 'pointer', background: 'rgba(182,255,0,0.08)', border: '1px solid rgba(182,255,0,0.22)', color: LIME }}>
             <Download style={{ width: 12, height: 12 }} /> Export
           </button>
         </div>
@@ -306,22 +307,22 @@ export default function EventRegistrationsPanel({ event, registrations, categori
               <button onClick={(e) => toggleSelect(reg.id, e)}
                 style={{
                   flexShrink: 0, width: 36, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: isSel ? 'rgba(0,230,118,0.08)' : 'transparent',
-                  border: `1px solid ${isSel ? 'rgba(0,230,118,0.3)' : BORDER}`,
+                  background: isSel ? 'rgba(182,255,0,0.07)' : 'transparent',
+                  border: `1px solid ${isSel ? 'rgba(182,255,0,0.3)' : BORDER}`,
                   borderRight: 'none', borderRadius: '12px 0 0 12px', cursor: 'pointer',
                 }}
               >
                 {isSel
-                  ? <CheckSquare style={{ width: 14, height: 14, color: ACCENT }} />
-                  : <Square style={{ width: 14, height: 14, color: 'rgba(255,255,255,0.2)' }} />
+                ? <CheckSquare style={{ width: 14, height: 14, color: LIME }} />
+                : <Square style={{ width: 14, height: 14, color: 'rgba(255,255,255,0.2)' }} />
                 }
               </button>
               {/* Card */}
               <button onClick={() => setDetailReg(reg)}
                 style={{
                   flex: 1, textAlign: 'left',
-                  background: isSel ? 'rgba(0,230,118,0.04)' : CARD_BG,
-                  border: `1px solid ${isSel ? 'rgba(0,230,118,0.3)' : BORDER}`,
+                  background: isSel ? 'rgba(182,255,0,0.04)' : CARD_BG,
+                  border: `1px solid ${isSel ? 'rgba(182,255,0,0.3)' : BORDER}`,
                   borderRadius: '0 12px 12px 0', padding: '12px 14px', cursor: 'pointer',
                 }}
               >
@@ -332,13 +333,13 @@ export default function EventRegistrationsPanel({ event, registrations, categori
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
                     <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 99, background: cfg?.bg, color: cfg?.color }}>{cfg?.label}</span>
-                    {cat && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 6, background: 'rgba(0,230,118,0.1)', color: ACCENT }}>{cat.name}</span>}
+                    {cat && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 6, background: 'rgba(182,255,0,0.08)', color: LIME }}>{cat.name}</span>}
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 10, color: 'rgba(255,255,255,0.4)', flexWrap: 'wrap' }}>
-                  <span>Bib: <strong style={{ color: reg.bib_number ? ACCENT : 'rgba(255,255,255,0.3)' }}>{reg.bib_number || '—'}</strong></span>
+                  <span>Bib: <strong style={{ color: reg.bib_number ? LIME : 'rgba(255,255,255,0.3)' }}>{reg.bib_number || '—'}</strong></span>
                   {payCfg && <span style={{ color: payCfg.color, fontWeight: 600 }}>{payCfg.label}</span>}
-                  {reg.checked_in && <span style={{ color: ACCENT, fontWeight: 700 }}>✓ In</span>}
+                  {reg.checked_in && <span style={{ color: LIME, fontWeight: 700 }}>✓ In</span>}
                   <span style={{ marginLeft: 'auto' }}>{reg.created_date ? format(new Date(reg.created_date), 'MMM d') : ''}</span>
                 </div>
               </button>

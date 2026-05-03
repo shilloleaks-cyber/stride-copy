@@ -15,9 +15,9 @@ import EventSettingsPanel from '@/components/admin/EventSettingsPanel';
 import EventActivityPanel from '@/components/admin/EventActivityPanel';
 import { useEventRole } from '@/hooks/useEventRole';
 
-const BG = '#050f08';
-const ACCENT = '#00e676';
-const BORDER = 'rgba(0,200,80,0.12)';
+const BG     = '#080808';
+const ACCENT = '#B6FF00';
+const BORDER = 'rgba(255,255,255,0.09)';
 
 import { EVENT_STATUS } from '@/lib/eventStatusConfig';
 
@@ -119,7 +119,7 @@ export default function EventWorkspace() {
       {/* ── Sticky Header ── */}
       <div style={{
         position: 'sticky', top: 0, zIndex: 50,
-        background: 'rgba(5,15,8,0.97)', backdropFilter: 'blur(16px)',
+        background: 'rgba(8,8,8,0.97)', backdropFilter: 'blur(16px)',
         borderBottom: `1px solid ${BORDER}`,
         padding: 'max(env(safe-area-inset-top,0px),20px) 16px 0',
       }}>
@@ -127,8 +127,8 @@ export default function EventWorkspace() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
           <button onClick={() => navigate('/AdminEvents')}
             style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-            <ArrowLeft style={{ width: 14, height: 14, color: 'rgba(0,230,118,0.6)' }} />
-            <span style={{ fontSize: 12, color: 'rgba(0,230,118,0.6)', fontWeight: 700 }}>Events</span>
+            <ArrowLeft style={{ width: 14, height: 14, color: 'rgba(182,255,0,0.6)' }} />
+            <span style={{ fontSize: 12, color: 'rgba(182,255,0,0.6)', fontWeight: 700 }}>Events</span>
           </button>
           <ChevronRight style={{ width: 12, height: 12, color: 'rgba(255,255,255,0.2)' }} />
           <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 160 }}>
@@ -160,7 +160,7 @@ export default function EventWorkspace() {
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px 12px', marginTop: 4 }}>
               {event.event_date && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <CalendarDays style={{ width: 11, height: 11, color: 'rgba(0,230,118,0.5)' }} />
+                  <CalendarDays style={{ width: 11, height: 11, color: 'rgba(182,255,0,0.5)' }} />
                   <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', fontWeight: 600 }}>
                     {format(new Date(event.event_date), 'MMM d, yyyy')}
                   </span>
@@ -168,7 +168,7 @@ export default function EventWorkspace() {
               )}
               {event.location_name && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <MapPin style={{ width: 11, height: 11, color: 'rgba(0,230,118,0.5)' }} />
+                  <MapPin style={{ width: 11, height: 11, color: 'rgba(182,255,0,0.5)' }} />
                   <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', fontWeight: 600 }}>
                     {event.location_name}
                   </span>

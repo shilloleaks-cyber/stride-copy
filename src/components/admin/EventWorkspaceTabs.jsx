@@ -1,7 +1,8 @@
 import React from 'react';
 import { BarChart2, Users, CreditCard, Tag, ScanLine, UserCog, Settings, Activity } from 'lucide-react';
 
-const ACCENT = '#00e676';
+const LIME = '#B6FF00';
+const BG = '#080808';
 
 const ALL_TABS = [
   { key: 'overview',       label: 'Overview',       Icon: BarChart2 },
@@ -15,7 +16,6 @@ const ALL_TABS = [
 ];
 
 export default function EventWorkspaceTabs({ activeTab, onTabChange, visibleTabs, badges = {} }) {
-  // If visibleTabs not provided, show all (backwards-compatible)
   const tabsToShow = visibleTabs
     ? ALL_TABS.filter(t => visibleTabs.includes(t.key))
     : ALL_TABS;
@@ -36,11 +36,15 @@ export default function EventWorkspaceTabs({ activeTab, onTabChange, visibleTabs
             style={{
               display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0,
               padding: '7px 13px', borderRadius: 99, fontSize: 12, fontWeight: 700,
-              cursor: 'pointer', border: 'none', transition: 'all 0.15s',
+              cursor: 'pointer', transition: 'all 0.15s',
               whiteSpace: 'nowrap', position: 'relative',
               ...(isActive
-                ? { background: ACCENT, color: '#050f08' }
-                : { background: 'rgba(0,230,118,0.07)', color: 'rgba(0,230,118,0.6)', border: '1px solid rgba(0,230,118,0.15)' }
+                ? { background: LIME, color: '#080808', border: 'none' }
+                : {
+                    background: 'rgba(255,255,255,0.05)',
+                    color: 'rgba(255,255,255,0.45)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                  }
               ),
             }}
           >
@@ -50,7 +54,7 @@ export default function EventWorkspaceTabs({ activeTab, onTabChange, visibleTabs
               <span style={{
                 position: 'absolute', top: -4, right: -4,
                 width: 16, height: 16, borderRadius: '50%',
-                background: 'rgba(255,180,0,0.9)', color: '#050f08',
+                background: 'rgba(255,180,0,0.95)', color: '#080808',
                 fontSize: 9, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>{badge}</span>
             )}

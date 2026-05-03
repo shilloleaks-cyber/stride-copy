@@ -4,7 +4,8 @@ import { base44 } from '@/api/base44Client';
 import { format } from 'date-fns';
 import { Activity, ShieldAlert } from 'lucide-react';
 
-const ACCENT = '#00e676';
+const LIME   = '#B6FF00';
+const ACCENT = LIME;
 const MANUAL_COLOR = 'rgba(190,140,255,1)';
 const MANUAL_BG    = 'rgba(138,43,226,0.12)';
 const MANUAL_BORDER = 'rgba(138,43,226,0.35)';
@@ -136,11 +137,11 @@ export default function EventActivityPanel({ event }) {
           if (isActive && isManualPill) {
             style = { background: 'rgba(138,43,226,1)', color: '#fff', border: 'none' };
           } else if (isActive) {
-            style = { background: ACCENT, color: '#050f08', border: 'none' };
+            style = { background: LIME, color: '#080808', border: 'none' };
           } else if (isManualPill) {
             style = { background: MANUAL_BG, color: MANUAL_COLOR, border: `1px solid ${MANUAL_BORDER}` };
           } else {
-            style = { background: 'rgba(0,230,118,0.07)', color: 'rgba(0,230,118,0.55)', border: '1px solid rgba(0,230,118,0.15)' };
+            style = { background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.45)', border: '1px solid rgba(255,255,255,0.1)' };
           }
           return (
             <button
@@ -155,7 +156,7 @@ export default function EventActivityPanel({ event }) {
       </div>
 
       {/* Log count */}
-      <p style={{ fontSize: 10, fontWeight: 800, color: 'rgba(0,230,118,0.45)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0 }}>
+      <p style={{ fontSize: 10, fontWeight: 800, color: 'rgba(182,255,0,0.45)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0 }}>
         {filtered.length} event{filtered.length !== 1 ? 's' : ''}
       </p>
 
@@ -166,8 +167,8 @@ export default function EventActivityPanel({ event }) {
 
       {/* Empty */}
       {!isLoading && filtered.length === 0 && (
-        <div style={{ textAlign: 'center', padding: 48, border: '1px dashed rgba(0,230,118,0.12)', borderRadius: 16 }}>
-          <Activity style={{ width: 28, height: 28, color: 'rgba(0,230,118,0.2)', margin: '0 auto 10px', display: 'block' }} />
+        <div style={{ textAlign: 'center', padding: 48, border: '1px dashed rgba(255,255,255,0.1)', borderRadius: 18 }}>
+          <Activity style={{ width: 28, height: 28, color: 'rgba(182,255,0,0.2)', margin: '0 auto 10px', display: 'block' }} />
           <p style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.3)', margin: '0 0 4px' }}>No activity yet</p>
           <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.18)', margin: 0 }}>Actions performed in this event will appear here</p>
         </div>
@@ -177,7 +178,7 @@ export default function EventActivityPanel({ event }) {
       {!isLoading && filtered.length > 0 && (
         <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 0 }}>
           {/* Vertical line */}
-          <div style={{ position: 'absolute', left: 15, top: 16, bottom: 16, width: 1, background: 'rgba(0,230,118,0.1)', zIndex: 0 }} />
+          <div style={{ position: 'absolute', left: 15, top: 16, bottom: 16, width: 1, background: 'rgba(182,255,0,0.08)', zIndex: 0 }} />
 
           {filtered.map((log, idx) => {
             const cfg = ACTION_CFG[log.action_type] || { label: log.action_type, color: 'rgba(255,255,255,0.4)', bg: 'rgba(255,255,255,0.05)' };
@@ -247,9 +248,9 @@ export default function EventActivityPanel({ event }) {
 
                   {/* Row 3: actor + target + full timestamp */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 11, color: isManual ? MANUAL_COLOR : 'rgba(0,230,118,0.6)', fontWeight: 700 }}>
+                    <span style={{ fontSize: 11, color: isManual ? MANUAL_COLOR : 'rgba(182,255,0,0.6)', fontWeight: 700 }}>
                       {log.actor_email?.split('@')[0]}
-                      <span style={{ color: isManual ? 'rgba(190,140,255,0.4)' : 'rgba(0,230,118,0.3)', fontWeight: 400 }}>
+                      <span style={{ color: isManual ? 'rgba(190,140,255,0.4)' : 'rgba(182,255,0,0.3)', fontWeight: 400 }}>
                         @{log.actor_email?.split('@')[1]}
                       </span>
                     </span>

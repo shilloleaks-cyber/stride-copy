@@ -1,13 +1,6 @@
 import React, { useEffect } from 'react';
 import { CheckCircle2, AlertTriangle, X } from 'lucide-react';
 
-/**
- * A dismissable banner shown after a bulk action completes.
- * Props:
- *   result  – { lines: string[], isError: boolean } | null
- *   onClose – () => void
- *   autoDismissMs – number (default 6000)
- */
 export default function BulkResultBanner({ result, onClose, autoDismissMs = 6000 }) {
   useEffect(() => {
     if (!result) return;
@@ -18,16 +11,16 @@ export default function BulkResultBanner({ result, onClose, autoDismissMs = 6000
   if (!result) return null;
 
   const isError = result.isError;
-  const accent  = isError ? 'rgba(255,120,50,1)' : '#00e676';
-  const bg      = isError ? 'rgba(255,80,0,0.1)'  : 'rgba(0,230,118,0.08)';
-  const border  = isError ? 'rgba(255,80,0,0.3)'  : 'rgba(0,230,118,0.25)';
+  const accent  = isError ? 'rgba(255,120,50,1)' : '#B6FF00';
+  const bg      = isError ? 'rgba(255,80,0,0.09)'  : 'rgba(182,255,0,0.07)';
+  const border  = isError ? 'rgba(255,80,0,0.28)'  : 'rgba(182,255,0,0.25)';
   const Icon    = isError ? AlertTriangle : CheckCircle2;
 
   return (
     <div style={{
       margin: '0 16px',
       padding: '14px 16px',
-      borderRadius: 14,
+      borderRadius: 16,
       background: bg,
       border: `1px solid ${border}`,
       display: 'flex', alignItems: 'flex-start', gap: 12,
@@ -39,7 +32,7 @@ export default function BulkResultBanner({ result, onClose, autoDismissMs = 6000
             margin: i === 0 ? 0 : '4px 0 0',
             fontSize: i === 0 ? 13 : 12,
             fontWeight: i === 0 ? 800 : 500,
-            color: i === 0 ? accent : 'rgba(255,255,255,0.5)',
+            color: i === 0 ? accent : 'rgba(255,255,255,0.45)',
             lineHeight: 1.4,
           }}>{line}</p>
         ))}

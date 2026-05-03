@@ -9,11 +9,12 @@ import BulkConfirmDialog from '@/components/admin/BulkConfirmDialog';
 import BulkResultBanner from '@/components/admin/BulkResultBanner';
 import { logActivity } from '@/lib/eventActivityLog';
 
-const ACCENT = '#00e676';
+const LIME   = '#B6FF00';
+const ACCENT = LIME;
 
 const selectStyle = {
   padding: '8px 10px', borderRadius: 10,
-  background: 'rgba(0,230,118,0.05)', border: '1px solid rgba(0,230,118,0.15)',
+  background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
   color: 'rgba(255,255,255,0.7)', fontSize: 12, outline: 'none',
 };
 
@@ -249,13 +250,13 @@ export default function EventPaymentsPanel({ event, registrations, payments, cat
 
       {/* Search */}
       <div style={{ position: 'relative' }}>
-        <Search style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, color: 'rgba(0,230,118,0.4)' }} />
+        <Search style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, color: 'rgba(182,255,0,0.4)' }} />
         <input
           value={search} onChange={e => { setSearch(e.target.value); clearSelection(); }}
           placeholder="Search name, email, bib..."
           style={{
             width: '100%', boxSizing: 'border-box', paddingLeft: 36, paddingRight: 12, paddingTop: 10, paddingBottom: 10,
-            borderRadius: 12, background: 'rgba(0,230,118,0.05)', border: '1px solid rgba(0,230,118,0.15)',
+            borderRadius: 12, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
             color: '#fff', fontSize: 13, outline: 'none',
           }}
         />
@@ -310,11 +311,11 @@ export default function EventPaymentsPanel({ event, registrations, payments, cat
         />
       ) : (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <button onClick={toggleAll} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(0,230,118,0.6)', fontSize: 11, fontWeight: 700, padding: 0 }}>
-            {allSelected ? <CheckSquare style={{ width: 14, height: 14, color: ACCENT }} /> : <Square style={{ width: 14, height: 14 }} />}
+          <button onClick={toggleAll} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(182,255,0,0.6)', fontSize: 11, fontWeight: 700, padding: 0 }}>
+            {allSelected ? <CheckSquare style={{ width: 14, height: 14, color: LIME }} /> : <Square style={{ width: 14, height: 14 }} />}
             {allSelected ? 'Deselect all' : 'Select all'}
           </button>
-          <span style={{ fontSize: 11, color: 'rgba(0,230,118,0.5)', fontWeight: 600 }}>
+          <span style={{ fontSize: 11, color: 'rgba(182,255,0,0.45)', fontWeight: 600 }}>
             {pending > 0 ? `${pending} pending · ` : ''}{sorted.length} shown
           </span>
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
@@ -322,7 +323,7 @@ export default function EventPaymentsPanel({ event, registrations, payments, cat
               style={{
                 display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px',
                 borderRadius: 99, fontSize: 11, fontWeight: 700, cursor: 'pointer',
-                background: 'rgba(0,230,118,0.08)', border: '1px solid rgba(0,230,118,0.2)', color: ACCENT,
+                background: 'rgba(182,255,0,0.08)', border: '1px solid rgba(182,255,0,0.22)', color: LIME,
               }}
             >
               <Download style={{ width: 12, height: 12 }} /> Export
@@ -354,13 +355,13 @@ export default function EventPaymentsPanel({ event, registrations, payments, cat
               onClick={(e) => toggleSelect(payment.id, e)}
               style={{
                 flexShrink: 0, width: 36, alignSelf: 'stretch', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: isSel ? 'rgba(0,230,118,0.06)' : 'rgba(255,255,255,0.02)',
-                border: `1px solid ${isSel ? 'rgba(0,230,118,0.3)' : 'rgba(255,255,255,0.07)'}`,
+                background: isSel ? 'rgba(182,255,0,0.05)' : 'rgba(255,255,255,0.02)',
+                border: `1px solid ${isSel ? 'rgba(182,255,0,0.28)' : 'rgba(255,255,255,0.08)'}`,
                 borderRight: 'none', borderRadius: '12px 0 0 12px', cursor: 'pointer',
               }}
             >
               {isSel
-                ? <CheckSquare style={{ width: 14, height: 14, color: ACCENT }} />
+                ? <CheckSquare style={{ width: 14, height: 14, color: LIME }} />
                 : <Square style={{ width: 14, height: 14, color: 'rgba(255,255,255,0.2)' }} />
               }
             </button>

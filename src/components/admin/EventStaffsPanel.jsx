@@ -6,9 +6,10 @@ import { format } from 'date-fns';
 import { logActivity } from '@/lib/eventActivityLog';
 import { notifyStaffInvitation } from '@/lib/notifications';
 
-const ACCENT = '#00e676';
-const CARD_BG = 'rgba(10,30,18,0.9)';
-const BORDER  = 'rgba(0,200,80,0.12)';
+const LIME    = '#B6FF00';
+const ACCENT  = LIME;
+const CARD_BG = 'rgba(255,255,255,0.04)';
+const BORDER  = 'rgba(255,255,255,0.09)';
 
 const ROLE_DEFS = [
   { key: 'checkin',          label: 'Check-in',         color: 'rgba(180,120,255,1)' },
@@ -24,7 +25,7 @@ const ROLE_DEFS = [
 
 const STATUS_CFG = {
   pending:   { label: 'Pending',   bg: 'rgba(255,200,80,0.12)',  color: 'rgba(255,200,80,1)',   border: 'rgba(255,200,80,0.25)'  },
-  accepted:  { label: 'Active',    bg: 'rgba(0,230,118,0.10)',   color: ACCENT,                 border: 'rgba(0,230,118,0.25)'   },
+  accepted:  { label: 'Active',    bg: 'rgba(182,255,0,0.08)',   color: LIME,                   border: 'rgba(182,255,0,0.25)'   },
   declined:  { label: 'Declined',  bg: 'rgba(255,80,80,0.10)',   color: 'rgba(255,100,100,1)',  border: 'rgba(255,80,80,0.25)'   },
   revoked:   { label: 'Revoked',   bg: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.3)',border: 'rgba(255,255,255,0.1)'  },
 };
@@ -53,10 +54,10 @@ function AvatarCircle({ name, email, size = 36 }) {
   return (
     <div style={{
       width: size, height: size, borderRadius: size * 0.3,
-      background: 'linear-gradient(135deg,rgba(0,230,118,0.2),rgba(138,43,226,0.2))',
-      border: '1px solid rgba(0,230,118,0.2)',
+      background: 'linear-gradient(135deg,rgba(182,255,0,0.15),rgba(138,43,226,0.2))',
+      border: '1px solid rgba(182,255,0,0.2)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      flexShrink: 0, fontSize: size * 0.35, fontWeight: 800, color: ACCENT,
+      flexShrink: 0, fontSize: size * 0.35, fontWeight: 800, color: LIME,
     }}>
       {initials}
     </div>
@@ -149,14 +150,14 @@ function AddStaffSheet({ event, user, onClose, onCreated }) {
       {/* Sheet */}
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 1001,
-        background: 'linear-gradient(180deg,#0b1a10 0%,#050f08 100%)',
-        borderTop: '1.5px solid rgba(0,230,118,0.3)',
+        background: 'linear-gradient(180deg,rgba(18,12,30,0.99) 0%,rgba(8,8,8,0.99) 100%)',
+        borderTop: '1.5px solid rgba(138,43,226,0.4)',
         borderRadius: '24px 24px 0 0',
         maxHeight: '92dvh',
         overflowY: 'auto',
         WebkitOverflowScrolling: 'touch',
         paddingBottom: 'calc(env(safe-area-inset-bottom) + 80px)',
-        boxShadow: '0 -8px 60px rgba(0,230,118,0.15)',
+        boxShadow: '0 -8px 60px rgba(138,43,226,0.2)',
       }}>
         {/* Handle */}
         <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 4px' }}>
@@ -177,7 +178,7 @@ function AddStaffSheet({ event, user, onClose, onCreated }) {
             <p style={LABEL_STYLE}>Search User</p>
             {!selectedProfile ? (
               <div style={{ position: 'relative' }}>
-                <Search style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, color: 'rgba(0,230,118,0.4)' }} />
+                <Search style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, color: 'rgba(182,255,0,0.4)' }} />
                 <input
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
@@ -272,8 +273,8 @@ function AddStaffSheet({ event, user, onClose, onCreated }) {
             disabled={!canSubmit}
             style={{
               width: '100%', padding: '14px 0', borderRadius: 14,
-              background: canSubmit ? ACCENT : 'rgba(0,230,118,0.15)',
-              color: canSubmit ? '#050f08' : 'rgba(0,230,118,0.4)',
+              background: canSubmit ? LIME : 'rgba(182,255,0,0.12)',
+              color: canSubmit ? '#080808' : 'rgba(182,255,0,0.4)',
               fontSize: 15, fontWeight: 900, border: 'none', cursor: canSubmit ? 'pointer' : 'not-allowed',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}
@@ -315,14 +316,14 @@ function EditRolesSheet({ assignment, onClose, onSaved }) {
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000 }} />
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 1001,
-        background: 'linear-gradient(180deg,#0b1a10 0%,#050f08 100%)',
-        borderTop: '1.5px solid rgba(0,230,118,0.3)', borderRadius: '24px 24px 0 0',
+        background: 'linear-gradient(180deg,rgba(18,12,30,0.99) 0%,rgba(8,8,8,0.99) 100%)',
+        borderTop: '1.5px solid rgba(138,43,226,0.4)', borderRadius: '24px 24px 0 0',
         maxHeight: '80dvh', overflowY: 'auto',
         paddingBottom: 'calc(env(safe-area-inset-bottom) + 80px)',
-        boxShadow: '0 -8px 60px rgba(0,230,118,0.15)',
+        boxShadow: '0 -8px 60px rgba(138,43,226,0.2)',
       }}>
         <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 4px' }}>
-          <div style={{ width: 36, height: 4, borderRadius: 99, background: 'rgba(0,230,118,0.25)' }} />
+          <div style={{ width: 36, height: 4, borderRadius: 99, background: 'rgba(182,255,0,0.2)' }} />
         </div>
         <div style={{ padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <p style={{ fontSize: 17, fontWeight: 900, color: '#fff', margin: 0 }}>Edit Roles</p>
@@ -367,13 +368,13 @@ function EditRolesSheet({ assignment, onClose, onSaved }) {
 
 // ── Shared styles ───────────────────────────────────────────────────────────────
 const LABEL_STYLE = {
-  fontSize: 10, fontWeight: 800, color: 'rgba(0,230,118,0.5)',
+  fontSize: 10, fontWeight: 800, color: 'rgba(182,255,0,0.5)',
   textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 8px',
 };
 const INPUT_STYLE = {
   width: '100%', boxSizing: 'border-box',
   padding: '11px 13px', borderRadius: 12,
-  background: 'rgba(0,230,118,0.05)', border: '1px solid rgba(0,230,118,0.2)',
+  background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
   color: '#fff', fontSize: 13, outline: 'none',
 };
 const INPUT_STYLE_ICON = { ...INPUT_STYLE, paddingLeft: 36 };
@@ -386,7 +387,7 @@ function StaffCard({ assignment, canManage, onRevoke, onReinvite, onEditRoles })
   return (
     <div style={{
       background: CARD_BG, border: `1px solid ${BORDER}`,
-      borderRadius: 16, padding: '14px 14px 12px',
+      borderRadius: 18, padding: '14px 14px 12px',
       display: 'flex', flexDirection: 'column', gap: 10,
     }}>
       {/* Top row */}
@@ -418,7 +419,7 @@ function StaffCard({ assignment, canManage, onRevoke, onReinvite, onEditRoles })
           </span>
         )}
         {assignment.accepted_at && (
-          <span style={{ fontSize: 10, color: 'rgba(0,230,118,0.5)' }}>
+        <span style={{ fontSize: 10, color: 'rgba(182,255,0,0.5)' }}>
             Accepted {format(new Date(assignment.accepted_at), 'MMM d, HH:mm')}
           </span>
         )}
@@ -522,13 +523,13 @@ export default function EventStaffsPanel({ event, user, eventRole }) {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <p style={{ fontSize: 10, fontWeight: 800, color: 'rgba(0,230,118,0.5)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0 }}>
+          <p style={{ fontSize: 10, fontWeight: 800, color: 'rgba(182,255,0,0.5)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0 }}>
             {totalActive} Active{totalPending > 0 ? ` · ${totalPending} Pending` : ''}
           </p>
         </div>
         {canManage && (
           <button onClick={() => setShowAdd(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', borderRadius: 10, background: ACCENT, color: '#050f08', fontSize: 12, fontWeight: 800, border: 'none', cursor: 'pointer' }}>
+            style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', borderRadius: 10, background: LIME, color: '#080808', fontSize: 12, fontWeight: 800, border: 'none', cursor: 'pointer' }}>
             <Plus style={{ width: 13, height: 13 }} /> Add Staff
           </button>
         )}
@@ -539,8 +540,8 @@ export default function EventStaffsPanel({ event, user, eventRole }) {
 
       {/* Empty */}
       {!isLoading && assignments.length === 0 && (
-        <div style={{ textAlign: 'center', padding: 40, border: '1px dashed rgba(0,230,118,0.15)', borderRadius: 16 }}>
-          <UserCog style={{ width: 28, height: 28, color: 'rgba(0,230,118,0.25)', margin: '0 auto 10px', display: 'block' }} />
+        <div style={{ textAlign: 'center', padding: 40, border: '1px dashed rgba(255,255,255,0.1)', borderRadius: 18 }}>
+          <UserCog style={{ width: 28, height: 28, color: 'rgba(182,255,0,0.25)', margin: '0 auto 10px', display: 'block' }} />
           <p style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.35)', margin: '0 0 4px' }}>No staff added yet</p>
           <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', margin: 0 }}>Add staff to grant scoped event access</p>
         </div>

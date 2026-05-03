@@ -1,15 +1,6 @@
 import React from 'react';
 import { X, Download, CheckSquare } from 'lucide-react';
 
-/**
- * Sticky bar shown when rows are selected.
- * Props:
- *   count         – number of selected rows
- *   onClear       – () => void   clear selection
- *   actions       – [{ label, icon, onClick, color, disabled }]
- *   exportLabel   – string (default 'Export selected')
- *   onExport      – () => void
- */
 export default function SelectionBar({ count, onClear, actions = [], onExport, exportLabel = 'Export selected' }) {
   if (count === 0) return null;
 
@@ -18,8 +9,8 @@ export default function SelectionBar({ count, onClear, actions = [], onExport, e
       margin: '0 16px',
       padding: '10px 14px',
       borderRadius: 14,
-      background: 'rgba(138,43,226,0.12)',
-      border: '1px solid rgba(138,43,226,0.3)',
+      background: 'rgba(138,43,226,0.1)',
+      border: '1px solid rgba(138,43,226,0.28)',
       display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
     }}>
       {/* Count + clear */}
@@ -44,10 +35,12 @@ export default function SelectionBar({ count, onClear, actions = [], onExport, e
         <button key={i} onClick={action.onClick} disabled={action.disabled}
           style={{
             display: 'flex', alignItems: 'center', gap: 5,
-            padding: '5px 11px', borderRadius: 99, fontSize: 11, fontWeight: 700, cursor: 'pointer',
-            background: 'rgba(138,43,226,0.15)', border: '1px solid rgba(138,43,226,0.3)',
+            padding: '6px 12px', borderRadius: 99, fontSize: 11, fontWeight: 700, cursor: 'pointer',
+            background: `${action.color || 'rgba(190,140,255,1)'}18`,
+            border: `1px solid ${action.color || 'rgba(190,140,255,1)'}40`,
             color: action.color || 'rgba(190,140,255,1)',
             opacity: action.disabled ? 0.5 : 1,
+            minHeight: 32,
           }}
         >
           {action.icon && <action.icon style={{ width: 11, height: 11 }} />}
@@ -60,9 +53,9 @@ export default function SelectionBar({ count, onClear, actions = [], onExport, e
         <button onClick={onExport}
           style={{
             display: 'flex', alignItems: 'center', gap: 5,
-            padding: '5px 11px', borderRadius: 99, fontSize: 11, fontWeight: 700, cursor: 'pointer',
-            background: 'rgba(138,43,226,0.15)', border: '1px solid rgba(138,43,226,0.3)',
-            color: 'rgba(190,140,255,0.85)',
+            padding: '6px 12px', borderRadius: 99, fontSize: 11, fontWeight: 700, cursor: 'pointer',
+            background: 'rgba(138,43,226,0.12)', border: '1px solid rgba(138,43,226,0.28)',
+            color: 'rgba(190,140,255,0.85)', minHeight: 32,
           }}
         >
           <Download style={{ width: 11, height: 11 }} />
