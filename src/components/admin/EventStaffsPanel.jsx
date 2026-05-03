@@ -129,6 +129,8 @@ function AddStaffSheet({ event, user, onClose, onCreated }) {
         event_title: event.title,
         event_id: event.id,
         role: selectedRoles.join(', '),
+        assignment_id: assignment?.id,
+        admin_email: normalizeEmail(user.email),
       }).catch(() => {});
       onCreated();
       onClose();

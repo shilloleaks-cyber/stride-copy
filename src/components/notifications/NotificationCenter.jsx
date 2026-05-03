@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Bell, X, CheckCheck } from 'lucide-react';
+import { Bell, X, CheckCheck, Check, XCircle, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 // ── BoomX palette ─────────────────────────────────────────────────────────────
 const C = {
@@ -85,6 +86,166 @@ const CATEGORY_LABELS = {
   group_post_created:   { label: 'Group', color: C.purple, bg: C.purpleDim },
   group_announcement:   { label: 'Group', color: C.amber, bg: C.amberDim },
 };
+
+// ── Staff Invite inline card ──────────────────────────────────────────────────
+function StaffInviteCard({ notif, currentUser, onRead, queryClient }) {
+  const cfg = TYPE_CFG.staff_invitation;
+  const isUnread = !notif.is_read;
+  const assignmentId = notif.metadata?.assignment_id;
+  const adminEmail = notif.metadata?.admin_email;
+  const roles = notif.metadata?.roles;
+
+  const { data: assignment, isLoading: assignLoading } = useQuery({
+    queryKey: ['staff-assignment-notif', assignmentId],
+    queryFn: () => base44.entities.EventStaffAssignment.filter({ id: assignmentId }),
+    enabled: !!assignmentId,
+    select: (data) => data[0] || null,
+    staleTime: 10000,
+  });
+
+  const [acting, setActing] = useState(null); // 'accept' | 'decline'
+
+  const normalizeEmail = (e) => String(e || '').toLowerCase().trim();
+
+  const handleAction = async (action) => {
+    // Security check: only the intended staff can act
+    if (!currentUser?.email || !assignment) return;
+    if (normalizeEmail(assignment.staff_email) !== normalizeEmail(currentUser.email)) {
+      toast.error('This invitation is not for your account.');
+      return;
+    }
+    if (assignment.status === 'revoked') {
+      toast.error('This invitation has been revoked.');
+      return;
+    }
+    setActing(action);
+    try {
+      const now = new Date().toISOString();
+      if (action === 'accept') {
+        await base44.entities.EventStaffAssignment.update(assignment.id, {
+          status: 'accepted',
+          accepted_at: now,
+        });
+        toast.success('Assignment accepted! Staff access granted.');
+      } else {
+        await base44.entities.EventStaffAssignment.update(assignment.id, {
+          status: 'declined',
+          declined_at: now,
+        });
+        toast.success('Invitation declined.');
+      }
+      // Mark notification as read
+      await base44.entities.Notification.update(notif.id, { is_read: true });
+      // Invalidate all relevant queries
+      queryClient.invalidateQueries({ queryKey: ['notifications', currentUser.email] });
+      queryClient.invalidateQueries({ queryKey: ['staff-assignment-notif', assignmentId] });
+      queryClient.invalidateQueries({ queryKey: ['event-staff-assignments'] });
+      queryClient.invalidateQueries({ queryKey: ['staff-assignments', currentUser.email] });
+      queryClient.invalidateQueries({ queryKey: ['staff-assignments-check', currentUser.email] });
+      queryClient.invalidateQueries({ queryKey: ['event-staff-me'] });
+    } catch (err) {
+      toast.error('Something went wrong. Please try again.');
+    } finally {
+      setActing(null);
+    }
+  };
+
+  // Determine resolved status
+  const status = assignment?.status || null;
+  const isSettled = status === 'accepted' || status === 'declined' || status === 'revoked';
+
+  return (
+    <div style={{
+      padding: '14px 16px',
+      borderBottom: `1px solid ${C.line}`,
+      background: isUnread ? cfg.bg : 'transparent',
+      borderLeft: isUnread ? `3px solid ${cfg.accent}` : '3px solid transparent',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+        {/* Icon */}
+        <div style={{
+          width: 36, height: 36, borderRadius: 12, flexShrink: 0,
+          background: 'rgba(0,0,0,0.3)', border: `1px solid ${cfg.border}`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17,
+        }}>
+          🔑
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ fontSize: 13, fontWeight: isUnread ? 800 : 600, color: C.text, margin: 0, lineHeight: 1.3 }}>
+            {notif.title}
+          </p>
+          {notif.event_title && (
+            <p style={{ fontSize: 12, color: C.purple, margin: '2px 0 0', fontWeight: 700 }}>
+              {notif.event_title}
+            </p>
+          )}
+          {roles && (
+            <p style={{ fontSize: 11, color: C.muted, margin: '2px 0 0' }}>
+              Roles: <span style={{ color: 'rgba(255,255,255,0.7)' }}>{roles}</span>
+            </p>
+          )}
+          {adminEmail && (
+            <p style={{ fontSize: 11, color: C.muted, margin: '1px 0 0' }}>
+              Invited by: <span style={{ color: 'rgba(255,255,255,0.5)' }}>{adminEmail.split('@')[0]}</span>
+            </p>
+          )}
+          <span style={{ fontSize: 10, color: C.muted, marginTop: 4, display: 'block' }}>
+            {timeAgo(notif.created_date)}
+          </span>
+        </div>
+        {isUnread && (
+          <div style={{ width: 7, height: 7, borderRadius: '50%', background: C.lime, flexShrink: 0, marginTop: 4, boxShadow: `0 0 6px ${C.lime}` }} />
+        )}
+      </div>
+
+      {/* Action area */}
+      <div style={{ marginTop: 12, marginLeft: 48 }}>
+        {assignLoading ? (
+          <div style={{ fontSize: 11, color: C.muted }}>Loading…</div>
+        ) : !assignment || status === 'revoked' ? (
+          <span style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 8, background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.1)' }}>
+            Revoked / No longer available
+          </span>
+        ) : status === 'accepted' ? (
+          <span style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 8, background: 'rgba(0,230,118,0.1)', color: '#00e676', border: '1px solid rgba(0,230,118,0.25)' }}>
+            ✓ Accepted
+          </span>
+        ) : status === 'declined' ? (
+          <span style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 8, background: 'rgba(255,80,80,0.08)', color: 'rgba(255,100,100,0.9)', border: '1px solid rgba(255,80,80,0.2)' }}>
+            ✕ Declined
+          </span>
+        ) : (
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={() => handleAction('accept')}
+              disabled={!!acting}
+              style={{
+                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                padding: '9px 0', borderRadius: 10, fontSize: 12, fontWeight: 800, cursor: 'pointer',
+                background: 'rgba(0,230,118,0.12)', border: '1px solid rgba(0,230,118,0.35)', color: '#00e676',
+              }}
+            >
+              {acting === 'accept' ? <Loader2 style={{ width: 13, height: 13, animation: 'spin 1s linear infinite' }} /> : <Check style={{ width: 13, height: 13 }} />}
+              Accept
+            </button>
+            <button
+              onClick={() => handleAction('decline')}
+              disabled={!!acting}
+              style={{
+                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                padding: '9px 0', borderRadius: 10, fontSize: 12, fontWeight: 800, cursor: 'pointer',
+                background: 'rgba(255,80,80,0.08)', border: '1px solid rgba(255,80,80,0.25)', color: 'rgba(255,100,100,0.9)',
+              }}
+            >
+              {acting === 'decline' ? <Loader2 style={{ width: 13, height: 13, animation: 'spin 1s linear infinite' }} /> : <XCircle style={{ width: 13, height: 13 }} />}
+              Decline
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 // ── Single notification row ───────────────────────────────────────────────────
 function NotifRow({ notif, onRead, onNavigate }) {
@@ -359,14 +520,24 @@ export default function NotificationCenter({ user }) {
                 </p>
               </div>
             ) : (
-              displayed.map(notif => (
-                <NotifRow
-                  key={notif.id}
-                  notif={notif}
-                  onRead={(id) => markReadMutation.mutate(id)}
-                  onNavigate={handleNavigate}
-                />
-              ))
+              displayed.map(notif =>
+                notif.type === 'staff_invitation' ? (
+                  <StaffInviteCard
+                    key={notif.id}
+                    notif={notif}
+                    currentUser={user}
+                    onRead={(id) => markReadMutation.mutate(id)}
+                    queryClient={queryClient}
+                  />
+                ) : (
+                  <NotifRow
+                    key={notif.id}
+                    notif={notif}
+                    onRead={(id) => markReadMutation.mutate(id)}
+                    onNavigate={handleNavigate}
+                  />
+                )
+              )
             )}
           </div>
 
@@ -374,6 +545,7 @@ export default function NotificationCenter({ user }) {
           <div style={{ height: 1, background: `linear-gradient(90deg, transparent, ${C.purple}, transparent)`, opacity: 0.4, flexShrink: 0 }} />
         </div>
       )}
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

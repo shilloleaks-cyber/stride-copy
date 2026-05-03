@@ -86,13 +86,14 @@ export function notifyPaymentNeedsAttention({ user_email, event_title, event_id,
   });
 }
 
-export function notifyStaffInvitation({ user_email, event_title, event_id, role }) {
+export function notifyStaffInvitation({ user_email, event_title, event_id, role, assignment_id, admin_email }) {
   return createNotification({
     user_email, type: 'staff_invitation', category: 'events',
-    title: 'Staff Invitation 🔑',
-    body: `You've been added as ${role || 'staff'} for ${event_title}.`,
+    title: 'New Staff Assignment 🔑',
+    body: `You've been invited as staff (${role || 'staff'}) for ${event_title}. Tap to accept or decline.`,
     event_id, event_title,
-    action_url: `/StrideEventDetail?id=${event_id}`,
+    action_url: null, // handled inline with Accept/Decline buttons
+    metadata: { assignment_id: assignment_id || null, admin_email: admin_email || null, roles: role || null },
   });
 }
 
