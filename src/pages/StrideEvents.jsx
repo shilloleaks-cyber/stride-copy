@@ -117,7 +117,7 @@ export default function StrideEvents() {
                   cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
                 }}
               >
-                ⚡ Admin Hub
+                Admin
               </button>
             )}
             <button
