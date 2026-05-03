@@ -2,126 +2,323 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronLeft, ExternalLink } from 'lucide-react';
+import {
+  ChevronLeft, ScanLine, CreditCard, Users, Tag,
+  BarChart2, UserCog, CalendarDays, MapPin
+} from 'lucide-react';
+import { format } from 'date-fns';
+import { useLanguage } from '@/lib/LanguageContext';
 
-export default function StrideStaffDashboard() {
-  const navigate = useNavigate();
+// ── BoomX palette ──────────────────────────────────────────────────────────────
+const C = {
+  bg: '#0D0D0D',
+  card: 'rgba(22,22,22,0.95)',
+  purple: '#8A2BE2',
+  purpleDim: 'rgba(138,43,226,0.15)',
+  purpleBorder: 'rgba(138,43,226,0.3)',
+  lime: '#BFFF00',
+  limeDim: 'rgba(191,255,0,0.07)',
+  limeBorder: 'rgba(191,255,0,0.25)',
+  muted: 'rgba(255,255,255,0.35)',
+  text: '#fff',
+  line: 'rgba(255,255,255,0.07)',
+};
 
-  const { data: user } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
+// ── Role → Tool config ─────────────────────────────────────────────────────────
+const TOOL_CONFIG = {
+  checkin: {
+    labelKey: 'role_checkin',
+    descKey: 'tool_checkin_desc',
+    icon: ScanLine,
+    color: '#BFFF00',
+    bg: 'rgba(191,255,0,0.07)',
+    border: 'rgba(191,255,0,0.2)',
+    tab: 'checkin',
+  },
+  payments: {
+    labelKey: 'role_payments',
+    descKey: 'tool_payments_desc',
+    icon: CreditCard,
+    color: '#00e676',
+    bg: 'rgba(0,230,118,0.07)',
+    border: 'rgba(0,230,118,0.2)',
+    tab: 'payments',
+  },
+  registrations: {
+    labelKey: 'role_registrations',
+    descKey: 'tool_registrations_desc',
+    icon: Users,
+    color: 'rgba(100,180,255,1)',
+    bg: 'rgba(100,180,255,0.07)',
+    border: 'rgba(100,180,255,0.2)',
+    tab: 'registrations',
+  },
+  categories: {
+    labelKey: 'role_categories',
+    descKey: 'tool_categories_desc',
+    icon: Tag,
+    color: 'rgba(255,180,60,1)',
+    bg: 'rgba(255,180,60,0.07)',
+    border: 'rgba(255,180,60,0.2)',
+    tab: 'categories',
+  },
+  analytics: {
+    labelKey: 'role_analytics',
+    descKey: 'tool_analytics_desc',
+    icon: BarChart2,
+    color: 'rgba(180,100,255,1)',
+    bg: 'rgba(180,100,255,0.07)',
+    border: 'rgba(180,100,255,0.2)',
+    tab: 'overview',
+  },
+  staff_management: {
+    labelKey: 'role_staff_management',
+    descKey: 'tool_staff_management_desc',
+    icon: UserCog,
+    color: 'rgba(255,120,100,1)',
+    bg: 'rgba(255,120,100,0.07)',
+    border: 'rgba(255,120,100,0.2)',
+    tab: 'staffs',
+  },
+};
 
-  const { data: assignments = [], isLoading } = useQuery({
-    queryKey: ['staff-assignments', user?.email],
-    queryFn: () => base44.entities.EventStaffAssignment.filter({ staff_email: user.email, status: 'accepted' }, '-accepted_at', 50),
-    enabled: !!user?.email,
-  });
+const FULL_ADMIN_TOOLS = ['checkin', 'payments', 'registrations', 'categories', 'analytics', 'staff_management'];
+
+// ── Tool Card ──────────────────────────────────────────────────────────────────
+function ToolCard({ toolKey, onPress, t }) {
+  const cfg = TOOL_CONFIG[toolKey];
+  if (!cfg) return null;
+  const Icon = cfg.icon;
+  return (
+    <button
+      onClick={onPress}
+      style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
+        padding: '14px 14px 12px', borderRadius: 16,
+        background: cfg.bg, border: `1px solid ${cfg.border}`,
+        cursor: 'pointer', textAlign: 'left',
+        WebkitTapHighlightColor: 'transparent', width: '100%',
+      }}
+    >
+      <div style={{
+        width: 36, height: 36, borderRadius: 12, marginBottom: 10,
+        background: `${cfg.color}18`, border: `1px solid ${cfg.border}`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <Icon style={{ width: 17, height: 17, color: cfg.color }} />
+      </div>
+      <p style={{ fontSize: 13, fontWeight: 800, color: C.text, margin: '0 0 3px', lineHeight: 1.2 }}>
+        {t(cfg.labelKey)}
+      </p>
+      <p style={{ fontSize: 11, color: C.muted, margin: 0, lineHeight: 1.4 }}>
+        {t(cfg.descKey)}
+      </p>
+    </button>
+  );
+}
+
+// ── Role chip ──────────────────────────────────────────────────────────────────
+function RoleChip({ role, t }) {
+  return (
+    <span style={{
+      fontSize: 9, fontWeight: 800, padding: '3px 8px', borderRadius: 6,
+      background: C.limeDim, border: `1px solid ${C.limeBorder}`,
+      color: C.lime, textTransform: 'uppercase', letterSpacing: '0.07em',
+    }}>{t(`role_${role}`) || role}</span>
+  );
+}
+
+// ── Event Staff Card ───────────────────────────────────────────────────────────
+function StaffEventCard({ assignment, event, navigate, t }) {
+  const roles = assignment.roles || [];
+  const isFull = roles.includes('full_admin_view');
+  const toolKeys = isFull ? FULL_ADMIN_TOOLS : roles.filter(r => TOOL_CONFIG[r]);
+
+  const handleTool = (toolKey) => {
+    const cfg = TOOL_CONFIG[toolKey];
+    if (!cfg) return;
+    navigate(`/EventWorkspace?event_id=${assignment.event_id}&from=staff&tab=${cfg.tab}`);
+  };
 
   return (
-    <div className="min-h-screen text-white pb-32" style={{ backgroundColor: '#0D0D0D' }}>
-      {/* Header */}
-      <div style={{ padding: '52px 20px 20px' }}>
-        <button
-          onClick={() => navigate(-1)}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)',
-            fontSize: 13, fontWeight: 600, cursor: 'pointer', marginBottom: 16, padding: 0,
-          }}
-        >
-          <ChevronLeft style={{ width: 16, height: 16 }} />
-          Events
-        </button>
-        <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(138,43,226,0.7)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4 }}>
-          Staff Access
+    <div style={{
+      borderRadius: 20, overflow: 'hidden',
+      background: C.card,
+      border: `1px solid ${C.purpleBorder}`,
+      boxShadow: '0 4px 20px rgba(138,43,226,0.1)',
+    }}>
+      {/* Banner */}
+      {event?.banner_image && (
+        <div style={{ height: 80, overflow: 'hidden', position: 'relative' }}>
+          <img src={event.banner_image} alt={event?.title} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 30%, rgba(22,22,22,0.97))' }} />
+        </div>
+      )}
+
+      {/* Event info */}
+      <div style={{ padding: '14px 16px 0' }}>
+        {/* Chips */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
+          <span style={{
+            fontSize: 9, fontWeight: 800, padding: '3px 8px', borderRadius: 6,
+            background: C.purpleDim, border: `1px solid ${C.purpleBorder}`,
+            color: 'rgba(180,100,255,0.9)', textTransform: 'uppercase', letterSpacing: '0.07em',
+          }}>{t('staff')}</span>
+          {isFull ? (
+            <span style={{
+              fontSize: 9, fontWeight: 800, padding: '3px 8px', borderRadius: 6,
+              background: 'rgba(0,230,118,0.08)', border: '1px solid rgba(0,230,118,0.25)',
+              color: '#00e676', textTransform: 'uppercase', letterSpacing: '0.07em',
+            }}>{t('role_full_admin_view')}</span>
+          ) : (
+            roles.map(r => <RoleChip key={r} role={r} t={t} />)
+          )}
+        </div>
+
+        <p style={{ fontSize: 17, fontWeight: 900, color: C.text, margin: '0 0 6px', lineHeight: 1.2 }}>
+          {event?.title || assignment.event_title || 'Event'}
         </p>
-        <h1 style={{ fontSize: 28, fontWeight: 900, color: '#fff', margin: 0 }}>Staff Dashboard</h1>
-        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', marginTop: 6 }}>
-          Events where you have staff access
-        </p>
+
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px 14px', marginBottom: 10 }}>
+          {event?.event_date && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <CalendarDays style={{ width: 11, height: 11, color: C.lime }} />
+              <span style={{ fontSize: 11, color: C.muted, fontWeight: 600 }}>
+                {format(new Date(event.event_date), 'MMM d, yyyy')}
+              </span>
+            </div>
+          )}
+          {event?.location_name && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <MapPin style={{ width: 11, height: 11, color: C.lime }} />
+              <span style={{ fontSize: 11, color: C.muted, fontWeight: 600 }}>{event.location_name}</span>
+            </div>
+          )}
+        </div>
+
+        {assignment.accepted_at && (
+          <p style={{ fontSize: 10, color: 'rgba(191,255,0,0.5)', marginBottom: 14 }}>
+            ✓ {t('accept_invite')}d {format(new Date(assignment.accepted_at), 'MMM d, yyyy')}
+          </p>
+        )}
       </div>
 
-      {/* Content */}
-      <div style={{ padding: '0 20px' }}>
-        {isLoading ? (
-          <div style={{ textAlign: 'center', padding: '48px 0', color: 'rgba(255,255,255,0.3)', fontSize: 14 }}>Loading…</div>
-        ) : assignments.length === 0 ? (
+      {/* Tool grid */}
+      <div style={{ padding: '0 16px 16px' }}>
+        {toolKeys.length === 0 ? (
           <div style={{
-            borderRadius: 20, padding: '48px 20px', textAlign: 'center',
-            background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.1)',
+            borderRadius: 12, padding: '14px', textAlign: 'center',
+            background: 'rgba(255,255,255,0.03)', border: `1px dashed ${C.line}`,
           }}>
-            <p style={{ fontSize: 36, marginBottom: 12 }}>🎟️</p>
-            <p style={{ fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.55)', marginBottom: 6 }}>No staff assignments</p>
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', lineHeight: 1.6 }}>
-              When an event admin invites you as staff and you accept, it'll appear here.
-            </p>
+            <p style={{ fontSize: 12, color: C.muted, margin: 0 }}>No tools assigned yet</p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {assignments.map(a => (
-              <StaffAssignmentCard key={a.id} assignment={a} onOpen={() => navigate(`/StrideEventDetail?event_id=${a.event_id}`)} />
-            ))}
-          </div>
+          <>
+            <p style={{ fontSize: 10, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
+              Your Tools
+            </p>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: toolKeys.length === 1 ? '1fr' : 'repeat(2, 1fr)',
+              gap: 8,
+            }}>
+              {toolKeys.map(key => (
+                <ToolCard key={key} toolKey={key} t={t} onPress={() => handleTool(key)} />
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>
   );
 }
 
-function StaffAssignmentCard({ assignment, onOpen }) {
+// ── Main Page ──────────────────────────────────────────────────────────────────
+export default function StrideStaffDashboard() {
+  const navigate = useNavigate();
+  const { t } = useLanguage();
+
+  const { data: user } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
+
+  const { data: assignments = [], isLoading: assignLoading } = useQuery({
+    queryKey: ['staff-assignments', user?.email],
+    queryFn: () => base44.entities.EventStaffAssignment.filter(
+      { staff_email: user.email, status: 'accepted' },
+      '-accepted_at', 50
+    ),
+    enabled: !!user?.email,
+  });
+
+  const eventIds = assignments.map(a => a.event_id);
+  const { data: events = [], isLoading: eventsLoading } = useQuery({
+    queryKey: ['staff-events', eventIds.join(',')],
+    queryFn: () => base44.entities.StrideEvent.list('-event_date', 200),
+    enabled: eventIds.length > 0,
+  });
+
+  const isLoading = assignLoading || eventsLoading;
+  const eventMap = Object.fromEntries(events.map(e => [e.id, e]));
+
   return (
-    <div style={{
-      borderRadius: 18, padding: '16px',
-      background: 'rgba(22,22,22,0.9)', border: '1px solid rgba(138,43,226,0.22)',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 6 }}>
-            <span style={{
-              fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 6,
-              background: 'rgba(138,43,226,0.15)', border: '1px solid rgba(138,43,226,0.35)',
-              color: 'rgba(180,100,255,0.9)', textTransform: 'uppercase', letterSpacing: '0.06em',
-            }}>Staff</span>
-            {assignment.roles?.map(role => (
-              <span key={role} style={{
-                fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 6,
-                background: 'rgba(191,255,0,0.06)', border: '1px solid rgba(191,255,0,0.2)',
-                color: 'rgba(191,255,0,0.7)', textTransform: 'uppercase', letterSpacing: '0.06em',
-              }}>{role}</span>
-            ))}
-          </div>
-          <p style={{ fontSize: 16, fontWeight: 800, color: '#fff', margin: '0 0 4px', lineHeight: 1.2 }}>
-            {assignment.event_title || 'Event'}
-          </p>
-          {assignment.admin_email && (
-            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: 0 }}>Invited by {assignment.admin_email}</p>
-          )}
-          {assignment.accepted_at && (
-            <p style={{ fontSize: 11, color: 'rgba(191,255,0,0.45)', margin: '3px 0 0' }}>
-              ✓ Accepted {new Date(assignment.accepted_at).toLocaleDateString()}
-            </p>
-          )}
-        </div>
+    <div style={{ minHeight: '100dvh', backgroundColor: C.bg, color: C.text, paddingBottom: 120 }}>
+      {/* Header */}
+      <div style={{ padding: 'max(env(safe-area-inset-top,0px),52px) 20px 20px' }}>
         <button
-          onClick={onOpen}
+          onClick={() => navigate(-1)}
           style={{
             display: 'flex', alignItems: 'center', gap: 6,
-            padding: '9px 14px', borderRadius: 12, flexShrink: 0,
-            background: 'rgba(138,43,226,0.12)', border: '1px solid rgba(138,43,226,0.35)',
-            color: 'rgba(180,100,255,0.95)', fontSize: 12, fontWeight: 700,
-            cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
+            background: 'none', border: 'none', color: C.muted,
+            fontSize: 13, fontWeight: 600, cursor: 'pointer', marginBottom: 18, padding: 0,
           }}
         >
-          <ExternalLink style={{ width: 13, height: 13 }} />
-          View Event
+          <ChevronLeft style={{ width: 16, height: 16 }} />
+          {t('nav_events')}
         </button>
+        <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(138,43,226,0.7)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4 }}>
+          {t('staff')}
+        </p>
+        <h1 style={{ fontSize: 28, fontWeight: 900, color: C.text, margin: '0 0 4px' }}>
+          {t('staff')}
+          {assignments.length > 0 && (
+            <span style={{ fontSize: 16, fontWeight: 700, color: 'rgba(138,43,226,0.7)', marginLeft: 10 }}>
+              {assignments.length}
+            </span>
+          )}
+        </h1>
+        <p style={{ fontSize: 13, color: C.muted, margin: 0 }}>{t('staff_dashboard_subtitle')}</p>
       </div>
-      {assignment.notes && (
-        <div style={{
-          marginTop: 10, padding: '8px 12px', borderRadius: 10,
-          background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)',
-        }}>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', margin: 0 }}>{assignment.notes}</p>
-        </div>
-      )}
+
+      {/* Content */}
+      <div style={{ padding: '0 20px' }}>
+        {isLoading ? (
+          <div style={{ textAlign: 'center', padding: '48px 0', color: C.muted, fontSize: 14 }}>Loading…</div>
+        ) : assignments.length === 0 ? (
+          <div style={{
+            borderRadius: 20, padding: '48px 20px', textAlign: 'center',
+            background: 'rgba(255,255,255,0.03)', border: `1px dashed ${C.line}`,
+          }}>
+            <p style={{ fontSize: 36, marginBottom: 12 }}>🎟️</p>
+            <p style={{ fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.55)', marginBottom: 6 }}>
+              {t('no_staff_events')}
+            </p>
+            <p style={{ fontSize: 12, color: C.muted, lineHeight: 1.6 }}>
+              Accepted staff invitations will appear here.
+            </p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {assignments.map(a => (
+              <StaffEventCard
+                key={a.id}
+                assignment={a}
+                event={eventMap[a.event_id] || null}
+                navigate={navigate}
+                t={t}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

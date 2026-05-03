@@ -17,6 +17,7 @@ import { useAuthGate } from '@/hooks/useAuthGate';
 import LoginGateModal from '@/components/auth/LoginGateModal';
 import { trackEventView } from '@/lib/eventMetrics';
 import { useLanguage } from '@/lib/LanguageContext';
+import { isEventOwner } from '@/lib/eventOwner';
 
 const CAT_COLORS = ['#BFFF00', '#8A2BE2', 'rgb(0,200,180)', 'rgb(255,180,0)', 'rgb(255,80,130)'];
 
@@ -63,6 +64,21 @@ export default function StrideEventDetail() {
     queryKey: ['event-categories', eventId],
     queryFn: () => base44.entities.EventCategory.filter({ event_id: eventId, is_active: true }),
     enabled: !!eventId,
+  });
+
+  // Check if current user has an accepted staff assignment for this event
+  const { data: myStaffAssignment } = useQuery({
+    queryKey: ['my-staff-assignment', eventId, user?.email],
+    queryFn: async () => {
+      const r = await base44.entities.EventStaffAssignment.filter({
+        event_id: eventId,
+        staff_email: user.email.toLowerCase().trim(),
+        status: 'accepted',
+      });
+      return r[0] || null;
+    },
+    enabled: !!eventId && !!user?.email,
+    staleTime: 30000,
   });
 
   const { data: myReg } = useQuery({
@@ -174,6 +190,44 @@ export default function StrideEventDetail() {
           </div>
           <h1 className="text-2xl font-bold text-white">{event.title}</h1>
           {event.organizer_name && <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.45)' }}>by {event.organizer_name}</p>}
+
+          {/* Admin / Staff contextual shortcuts */}
+          {user && (() => {
+            const isOwner = isEventOwner(event, user) || user.role === 'admin';
+            const isStaff = !!myStaffAssignment && !isOwner;
+            if (!isOwner && !isStaff) return null;
+            return (
+              <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+                {isOwner && (
+                  <button
+                    onClick={() => navigate(`/EventWorkspace?event_id=${event.id}`)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 6,
+                      padding: '8px 14px', borderRadius: 99, fontSize: 12, fontWeight: 800,
+                      background: 'rgba(191,255,0,0.1)', border: '1px solid rgba(191,255,0,0.35)',
+                      color: '#BFFF00', cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
+                    }}
+                  >
+                    <Settings style={{ width: 12, height: 12 }} />
+                    {t('manage_event')}
+                  </button>
+                )}
+                {isStaff && (
+                  <button
+                    onClick={() => navigate(`/EventWorkspace?event_id=${event.id}&from=staff`)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 6,
+                      padding: '8px 14px', borderRadius: 99, fontSize: 12, fontWeight: 800,
+                      background: 'rgba(138,43,226,0.12)', border: '1px solid rgba(138,43,226,0.4)',
+                      color: 'rgba(180,100,255,0.95)', cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
+                    }}
+                  >
+                    🎟️ {t('staff_panel')}
+                  </button>
+                )}
+              </div>
+            );
+          })()}
         </div>
 
         {/* Meta */}

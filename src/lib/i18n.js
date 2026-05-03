@@ -236,6 +236,51 @@ export const translations = {
     empty_no_events:      'No events yet',
     empty_no_tickets:     'No tickets yet',
     empty_no_items:       'No items',
+
+    // ── Admin Hub ──
+    admin_hub:                  'Admin Hub',
+    admin_hub_subtitle:         'Manage events you created',
+    manage_event:               'Manage Event',
+    open_admin:                 'Open Admin',
+    open_workspace:             'Open Workspace',
+    no_admin_events:            'No admin events yet',
+    create_official_event:      'Create Official Event',
+
+    // ── Staff Dashboard ──
+    staff:                      'Staff',
+    staff_dashboard_subtitle:   'Your assigned event tools',
+    staff_panel:                'Staff Panel',
+    staff_management:           'Staff Management',
+    assigned_roles:             'Assigned Roles',
+    pending_invites:            'Pending Invites',
+    active_staff:               'Active Staff',
+    accept_invite:              'Accept',
+    decline_invite:             'Decline',
+    no_staff_events:            'No staff events yet',
+    assigned_by:                'Assigned by',
+    invited_to_event:           'You were invited to this event',
+    access_denied_staff_tool:   "You don't have access to this tool.",
+
+    // ── Role labels ──
+    role_checkin:               'Check-in',
+    role_payments:              'Payments',
+    role_registrations:         'Registrations',
+    role_categories:            'Categories',
+    role_coupons:               'Coupons',
+    role_bib:                   'BIB',
+    role_analytics:             'Analytics',
+    role_staff_management:      'Staff',
+    role_full_admin_view:       'Full Admin',
+
+    // ── Tool descriptions ──
+    tool_checkin_desc:          'Scan participant QR & manage arrivals',
+    tool_payments_desc:         'Review & approve payment slips',
+    tool_registrations_desc:    'View participant registrations',
+    tool_categories_desc:       'Manage event categories & items',
+    tool_coupons_desc:          'Manage sponsor coupons & rewards',
+    tool_bib_desc:              'Manage bibs & bib draw',
+    tool_analytics_desc:        'View event insights & stats',
+    tool_staff_management_desc: 'Manage staff assignments',
   },
 
   th: {
@@ -468,6 +513,51 @@ export const translations = {
     empty_no_events:      'ยังไม่มีอีเวนต์',
     empty_no_tickets:     'ยังไม่มีตั๋ว',
     empty_no_items:       'ไม่มีรายการ',
+
+    // ── Admin Hub ──
+    admin_hub:                  'แอดมิน Hub',
+    admin_hub_subtitle:         'จัดการอีเวนต์ที่คุณสร้าง',
+    manage_event:               'จัดการอีเวนต์',
+    open_admin:                 'เปิดแอดมิน',
+    open_workspace:             'เปิด Workspace',
+    no_admin_events:            'ยังไม่มีอีเวนต์',
+    create_official_event:      'สร้างอีเวนต์ทางการ',
+
+    // ── Staff Dashboard ──
+    staff:                      'สตาฟ',
+    staff_dashboard_subtitle:   'เครื่องมืออีเวนต์ที่ได้รับมอบหมาย',
+    staff_panel:                'แผงสตาฟ',
+    staff_management:           'จัดการสตาฟ',
+    assigned_roles:             'บทบาทที่ได้รับ',
+    pending_invites:            'คำเชิญที่รอ',
+    active_staff:               'สตาฟที่ใช้งานอยู่',
+    accept_invite:              'ยอมรับ',
+    decline_invite:             'ปฏิเสธ',
+    no_staff_events:            'ยังไม่มีอีเวนต์สตาฟ',
+    assigned_by:                'ได้รับมอบหมายจาก',
+    invited_to_event:           'คุณได้รับเชิญให้เข้าร่วมอีเวนต์นี้',
+    access_denied_staff_tool:   'คุณไม่มีสิทธิ์เข้าถึงเครื่องมือนี้',
+
+    // ── Role labels ──
+    role_checkin:               'เช็คอิน',
+    role_payments:              'การชำระเงิน',
+    role_registrations:         'การลงทะเบียน',
+    role_categories:            'ประเภท',
+    role_coupons:               'คูปอง',
+    role_bib:                   'บิบ',
+    role_analytics:             'วิเคราะห์',
+    role_staff_management:      'สตาฟ',
+    role_full_admin_view:       'แอดมินเต็มรูปแบบ',
+
+    // ── Tool descriptions ──
+    tool_checkin_desc:          'สแกน QR และจัดการผู้เข้าร่วม',
+    tool_payments_desc:         'ตรวจสอบและอนุมัติสลิปการชำระเงิน',
+    tool_registrations_desc:    'ดูรายการลงทะเบียน',
+    tool_categories_desc:       'จัดการประเภทและรายการ',
+    tool_coupons_desc:          'จัดการคูปองและรางวัล',
+    tool_bib_desc:              'จัดการบิบ',
+    tool_analytics_desc:        'ดูสถิติและข้อมูลเชิงลึก',
+    tool_staff_management_desc: 'จัดการสตาฟ',
   },
 };
 
