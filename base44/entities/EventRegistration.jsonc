@@ -65,7 +65,7 @@
     },
     "item_selections": {
       "type": "object",
-      "description": "Map of categoryItemId \u2192 selected variant (e.g. { 'item123': 'M', 'item456': 'included' })"
+      "description": "Map of categoryItemId \u2192 selected variant"
     },
     "status": {
       "type": "string",
@@ -126,9 +126,6 @@
   ],
   "rls": {
     "create": {
-      "data.user_email": "{{user.email}}"
-    },
-    "read": {
       "$or": [
         {
           "data.user_email": "{{user.email}}"
@@ -140,6 +137,7 @@
         }
       ]
     },
+    "read": {},
     "update": {
       "$or": [
         {

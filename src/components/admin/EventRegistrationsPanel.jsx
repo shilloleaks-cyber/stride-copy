@@ -7,7 +7,7 @@ import RegistrationDetailSheet from '@/components/stride/RegistrationDetailSheet
 import BulkConfirmDialog from './BulkConfirmDialog';
 import BulkResultBanner from './BulkResultBanner';
 import SelectionBar from './SelectionBar';
-import { logActivity } from '@/lib/eventActivityLog';
+import { staffAction } from '@/lib/staffEventAction';
 
 const LIME    = '#B6FF00';
 const ACCENT  = LIME;
@@ -58,7 +58,7 @@ function downloadCSV(content, filename) {
   a.click();
 }
 
-export default function EventRegistrationsPanel({ event, registrations, categories, onRegsUpdated, canApprove = true, canReject = true, actorEmail, isFullAdmin = false }) {
+export default function EventRegistrationsPanel({ event, registrations, categories, onRegsUpdated, canApprove = true, canReject = true, actorEmail, isFullAdmin = false, isStaff = false }) {
   const [search, setSearch]               = useState('');
   const [catFilter, setCatFilter]         = useState('all');
   const [statusFilter, setStatusFilter]   = useState('all');
@@ -76,7 +76,8 @@ export default function EventRegistrationsPanel({ event, registrations, categori
   const slug     = makeSlug(event.title);
   const today    = format(new Date(), 'yyyy-MM-dd');
 
-  const eventRegs = registrations.filter(r => r.event_id === event.id);
+  // registrations are already scoped to this event from EventWorkspace
+  const eventRegs = registrations;
 
   const filtered = useMemo(() => eventRegs.filter(r => {
     if (catFilter !== 'all' && r.category_id !== catFilter) return false;
@@ -130,22 +131,25 @@ export default function EventRegistrationsPanel({ event, registrations, categori
 
   const clearSelection = () => setSelected(new Set());
 
-  // Bulk approve mutation — with per-item result tracking
+  // Bulk approve mutation — routes through staffEventAction for staff users
   const bulkApproveMutation = useMutation({
     mutationFn: async () => {
       if (!canApprove) throw new Error('Permission denied');
       const results = await Promise.allSettled(
-        selectedRows.map(r => base44.entities.EventRegistration.update(r.id, { status: 'confirmed' }))
+        selectedRows.map(r =>
+          isStaff
+            ? staffAction('approve_registration', { event_id: event.id, registration_id: r.id })
+            : base44.entities.EventRegistration.update(r.id, { status: 'confirmed' })
+        )
       );
       const succeeded = results.filter(r => r.status === 'fulfilled').length;
       const failed    = results.filter(r => r.status === 'rejected').length;
       return { succeeded, failed, total: selectedRows.length };
     },
     onSuccess: ({ succeeded, failed }) => {
-      logActivity({ eventId: event.id, actorEmail, actionType: 'bulk_approve_registrations', targetType: 'registration', summary: `Bulk approved ${succeeded} registration(s)`, meta: { succeeded, failed, total: selectedRows.length } });
+      staffAction('log_activity', { event_id: event.id, action_type: 'bulk_approve_registrations', target_type: 'registration', summary: `Bulk approved ${succeeded} registration(s)`, meta: { succeeded, failed, total: selectedRows.length } }).catch(() => {});
       clearSelection();
       setConfirm(null);
-      queryClient.invalidateQueries({ queryKey: ['all-regs-admin'] });
       if (onRegsUpdated) onRegsUpdated();
       const lines = [`${succeeded} approved successfully`];
       if (failed > 0) lines.push(`${failed} failed — please try again`);
@@ -153,22 +157,25 @@ export default function EventRegistrationsPanel({ event, registrations, categori
     },
   });
 
-  // Bulk reject mutation — with per-item result tracking
+  // Bulk reject mutation — routes through staffEventAction for staff users
   const bulkRejectMutation = useMutation({
     mutationFn: async () => {
       if (!canReject) throw new Error('Permission denied');
       const results = await Promise.allSettled(
-        selectedRows.map(r => base44.entities.EventRegistration.update(r.id, { status: 'rejected' }))
+        selectedRows.map(r =>
+          isStaff
+            ? staffAction('reject_registration', { event_id: event.id, registration_id: r.id })
+            : base44.entities.EventRegistration.update(r.id, { status: 'rejected' })
+        )
       );
       const succeeded = results.filter(r => r.status === 'fulfilled').length;
       const failed    = results.filter(r => r.status === 'rejected').length;
       return { succeeded, failed };
     },
     onSuccess: ({ succeeded, failed }) => {
-      logActivity({ eventId: event.id, actorEmail, actionType: 'bulk_reject_registrations', targetType: 'registration', summary: `Bulk rejected ${succeeded} registration(s)`, meta: { succeeded, failed } });
+      staffAction('log_activity', { event_id: event.id, action_type: 'bulk_reject_registrations', target_type: 'registration', summary: `Bulk rejected ${succeeded} registration(s)`, meta: { succeeded, failed } }).catch(() => {});
       clearSelection();
       setConfirm(null);
-      queryClient.invalidateQueries({ queryKey: ['all-regs-admin'] });
       if (onRegsUpdated) onRegsUpdated();
       const lines = [`${succeeded} rejected`];
       if (failed > 0) lines.push(`${failed} failed — please try again`);

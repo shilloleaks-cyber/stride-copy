@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, AlertTriangle, Loader2, ExternalLink, Clock, Building2, QrCode } from 'lucide-react';
 import { format } from 'date-fns';
-import { logActivity } from '@/lib/eventActivityLog';
+import { staffAction } from '@/lib/staffEventAction';
 import { notifyPaymentApproved, notifyPaymentNeedsAttention } from '@/lib/notifications';
 
 const METHOD_LABELS = {
@@ -20,7 +20,7 @@ const STATUS_CFG = {
   needs_attention: { label: 'Payment Needs Attention', ...PAY_CFG_MAP.needs_attention,  border: PAY_CFG_MAP.needs_attention.border },
 };
 
-export default function PaymentReviewPanel({ payment, reg, catMap, registrations, user, onDone, canReview = true, eventId, eventTitle }) {
+export default function PaymentReviewPanel({ payment, reg, catMap, registrations, user, onDone, canReview = true, eventId, eventTitle, isStaff = false }) {
   const queryClient = useQueryClient();
   const [noteInput, setNoteInput] = useState('');
   const [showNoteInput, setShowNoteInput] = useState(false);
@@ -45,34 +45,28 @@ export default function PaymentReviewPanel({ payment, reg, catMap, registrations
   };
 
   const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ['all-payments-admin'] });
-    queryClient.invalidateQueries({ queryKey: ['all-regs-admin'] });
-    queryClient.invalidateQueries({ queryKey: ['all-cats-admin'] });
     if (onDone) onDone();
   };
 
   const approveMutation = useMutation({
     mutationFn: async () => {
       if (!canReview) throw new Error('Permission denied');
-      const now = new Date().toISOString();
-      const bibNumber = generateBib();
-      await Promise.all([
-        base44.entities.EventPayment.update(payment.id, {
-          status: 'approved',
-          reviewed_by: user.email,
-          reviewed_at: now,
-          admin_note: null,
-        }),
-        base44.entities.EventRegistration.update(reg.id, {
-          status: 'confirmed',
-          payment_status: 'paid',
-          bib_number: reg.bib_number || bibNumber,
-        }),
-      ]);
+      if (isStaff) {
+        // Staff: route through backend function (handles RLS elevation)
+        await staffAction('approve_payment', { event_id: eventId || reg.event_id, payment_id: payment.id });
+      } else {
+        // Admin/owner: direct SDK update
+        const now = new Date().toISOString();
+        const bibNumber = generateBib();
+        await Promise.all([
+          base44.entities.EventPayment.update(payment.id, { status: 'approved', reviewed_by: user.email, reviewed_at: now, admin_note: null }),
+          base44.entities.EventRegistration.update(reg.id, { status: 'confirmed', payment_status: 'paid', bib_number: reg.bib_number || bibNumber }),
+        ]);
+      }
     },
     onSuccess: () => {
       const displayAmt = payment.user_entered_amount ?? payment.amount_paid ?? payment.amount;
-      logActivity({ eventId: eventId || reg.event_id, actorEmail: user.email, actionType: 'payment_approved', targetType: 'payment', targetId: payment.id, summary: `Approved payment for ${reg.first_name} ${reg.last_name} (฿${displayAmt})${payment.payment_mode === 'user_entered_amount' ? ' [user-entered]' : ''}` });
+      staffAction('log_activity', { event_id: eventId || reg.event_id, action_type: 'payment_approved', target_type: 'payment', target_id: payment.id, summary: `Approved payment for ${reg.first_name} ${reg.last_name} (฿${displayAmt})` }).catch(() => {});
       notifyPaymentApproved({ user_email: reg.user_email, event_title: eventTitle || '', event_id: reg.event_id, registration_id: reg.id });
       invalidate();
     },
@@ -81,22 +75,20 @@ export default function PaymentReviewPanel({ payment, reg, catMap, registrations
   const needsAttentionMutation = useMutation({
     mutationFn: async () => {
       if (!canReview) throw new Error('Permission denied');
-      const now = new Date().toISOString();
       const note = noteInput.trim() || null;
-      await Promise.all([
-        base44.entities.EventPayment.update(payment.id, {
-          status: 'needs_attention',
-          reviewed_by: user.email,
-          reviewed_at: now,
-          admin_note: note,
-        }),
-        // Keep reg consistent: reflect needs_attention at the registration level too
-        base44.entities.EventRegistration.update(reg.id, { payment_status: 'needs_attention' }),
-      ]);
+      if (isStaff) {
+        await staffAction('needs_attention', { event_id: eventId || reg.event_id, payment_id: payment.id, admin_note: note });
+      } else {
+        const now = new Date().toISOString();
+        await Promise.all([
+          base44.entities.EventPayment.update(payment.id, { status: 'needs_attention', reviewed_by: user.email, reviewed_at: now, admin_note: note }),
+          base44.entities.EventRegistration.update(reg.id, { payment_status: 'needs_attention' }),
+        ]);
+      }
     },
     onSuccess: () => {
       const note = noteInput.trim() || null;
-      logActivity({ eventId: eventId || reg.event_id, actorEmail: user.email, actionType: 'payment_needs_attention', targetType: 'payment', targetId: payment.id, summary: `Marked payment needs attention for ${reg.first_name} ${reg.last_name}`, meta: { note } });
+      staffAction('log_activity', { event_id: eventId || reg.event_id, action_type: 'payment_needs_attention', target_type: 'payment', target_id: payment.id, summary: `Marked payment needs attention for ${reg.first_name} ${reg.last_name}`, meta: { note } }).catch(() => {});
       notifyPaymentNeedsAttention({ user_email: reg.user_email, event_title: eventTitle || '', event_id: reg.event_id, registration_id: reg.id, note });
       setShowNoteInput(false);
       setNoteInput('');

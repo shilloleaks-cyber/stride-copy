@@ -7,7 +7,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import BulkConfirmDialog from './BulkConfirmDialog';
 import BulkResultBanner from './BulkResultBanner';
 import SelectionBar from './SelectionBar';
-import { logActivity } from '@/lib/eventActivityLog';
+import { staffAction } from '@/lib/staffEventAction';
 
 const LIME    = '#B6FF00';
 const ACCENT  = LIME;
@@ -47,7 +47,7 @@ function downloadCSV(content, filename) {
   a.click();
 }
 
-export default function EventCheckinPanel({ event, registrations, categories, onRegsUpdated, canBulkCheckin = true, actorEmail }) {
+export default function EventCheckinPanel({ event, registrations, categories, onRegsUpdated, canBulkCheckin = true, actorEmail, isStaff = false }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -62,7 +62,8 @@ export default function EventCheckinPanel({ event, registrations, categories, on
   const slug   = makeSlug(event.title);
   const today  = format(new Date(), 'yyyy-MM-dd');
 
-  const eventRegs      = registrations.filter(r => r.event_id === event.id && r.status === 'confirmed');
+  // registrations are already event-scoped from parent
+  const eventRegs      = registrations.filter(r => r.status === 'confirmed');
   const checkedInCount = eventRegs.filter(r => r.checked_in).length;
   const total          = eventRegs.length;
 
@@ -101,25 +102,33 @@ export default function EventCheckinPanel({ event, registrations, categories, on
 
   const clearSelection = () => setSelected(new Set());
 
-  // Bulk check-in mutation with per-item tracking
+  // Bulk check-in mutation — routes through staffEventAction for staff users
   const bulkCheckinMutation = useMutation({
     mutationFn: async () => {
       if (!canBulkCheckin) throw new Error('Permission denied');
       const targets = selectedRows.filter(r => !r.checked_in);
       const skipped = selectedRows.filter(r => r.checked_in).length;
-      const now = new Date().toISOString();
-      const results = await Promise.allSettled(
-        targets.map(r => base44.entities.EventRegistration.update(r.id, { checked_in: true, checked_in_at: now, checked_in_by: actorEmail }))
-      );
-      const succeeded = results.filter(r => r.status === 'fulfilled').length;
-      const failed    = results.filter(r => r.status === 'rejected').length;
+      let succeeded = 0, failed = 0;
+      if (isStaff) {
+        const res = await staffAction('bulk_checkin', {
+          event_id: event.id,
+          registration_ids: targets.map(r => r.id),
+        });
+        succeeded = res?.count ?? targets.length;
+      } else {
+        const now = new Date().toISOString();
+        const results = await Promise.allSettled(
+          targets.map(r => base44.entities.EventRegistration.update(r.id, { checked_in: true, checked_in_at: now, checked_in_by: actorEmail }))
+        );
+        succeeded = results.filter(r => r.status === 'fulfilled').length;
+        failed    = results.filter(r => r.status === 'rejected').length;
+      }
       return { succeeded, failed, skipped };
     },
     onSuccess: ({ succeeded, failed, skipped }) => {
-      logActivity({ eventId: event.id, actorEmail, actionType: 'bulk_checkin', targetType: 'registration', summary: `Bulk checked in ${succeeded} participant(s)`, meta: { succeeded, failed, skipped } });
+      staffAction('log_activity', { event_id: event.id, action_type: 'bulk_checkin', target_type: 'registration', summary: `Bulk checked in ${succeeded} participant(s)`, meta: { succeeded, failed, skipped } }).catch(() => {});
       clearSelection();
       setConfirmOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['all-regs-admin'] });
       if (onRegsUpdated) onRegsUpdated();
       const lines = [`${succeeded} checked in`];
       if (skipped > 0) lines.push(`${skipped} skipped — already checked in`);

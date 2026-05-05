@@ -20,11 +20,11 @@
     },
     "amount_due": {
       "type": "number",
-      "description": "Amount due: category.price for fixed_price, or user-entered value for user_entered_amount"
+      "description": "Amount due"
     },
     "amount_paid": {
       "type": "number",
-      "description": "Amount actually paid (same as amount_due in normal flow)"
+      "description": "Amount actually paid"
     },
     "user_entered_amount": {
       "type": "number",
@@ -36,11 +36,11 @@
         "fixed_price",
         "user_entered_amount"
       ],
-      "description": "Payment mode snapshot at time of payment submission"
+      "description": "Payment mode snapshot"
     },
     "category_price_snapshot": {
       "type": "number",
-      "description": "Category price at time of registration (for audit)"
+      "description": "Category price at time of registration"
     },
     "payment_enabled_snapshot": {
       "type": "boolean",
@@ -52,8 +52,7 @@
         "bank_transfer",
         "qr_scan"
       ],
-      "default": "bank_transfer",
-      "description": "Payment method used by the participant"
+      "default": "bank_transfer"
     },
     "slip_image": {
       "type": "string",
@@ -66,21 +65,19 @@
         "approved",
         "needs_attention"
       ],
-      "default": "pending",
-      "description": "pending = awaiting approval, approved = payment confirmed, needs_attention = admin requested re-upload"
+      "default": "pending"
     },
     "user_note": {
       "type": "string",
-      "description": "Optional note from participant when submitting payment"
+      "description": "Optional note from participant"
     },
     "reviewed_by": {
       "type": "string",
-      "description": "Admin email who last reviewed"
+      "description": "Admin/staff email who last reviewed"
     },
     "reviewed_at": {
       "type": "string",
-      "format": "date-time",
-      "description": "When payment was last reviewed"
+      "format": "date-time"
     },
     "admin_note": {
       "type": "string",
@@ -88,8 +85,7 @@
     },
     "submitted_at": {
       "type": "string",
-      "format": "date-time",
-      "description": "When the slip was last submitted/re-submitted"
+      "format": "date-time"
     }
   },
   "required": [
@@ -111,18 +107,7 @@
         }
       ]
     },
-    "read": {
-      "$or": [
-        {
-          "data.user_email": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
+    "read": {},
     "update": {
       "$or": [
         {

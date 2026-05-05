@@ -7,7 +7,7 @@ import PaymentReviewPanel from '@/components/stride/PaymentReviewPanel';
 import SelectionBar from '@/components/admin/SelectionBar';
 import BulkConfirmDialog from '@/components/admin/BulkConfirmDialog';
 import BulkResultBanner from '@/components/admin/BulkResultBanner';
-import { logActivity } from '@/lib/eventActivityLog';
+import { staffAction } from '@/lib/staffEventAction';
 
 const LIME   = '#B6FF00';
 const ACCENT = LIME;
@@ -69,7 +69,7 @@ function generateBib(categoryId, catMap, registrations) {
   return bib;
 }
 
-export default function EventPaymentsPanel({ event, registrations, payments, categories, onDone, canReview = true, actorEmail }) {
+export default function EventPaymentsPanel({ event, registrations, payments, categories, onDone, canReview = true, actorEmail, isStaff = false }) {
   const queryClient = useQueryClient();
 
   const [search, setSearch]             = useState('');
@@ -85,10 +85,10 @@ export default function EventPaymentsPanel({ event, registrations, payments, cat
   const today       = format(new Date(), 'yyyy-MM-dd');
   const reviewUser  = { role: 'admin', email: actorEmail };
 
-  const eventRegs     = registrations.filter(r => r.event_id === event.id);
+  // registrations and payments are already scoped to this event from EventWorkspace
+  const eventRegs     = registrations;
   const regsById      = Object.fromEntries(eventRegs.map(r => [r.id, r]));
-  const regIds        = new Set(eventRegs.map(r => r.id));
-  const eventPayments = payments.filter(p => regIds.has(p.registration_id));
+  const eventPayments = payments;
 
   const filtered = useMemo(() => eventPayments.filter(p => {
     const reg = regsById[p.registration_id];
@@ -139,29 +139,24 @@ export default function EventPaymentsPanel({ event, registrations, payments, cat
     }
   };
 
-  // Bulk approve mutation
+  // Bulk approve mutation — routes through staffEventAction for staff, direct SDK for admins
   const bulkApproveMutation = useMutation({
     mutationFn: async () => {
       if (!canReview) throw new Error('Permission denied');
-      const now = new Date().toISOString();
       const targets = selectedPayments.filter(p => p.status !== 'approved');
       const results = await Promise.allSettled(
         targets.map(async (p) => {
-          const reg = regsById[p.registration_id];
-          const bib = reg?.bib_number || generateBib(reg?.category_id, catMap, registrations);
-          await Promise.all([
-            base44.entities.EventPayment.update(p.id, {
-              status: 'approved',
-              reviewed_by: actorEmail,
-              reviewed_at: now,
-              admin_note: null,
-            }),
-            base44.entities.EventRegistration.update(p.registration_id, {
-              status: 'confirmed',
-              payment_status: 'paid',
-              bib_number: reg?.bib_number || bib,
-            }),
-          ]);
+          if (isStaff) {
+            await staffAction('approve_payment', { event_id: event.id, payment_id: p.id });
+          } else {
+            const reg = regsById[p.registration_id];
+            const bib = reg?.bib_number || generateBib(reg?.category_id, catMap, registrations);
+            const now = new Date().toISOString();
+            await Promise.all([
+              base44.entities.EventPayment.update(p.id, { status: 'approved', reviewed_by: actorEmail, reviewed_at: now, admin_note: null }),
+              base44.entities.EventRegistration.update(p.registration_id, { status: 'confirmed', payment_status: 'paid', bib_number: reg?.bib_number || bib }),
+            ]);
+          }
         })
       );
       const succeeded = results.filter(r => r.status === 'fulfilled').length;
@@ -170,18 +165,9 @@ export default function EventPaymentsPanel({ event, registrations, payments, cat
       return { succeeded, failed, skipped };
     },
     onSuccess: ({ succeeded, failed, skipped }) => {
-      logActivity({
-        eventId: event.id,
-        actorEmail,
-        actionType: 'payment_approved',
-        targetType: 'payment',
-        summary: `Bulk approved ${succeeded} payment(s)`,
-        meta: { succeeded, failed, skipped },
-      });
+      staffAction('log_activity', { event_id: event.id, action_type: 'payment_approved', target_type: 'payment', summary: `Bulk approved ${succeeded} payment(s)`, meta: { succeeded, failed, skipped } }).catch(() => {});
       clearSelection();
       setConfirm(null);
-      queryClient.invalidateQueries({ queryKey: ['all-payments-admin'] });
-      queryClient.invalidateQueries({ queryKey: ['all-regs-admin'] });
       if (onDone) onDone();
       const lines = [`${succeeded} payment${succeeded !== 1 ? 's' : ''} approved`];
       if (skipped > 0) lines.push(`${skipped} skipped (already approved)`);
@@ -190,25 +176,23 @@ export default function EventPaymentsPanel({ event, registrations, payments, cat
     },
   });
 
-  // Bulk needs-attention mutation
+  // Bulk needs-attention mutation — routes through staffEventAction for staff
   const bulkNeedsAttentionMutation = useMutation({
     mutationFn: async () => {
       if (!canReview) throw new Error('Permission denied');
-      const now = new Date().toISOString();
       const targets = selectedPayments.filter(p => p.status !== 'needs_attention');
       const results = await Promise.allSettled(
-        targets.map(p =>
-          Promise.all([
-            base44.entities.EventPayment.update(p.id, {
-              status: 'needs_attention',
-              reviewed_by: actorEmail,
-              reviewed_at: now,
-            }),
-            base44.entities.EventRegistration.update(p.registration_id, {
-              payment_status: 'needs_attention',
-            }),
-          ])
-        )
+        targets.map(async (p) => {
+          if (isStaff) {
+            await staffAction('needs_attention', { event_id: event.id, payment_id: p.id });
+          } else {
+            const now = new Date().toISOString();
+            await Promise.all([
+              base44.entities.EventPayment.update(p.id, { status: 'needs_attention', reviewed_by: actorEmail, reviewed_at: now }),
+              base44.entities.EventRegistration.update(p.registration_id, { payment_status: 'needs_attention' }),
+            ]);
+          }
+        })
       );
       const succeeded = results.filter(r => r.status === 'fulfilled').length;
       const failed    = results.filter(r => r.status === 'rejected').length;
@@ -216,17 +200,9 @@ export default function EventPaymentsPanel({ event, registrations, payments, cat
       return { succeeded, failed, skipped };
     },
     onSuccess: ({ succeeded, failed, skipped }) => {
-      logActivity({
-        eventId: event.id,
-        actorEmail,
-        actionType: 'payment_needs_attention',
-        targetType: 'payment',
-        summary: `Bulk marked ${succeeded} payment(s) as Needs Attention`,
-        meta: { succeeded, failed, skipped },
-      });
+      staffAction('log_activity', { event_id: event.id, action_type: 'payment_needs_attention', target_type: 'payment', summary: `Bulk marked ${succeeded} payment(s) as Needs Attention`, meta: { succeeded, failed, skipped } }).catch(() => {});
       clearSelection();
       setConfirm(null);
-      queryClient.invalidateQueries({ queryKey: ['all-payments-admin'] });
       if (onDone) onDone();
       const lines = [`${succeeded} payment${succeeded !== 1 ? 's' : ''} marked as Needs Attention`];
       if (skipped > 0) lines.push(`${skipped} skipped (already marked)`);
@@ -377,6 +353,7 @@ export default function EventPaymentsPanel({ event, registrations, payments, cat
                 canReview={canReview}
                 eventId={event.id}
                 eventTitle={event.title}
+                isStaff={isStaff}
               />
             </div>
           </div>

@@ -218,14 +218,16 @@ export default function StrideCheckin() {
     (scopedEventId && (isFull || can('checkin')))
   );
 
-  // ── Check-in mutation ──────────────────────────────────────────────────────
+  // ── Check-in mutation — uses staffEventAction backend fn for staff users ──
   const checkinMutation = useMutation({
     mutationFn: async () => {
       const now = new Date().toISOString();
-      await base44.entities.EventRegistration.update(foundReg.id, {
-        checked_in: true,
-        checked_in_at: now,
-        checked_in_by: user.email,
+      const isStaff = !!(scopedEventId && !user?.role === 'admin');
+      // Route through backend function (handles RLS elevation for all non-admin users)
+      await base44.functions.invoke('staffEventAction', {
+        action: 'checkin',
+        event_id: foundReg.event_id,
+        registration_id: foundReg.id,
       });
       await base44.entities.EventCheckinLog.create({
         event_id: foundReg.event_id,
@@ -256,6 +258,7 @@ export default function StrideCheckin() {
     },
     onSuccess: () => {
       setState(S.SUCCESS);
+      queryClient.invalidateQueries({ queryKey: ['event-regs', scopedEventId] });
       queryClient.invalidateQueries({ queryKey: ['all-regs-admin'] });
     },
   });
@@ -338,9 +341,12 @@ export default function StrideCheckin() {
       regs = await base44.entities.EventRegistration.filter(bibFilter);
     }
 
-    // 3. Broad fetch + client-side filter by name / email
+    // 3. Broad fetch + client-side filter by name / email (scope to event if known)
     if (!regs.length) {
-      const all = await base44.entities.EventRegistration.list('-created_date', 500);
+      const fetchFilter = scopedEventId ? { event_id: scopedEventId } : {};
+      const all = Object.keys(fetchFilter).length > 0
+        ? await base44.entities.EventRegistration.filter(fetchFilter, '-created_date', 500)
+        : await base44.entities.EventRegistration.list('-created_date', 500);
       const ql = q.toLowerCase();
       regs = all.filter(r =>
         `${r.first_name} ${r.last_name}`.toLowerCase().includes(ql) ||

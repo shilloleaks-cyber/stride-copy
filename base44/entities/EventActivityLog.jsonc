@@ -20,6 +20,9 @@
         "payment_needs_attention",
         "staff_added",
         "staff_removed",
+        "staff_invited",
+        "staff_revoked",
+        "staff_reinvited",
         "event_settings_updated",
         "category_created",
         "category_updated",
@@ -45,20 +48,16 @@
         "staff",
         "event",
         "category"
-      ],
-      "description": "Entity type that was acted upon"
+      ]
     },
     "target_id": {
-      "type": "string",
-      "description": "ID of the specific entity acted upon (if applicable)"
+      "type": "string"
     },
     "summary": {
-      "type": "string",
-      "description": "Human-readable summary of the action"
+      "type": "string"
     },
     "meta": {
-      "type": "object",
-      "description": "Extra structured data (e.g. count, previous value)"
+      "type": "object"
     }
   },
   "required": [
@@ -68,11 +67,7 @@
     "summary"
   ],
   "rls": {
-    "create": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
+    "create": {},
     "read": {
       "user_condition": {
         "role": "admin"
