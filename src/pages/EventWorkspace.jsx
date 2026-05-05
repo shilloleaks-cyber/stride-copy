@@ -38,21 +38,26 @@ export default function EventWorkspace() {
 
   const params = new URLSearchParams(window.location.search);
   const eventIdParam = params.get('event_id');
+  const tabParam = params.get('tab'); // optional tab from URL (e.g. from Staff Dashboard)
 
   const { data: user } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
 
   // Role resolution (event-scoped)
-  const { role, can, visibleTabs, defaultTab, isLoading: roleLoading } = useEventRole(eventIdParam, user);
+  const { role, can, isFull, isStaff, roles: staffRoles, visibleTabs, defaultTab, isLoading: roleLoading } = useEventRole(eventIdParam, user);
 
   const [activeTab, setActiveTab] = useState(null); // set once role is known
 
-  // Set default tab once role is resolved
+  // Set default tab once role is resolved — respect ?tab= param if user has access
   useEffect(() => {
-    if (defaultTab && !activeTab) setActiveTab(defaultTab);
-  }, [defaultTab]);
+    if (!defaultTab) return;
+    if (!activeTab) {
+      const requestedTab = tabParam && visibleTabs.includes(tabParam) ? tabParam : defaultTab;
+      setActiveTab(requestedTab);
+    }
+  }, [defaultTab, visibleTabs.join(',')]);
 
   // Fetch event data only if user has some access
-  const hasAnyAccess = !!role;
+  const hasAnyAccess = isFull || !!role;
 
   const { data: events = [] } = useQuery({
     queryKey: ['admin-events-list'],
@@ -78,21 +83,30 @@ export default function EventWorkspace() {
     enabled: can('payments'),
   });
 
-  const event = events.find(e => e.id === eventIdParam);
+  // Staff may not have the event in the admin list — fetch it directly
+  const { data: directEvent } = useQuery({
+    queryKey: ['single-event', eventIdParam],
+    queryFn: () => base44.entities.StrideEvent.filter({ id: eventIdParam }).then(r => r[0] || null),
+    enabled: !!eventIdParam,
+    staleTime: 60000,
+  });
+
+  const event = events.find(e => e.id === eventIdParam) || directEvent || null;
 
   useEffect(() => {
-    if (!eventIdParam || (!event && events.length > 0 && user?.role === 'admin')) {
+    // Only redirect global admins who landed without a valid event_id
+    if (!eventIdParam && user?.role === 'admin') {
       navigate('/AdminEvents', { replace: true });
     }
-  }, [eventIdParam, event, events.length, user?.role]);
+  }, [eventIdParam, user?.role]);
 
-  // Loading state
+  // Loading state — wait for role resolution and event data
   if (!user || roleLoading || !event) {
     return <div style={{ minHeight: '100dvh', background: BG }} />;
   }
 
   // No access at all
-  if (!role) {
+  if (!role && !isFull) {
     return <AccessDenied onBack={() => navigate(-1)} />;
   }
 
@@ -111,8 +125,7 @@ export default function EventWorkspace() {
   const statusCfg = EVENT_STATUS[event.status] || EVENT_STATUS.open;
 
   // Role badge shown in header for non-full-admin staff
-  const ROLE_LABEL = { full: null, registrations: 'Registrations', payments: 'Payments', checkin: 'Check-in' };
-  const roleBadge = ROLE_LABEL[role];
+  const roleBadge = !isFull && isStaff ? (staffRoles.join(', ') || 'Staff') : null;
 
   return (
     <div style={{ minHeight: '100dvh', background: BG, paddingBottom: 100 }}>
@@ -207,7 +220,7 @@ export default function EventWorkspace() {
             canApprove={can('registrations')}
             canReject={can('registrations')}
             actorEmail={user?.email}
-            isFullAdmin={user?.role === 'admin' || role === 'full'}
+            isFullAdmin={isFull}
             onRegsUpdated={() => queryClient.invalidateQueries({ queryKey: ['all-regs-admin'] })}
           />
         )}
@@ -226,7 +239,7 @@ export default function EventWorkspace() {
           <EventCategoriesPanel
             event={event}
             categories={categories}
-            canManage={role === 'full'}
+            canManage={isFull}
           />
         )}
         {activeTab === 'checkin' && can('checkin') && (
@@ -240,7 +253,7 @@ export default function EventWorkspace() {
           />
         )}
         {activeTab === 'staffs' && can('staffs') && (
-          <EventStaffsPanel event={event} user={user} eventRole={role} />
+          <EventStaffsPanel event={event} user={user} eventRole={role} canManage={isFull} />
         )}
         {activeTab === 'settings' && can('settings') && (
           <EventSettingsPanel

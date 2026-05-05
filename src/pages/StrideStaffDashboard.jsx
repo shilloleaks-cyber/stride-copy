@@ -137,7 +137,12 @@ function StaffEventCard({ assignment, event, navigate, t }) {
   const handleTool = (toolKey) => {
     const cfg = TOOL_CONFIG[toolKey];
     if (!cfg) return;
-    navigate(`/EventWorkspace?event_id=${assignment.event_id}&from=staff&tab=${cfg.tab}`);
+    if (toolKey === 'checkin') {
+      // Standalone QR scanner — needs event_id for role validation
+      navigate(`/StrideCheckin?event_id=${assignment.event_id}&from=staff`);
+    } else {
+      navigate(`/EventWorkspace?event_id=${assignment.event_id}&from=staff&tab=${cfg.tab}`);
+    }
   };
 
   return (

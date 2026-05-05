@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import QRScanner from '@/components/stride/QRScanner';
+import { useEventRole } from '@/hooks/useEventRole';
 
 // ─── State keys ───────────────────────────────────────────────────────────────
 const S = {
@@ -200,21 +201,22 @@ export default function StrideCheckin() {
   const [scanError, setScanError]     = useState('');   // detail message for error states
   const scanDebounceRef               = useRef(null);   // debounce for repeated QR scans
 
-  // Optional: event_id from URL to restrict check-in to a specific event
+  // event_id from URL — required for staff access check
   const urlParams = new URLSearchParams(window.location.search);
   const scopedEventId = urlParams.get('event_id') || null;
 
   const { data: user, isLoading: loadingUser } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
 
-  const { data: boothStaff = [], isLoading: loadingStaff } = useQuery({
-    queryKey: ['my-booth-staff', user?.email],
-    queryFn: () => base44.entities.BoothStaff.filter({ user_id: user.email, is_active: true }),
-    enabled: !!user?.email && user?.role !== 'admin',
-  });
+  // Use useEventRole for proper staff access resolution
+  const { can, isFull, loading: roleLoading } = useEventRole(scopedEventId, user);
 
-  const isAdmin = user?.role === 'admin';
-  const isLoadingAccess = loadingUser || (!isAdmin && loadingStaff);
-  const hasAccess = isAdmin || boothStaff.length > 0;
+  const isLoadingAccess = loadingUser || (!!scopedEventId && roleLoading);
+
+  // Access: need an event_id to validate staff access; global admin always in
+  const hasAccess = !!user && (
+    user.role === 'admin' ||
+    (scopedEventId && (isFull || can('checkin')))
+  );
 
   // ── Check-in mutation ──────────────────────────────────────────────────────
   const checkinMutation = useMutation({
@@ -416,17 +418,27 @@ export default function StrideCheckin() {
         )}
       </div>
 
-      {/* Access denied */}
-      {!hasAccess && (
+      {/* No event selected */}
+      {!scopedEventId && user?.role !== 'admin' && (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', paddingTop: 96, paddingLeft: 32, paddingRight: 32, textAlign: 'center', gap: 16 }}>
-          <ShieldOff style={{ width: 56, height: 56, color: 'rgba(255,80,80,0.5)' }} />
-          <p style={{ fontSize: 20, fontWeight: 800, color: '#fff', margin: 0 }}>Access Denied</p>
-          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', margin: 0 }}>You need staff or admin access to use check-in.</p>
+          <ScanLine style={{ width: 56, height: 56, color: 'rgba(255,255,255,0.2)' }} />
+          <p style={{ fontSize: 20, fontWeight: 800, color: '#fff', margin: 0 }}>Select an Event</p>
+          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', margin: 0 }}>Open Check-In from your Staff Dashboard to scan for a specific event.</p>
           <button onClick={() => navigate(-1)} style={{ marginTop: 8, padding: '12px 32px', borderRadius: 16, background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', fontWeight: 700, fontSize: 14, cursor: 'pointer', border: 'none' }}>Go Back</button>
         </div>
       )}
 
-      {hasAccess && (
+      {/* Access denied */}
+      {scopedEventId && !isLoadingAccess && !hasAccess && (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', paddingTop: 96, paddingLeft: 32, paddingRight: 32, textAlign: 'center', gap: 16 }}>
+          <ShieldOff style={{ width: 56, height: 56, color: 'rgba(255,80,80,0.5)' }} />
+          <p style={{ fontSize: 20, fontWeight: 800, color: '#fff', margin: 0 }}>Access Denied</p>
+          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', margin: 0 }}>You don't have check-in access for this event.</p>
+          <button onClick={() => navigate(-1)} style={{ marginTop: 8, padding: '12px 32px', borderRadius: 16, background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', fontWeight: 700, fontSize: 14, cursor: 'pointer', border: 'none' }}>Go Back</button>
+        </div>
+      )}
+
+      {(hasAccess || (user?.role === 'admin' && !scopedEventId)) && (
         <div style={{ padding: '20px 20px 0', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
           {/* Always-visible scan/search controls */}
