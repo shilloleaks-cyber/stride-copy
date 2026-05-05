@@ -39,6 +39,7 @@ export default function EventWorkspace() {
   const params = new URLSearchParams(window.location.search);
   const eventIdParam = params.get('event_id');
   const tabParam = params.get('tab'); // optional tab from URL (e.g. from Staff Dashboard)
+  const fromStaff = params.get('from') === 'staff'; // true when routed from StrideStaffDashboard
 
   const { data: user } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
 
@@ -138,10 +139,10 @@ export default function EventWorkspace() {
       }}>
         {/* Breadcrumb */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-          <button onClick={() => navigate('/AdminEvents')}
+          <button onClick={() => navigate(fromStaff ? '/StrideStaffDashboard' : '/AdminEvents')}
             style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
             <ArrowLeft style={{ width: 14, height: 14, color: 'rgba(182,255,0,0.6)' }} />
-            <span style={{ fontSize: 12, color: 'rgba(182,255,0,0.6)', fontWeight: 700 }}>Events</span>
+            <span style={{ fontSize: 12, color: 'rgba(182,255,0,0.6)', fontWeight: 700 }}>{fromStaff ? 'Staff Dashboard' : 'Events'}</span>
           </button>
           <ChevronRight style={{ width: 12, height: 12, color: 'rgba(255,255,255,0.2)' }} />
           <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 160 }}>
