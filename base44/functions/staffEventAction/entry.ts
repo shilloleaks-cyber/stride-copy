@@ -115,7 +115,13 @@ Deno.serve(async (req) => {
 
       // Verify payment belongs to this event
       const payments = await base44.asServiceRole.entities.EventPayment.filter({ id: payment_id, event_id });
-      if (!payments[0]) return Response.json({ error: 'Payment not found for this event' }, { status: 404 });
+      const payment = payments[0];
+      if (!payment) return Response.json({ error: 'Payment not found for this event' }, { status: 404 });
+
+      // Idempotent: skip if already approved
+      if (payment.status === 'approved') {
+        return Response.json({ success: true, skipped: true });
+      }
 
       await base44.asServiceRole.entities.EventPayment.update(payment_id, {
         status: 'approved',
@@ -124,16 +130,43 @@ Deno.serve(async (req) => {
         admin_note: admin_note || null,
       });
 
-      // Update registration payment_status to paid
-      const reg_id = payments[0].registration_id;
+      const reg_id = payment.registration_id;
       if (reg_id) {
+        // Load registration and category to generate BIB using the same logic as admin approval
+        const [regs, categoryRegs] = await Promise.all([
+          base44.asServiceRole.entities.EventRegistration.filter({ id: reg_id }),
+          base44.asServiceRole.entities.EventRegistration.filter({ event_id }),
+        ]);
+        const reg = regs[0];
+
+        let bibNumber = reg?.bib_number || null;
+
+        // Only generate BIB if not already assigned
+        if (!bibNumber && reg?.category_id) {
+          const cats = await base44.asServiceRole.entities.EventCategory.filter({ id: reg.category_id });
+          const cat = cats[0];
+          const prefix = cat?.bib_prefix || 'R';
+          const start = cat?.bib_start || 1;
+          const usedBibs = new Set(
+            categoryRegs
+              .filter(r => r.category_id === reg.category_id && r.bib_number)
+              .map(r => r.bib_number)
+          );
+          let candidate = start;
+          do {
+            bibNumber = `${prefix}${String(candidate).padStart(3, '0')}`;
+            candidate++;
+          } while (usedBibs.has(bibNumber));
+        }
+
         await base44.asServiceRole.entities.EventRegistration.update(reg_id, {
           payment_status: 'paid',
           status: 'confirmed',
+          ...(bibNumber && !reg?.bib_number ? { bib_number: bibNumber } : {}),
         });
       }
 
-      return Response.json({ success: true });
+      return Response.json({ success: true, bib_number: reg_id ? null : undefined });
     }
 
     // ── ACTION: needs_attention ──
@@ -146,12 +179,22 @@ Deno.serve(async (req) => {
       const payments = await base44.asServiceRole.entities.EventPayment.filter({ id: payment_id, event_id });
       if (!payments[0]) return Response.json({ error: 'Payment not found for this event' }, { status: 404 });
 
+      const paymentsNa = await base44.asServiceRole.entities.EventPayment.filter({ id: payment_id, event_id });
+      const paymentNa = paymentsNa[0];
+
       await base44.asServiceRole.entities.EventPayment.update(payment_id, {
         status: 'needs_attention',
         reviewed_by: normalizeEmail(user.email),
         reviewed_at: now,
         admin_note: admin_note || null,
       });
+
+      // Also update registration payment_status so participant sees they need to re-upload
+      if (paymentNa?.registration_id) {
+        await base44.asServiceRole.entities.EventRegistration.update(paymentNa.registration_id, {
+          payment_status: 'needs_attention',
+        });
+      }
 
       return Response.json({ success: true });
     }
