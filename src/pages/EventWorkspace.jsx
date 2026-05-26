@@ -117,7 +117,7 @@ export default function EventWorkspace() {
   const useStaffBackend = hasAnyAccess && !isFull && isStaff;
 
   const { data: staffEventData } = useQuery({
-    queryKey: ['staff-event-data', eventIdParam, user?.email],
+    queryKey: ['staff-event-data', eventIdParam],
     queryFn: () => staffAction('get_event_data', { event_id: eventIdParam }).then(r => r.data),
     enabled: useStaffBackend && !!eventIdParam && !!user,
     staleTime: 30000,
@@ -278,9 +278,8 @@ export default function EventWorkspace() {
             registrations={registrations}
             payments={allPayments}
             onTabChange={setActiveTab}
-            debugMode={isStaff && !isFull}
             usingInjectedData={useStaffBackend}
-            directRegistrationsCount={useStaffBackend ? 0 : registrations.length}
+            directRegistrationsCount={useStaffBackend ? registrationsDirect.length : registrations.length}
           />
         )}
         {activeTab === 'registrations' && can('registrations') && (

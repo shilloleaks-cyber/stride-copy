@@ -15,11 +15,10 @@ function DebugRow({ label, value }) {
   );
 }
 
-export default function EventOverviewPanel({ event, registrations, payments, onTabChange, debugMode, usingInjectedData, directRegistrationsCount }) {
-  // registrations are already event-scoped from the parent — no need to re-filter
-  // (re-filtering by event_id here was the bug: if injected data has correct event_id it passes,
-  //  but we keep it as a safety guard and expose it in debug)
-  const regs = registrations.filter(r => r.event_id === event.id);
+export default function EventOverviewPanel({ event, registrations = [], payments = [], onTabChange, usingInjectedData, directRegistrationsCount }) {
+  // For injected staff data: use registrations as-is (already event-scoped from asServiceRole query)
+  // For admin direct query: still filter by event_id as a safety guard
+  const regs = usingInjectedData ? registrations : registrations.filter(r => r.event_id === event.id);
   const total    = regs.length;
   const pending  = regs.filter(r => r.status === 'pending').length;
   const confirmed = regs.filter(r => r.status === 'confirmed').length;
@@ -46,11 +45,12 @@ export default function EventOverviewPanel({ event, registrations, payments, onT
   return (
     <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-      {/* ── Temporary debug banner for staff data verification ── */}
-      {debugMode && (
-        <div style={{ background: 'rgba(0,200,255,0.07)', border: '1px solid rgba(0,200,255,0.25)', borderRadius: 12, padding: '10px 14px', fontSize: 11, display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <span style={{ fontSize: 10, fontWeight: 800, color: 'rgba(0,200,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>📊 Overview Debug</span>
+      {/* ── Always-visible staff data debug banner ── */}
+      {usingInjectedData !== undefined && (
+        <div style={{ background: 'rgba(0,200,255,0.08)', border: '1px solid rgba(0,200,255,0.3)', borderRadius: 12, padding: '10px 14px', fontSize: 11, display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <span style={{ fontSize: 10, fontWeight: 800, color: 'rgba(0,200,255,0.8)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 2 }}>📊 Staff Data Debug</span>
           <DebugRow label="usingInjectedData" value={String(usingInjectedData)} />
+          <DebugRow label="staffDataSource" value={usingInjectedData ? 'staffEventAction.get_event_data' : 'directQuery'} />
           <DebugRow label="staffRegistrationsCount" value={registrations.length} />
           <DebugRow label="regsAfterEventIdFilter" value={regs.length} />
           <DebugRow label="directRegistrationsCount" value={directRegistrationsCount ?? '—'} />
