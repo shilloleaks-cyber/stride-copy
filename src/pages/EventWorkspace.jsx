@@ -278,6 +278,9 @@ export default function EventWorkspace() {
             registrations={registrations}
             payments={allPayments}
             onTabChange={setActiveTab}
+            debugMode={isStaff && !isFull}
+            usingInjectedData={useStaffBackend}
+            directRegistrationsCount={useStaffBackend ? 0 : registrations.length}
           />
         )}
         {activeTab === 'registrations' && can('registrations') && (
