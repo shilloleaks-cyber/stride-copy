@@ -112,22 +112,30 @@ export default function EventWorkspace() {
     staleTime: 60000,
   });
 
-  // Staff users: fetch all event data via backend function (bypasses RLS using asServiceRole)
-  // Admin/owner: use direct frontend queries (they have full RLS access)
-  // NOTE: isStaff is only true after assignment query resolves — we must wait for that before deciding
+  // Determine mode BEFORE any queries
   const isGlobalAdmin = user?.role === 'admin';
   const useStaffBackend = !isGlobalAdmin && isStaff;
 
+  // When switching into staff mode: evict all cached direct-query data so stale RLS-filtered
+  // results can never bleed into the staff view.
+  useEffect(() => {
+    if (useStaffBackend && eventIdParam) {
+      queryClient.removeQueries({ queryKey: ['event-regs', eventIdParam] });
+      queryClient.removeQueries({ queryKey: ['event-payments', eventIdParam] });
+      queryClient.removeQueries({ queryKey: ['event-cats', eventIdParam] });
+    }
+  }, [useStaffBackend, eventIdParam]);
+
+  // Staff backend query — always fresh on mount (staleTime: 0)
   const { data: staffEventData } = useQuery({
     queryKey: ['staff-event-data', eventIdParam],
     queryFn: () => staffAction('get_event_data', { event_id: eventIdParam }).then(r => r.data),
     enabled: useStaffBackend && !!eventIdParam && !!user,
-    staleTime: 30000,
+    staleTime: 0,
   });
 
-  // Admin/owner direct queries — only run when NOT a non-admin staff user
-  // Wait for role resolution (!roleLoading) before enabling to prevent race conditions
-  const directQueriesEnabled = !roleLoading && !useStaffBackend && isFull && !!eventIdParam;
+  // Admin/owner direct queries — only run when confirmed full admin (no race)
+  const directQueriesEnabled = !roleLoading && isFull && !!eventIdParam;
 
   const { data: categoriesDirect = [] } = useQuery({
     queryKey: ['event-cats', eventIdParam],
@@ -147,8 +155,8 @@ export default function EventWorkspace() {
     enabled: directQueriesEnabled && can('payments'),
   });
 
-  // Resolve final data — staff uses backend result, admin uses direct queries
-  const categories   = useStaffBackend ? (staffEventData?.categories   || []) : categoriesDirect;
+  // Resolve final data — staff ALWAYS uses backend result, never direct cache
+  const categories    = useStaffBackend ? (staffEventData?.categories    || []) : categoriesDirect;
   const registrations = useStaffBackend ? (staffEventData?.registrations || []) : registrationsDirect;
   const allPayments   = useStaffBackend ? (staffEventData?.payments      || []) : allPaymentsDirect;
 

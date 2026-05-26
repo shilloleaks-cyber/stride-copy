@@ -16,17 +16,17 @@ function DebugRow({ label, value }) {
 }
 
 export default function EventOverviewPanel({ event, registrations = [], payments = [], onTabChange, usingInjectedData, directRegistrationsCount }) {
-  // For injected staff data: use registrations as-is (already event-scoped from asServiceRole query)
-  // For admin direct query: still filter by event_id as a safety guard
-  const regs = usingInjectedData ? registrations : registrations.filter(r => r.event_id === event.id);
-  const total    = regs.length;
-  const pending  = regs.filter(r => r.status === 'pending').length;
-  const confirmed = regs.filter(r => r.status === 'confirmed').length;
-  const checkedIn = regs.filter(r => r.checked_in).length;
-  const pendingPayments = payments.filter(p => {
-    const reg = registrations.find(r => r.id === p.registration_id);
-    return reg?.event_id === event.id && p.status === 'pending';
-  }).length;
+  // Staff: registrations comes directly from staffEventData (asServiceRole, no RLS) — never filter
+  // Admin: filter by event_id as safety guard
+  const regs = usingInjectedData
+    ? registrations
+    : registrations.filter(r => r.event_id === event.id);
+
+  const total       = regs.length;
+  const pending     = regs.filter(r => r.status === 'pending').length;
+  const confirmed   = regs.filter(r => r.status === 'confirmed').length;
+  const checkedIn   = regs.filter(r => r.checked_in).length;
+  const pendingPayments = payments.filter(p => p.status === 'pending').length;
 
   const statCards = [
     { label: 'Total',      value: total,     color: '#fff',                       bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.08)' },
