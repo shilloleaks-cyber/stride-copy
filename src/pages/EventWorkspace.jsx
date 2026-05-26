@@ -114,7 +114,9 @@ export default function EventWorkspace() {
 
   // Staff users: fetch all event data via backend function (bypasses RLS using asServiceRole)
   // Admin/owner: use direct frontend queries (they have full RLS access)
-  const useStaffBackend = hasAnyAccess && !isFull && isStaff;
+  // NOTE: isStaff is only true after assignment query resolves — we must wait for that before deciding
+  const isGlobalAdmin = user?.role === 'admin';
+  const useStaffBackend = !isGlobalAdmin && isStaff;
 
   const { data: staffEventData } = useQuery({
     queryKey: ['staff-event-data', eventIdParam],
@@ -123,23 +125,26 @@ export default function EventWorkspace() {
     staleTime: 30000,
   });
 
-  // Admin/owner direct queries — only run when NOT using staff backend
+  // Admin/owner direct queries — only run when NOT a non-admin staff user
+  // Wait for role resolution (!roleLoading) before enabling to prevent race conditions
+  const directQueriesEnabled = !roleLoading && !useStaffBackend && isFull && !!eventIdParam;
+
   const { data: categoriesDirect = [] } = useQuery({
     queryKey: ['event-cats', eventIdParam],
     queryFn: () => base44.entities.EventCategory.filter({ event_id: eventIdParam }, '-created_date', 200),
-    enabled: !useStaffBackend && hasAnyAccess && !!eventIdParam,
+    enabled: directQueriesEnabled,
   });
 
   const { data: registrationsDirect = [] } = useQuery({
     queryKey: ['event-regs', eventIdParam],
     queryFn: () => base44.entities.EventRegistration.filter({ event_id: eventIdParam }, '-created_date', 500),
-    enabled: !useStaffBackend && hasAnyAccess && !!eventIdParam,
+    enabled: directQueriesEnabled,
   });
 
   const { data: allPaymentsDirect = [] } = useQuery({
     queryKey: ['event-payments', eventIdParam],
     queryFn: () => base44.entities.EventPayment.filter({ event_id: eventIdParam }, '-created_date', 500),
-    enabled: !useStaffBackend && can('payments') && !!eventIdParam,
+    enabled: directQueriesEnabled && can('payments'),
   });
 
   // Resolve final data — staff uses backend result, admin uses direct queries
