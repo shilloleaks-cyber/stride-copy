@@ -14,11 +14,12 @@ import EventStaffsPanel from '@/components/admin/EventStaffsPanel';
 import EventSettingsPanel from '@/components/admin/EventSettingsPanel';
 import EventActivityPanel from '@/components/admin/EventActivityPanel';
 import { useEventRole } from '@/hooks/useEventRole';
+import { staffAction } from '@/lib/staffEventAction';
 
 const BG     = '#080808';
 
 // ── Staff Debug Panel ──────────────────────────────────────────────────────────
-function StaffDebugPanel({ user, eventId, assignment, staffRoles, isStaff, isFull, can, registrations, allPayments, categories }) {
+function StaffDebugPanel({ user, eventId, assignment, staffRoles, isStaff, isFull, can, registrations, allPayments, categories, usingInjectedData }) {
   const [open, setOpen] = React.useState(false);
   return (
     <div style={{ margin: '12px 16px 0', borderRadius: 12, background: 'rgba(255,200,0,0.06)', border: '1px solid rgba(255,200,0,0.2)', overflow: 'hidden' }}>
@@ -41,6 +42,7 @@ function StaffDebugPanel({ user, eventId, assignment, staffRoles, isStaff, isFul
           <DebugRow label="can(categories)" value={String(can('categories'))} />
           <DebugRow label="can(staffs)" value={String(can('staffs'))} />
           <div style={{ marginTop: 6, paddingTop: 6, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+            <DebugRow label="usingInjectedData" value={String(usingInjectedData)} />
             <DebugRow label="Registrations count" value={registrations?.length ?? '—'} />
             <DebugRow label="Payments count" value={allPayments?.length ?? '—'} />
             <DebugRow label="Categories count" value={categories?.length ?? '—'} />
@@ -110,24 +112,40 @@ export default function EventWorkspace() {
     staleTime: 60000,
   });
 
-  // All queries are scoped to this event_id — safe for staff (RLS now allows public read on registrations/payments)
-  const { data: categories = [] } = useQuery({
+  // Staff users: fetch all event data via backend function (bypasses RLS using asServiceRole)
+  // Admin/owner: use direct frontend queries (they have full RLS access)
+  const useStaffBackend = hasAnyAccess && !isFull && isStaff;
+
+  const { data: staffEventData } = useQuery({
+    queryKey: ['staff-event-data', eventIdParam, user?.email],
+    queryFn: () => staffAction('get_event_data', { event_id: eventIdParam }).then(r => r.data),
+    enabled: useStaffBackend && !!eventIdParam && !!user,
+    staleTime: 30000,
+  });
+
+  // Admin/owner direct queries — only run when NOT using staff backend
+  const { data: categoriesDirect = [] } = useQuery({
     queryKey: ['event-cats', eventIdParam],
     queryFn: () => base44.entities.EventCategory.filter({ event_id: eventIdParam }, '-created_date', 200),
-    enabled: hasAnyAccess && !!eventIdParam,
+    enabled: !useStaffBackend && hasAnyAccess && !!eventIdParam,
   });
 
-  const { data: registrations = [] } = useQuery({
+  const { data: registrationsDirect = [] } = useQuery({
     queryKey: ['event-regs', eventIdParam],
     queryFn: () => base44.entities.EventRegistration.filter({ event_id: eventIdParam }, '-created_date', 500),
-    enabled: hasAnyAccess && !!eventIdParam,
+    enabled: !useStaffBackend && hasAnyAccess && !!eventIdParam,
   });
 
-  const { data: allPayments = [] } = useQuery({
+  const { data: allPaymentsDirect = [] } = useQuery({
     queryKey: ['event-payments', eventIdParam],
     queryFn: () => base44.entities.EventPayment.filter({ event_id: eventIdParam }, '-created_date', 500),
-    enabled: can('payments') && !!eventIdParam,
+    enabled: !useStaffBackend && can('payments') && !!eventIdParam,
   });
+
+  // Resolve final data — staff uses backend result, admin uses direct queries
+  const categories   = useStaffBackend ? (staffEventData?.categories   || []) : categoriesDirect;
+  const registrations = useStaffBackend ? (staffEventData?.registrations || []) : registrationsDirect;
+  const allPayments   = useStaffBackend ? (staffEventData?.payments      || []) : allPaymentsDirect;
 
   useEffect(() => {
     // Only redirect global admins who landed without a valid event_id
@@ -136,8 +154,9 @@ export default function EventWorkspace() {
     }
   }, [eventIdParam, user?.role]);
 
-  // Loading state — wait for role resolution and event data
-  if (!user || roleLoading || !event) {
+  // Loading state — wait for role resolution, event data, and staff backend data (if applicable)
+  const staffDataLoading = useStaffBackend && !staffEventData;
+  if (!user || roleLoading || !event || staffDataLoading) {
     return <div style={{ minHeight: '100dvh', background: BG }} />;
   }
 
@@ -247,6 +266,7 @@ export default function EventWorkspace() {
           registrations={registrations}
           allPayments={allPayments}
           categories={categories}
+          usingInjectedData={useStaffBackend}
         />
       )}
 
@@ -270,7 +290,10 @@ export default function EventWorkspace() {
             actorEmail={user?.email}
             isFullAdmin={isFull}
             isStaff={isStaff}
-            onRegsUpdated={() => queryClient.invalidateQueries({ queryKey: ['event-regs', eventIdParam] })}
+            onRegsUpdated={() => {
+              queryClient.invalidateQueries({ queryKey: ['event-regs', eventIdParam] });
+              queryClient.invalidateQueries({ queryKey: ['staff-event-data', eventIdParam] });
+            }}
           />
         )}
         {activeTab === 'payments' && can('payments') && (
@@ -282,7 +305,10 @@ export default function EventWorkspace() {
             canReview={can('payments')}
             actorEmail={user?.email}
             isStaff={isStaff}
-            onDone={() => queryClient.invalidateQueries({ queryKey: ['event-payments', eventIdParam] })}
+            onDone={() => {
+              queryClient.invalidateQueries({ queryKey: ['event-payments', eventIdParam] });
+              queryClient.invalidateQueries({ queryKey: ['staff-event-data', eventIdParam] });
+            }}
           />
         )}
         {activeTab === 'categories' && can('categories') && (
@@ -300,7 +326,10 @@ export default function EventWorkspace() {
             canBulkCheckin={can('checkin')}
             actorEmail={user?.email}
             isStaff={isStaff}
-            onRegsUpdated={() => queryClient.invalidateQueries({ queryKey: ['event-regs', eventIdParam] })}
+            onRegsUpdated={() => {
+              queryClient.invalidateQueries({ queryKey: ['event-regs', eventIdParam] });
+              queryClient.invalidateQueries({ queryKey: ['staff-event-data', eventIdParam] });
+            }}
           />
         )}
         {activeTab === 'staffs' && can('staffs') && (

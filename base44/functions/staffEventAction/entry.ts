@@ -247,6 +247,22 @@ Deno.serve(async (req) => {
       return Response.json({ success: true });
     }
 
+    // ── ACTION: get_event_data ──
+    // Returns all event-scoped registrations/payments/categories for staff who have accepted assignment.
+    // Uses asServiceRole to bypass RLS — permission is verified via EventStaffAssignment above.
+    if (action === 'get_event_data') {
+      // Fetch all event data in parallel using service role
+      const [registrations, payments, categories] = await Promise.all([
+        base44.asServiceRole.entities.EventRegistration.filter({ event_id }, '-created_date', 500),
+        isFull || hasRole(assignment, 'payments')
+          ? base44.asServiceRole.entities.EventPayment.filter({ event_id }, '-created_date', 500)
+          : Promise.resolve([]),
+        base44.asServiceRole.entities.EventCategory.filter({ event_id }, '-created_date', 200),
+      ]);
+
+      return Response.json({ success: true, registrations, payments, categories });
+    }
+
     return Response.json({ error: `Unknown action: ${action}` }, { status: 400 });
 
   } catch (error) {
