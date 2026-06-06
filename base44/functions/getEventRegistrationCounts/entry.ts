@@ -5,6 +5,8 @@
  * Returns COUNTS ONLY — no emails, names, or private registration data.
  * Safe for public-facing pages.
  *
+ * Archived records (is_archived: true) are excluded from all counts.
+ *
  * Input:  { event_ids: string[] }
  * Output: { [event_id]: { total, pending, confirmed, checkedIn } }
  */
@@ -25,8 +27,7 @@ Deno.serve(async (req) => {
     // Cap to avoid abuse
     const ids = event_ids.slice(0, 50);
 
-    // Fetch all registrations for these events in parallel (service role to bypass RLS)
-    // We fetch per event to keep things clean and avoid huge result sets
+    // Fetch registrations per event, excluding archived records
     const results = await Promise.all(
       ids.map(async (event_id) => {
         const regs = await base44.asServiceRole.entities.EventRegistration.filter(
@@ -40,11 +41,13 @@ Deno.serve(async (req) => {
 
     const counts = {};
     for (const { event_id, regs } of results) {
+      // Also defensively filter out any archived records that slipped through
+      const active = regs.filter(r => !r.is_archived);
       counts[event_id] = {
-        total:     regs.length,
-        pending:   regs.filter(r => r.status === 'pending').length,
-        confirmed: regs.filter(r => r.status === 'confirmed').length,
-        checkedIn: regs.filter(r => r.checked_in === true).length,
+        total:     active.length,
+        pending:   active.filter(r => r.status === 'pending').length,
+        confirmed: active.filter(r => r.status === 'confirmed').length,
+        checkedIn: active.filter(r => r.checked_in === true).length,
       };
     }
 

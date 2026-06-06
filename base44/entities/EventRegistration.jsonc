@@ -109,6 +109,24 @@
     },
     "admin_notes": {
       "type": "string"
+    },
+    "is_archived": {
+      "type": "boolean",
+      "default": false,
+      "description": "Soft-archived record \u2014 excluded from live counts and admin views"
+    },
+    "archive_reason": {
+      "type": "string",
+      "description": "Reason for archiving e.g. orphaned_deleted_event"
+    },
+    "archived_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the record was archived"
+    },
+    "archived_by": {
+      "type": "string",
+      "description": "Email of admin who archived the record"
     }
   },
   "required": [
