@@ -1,0 +1,71 @@
+{
+  "name": "UserAchievement",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "User's email"
+    },
+    "achievement_id": {
+      "type": "string",
+      "description": "Achievement ID"
+    },
+    "unlocked_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When unlocked"
+    },
+    "progress": {
+      "type": "number",
+      "default": 0,
+      "description": "Progress towards achievement"
+    }
+  },
+  "required": [
+    "user_email",
+    "achievement_id"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "name": "EventShareLog",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "description": "StrideEvent ID"
+    },
+    "shared_by": {
+      "type": "string",
+      "description": "User email who shared"
+    },
+    "shared_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "channel": {
+      "type": "string",
+      "enum": [
+        "native",
+        "copy_link"
+      ],
+      "description": "Share channel used"
+    }
+  },
+  "required": [
+    "event_id",
+    "shared_by",
+    "shared_at",
+    "channel"
+  ],
+  "rls": {
+    "create": {
+      "data.shared_by": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "data.shared_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.shared_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.shared_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

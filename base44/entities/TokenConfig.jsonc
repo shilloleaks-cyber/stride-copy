@@ -1,0 +1,94 @@
+{
+  "name": "TokenConfig",
+  "type": "object",
+  "properties": {
+    "token_name": {
+      "type": "string",
+      "default": "BoomX",
+      "description": "Token name"
+    },
+    "token_symbol": {
+      "type": "string",
+      "default": "BX",
+      "description": "Token symbol"
+    },
+    "total_supply": {
+      "type": "number",
+      "default": 29000000,
+      "description": "Total token supply"
+    },
+    "distributed": {
+      "type": "number",
+      "default": 0,
+      "description": "Total tokens distributed so far"
+    },
+    "remaining": {
+      "type": "number",
+      "default": 29000000,
+      "description": "Remaining tokens available"
+    },
+    "base_rate_per_km": {
+      "type": "number",
+      "default": 1,
+      "description": "Base BX earned per km"
+    },
+    "max_reward_per_run": {
+      "type": "number",
+      "default": 50,
+      "description": "Max BX a user can earn in a single run"
+    },
+    "daily_user_cap": {
+      "type": "number",
+      "default": 60,
+      "description": "Max BX a user can earn in a single day"
+    },
+    "daily_first_bonus": {
+      "type": "number",
+      "default": 0.1,
+      "description": "Bonus rate for first run of the day (e.g. 0.10 = 10%)"
+    },
+    "streak_max_days": {
+      "type": "number",
+      "default": 30,
+      "description": "Streak days at which max streak bonus is reached"
+    },
+    "streak_max_bonus": {
+      "type": "number",
+      "default": 0.2,
+      "description": "Max streak bonus rate (e.g. 0.20 = 20%)"
+    },
+    "emission_k": {
+      "type": "number",
+      "default": 2.2,
+      "description": "Emission curve exponent"
+    },
+    "emission_floor": {
+      "type": "number",
+      "default": 0.35,
+      "description": "Minimum emission multiplier"
+    }
+  },
+  "required": [],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

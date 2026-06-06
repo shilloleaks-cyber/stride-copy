@@ -1,0 +1,65 @@
+{
+  "name": "Redemption",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "User email"
+    },
+    "reward_id": {
+      "type": "string",
+      "description": "Reward ID"
+    },
+    "reward_name": {
+      "type": "string",
+      "description": "Reward name"
+    },
+    "coin_price": {
+      "type": "number",
+      "description": "Coins spent"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "completed",
+        "shipped"
+      ],
+      "default": "pending",
+      "description": "Redemption status"
+    }
+  },
+  "required": [
+    "user_email",
+    "reward_id",
+    "reward_name",
+    "coin_price"
+  ],
+  "rls": {
+    "create": {
+      "data.user_email": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

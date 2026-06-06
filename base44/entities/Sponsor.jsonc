@@ -1,0 +1,43 @@
+{
+  "name": "Sponsor",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Sponsor name"
+    },
+    "logo": {
+      "type": "string",
+      "description": "Logo image URL"
+    },
+    "description": {
+      "type": "string",
+      "description": "Sponsor description"
+    },
+    "website": {
+      "type": "string",
+      "description": "Sponsor website URL"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

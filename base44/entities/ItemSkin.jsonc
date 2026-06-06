@@ -1,0 +1,52 @@
+{
+  "name": "ItemSkin",
+  "type": "object",
+  "properties": {
+    "item_type": {
+      "type": "string",
+      "enum": [
+        "route",
+        "coin",
+        "badge",
+        "theme"
+      ],
+      "description": "Type of skin"
+    },
+    "name": {
+      "type": "string",
+      "description": "Skin name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Skin description"
+    },
+    "preview_color": {
+      "type": "string",
+      "description": "Primary color hex"
+    },
+    "cost_coins": {
+      "type": "number",
+      "default": 0,
+      "description": "Cost in coins (0 = free)"
+    },
+    "unlock_level": {
+      "type": "number",
+      "default": 0,
+      "description": "Required level (0 = no requirement)"
+    },
+    "is_default": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether default skin"
+    },
+    "skin_data": {
+      "type": "object",
+      "description": "Skin-specific data (colors, icons, etc.)"
+    }
+  },
+  "required": [
+    "item_type",
+    "name",
+    "preview_color"
+  ]
+}

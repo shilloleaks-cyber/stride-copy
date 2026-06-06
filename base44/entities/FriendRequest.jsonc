@@ -1,0 +1,82 @@
+{
+  "name": "FriendRequest",
+  "type": "object",
+  "properties": {
+    "sender_email": {
+      "type": "string",
+      "description": "Email \u0e1c\u0e39\u0e49\u0e2a\u0e48\u0e07\u0e04\u0e33\u0e02\u0e2d"
+    },
+    "sender_name": {
+      "type": "string",
+      "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e1c\u0e39\u0e49\u0e2a\u0e48\u0e07\u0e04\u0e33\u0e02\u0e2d"
+    },
+    "receiver_email": {
+      "type": "string",
+      "description": "Email \u0e1c\u0e39\u0e49\u0e23\u0e31\u0e1a\u0e04\u0e33\u0e02\u0e2d"
+    },
+    "receiver_name": {
+      "type": "string",
+      "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e1c\u0e39\u0e49\u0e23\u0e31\u0e1a\u0e04\u0e33\u0e02\u0e2d"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "rejected"
+      ],
+      "default": "pending",
+      "description": "\u0e2a\u0e16\u0e32\u0e19\u0e30\u0e04\u0e33\u0e02\u0e2d"
+    }
+  },
+  "required": [
+    "sender_email",
+    "sender_name",
+    "receiver_email",
+    "receiver_name"
+  ],
+  "rls": {
+    "create": {
+      "data.sender_email": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "data.sender_email": "{{user.email}}"
+        },
+        {
+          "data.receiver_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.receiver_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.sender_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

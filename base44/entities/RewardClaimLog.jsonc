@@ -1,0 +1,91 @@
+{
+  "name": "RewardClaimLog",
+  "type": "object",
+  "properties": {
+    "registration_id": {
+      "type": "string",
+      "description": "EventRegistration ID"
+    },
+    "reward_id": {
+      "type": "string",
+      "description": "SponsorReward ID"
+    },
+    "event_id": {
+      "type": "string",
+      "description": "StrideEvent ID"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Registrant email"
+    },
+    "first_name": {
+      "type": "string"
+    },
+    "last_name": {
+      "type": "string"
+    },
+    "bib_number": {
+      "type": "string"
+    },
+    "reward_name": {
+      "type": "string"
+    },
+    "sponsor_name": {
+      "type": "string"
+    },
+    "claimed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "claimed_by_staff": {
+      "type": "string",
+      "description": "Staff email who processed claim"
+    }
+  },
+  "required": [
+    "registration_id",
+    "reward_id",
+    "user_email",
+    "claimed_at",
+    "claimed_by_staff"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.claimed_by_staff": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "data.claimed_by_staff": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

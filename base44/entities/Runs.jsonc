@@ -1,0 +1,146 @@
+{
+  "name": "Runs",
+  "type": "object",
+  "properties": {
+    "user": {
+      "type": "string",
+      "description": "User email"
+    },
+    "distance_km": {
+      "type": "number",
+      "description": "Distance in km"
+    },
+    "duration_sec": {
+      "type": "number",
+      "description": "Duration in seconds (short alias)"
+    },
+    "duration_seconds": {
+      "type": "number",
+      "description": "Duration in seconds"
+    },
+    "avg_pace": {
+      "type": "string",
+      "description": "Avg pace string"
+    },
+    "calories_est": {
+      "type": "number",
+      "description": "Estimated calories"
+    },
+    "tokens_earned": {
+      "type": "number",
+      "description": "Tokens earned from this run"
+    },
+    "start_time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Run start time"
+    },
+    "end_time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Run end time"
+    },
+    "avg_speed_kmh": {
+      "type": "number",
+      "description": "Average speed km/h"
+    },
+    "max_speed_kmh": {
+      "type": "number",
+      "description": "Max speed km/h"
+    },
+    "calories_burned": {
+      "type": "number",
+      "description": "Calories burned"
+    },
+    "avg_heart_rate": {
+      "type": "number",
+      "description": "Avg heart rate BPM"
+    },
+    "max_heart_rate": {
+      "type": "number",
+      "description": "Max heart rate BPM"
+    },
+    "pace_min_per_km": {
+      "type": "number",
+      "description": "Pace min/km"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "paused",
+        "completed"
+      ],
+      "description": "Run status"
+    },
+    "route_points": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "lat": {
+            "type": "number"
+          },
+          "lng": {
+            "type": "number"
+          },
+          "time": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "GPS route points"
+    },
+    "start_lat": {
+      "type": "number"
+    },
+    "start_lng": {
+      "type": "number"
+    },
+    "end_lat": {
+      "type": "number"
+    },
+    "end_lng": {
+      "type": "number"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "reward_claimed": {
+      "type": "boolean",
+      "default": false
+    },
+    "quote_text": {
+      "type": "string"
+    },
+    "quote_rarity": {
+      "type": "string",
+      "enum": [
+        "common",
+        "rare"
+      ]
+    },
+    "quote_tag": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user",
+    "distance_km",
+    "duration_sec"
+  ],
+  "rls": {
+    "create": {
+      "data.user": "{{user.email}}"
+    },
+    "read": {
+      "data.user": "{{user.email}}"
+    },
+    "update": {
+      "data.user": "{{user.email}}"
+    },
+    "delete": {
+      "data.user": "{{user.email}}"
+    }
+  }
+}

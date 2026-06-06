@@ -1,0 +1,121 @@
+{
+  "name": "Run",
+  "type": "object",
+  "properties": {
+    "start_time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the run started"
+    },
+    "end_time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the run ended"
+    },
+    "duration_seconds": {
+      "type": "number",
+      "description": "Total duration in seconds"
+    },
+    "distance_km": {
+      "type": "number",
+      "description": "Total distance in kilometers"
+    },
+    "avg_speed_kmh": {
+      "type": "number",
+      "description": "Average speed in km/h"
+    },
+    "max_speed_kmh": {
+      "type": "number",
+      "description": "Maximum speed in km/h"
+    },
+    "calories_burned": {
+      "type": "number",
+      "description": "Estimated calories burned"
+    },
+    "avg_heart_rate": {
+      "type": "number",
+      "description": "Average heart rate in BPM"
+    },
+    "max_heart_rate": {
+      "type": "number",
+      "description": "Maximum heart rate in BPM"
+    },
+    "pace_min_per_km": {
+      "type": "number",
+      "description": "Average pace in minutes per km"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "paused",
+        "completed"
+      ],
+      "description": "Current status of the run"
+    },
+    "route_points": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "lat": {
+            "type": "number"
+          },
+          "lng": {
+            "type": "number"
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "description": "GPS route points tracked during the run"
+    },
+    "start_lat": {
+      "type": "number",
+      "description": "Starting latitude"
+    },
+    "start_lng": {
+      "type": "number",
+      "description": "Starting longitude"
+    },
+    "end_lat": {
+      "type": "number",
+      "description": "Ending latitude"
+    },
+    "end_lng": {
+      "type": "number",
+      "description": "Ending longitude"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional notes about the run"
+    },
+    "reward_claimed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the coin reward has been claimed"
+    },
+    "quote_text": {
+      "type": "string",
+      "description": "Motivational quote shown for this run"
+    },
+    "quote_rarity": {
+      "type": "string",
+      "enum": [
+        "common",
+        "rare"
+      ],
+      "description": "Quote rarity level"
+    },
+    "quote_tag": {
+      "type": "string",
+      "description": "Quote display tag"
+    }
+  },
+  "required": [
+    "start_time",
+    "status"
+  ]
+}

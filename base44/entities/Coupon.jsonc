@@ -1,0 +1,76 @@
+{
+  "name": "Coupon",
+  "type": "object",
+  "properties": {
+    "sponsor_id": {
+      "type": "string",
+      "description": "Sponsor ID"
+    },
+    "event_id": {
+      "type": "string",
+      "description": "Event ID this coupon belongs to"
+    },
+    "title": {
+      "type": "string",
+      "description": "Coupon title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Coupon description"
+    },
+    "discount_text": {
+      "type": "string",
+      "description": "Discount label e.g. 20% OFF"
+    },
+    "image": {
+      "type": "string",
+      "description": "Coupon image URL"
+    },
+    "total_quantity": {
+      "type": "number",
+      "description": "Max quantity (0 = unlimited)"
+    },
+    "expiry_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Coupon expiry date"
+    }
+  },
+  "required": [
+    "sponsor_id",
+    "event_id",
+    "title"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "$or": [
+        {
+          "data.sponsor_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.sponsor_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,132 @@
+{
+  "name": "GroupChallenge",
+  "type": "object",
+  "properties": {
+    "group_id": {
+      "type": "string",
+      "description": "Group ID"
+    },
+    "title": {
+      "type": "string",
+      "description": "Challenge title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Challenge description"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "distance",
+        "time",
+        "runs"
+      ],
+      "default": "distance",
+      "description": "Challenge type"
+    },
+    "challenge_type": {
+      "type": "string",
+      "enum": [
+        "distance",
+        "time",
+        "runs_count",
+        "consistency"
+      ],
+      "description": "Challenge type (legacy)"
+    },
+    "period": {
+      "type": "string",
+      "enum": [
+        "weekly",
+        "monthly",
+        "custom"
+      ],
+      "default": "weekly",
+      "description": "Challenge period"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Challenge start date"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Challenge end date"
+    },
+    "target_value": {
+      "type": "number",
+      "description": "Target value to achieve"
+    },
+    "reward_bx": {
+      "type": "number",
+      "default": 0,
+      "description": "BX reward for completion"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "active",
+        "ended"
+      ],
+      "default": "active",
+      "description": "Challenge status"
+    },
+    "created_by_email": {
+      "type": "string",
+      "description": "Creator email"
+    },
+    "creator_email": {
+      "type": "string",
+      "description": "Creator email (legacy)"
+    },
+    "creator_name": {
+      "type": "string",
+      "description": "Creator name (legacy)"
+    },
+    "participant_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of participants"
+    }
+  },
+  "required": [
+    "group_id",
+    "title",
+    "target_value",
+    "start_date",
+    "end_date",
+    "created_by_email"
+  ],
+  "rls": {
+    "create": {
+      "data.created_by_email": "{{user.email}}"
+    },
+    "read": {},
+    "update": {
+      "$or": [
+        {
+          "data.created_by_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.created_by_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

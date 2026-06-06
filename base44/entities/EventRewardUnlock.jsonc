@@ -1,0 +1,98 @@
+{
+  "name": "EventRewardUnlock",
+  "type": "object",
+  "properties": {
+    "registration_id": {
+      "type": "string",
+      "description": "EventRegistration ID"
+    },
+    "event_id": {
+      "type": "string",
+      "description": "StrideEvent ID"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Participant email"
+    },
+    "reward_type": {
+      "type": "string",
+      "enum": [
+        "coupon",
+        "coins",
+        "badge",
+        "other"
+      ],
+      "default": "coupon",
+      "description": "Type of reward"
+    },
+    "reward_id": {
+      "type": "string",
+      "description": "ID of the reward record (coupon/badge/etc)"
+    },
+    "reward_label": {
+      "type": "string",
+      "description": "Display name for the reward"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "unlocked",
+        "redeemed"
+      ],
+      "default": "unlocked",
+      "description": "Reward status"
+    },
+    "unlocked_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the reward was unlocked"
+    },
+    "redeemed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the reward was redeemed"
+    }
+  },
+  "required": [
+    "registration_id",
+    "event_id",
+    "user_email",
+    "reward_type"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

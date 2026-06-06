@@ -1,0 +1,112 @@
+{
+  "name": "Challenge",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Challenge title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Challenge description"
+    },
+    "challenge_type": {
+      "type": "string",
+      "enum": [
+        "distance",
+        "time",
+        "runs_count",
+        "consistency"
+      ],
+      "description": "Type of challenge"
+    },
+    "target_value": {
+      "type": "number",
+      "description": "Target to achieve"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Challenge start date"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Challenge end date"
+    },
+    "creator_email": {
+      "type": "string",
+      "description": "Creator email"
+    },
+    "creator_name": {
+      "type": "string",
+      "description": "Creator name"
+    },
+    "is_recurring": {
+      "type": "boolean",
+      "default": false,
+      "description": "Is this a recurring challenge"
+    },
+    "recurrence_pattern": {
+      "type": "string",
+      "enum": [
+        "weekly",
+        "monthly",
+        "none"
+      ],
+      "default": "none",
+      "description": "Recurrence pattern"
+    },
+    "participant_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of participants"
+    },
+    "is_public": {
+      "type": "boolean",
+      "default": true,
+      "description": "Public or private"
+    }
+  },
+  "required": [
+    "title",
+    "challenge_type",
+    "target_value",
+    "start_date",
+    "end_date",
+    "creator_email",
+    "creator_name"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "$or": [
+        {
+          "data.creator_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.creator_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

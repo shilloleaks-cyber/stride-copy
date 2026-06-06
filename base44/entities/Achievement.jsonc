@@ -1,0 +1,74 @@
+{
+  "name": "Achievement",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Achievement title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Achievement description"
+    },
+    "badge_emoji": {
+      "type": "string",
+      "description": "Emoji icon for badge"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "distance",
+        "quest",
+        "speed",
+        "consistency",
+        "social",
+        "special"
+      ],
+      "description": "Achievement category"
+    },
+    "requirement_type": {
+      "type": "string",
+      "enum": [
+        "total_distance",
+        "total_runs",
+        "quest_streak",
+        "pace_threshold",
+        "friend_count",
+        "challenge_wins"
+      ],
+      "description": "What needs to be achieved"
+    },
+    "requirement_value": {
+      "type": "number",
+      "description": "Target value to unlock"
+    },
+    "reward_coins": {
+      "type": "number",
+      "default": 0,
+      "description": "Coins awarded"
+    },
+    "rarity": {
+      "type": "string",
+      "enum": [
+        "common",
+        "rare",
+        "epic",
+        "legendary"
+      ],
+      "default": "common",
+      "description": "Rarity level"
+    },
+    "display_order": {
+      "type": "number",
+      "description": "Display order for sorting (1-8)"
+    }
+  },
+  "required": [
+    "title",
+    "badge_emoji",
+    "category",
+    "requirement_type",
+    "requirement_value",
+    "display_order"
+  ]
+}

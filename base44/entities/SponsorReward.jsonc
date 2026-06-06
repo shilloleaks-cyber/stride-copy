@@ -1,0 +1,94 @@
+{
+  "name": "SponsorReward",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "description": "StrideEvent ID"
+    },
+    "sponsor_id": {
+      "type": "string",
+      "description": "Sponsor ID"
+    },
+    "sponsor_name": {
+      "type": "string",
+      "description": "Sponsor display name"
+    },
+    "reward_name": {
+      "type": "string",
+      "description": "Reward name e.g. Free Protein Shake"
+    },
+    "reward_description": {
+      "type": "string",
+      "description": "Reward description"
+    },
+    "reward_image": {
+      "type": "string",
+      "description": "Reward image URL"
+    },
+    "total_quantity": {
+      "type": "number",
+      "default": 0,
+      "description": "Total available (0 = unlimited)"
+    },
+    "claimed_count": {
+      "type": "number",
+      "default": 0,
+      "description": "How many have been claimed"
+    },
+    "eligible_categories": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Category IDs eligible for this reward (empty = all)"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "event_id",
+    "reward_name"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.sponsor_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {},
+    "update": {
+      "$or": [
+        {
+          "data.sponsor_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.sponsor_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

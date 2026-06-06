@@ -15,6 +15,7 @@ import EventSettingsPanel from '@/components/admin/EventSettingsPanel';
 import EventActivityPanel from '@/components/admin/EventActivityPanel';
 import { useEventRole } from '@/hooks/useEventRole';
 import { staffAction } from '@/lib/staffEventAction';
+import { EVENT_STATUS } from '@/lib/eventStatusConfig';
 
 const BG     = '#080808';
 
@@ -63,8 +64,6 @@ function DebugRow({ label, value }) {
 const ACCENT = '#B6FF00';
 const BORDER = 'rgba(255,255,255,0.09)';
 
-import { EVENT_STATUS } from '@/lib/eventStatusConfig';
-
 function AccessDenied({ onBack }) {
   return (
     <div style={{ minHeight: '100dvh', background: BG, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff', padding: 24, textAlign: 'center' }}>
@@ -88,7 +87,7 @@ export default function EventWorkspace() {
   const { data: user } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
 
   // Role resolution (event-scoped)
-  const { role, can, isFull, isStaff, roles: staffRoles, assignment, visibleTabs, defaultTab, isLoading: roleLoading } = useEventRole(eventIdParam, user);
+  const { role, can, isFull, isStaff, isOwner, roles: staffRoles, assignment, visibleTabs, defaultTab, isLoading: roleLoading } = useEventRole(eventIdParam, user);
 
   const [activeTab, setActiveTab] = useState(null); // set once role is known
 
@@ -112,9 +111,13 @@ export default function EventWorkspace() {
     staleTime: 60000,
   });
 
-  // Determine mode BEFORE any queries
+  // Determine mode BEFORE any queries.
+  // useStaffBackend = true for ANY user who is a staff member (including full_admin_view staff),
+  // as long as they are not a global app admin or event owner.
+  // Global admins and event owners have RLS access and use direct queries.
   const isGlobalAdmin = user?.role === 'admin';
-  const useStaffBackend = !isGlobalAdmin && isStaff;
+  // isOwner comes from the useEventRole destructure above
+  const useStaffBackend = !isGlobalAdmin && !isOwner && isStaff;
 
   // When switching into staff mode: evict all cached direct-query data so stale RLS-filtered
   // results can never bleed into the staff view.
@@ -127,15 +130,15 @@ export default function EventWorkspace() {
   }, [useStaffBackend, eventIdParam]);
 
   // Staff backend query — always fresh on mount (staleTime: 0)
-  const { data: staffEventData } = useQuery({
+  const { data: staffEventData, isLoading: staffDataLoading } = useQuery({
     queryKey: ['staff-event-data', eventIdParam],
     queryFn: () => staffAction('get_event_data', { event_id: eventIdParam }).then(r => r.data),
-    enabled: useStaffBackend && !!eventIdParam && !!user,
+    enabled: !roleLoading && useStaffBackend && !!eventIdParam && !!user,
     staleTime: 0,
   });
 
-  // Admin/owner direct queries — only run when confirmed full admin (no race)
-  const directQueriesEnabled = !roleLoading && isFull && !!eventIdParam;
+  // Admin/owner direct queries — only run for true global admins or event owners (have full RLS access)
+  const directQueriesEnabled = !roleLoading && (isGlobalAdmin || isOwner) && !!eventIdParam;
 
   const { data: categoriesDirect = [] } = useQuery({
     queryKey: ['event-cats', eventIdParam],
@@ -152,7 +155,7 @@ export default function EventWorkspace() {
   const { data: allPaymentsDirect = [] } = useQuery({
     queryKey: ['event-payments', eventIdParam],
     queryFn: () => base44.entities.EventPayment.filter({ event_id: eventIdParam }, '-created_date', 500),
-    enabled: directQueriesEnabled && can('payments'),
+    enabled: directQueriesEnabled,
   });
 
   // Resolve final data — staff ALWAYS uses backend result, never direct cache
@@ -167,10 +170,21 @@ export default function EventWorkspace() {
     }
   }, [eventIdParam, user?.role]);
 
-  // Loading state — wait for role resolution, event data, and staff backend data (if applicable)
-  const staffDataLoading = useStaffBackend && !staffEventData;
-  if (!user || roleLoading || !event || staffDataLoading) {
-    return <div style={{ minHeight: '100dvh', background: BG }} />;
+  // Loading states — show visible loaders instead of black screen
+  const loadingMessage =
+    !user ? 'Loading...' :
+    roleLoading ? 'Checking access...' :
+    !event ? 'Loading event...' :
+    (useStaffBackend && staffDataLoading) ? 'Loading staff workspace...' : null;
+
+  if (loadingMessage) {
+    return (
+      <div style={{ minHeight: '100dvh', background: BG, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <div style={{ width: 32, height: 32, border: '3px solid rgba(182,255,0,0.2)', borderTopColor: '#B6FF00', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, fontWeight: 600, margin: 0 }}>{loadingMessage}</p>
+      </div>
+    );
   }
 
   // No access at all

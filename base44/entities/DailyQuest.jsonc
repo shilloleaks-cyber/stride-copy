@@ -1,0 +1,44 @@
+{
+  "name": "DailyQuest",
+  "type": "object",
+  "properties": {
+    "quest_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date for this quest"
+    },
+    "quest_type": {
+      "type": "string",
+      "enum": [
+        "run_distance",
+        "run_time",
+        "beat_pace",
+        "earn_coins",
+        "complete_run"
+      ],
+      "description": "Type of quest"
+    },
+    "target_value": {
+      "type": "number",
+      "description": "Target value to achieve"
+    },
+    "reward_coins": {
+      "type": "number",
+      "description": "Coin reward"
+    },
+    "title": {
+      "type": "string",
+      "description": "Quest title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Quest description"
+    }
+  },
+  "required": [
+    "quest_date",
+    "quest_type",
+    "reward_coins",
+    "title"
+  ]
+}

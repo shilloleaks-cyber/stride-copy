@@ -1,0 +1,154 @@
+{
+  "name": "GroupPost",
+  "type": "object",
+  "properties": {
+    "group_id": {
+      "type": "string",
+      "description": "Group ID"
+    },
+    "author_email": {
+      "type": "string",
+      "description": "Author email"
+    },
+    "author_name": {
+      "type": "string",
+      "description": "Author name"
+    },
+    "author_image": {
+      "type": "string",
+      "description": "Author profile image"
+    },
+    "content": {
+      "type": "string",
+      "description": "Post content"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Post image URL"
+    },
+    "video_url": {
+      "type": "string",
+      "description": "Post video URL"
+    },
+    "run_id": {
+      "type": "string",
+      "description": "Linked run ID"
+    },
+    "run_data": {
+      "type": "object",
+      "description": "Run snapshot: distance/time/pace",
+      "properties": {
+        "distance_km": {
+          "type": "number"
+        },
+        "duration_seconds": {
+          "type": "number"
+        },
+        "pace_min_per_km": {
+          "type": "number"
+        }
+      }
+    },
+    "likes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "User emails who liked"
+    },
+    "comments_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of comments"
+    }
+  },
+  "required": [
+    "group_id",
+    "author_email"
+  ],
+  "rls": {
+    "create": {
+      "data.author_email": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "data.group_id": {
+            "$in": {
+              "entity": "GroupMember",
+              "field": "data.group_id",
+              "filter": {
+                "data.user_email": "{{user.email}}",
+                "data.status": "active"
+              }
+            }
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.author_email": "{{user.email}}"
+        },
+        {
+          "data.group_id": {
+            "$in": {
+              "entity": "GroupMember",
+              "field": "data.group_id",
+              "filter": {
+                "data.user_email": "{{user.email}}",
+                "data.role": {
+                  "$in": [
+                    "owner",
+                    "admin"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.author_email": "{{user.email}}"
+        },
+        {
+          "data.group_id": {
+            "$in": {
+              "entity": "GroupMember",
+              "field": "data.group_id",
+              "filter": {
+                "data.user_email": "{{user.email}}",
+                "data.role": {
+                  "$in": [
+                    "owner",
+                    "admin"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,95 @@
+{
+  "name": "GroupChallengeParticipant",
+  "type": "object",
+  "properties": {
+    "challenge_id": {
+      "type": "string",
+      "description": "GroupChallenge ID"
+    },
+    "group_id": {
+      "type": "string",
+      "description": "Group ID"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Participant email"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "Participant name (legacy)"
+    },
+    "progress_value": {
+      "type": "number",
+      "default": 0,
+      "description": "Current progress value"
+    },
+    "progress": {
+      "type": "number",
+      "default": 0,
+      "description": "Progress (legacy)"
+    },
+    "completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether completed"
+    },
+    "is_completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Completion status (legacy)"
+    },
+    "last_updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last progress update time"
+    }
+  },
+  "required": [
+    "challenge_id",
+    "group_id",
+    "user_email"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

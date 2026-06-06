@@ -1,0 +1,76 @@
+{
+  "name": "UserCoupon",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "User email"
+    },
+    "coupon_id": {
+      "type": "string",
+      "description": "Coupon ID"
+    },
+    "event_id": {
+      "type": "string",
+      "description": "Event ID"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "unlocked",
+        "redeemed",
+        "expired"
+      ],
+      "default": "unlocked",
+      "description": "Coupon status"
+    },
+    "redeem_code": {
+      "type": "string",
+      "description": "Unique short redeem code generated on unlock"
+    },
+    "unlocked_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the coupon was unlocked"
+    },
+    "redeemed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the coupon was redeemed"
+    },
+    "redeemed_by_user_id": {
+      "type": "string",
+      "description": "Email of staff/admin who processed the redemption"
+    },
+    "redeemed_by_sponsor_id": {
+      "type": "string",
+      "description": "Sponsor ID of the booth that processed the redemption"
+    }
+  },
+  "required": [
+    "user_id",
+    "coupon_id",
+    "event_id",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "data.user_id": "{{user.email}}"
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

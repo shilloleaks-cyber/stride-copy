@@ -1,0 +1,85 @@
+{
+  "name": "EventCheckinLog",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string"
+    },
+    "registration_id": {
+      "type": "string"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Participant email"
+    },
+    "bib_number": {
+      "type": "string"
+    },
+    "scanned_by": {
+      "type": "string",
+      "description": "Staff email"
+    },
+    "scanned_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "result": {
+      "type": "string",
+      "enum": [
+        "success",
+        "already_checked_in",
+        "not_found",
+        "invalid"
+      ],
+      "default": "success"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "event_id",
+    "registration_id",
+    "scanned_by",
+    "result"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.scanned_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.scanned_by": "{{user.email}}"
+        },
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

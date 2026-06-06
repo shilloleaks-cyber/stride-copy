@@ -1,0 +1,66 @@
+{
+  "name": "WorkoutSession",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "User's email"
+    },
+    "plan_id": {
+      "type": "string",
+      "description": "Related training plan ID"
+    },
+    "scheduled_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Scheduled workout date"
+    },
+    "workout_type": {
+      "type": "string",
+      "enum": [
+        "easy_run",
+        "tempo_run",
+        "intervals",
+        "long_run",
+        "rest",
+        "cross_training"
+      ],
+      "description": "Type of workout"
+    },
+    "planned_distance": {
+      "type": "number",
+      "description": "Planned distance in km"
+    },
+    "planned_pace": {
+      "type": "number",
+      "description": "Target pace min/km"
+    },
+    "instructions": {
+      "type": "string",
+      "description": "Workout instructions"
+    },
+    "completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether completed"
+    },
+    "run_id": {
+      "type": "string",
+      "description": "Linked run record if completed"
+    },
+    "feedback": {
+      "type": "string",
+      "enum": [
+        "too_easy",
+        "just_right",
+        "too_hard"
+      ],
+      "description": "User feedback"
+    }
+  },
+  "required": [
+    "user_email",
+    "scheduled_date",
+    "workout_type"
+  ]
+}

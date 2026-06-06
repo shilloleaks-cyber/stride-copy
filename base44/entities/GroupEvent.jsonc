@@ -1,0 +1,128 @@
+{
+  "name": "GroupEvent",
+  "type": "object",
+  "properties": {
+    "group_id": {
+      "type": "string",
+      "description": "Group ID"
+    },
+    "title": {
+      "type": "string",
+      "description": "Event title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Event description"
+    },
+    "event_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Event date and time"
+    },
+    "location": {
+      "type": "string",
+      "description": "Event location"
+    },
+    "location_lat": {
+      "type": "number",
+      "description": "Location latitude"
+    },
+    "location_lng": {
+      "type": "number",
+      "description": "Location longitude"
+    },
+    "creator_email": {
+      "type": "string",
+      "description": "Creator email"
+    },
+    "creator_name": {
+      "type": "string",
+      "description": "Creator name"
+    },
+    "attendee_emails": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "List of attendee emails"
+    },
+    "max_attendees": {
+      "type": "number",
+      "description": "Maximum number of attendees"
+    }
+  },
+  "required": [
+    "group_id",
+    "title",
+    "event_date",
+    "location",
+    "creator_email",
+    "creator_name"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.creator_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.visibility": "public"
+        },
+        {
+          "data.group_id": {
+            "$in": {
+              "entity": "GroupMember",
+              "field": "data.group_id",
+              "filter": {
+                "data.user_email": "{{user.email}}",
+                "data.status": "active"
+              }
+            }
+          }
+        },
+        {
+          "data.creator_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.creator_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.creator_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

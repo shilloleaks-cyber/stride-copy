@@ -1,0 +1,56 @@
+{
+  "name": "Comment",
+  "type": "object",
+  "properties": {
+    "post_id": {
+      "type": "string",
+      "description": "ID \u0e02\u0e2d\u0e07\u0e42\u0e1e\u0e2a\u0e15\u0e4c"
+    },
+    "content": {
+      "type": "string",
+      "description": "\u0e40\u0e19\u0e37\u0e49\u0e2d\u0e2b\u0e32\u0e04\u0e2d\u0e21\u0e40\u0e21\u0e19\u0e15\u0e4c"
+    },
+    "author_name": {
+      "type": "string",
+      "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e1c\u0e39\u0e49\u0e04\u0e2d\u0e21\u0e40\u0e21\u0e19\u0e15\u0e4c"
+    },
+    "author_email": {
+      "type": "string",
+      "description": "\u0e2d\u0e35\u0e40\u0e21\u0e25\u0e1c\u0e39\u0e49\u0e04\u0e2d\u0e21\u0e40\u0e21\u0e19\u0e15\u0e4c"
+    }
+  },
+  "required": [
+    "post_id",
+    "content",
+    "author_name",
+    "author_email"
+  ],
+  "rls": {
+    "create": {},
+    "read": {},
+    "update": {
+      "$or": [
+        {
+          "data.author_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.author_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

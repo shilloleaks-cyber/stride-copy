@@ -1,0 +1,81 @@
+{
+  "name": "CoachNudge",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Target user email"
+    },
+    "nudge_type": {
+      "type": "string",
+      "enum": [
+        "motivation",
+        "goal_reminder",
+        "event_reminder",
+        "challenge_update",
+        "peer_activity"
+      ],
+      "description": "Type of nudge"
+    },
+    "title": {
+      "type": "string",
+      "description": "Nudge title"
+    },
+    "message": {
+      "type": "string",
+      "description": "Nudge message"
+    },
+    "action_url": {
+      "type": "string",
+      "description": "Optional action link"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false,
+      "description": "Read status"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "default": "medium",
+      "description": "Nudge priority"
+    }
+  },
+  "required": [
+    "user_email",
+    "nudge_type",
+    "title",
+    "message"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "data.user_email": "{{user.email}}"
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

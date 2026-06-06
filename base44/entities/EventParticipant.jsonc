@@ -1,0 +1,89 @@
+{
+  "name": "EventParticipant",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "description": "Event ID"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Participant email"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "Participant display name"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "joined",
+        "registered",
+        "checked_in",
+        "cancelled"
+      ],
+      "default": "joined",
+      "description": "Participation status"
+    },
+    "checked_in_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the participant checked in (official events only)"
+    }
+  },
+  "required": [
+    "event_id",
+    "user_email",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

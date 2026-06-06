@@ -1,0 +1,72 @@
+{
+  "name": "RewardItem",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Reward name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Reward description"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "digital",
+        "merch"
+      ],
+      "description": "Reward category"
+    },
+    "coin_price": {
+      "type": "number",
+      "description": "Cost in coins"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Reward image"
+    },
+    "stock": {
+      "type": "number",
+      "description": "Available stock (null = unlimited)"
+    },
+    "rarity": {
+      "type": "string",
+      "enum": [
+        "easy",
+        "rare",
+        "limited"
+      ],
+      "default": "easy",
+      "description": "Rarity level"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Is available"
+    }
+  },
+  "required": [
+    "name",
+    "category",
+    "coin_price"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,103 @@
+{
+  "name": "EventResult",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "description": "StrideEvent ID"
+    },
+    "registration_id": {
+      "type": "string",
+      "description": "EventRegistration ID"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Participant email"
+    },
+    "category_id": {
+      "type": "string",
+      "description": "EventCategory ID"
+    },
+    "bib_number": {
+      "type": "string",
+      "description": "Bib number"
+    },
+    "finish_time_seconds": {
+      "type": "number",
+      "description": "Net finish time in seconds"
+    },
+    "gun_time_seconds": {
+      "type": "number",
+      "description": "Gun time in seconds"
+    },
+    "overall_rank": {
+      "type": "number",
+      "description": "Overall placement"
+    },
+    "category_rank": {
+      "type": "number",
+      "description": "Rank within category"
+    },
+    "gender_rank": {
+      "type": "number",
+      "description": "Rank within gender"
+    },
+    "distance_km": {
+      "type": "number",
+      "description": "Distance completed"
+    },
+    "pace_min_per_km": {
+      "type": "number",
+      "description": "Average pace"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "dnf",
+        "dns",
+        "finished"
+      ],
+      "default": "finished",
+      "description": "Race result status"
+    },
+    "certificate_url": {
+      "type": "string",
+      "description": "E-certificate PDF/image URL"
+    }
+  },
+  "required": [
+    "event_id",
+    "registration_id",
+    "user_email",
+    "category_id"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,152 @@
+{
+  "name": "GroupMember",
+  "type": "object",
+  "properties": {
+    "group_id": {
+      "type": "string",
+      "description": "Group ID"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Member email"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "Member name"
+    },
+    "user_image": {
+      "type": "string",
+      "description": "Member profile image URL"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "owner",
+        "admin",
+        "member"
+      ],
+      "default": "member",
+      "description": "Member role"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "pending",
+        "banned"
+      ],
+      "default": "active",
+      "description": "Membership status"
+    },
+    "joined_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When member joined"
+    }
+  },
+  "required": [
+    "group_id",
+    "user_email"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "data.group_id": {
+            "$in": {
+              "entity": "GroupMember",
+              "field": "data.group_id",
+              "filter": {
+                "data.user_email": "{{user.email}}",
+                "data.role": {
+                  "$in": [
+                    "owner",
+                    "admin"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "data.group_id": {
+            "$in": {
+              "entity": "GroupMember",
+              "field": "data.group_id",
+              "filter": {
+                "data.user_email": "{{user.email}}",
+                "data.role": {
+                  "$in": [
+                    "owner",
+                    "admin"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "data.group_id": {
+            "$in": {
+              "entity": "GroupMember",
+              "field": "data.group_id",
+              "filter": {
+                "data.user_email": "{{user.email}}",
+                "data.role": {
+                  "$in": [
+                    "owner",
+                    "admin"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

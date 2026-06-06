@@ -1,0 +1,91 @@
+{
+  "name": "TrainingGoal",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "User's email"
+    },
+    "goal_type": {
+      "type": "string",
+      "enum": [
+        "distance",
+        "pace",
+        "endurance",
+        "5k",
+        "10k",
+        "half_marathon"
+      ],
+      "description": "Type of goal"
+    },
+    "target_value": {
+      "type": "number",
+      "description": "Target value (e.g., 5km distance or 5:30 pace)"
+    },
+    "target_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Target completion date"
+    },
+    "current_level": {
+      "type": "number",
+      "description": "User level when goal created"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "completed",
+        "paused"
+      ],
+      "default": "active",
+      "description": "Goal status"
+    }
+  },
+  "required": [
+    "user_email",
+    "goal_type",
+    "target_date"
+  ],
+  "rls": {
+    "create": {
+      "data.user_email": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

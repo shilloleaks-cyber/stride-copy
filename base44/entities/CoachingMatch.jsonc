@@ -1,0 +1,82 @@
+{
+  "name": "CoachingMatch",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "User seeking coaching"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "User name"
+    },
+    "coach_email": {
+      "type": "string",
+      "description": "Matched coach email"
+    },
+    "coach_name": {
+      "type": "string",
+      "description": "Matched coach name"
+    },
+    "match_reason": {
+      "type": "string",
+      "description": "Why they were matched"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "active",
+        "completed"
+      ],
+      "default": "pending",
+      "description": "Coaching relationship status"
+    },
+    "goals": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Shared goals"
+    }
+  },
+  "required": [
+    "user_email",
+    "user_name",
+    "coach_email",
+    "coach_name"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "data.coach_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "name": "QuestProgress",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "User's email"
+    },
+    "quest_id": {
+      "type": "string",
+      "description": "Daily quest ID"
+    },
+    "quest_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Quest date"
+    },
+    "progress": {
+      "type": "number",
+      "default": 0,
+      "description": "Current progress"
+    },
+    "completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether completed"
+    },
+    "reward_claimed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether reward was claimed"
+    }
+  },
+  "required": [
+    "user_email",
+    "quest_id",
+    "quest_date"
+  ],
+  "rls": {
+    "create": {
+      "data.user_email": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

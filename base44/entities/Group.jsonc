@@ -1,0 +1,142 @@
+{
+  "name": "Group",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Group name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Group description"
+    },
+    "banner_image": {
+      "type": "string",
+      "description": "Banner image URL"
+    },
+    "avatar_image": {
+      "type": "string",
+      "description": "Avatar image URL"
+    },
+    "cover_image": {
+      "type": "string",
+      "description": "Cover image URL (legacy)"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "marathon_training",
+        "local_club",
+        "beginners",
+        "advanced",
+        "trail_running",
+        "social",
+        "other"
+      ],
+      "description": "Group category"
+    },
+    "group_type": {
+      "type": "string",
+      "enum": [
+        "social"
+      ],
+      "default": "social",
+      "description": "Group type"
+    },
+    "privacy": {
+      "type": "string",
+      "enum": [
+        "public",
+        "private",
+        "invite"
+      ],
+      "default": "public",
+      "description": "Group privacy"
+    },
+    "join_policy": {
+      "type": "string",
+      "enum": [
+        "open",
+        "approval",
+        "invite_only"
+      ],
+      "default": "open",
+      "description": "Join policy"
+    },
+    "owner_email": {
+      "type": "string",
+      "description": "Group owner email"
+    },
+    "creator_email": {
+      "type": "string",
+      "description": "Group creator email (legacy)"
+    },
+    "creator_name": {
+      "type": "string",
+      "description": "Group creator name (legacy)"
+    },
+    "member_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Cached member count"
+    },
+    "post_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Cached post count"
+    },
+    "is_private": {
+      "type": "boolean",
+      "default": false,
+      "description": "Private group (legacy)"
+    }
+  },
+  "required": [
+    "name",
+    "owner_email"
+  ],
+  "rls": {
+    "create": {
+      "data.owner_email": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "data.privacy": "public"
+        },
+        {
+          "data.owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

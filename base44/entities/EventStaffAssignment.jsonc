@@ -1,0 +1,129 @@
+{
+  "name": "EventStaffAssignment",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "description": "StrideEvent ID"
+    },
+    "event_title": {
+      "type": "string",
+      "description": "Event title snapshot"
+    },
+    "admin_email": {
+      "type": "string",
+      "description": "Email of the event admin who invited"
+    },
+    "staff_email": {
+      "type": "string",
+      "description": "Email of the invited staff"
+    },
+    "staff_display_name": {
+      "type": "string",
+      "description": "Display name of the staff member"
+    },
+    "roles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Roles assigned (e.g. checkin, registration, payments)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "declined",
+        "revoked"
+      ],
+      "default": "pending",
+      "description": "Assignment status"
+    },
+    "invited_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the invitation was sent"
+    },
+    "accepted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When staff accepted"
+    },
+    "declined_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When staff declined"
+    },
+    "revoked_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When admin revoked access"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional notes"
+    }
+  },
+  "required": [
+    "event_id",
+    "admin_email",
+    "staff_email"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.admin_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.admin_email": "{{user.email}}"
+        },
+        {
+          "data.staff_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.admin_email": "{{user.email}}"
+        },
+        {
+          "data.staff_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.admin_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
