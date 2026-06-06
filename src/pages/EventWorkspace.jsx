@@ -91,7 +91,7 @@ export default function EventWorkspace() {
   // Staff backend query — always fresh on mount (staleTime: 0)
   const { data: staffEventData, isLoading: staffDataLoading } = useQuery({
     queryKey: ['staff-event-data', eventIdParam],
-    queryFn: () => staffAction('get_event_data', { event_id: eventIdParam }).then(r => r.data),
+    queryFn: () => staffAction('get_event_data', { event_id: eventIdParam }),
     enabled: !roleLoading && useStaffBackend && !!eventIdParam && !!user,
     staleTime: 0,
   });
