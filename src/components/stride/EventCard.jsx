@@ -9,7 +9,7 @@ import { Calendar, MapPin, Users, Star } from 'lucide-react';
  *   isRegistered - boolean (optional)
  *   onClick     - override default navigate (optional)
  */
-export default function EventCard({ event, isRegistered, onClick }) {
+export default function EventCard({ event, isRegistered, onClick, liveCount }) {
   const navigate = useNavigate();
 
   const handleClick = () => {
@@ -102,16 +102,21 @@ export default function EventCard({ event, isRegistered, onClick }) {
               </span>
             </div>
           )}
-          {(event.total_registered > 0 || event.max_participants > 0) && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-              <Users style={{ width: 13, height: 13, color: 'rgba(191,255,0,0.5)', flexShrink: 0 }} />
-              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', fontWeight: 500 }}>
-                {event.total_registered > 0 ? `${event.total_registered} registered` : ''}
-                {event.max_participants > 0 && event.total_registered > 0 ? ' · ' : ''}
-                {event.max_participants > 0 ? `${Math.max(0, event.max_participants - (event.total_registered || 0))} spots left` : ''}
-              </span>
-            </div>
-          )}
+          {(() => {
+            // Use live count if available, otherwise fall back to stale cached field
+            const displayCount = liveCount != null ? liveCount.total : (event.total_registered || 0);
+            if (displayCount === 0 && !event.max_participants) return null;
+            return (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                <Users style={{ width: 13, height: 13, color: 'rgba(191,255,0,0.5)', flexShrink: 0 }} />
+                <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', fontWeight: 500 }}>
+                  {displayCount > 0 ? `${displayCount} registered` : ''}
+                  {event.max_participants > 0 && displayCount > 0 ? ' · ' : ''}
+                  {event.max_participants > 0 ? `${Math.max(0, event.max_participants - displayCount)} spots left` : ''}
+                </span>
+              </div>
+            );
+          })()}
         </div>
       </div>
 

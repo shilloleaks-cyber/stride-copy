@@ -93,6 +93,15 @@ export default function StrideEventDetail() {
     enabled: !!eventId && !!user?.email,
   });
 
+  // Live registration count — from backend function, not stale event.total_registered
+  const { data: liveCountData } = useQuery({
+    queryKey: ['event-live-counts', eventId],
+    queryFn: () => base44.functions.invoke('getEventRegistrationCounts', { event_ids: [eventId] }).then(r => r.data?.counts?.[eventId] || null),
+    enabled: !!eventId,
+    staleTime: 30000,
+  });
+  const liveCount = liveCountData ?? null;
+
   const handleRegisterSuccess = (reg) => {
     setShowForm(false);
     queryClient.invalidateQueries({ queryKey: ['my-reg', eventId, user?.email] });
@@ -259,15 +268,19 @@ export default function StrideEventDetail() {
               </div>
             </div>
           )}
-          {/* Total registered — from backend-synced counter */}
-          {event.event_type !== 'community' && (event.total_registered > 0 || event.max_participants > 0) && (
+          {/* Total registered — live count from backend, falls back to stale cached field */}
+          {event.event_type !== 'community' && (
+            (liveCount !== null && liveCount.total > 0) ||
+            event.total_registered > 0 ||
+            event.max_participants > 0
+          ) && (
             <div className="flex items-center gap-3">
               <Users className="w-5 h-5 flex-shrink-0" style={{ color: 'rgba(191,255,0,0.6)' }} />
               <div>
                 <p className="text-xs mb-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Registered</p>
                 <p className="text-white font-semibold">
-                  {event.total_registered || 0} {t('home_registered')}
-                  {event.max_participants > 0 && ` · ${Math.max(0, event.max_participants - (event.total_registered || 0))} ${t('event_spots_left')}`}
+                  {liveCount !== null ? liveCount.total : (event.total_registered || 0)} {t('home_registered')}
+                  {event.max_participants > 0 && ` · ${Math.max(0, event.max_participants - (liveCount !== null ? liveCount.total : (event.total_registered || 0)))} ${t('event_spots_left')}`}
                 </p>
               </div>
             </div>

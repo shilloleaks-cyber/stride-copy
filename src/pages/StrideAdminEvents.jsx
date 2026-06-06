@@ -15,7 +15,7 @@ const STATUS_CFG = {
   cancelled: { bg: 'rgba(255,60,60,0.08)',  border: 'rgba(255,60,60,0.2)',    color: 'rgba(255,100,100,0.85)',label: 'Cancelled' },
 };
 
-function EventAdminCard({ event, onOpen }) {
+function EventAdminCard({ event, onOpen, liveCount }) {
   const sc = STATUS_CFG[event.status] || STATUS_CFG.draft;
   const hasDate = !!event.event_date;
 
@@ -82,12 +82,16 @@ function EventAdminCard({ event, onOpen }) {
         {/* Stats row + Open Admin */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
           <div style={{ display: 'flex', gap: 12 }}>
-            {event.total_registered > 0 && (
-              <div>
-                <p style={{ fontSize: 16, fontWeight: 900, color: '#fff', margin: 0, lineHeight: 1 }}>{event.total_registered}</p>
-                <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', margin: '2px 0 0', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Registered</p>
-              </div>
-            )}
+            {(() => {
+              const displayCount = liveCount != null ? liveCount.total : (event.total_registered || 0);
+              if (displayCount === 0) return null;
+              return (
+                <div>
+                  <p style={{ fontSize: 16, fontWeight: 900, color: '#fff', margin: 0, lineHeight: 1 }}>{displayCount}</p>
+                  <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', margin: '2px 0 0', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Registered</p>
+                </div>
+              );
+            })()}
           </div>
           <button
             onClick={onOpen}
@@ -121,6 +125,15 @@ export default function StrideAdminEvents() {
   });
 
   const myEvents = allEvents.filter(ev => isEventOwner(ev, user));
+
+  // Live registration counts — overrides stale event.total_registered
+  const { data: liveCountsData } = useQuery({
+    queryKey: ['admin-events-live-counts', myEvents.map(e => e.id).join(',')],
+    queryFn: () => base44.functions.invoke('getEventRegistrationCounts', { event_ids: myEvents.map(e => e.id) }).then(r => r.data?.counts || {}),
+    enabled: myEvents.length > 0,
+    staleTime: 30000,
+  });
+  const liveCounts = liveCountsData || {};
 
   return (
     <div className="min-h-screen text-white pb-32" style={{ backgroundColor: '#0D0D0D' }}>
@@ -202,7 +215,7 @@ export default function StrideAdminEvents() {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {myEvents.map(ev => (
-              <EventAdminCard key={ev.id} event={ev} onOpen={() => navigate(`/EventWorkspace?event_id=${ev.id}`)} />
+              <EventAdminCard key={ev.id} event={ev} onOpen={() => navigate(`/EventWorkspace?event_id=${ev.id}`)} liveCount={liveCounts[ev.id]} />
             ))}
           </div>
         )}

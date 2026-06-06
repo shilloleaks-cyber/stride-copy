@@ -6,21 +6,10 @@ const PURPLE = '#8A2BE2';
 const CARD   = 'rgba(255,255,255,0.05)';
 const BORDER = 'rgba(255,255,255,0.09)';
 
-function DebugRow({ label, value }) {
-  return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-      <span style={{ color: 'rgba(255,255,255,0.4)' }}>{label}</span>
-      <span style={{ color: 'rgba(0,220,255,0.9)', fontWeight: 700 }}>{String(value ?? '—')}</span>
-    </div>
-  );
-}
 
-export default function EventOverviewPanel({ event, registrations = [], payments = [], onTabChange, usingInjectedData, directRegistrationsCount }) {
-  // Staff: registrations comes directly from staffEventData (asServiceRole, no RLS) — never filter
-  // Admin: filter by event_id as safety guard
-  const regs = usingInjectedData
-    ? registrations
-    : registrations.filter(r => r.event_id === event.id);
+export default function EventOverviewPanel({ event, registrations = [], payments = [], onTabChange }) {
+  // registrations are already scoped to this event (either from direct query or staffEventAction backend)
+  const regs = registrations;
 
   const total       = regs.length;
   const pending     = regs.filter(r => r.status === 'pending').length;
@@ -44,21 +33,6 @@ export default function EventOverviewPanel({ event, registrations = [], payments
 
   return (
     <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 20 }}>
-
-      {/* ── Always-visible staff data debug banner ── */}
-      {usingInjectedData !== undefined && (
-        <div style={{ background: 'rgba(0,200,255,0.08)', border: '1px solid rgba(0,200,255,0.3)', borderRadius: 12, padding: '10px 14px', fontSize: 11, display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <span style={{ fontSize: 10, fontWeight: 800, color: 'rgba(0,200,255,0.8)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 2 }}>📊 Staff Data Debug</span>
-          <DebugRow label="usingInjectedData" value={String(usingInjectedData)} />
-          <DebugRow label="staffDataSource" value={usingInjectedData ? 'staffEventAction.get_event_data' : 'directQuery'} />
-          <DebugRow label="staffRegistrationsCount" value={registrations.length} />
-          <DebugRow label="regsAfterEventIdFilter" value={regs.length} />
-          <DebugRow label="directRegistrationsCount" value={directRegistrationsCount ?? '—'} />
-          <DebugRow label="displayedTotal" value={total} />
-          <DebugRow label="event.id" value={event.id} />
-          <DebugRow label="sampleEventIdFromReg" value={registrations[0]?.event_id ?? 'n/a'} />
-        </div>
-      )}
 
       {/* Stats */}
       <div>

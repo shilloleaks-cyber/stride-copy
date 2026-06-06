@@ -19,48 +19,7 @@ import { EVENT_STATUS } from '@/lib/eventStatusConfig';
 
 const BG     = '#080808';
 
-// ── Staff Debug Panel ──────────────────────────────────────────────────────────
-function StaffDebugPanel({ user, eventId, assignment, staffRoles, isStaff, isFull, can, registrations, allPayments, categories, usingInjectedData }) {
-  const [open, setOpen] = React.useState(false);
-  return (
-    <div style={{ margin: '12px 16px 0', borderRadius: 12, background: 'rgba(255,200,0,0.06)', border: '1px solid rgba(255,200,0,0.2)', overflow: 'hidden' }}>
-      <button onClick={() => setOpen(o => !o)} style={{ width: '100%', padding: '8px 12px', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: 10, fontWeight: 800, color: 'rgba(255,200,0,0.8)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>🔍 Staff Access Debug</span>
-        <span style={{ fontSize: 11, color: 'rgba(255,200,0,0.5)' }}>{open ? '▲' : '▼'}</span>
-      </button>
-      {open && (
-        <div style={{ padding: '0 12px 12px', fontSize: 11, color: 'rgba(255,255,255,0.6)', display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <DebugRow label="Email" value={user?.email} />
-          <DebugRow label="Event ID" value={eventId} />
-          <DebugRow label="Assignment found" value={assignment ? 'YES ✅' : 'NO ❌'} />
-          <DebugRow label="Assignment status" value={assignment?.status} />
-          <DebugRow label="Roles" value={staffRoles?.join(', ') || '—'} />
-          <DebugRow label="isStaff" value={String(isStaff)} />
-          <DebugRow label="isFull" value={String(isFull)} />
-          <DebugRow label="can(registrations)" value={String(can('registrations'))} />
-          <DebugRow label="can(payments)" value={String(can('payments'))} />
-          <DebugRow label="can(checkin)" value={String(can('checkin'))} />
-          <DebugRow label="can(categories)" value={String(can('categories'))} />
-          <DebugRow label="can(staffs)" value={String(can('staffs'))} />
-          <div style={{ marginTop: 6, paddingTop: 6, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-            <DebugRow label="usingInjectedData" value={String(usingInjectedData)} />
-            <DebugRow label="Registrations count" value={registrations?.length ?? '—'} />
-            <DebugRow label="Payments count" value={allPayments?.length ?? '—'} />
-            <DebugRow label="Categories count" value={categories?.length ?? '—'} />
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-function DebugRow({ label, value }) {
-  return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-      <span style={{ color: 'rgba(255,255,255,0.4)' }}>{label}</span>
-      <span style={{ color: 'rgba(255,200,0,0.9)', fontWeight: 700 }}>{String(value ?? '—')}</span>
-    </div>
-  );
-}
+
 const ACCENT = '#B6FF00';
 const BORDER = 'rgba(255,255,255,0.09)';
 
@@ -280,23 +239,6 @@ export default function EventWorkspace() {
         )}
       </div>
 
-      {/* ── Staff Debug Panel (staff mode only) ── */}
-      {isStaff && !isFull && (
-        <StaffDebugPanel
-          user={user}
-          eventId={eventIdParam}
-          assignment={assignment}
-          staffRoles={staffRoles}
-          isStaff={isStaff}
-          isFull={isFull}
-          can={can}
-          registrations={registrations}
-          allPayments={allPayments}
-          categories={categories}
-          usingInjectedData={useStaffBackend}
-        />
-      )}
-
       {/* ── Tab content ── */}
       <div style={{ paddingTop: 20 }}>
         {activeTab === 'overview' && can('overview') && (
@@ -305,8 +247,6 @@ export default function EventWorkspace() {
             registrations={registrations}
             payments={allPayments}
             onTabChange={setActiveTab}
-            usingInjectedData={useStaffBackend}
-            directRegistrationsCount={useStaffBackend ? registrationsDirect.length : registrations.length}
           />
         )}
         {activeTab === 'registrations' && can('registrations') && (

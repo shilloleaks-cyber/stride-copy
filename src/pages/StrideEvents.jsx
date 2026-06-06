@@ -70,6 +70,16 @@ export default function StrideEvents() {
     staleTime: 60000,
   });
 
+  // Live registration counts for all visible events — overrides stale event.total_registered
+  const allVisibleEventIds = [...events.map(e => e.id), ...draftEvents.map(e => e.id)];
+  const { data: liveCountsData } = useQuery({
+    queryKey: ['events-live-counts', allVisibleEventIds.join(',')],
+    queryFn: () => base44.functions.invoke('getEventRegistrationCounts', { event_ids: allVisibleEventIds }).then(r => r.data?.counts || {}),
+    enabled: allVisibleEventIds.length > 0,
+    staleTime: 30000,
+  });
+  const liveCounts = liveCountsData || {};
+
   const myRegMap = Object.fromEntries(myRegs.map(r => [r.event_id, r]));
   const isAdmin = user?.role === 'admin';
   const showAdminHub = allEventsForOwnerCheck.some(ev => isEventOwner(ev, user));
@@ -203,7 +213,7 @@ export default function StrideEvents() {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {officialEvents.map(event => (
-                  <EventCard key={event.id} event={event} isRegistered={!!myRegMap[event.id]} />
+                  <EventCard key={event.id} event={event} isRegistered={!!myRegMap[event.id]} liveCount={liveCounts[event.id]} />
                 ))}
               </div>
             )}
@@ -258,7 +268,7 @@ export default function StrideEvents() {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {communityEvents.map(event => (
-                  <EventCard key={event.id} event={event} />
+                  <EventCard key={event.id} event={event} liveCount={liveCounts[event.id]} />
                 ))}
               </div>
             )}
