@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
@@ -128,41 +128,57 @@ function RoleChip({ role, t }) {
   );
 }
 
-// ── Event Staff Card ───────────────────────────────────────────────────────────
-function StaffEventCard({ assignment, event, navigate, t }) {
+// ── Event Selector Chip ────────────────────────────────────────────────────────
+function EventChip({ assignment, event, isSelected, onClick }) {
+  const title = event?.title || assignment.event_title || 'Event';
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        flexShrink: 0,
+        padding: '8px 16px',
+        borderRadius: 20,
+        border: isSelected ? `1.5px solid ${C.lime}` : `1.5px solid rgba(255,255,255,0.1)`,
+        background: isSelected ? 'rgba(191,255,0,0.12)' : 'rgba(255,255,255,0.04)',
+        color: isSelected ? C.lime : 'rgba(255,255,255,0.6)',
+        fontSize: 13,
+        fontWeight: isSelected ? 800 : 600,
+        cursor: 'pointer',
+        whiteSpace: 'nowrap',
+        WebkitTapHighlightColor: 'transparent',
+        transition: 'all 0.18s ease',
+        boxShadow: isSelected ? '0 0 12px rgba(191,255,0,0.15)' : 'none',
+      }}
+    >
+      {title}
+    </button>
+  );
+}
+
+// ── Active Event Summary Card ──────────────────────────────────────────────────
+function ActiveEventCard({ assignment, event, t }) {
   const roles = assignment.roles || [];
   const isFull = roles.includes('full_admin_view');
-  const toolKeys = isFull ? FULL_ADMIN_TOOLS : roles.filter(r => TOOL_CONFIG[r]);
-
-  const handleTool = (toolKey) => {
-    const cfg = TOOL_CONFIG[toolKey];
-    if (!cfg) return;
-    if (toolKey === 'checkin') {
-      // Standalone QR scanner — needs event_id for role validation
-      navigate(`/StrideCheckin?event_id=${assignment.event_id}&from=staff`);
-    } else {
-      navigate(`/EventWorkspace?event_id=${assignment.event_id}&from=staff&tab=${cfg.tab}`);
-    }
-  };
 
   return (
     <div style={{
       borderRadius: 20, overflow: 'hidden',
       background: C.card,
       border: `1px solid ${C.purpleBorder}`,
-      boxShadow: '0 4px 20px rgba(138,43,226,0.1)',
+      boxShadow: '0 4px 20px rgba(138,43,226,0.12)',
     }}>
-      {/* Banner */}
       {event?.banner_image && (
-        <div style={{ height: 80, overflow: 'hidden', position: 'relative' }}>
-          <img src={event.banner_image} alt={event?.title} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }} />
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 30%, rgba(22,22,22,0.97))' }} />
+        <div style={{ height: 110, overflow: 'hidden', position: 'relative' }}>
+          <img
+            src={event.banner_image}
+            alt={event?.title}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.65 }}
+          />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 20%, rgba(22,22,22,0.97))' }} />
         </div>
       )}
-
-      {/* Event info */}
-      <div style={{ padding: '14px 16px 0' }}>
-        {/* Chips */}
+      <div style={{ padding: '14px 16px 16px' }}>
+        {/* Role badges */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
           <span style={{
             fontSize: 9, fontWeight: 800, padding: '3px 8px', borderRadius: 6,
@@ -180,11 +196,11 @@ function StaffEventCard({ assignment, event, navigate, t }) {
           )}
         </div>
 
-        <p style={{ fontSize: 17, fontWeight: 900, color: C.text, margin: '0 0 6px', lineHeight: 1.2 }}>
+        <p style={{ fontSize: 18, fontWeight: 900, color: C.text, margin: '0 0 8px', lineHeight: 1.2 }}>
           {event?.title || assignment.event_title || 'Event'}
         </p>
 
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px 14px', marginBottom: 10 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 16px' }}>
           {event?.event_date && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <CalendarDays style={{ width: 11, height: 11, color: C.lime }} />
@@ -200,39 +216,6 @@ function StaffEventCard({ assignment, event, navigate, t }) {
             </div>
           )}
         </div>
-
-        {assignment.accepted_at && (
-          <p style={{ fontSize: 10, color: 'rgba(191,255,0,0.5)', marginBottom: 14 }}>
-            ✓ {t('accept_invite')}d {format(new Date(assignment.accepted_at), 'MMM d, yyyy')}
-          </p>
-        )}
-      </div>
-
-      {/* Tool grid */}
-      <div style={{ padding: '0 16px 16px' }}>
-        {toolKeys.length === 0 ? (
-          <div style={{
-            borderRadius: 12, padding: '14px', textAlign: 'center',
-            background: 'rgba(255,255,255,0.03)', border: `1px dashed ${C.line}`,
-          }}>
-            <p style={{ fontSize: 12, color: C.muted, margin: 0 }}>No tools assigned yet</p>
-          </div>
-        ) : (
-          <>
-            <p style={{ fontSize: 10, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
-              Your Tools
-            </p>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: toolKeys.length === 1 ? '1fr' : 'repeat(2, 1fr)',
-              gap: 8,
-            }}>
-              {toolKeys.map(key => (
-                <ToolCard key={key} toolKey={key} t={t} onPress={() => handleTool(key)} />
-              ))}
-            </div>
-          </>
-        )}
       </div>
     </div>
   );
@@ -242,16 +225,14 @@ function StaffEventCard({ assignment, event, navigate, t }) {
 export default function StrideStaffDashboard() {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const [selectedIdx, setSelectedIdx] = useState(0);
 
   const { data: user } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
-
   const normalizedEmail = user?.email ? user.email.toLowerCase().trim() : null;
 
   const { data: assignments = [], isLoading: assignLoading } = useQuery({
     queryKey: ['staff-assignments', normalizedEmail],
     queryFn: async () => {
-      // Fetch all assignments for this email (any status) and filter client-side
-      // to support both 'accepted' and 'active' as canonical active statuses.
       const records = await base44.entities.EventStaffAssignment.filter(
         { staff_email: normalizedEmail },
         '-invited_at', 100
@@ -275,10 +256,26 @@ export default function StrideStaffDashboard() {
   const isLoading = assignLoading || eventsLoading;
   const eventMap = Object.fromEntries(events.map(e => [e.id, e]));
 
+  const activeAssignment = assignments[selectedIdx] || null;
+  const activeEvent = activeAssignment ? eventMap[activeAssignment.event_id] || null : null;
+  const activeRoles = activeAssignment?.roles || [];
+  const isFull = activeRoles.includes('full_admin_view');
+  const toolKeys = isFull ? FULL_ADMIN_TOOLS : activeRoles.filter(r => TOOL_CONFIG[r]);
+
+  const handleTool = (toolKey) => {
+    const cfg = TOOL_CONFIG[toolKey];
+    if (!cfg || !activeAssignment) return;
+    if (toolKey === 'checkin') {
+      navigate(`/StrideCheckin?event_id=${activeAssignment.event_id}&from=staff`);
+    } else {
+      navigate(`/EventWorkspace?event_id=${activeAssignment.event_id}&from=staff&tab=${cfg.tab}`);
+    }
+  };
+
   return (
     <div style={{ minHeight: '100dvh', backgroundColor: C.bg, color: C.text, paddingBottom: 120 }}>
       {/* Header */}
-      <div style={{ padding: 'max(env(safe-area-inset-top,0px),52px) 20px 20px' }}>
+      <div style={{ padding: 'max(env(safe-area-inset-top,0px),52px) 20px 16px' }}>
         <button
           onClick={() => navigate(-1)}
           style={{
@@ -293,7 +290,7 @@ export default function StrideStaffDashboard() {
         <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(138,43,226,0.7)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4 }}>
           {t('staff')}
         </p>
-        <h1 style={{ fontSize: 28, fontWeight: 900, color: C.text, margin: '0 0 4px' }}>
+        <h1 style={{ fontSize: 28, fontWeight: 900, color: C.text, margin: '0 0 2px' }}>
           {t('staff')}
           {assignments.length > 0 && (
             <span style={{ fontSize: 16, fontWeight: 700, color: 'rgba(138,43,226,0.7)', marginLeft: 10 }}>
@@ -304,11 +301,10 @@ export default function StrideStaffDashboard() {
         <p style={{ fontSize: 13, color: C.muted, margin: 0 }}>{t('staff_dashboard_subtitle')}</p>
       </div>
 
-      {/* Content */}
-      <div style={{ padding: '0 20px' }}>
-        {isLoading ? (
-          <div style={{ textAlign: 'center', padding: '48px 0', color: C.muted, fontSize: 14 }}>Loading…</div>
-        ) : assignments.length === 0 ? (
+      {isLoading ? (
+        <div style={{ textAlign: 'center', padding: '64px 0', color: C.muted, fontSize: 14 }}>Loading…</div>
+      ) : assignments.length === 0 ? (
+        <div style={{ margin: '0 20px' }}>
           <div style={{
             borderRadius: 20, padding: '48px 20px', textAlign: 'center',
             background: 'rgba(255,255,255,0.03)', border: `1px dashed ${C.line}`,
@@ -321,20 +317,72 @@ export default function StrideStaffDashboard() {
               Accepted staff invitations will appear here.
             </p>
           </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {assignments.map(a => (
-              <StaffEventCard
-                key={a.id}
-                assignment={a}
-                event={eventMap[a.event_id] || null}
-                navigate={navigate}
-                t={t}
-              />
-            ))}
+        </div>
+      ) : (
+        <>
+          {/* Sticky event selector */}
+          <div style={{
+            position: 'sticky', top: 0, zIndex: 50,
+            backgroundColor: C.bg,
+            borderBottom: `1px solid ${C.line}`,
+            padding: '10px 20px 12px',
+          }}>
+            <div style={{
+              display: 'flex', gap: 8, overflowX: 'auto',
+              scrollbarWidth: 'none', msOverflowStyle: 'none',
+              WebkitOverflowScrolling: 'touch',
+            }}>
+              {assignments.map((a, idx) => (
+                <EventChip
+                  key={a.id}
+                  assignment={a}
+                  event={eventMap[a.event_id] || null}
+                  isSelected={idx === selectedIdx}
+                  onClick={() => setSelectedIdx(idx)}
+                />
+              ))}
+            </div>
           </div>
-        )}
-      </div>
+
+          {/* Active event content */}
+          {activeAssignment && (
+            <div style={{ padding: '16px 20px 0' }}>
+              {/* Event summary card */}
+              <ActiveEventCard assignment={activeAssignment} event={activeEvent} t={t} />
+
+              {/* Tools */}
+              <div style={{ marginTop: 20 }}>
+                {toolKeys.length === 0 ? (
+                  <div style={{
+                    borderRadius: 16, padding: '20px', textAlign: 'center',
+                    background: 'rgba(255,255,255,0.03)', border: `1px dashed ${C.line}`,
+                  }}>
+                    <p style={{ fontSize: 12, color: C.muted, margin: 0 }}>No tools assigned yet</p>
+                  </div>
+                ) : (
+                  <>
+                    <p style={{
+                      fontSize: 10, fontWeight: 700, color: C.muted,
+                      textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10,
+                    }}>
+                      Your Tools
+                    </p>
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(2, 1fr)',
+                      gap: 10,
+                    }}>
+                      {toolKeys.map(key => (
+                        <ToolCard key={key} toolKey={key} t={t} onPress={() => handleTool(key)} />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
