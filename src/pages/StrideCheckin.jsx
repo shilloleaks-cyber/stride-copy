@@ -9,6 +9,8 @@ import {
 import { format } from 'date-fns';
 import QRScanner from '@/components/stride/QRScanner';
 import { useEventRole } from '@/hooks/useEventRole';
+import { parseRegistrationQr } from '@/lib/registrationQr';
+import { staffAction } from '@/lib/staffEventAction';
 
 // ─── State keys ───────────────────────────────────────────────────────────────
 const S = {
@@ -25,24 +27,7 @@ const S = {
   SUCCESS:     'success',
 };
 
-// ─── Parse QR string → structured payload ────────────────────────────────────
-// Supports:
-//   1. New format: JSON { type, registration_id, event_id, bib_number }
-//   2. Legacy: plain qr_code string (e.g. "QR-ABC123-1234")
-function parseQRValue(raw) {
-  if (!raw || typeof raw !== 'string') return { format: 'invalid', raw };
-  const trimmed = raw.trim();
-  if (trimmed.startsWith('{')) {
-    try {
-      const obj = JSON.parse(trimmed);
-      if (obj.type === 'event_registration' && obj.registration_id) {
-        return { format: 'json', ...obj, raw: trimmed };
-      }
-    } catch (_) {}
-  }
-  // Legacy: treat as a raw qr_code / bib lookup string
-  return { format: 'legacy', raw: trimmed };
-}
+// parseRegistrationQr is imported from lib/registrationQr.js
 
 // ─── Payment label helper ─────────────────────────────────────────────────────
 function getPayLabel(payment_status, hasSlip) {
@@ -218,75 +203,76 @@ export default function StrideCheckin() {
     (scopedEventId && (isFull || can('checkin')))
   );
 
-  // ── Check-in mutation — uses staffEventAction backend fn for staff users ──
+  // ── Check-in mutation — always routes through staffEventAction (service role) ──
   const checkinMutation = useMutation({
     mutationFn: async () => {
       const now = new Date().toISOString();
-      const isStaff = !!(scopedEventId && !user?.role === 'admin');
-      // Route through backend function (handles RLS elevation for all non-admin users)
-      await base44.functions.invoke('staffEventAction', {
-        action: 'checkin',
+      // Use backend check_in_registration for all users — it handles RLS elevation
+      const result = await staffAction('check_in_registration', {
         event_id: foundReg.event_id,
         registration_id: foundReg.id,
       });
-      await base44.entities.EventCheckinLog.create({
-        event_id: foundReg.event_id,
-        registration_id: foundReg.id,
-        user_email: foundReg.user_email,
-        bib_number: foundReg.bib_number || '',
-        scanned_by: user.email,
-        scanned_at: now,
-        result: 'success',
-      });
-      const existingRewards = await base44.entities.EventRewardUnlock.filter({ registration_id: foundReg.id });
-      if (existingRewards.length === 0) {
-        await base44.entities.EventRewardUnlock.create({
-          registration_id: foundReg.id, event_id: foundReg.event_id,
-          user_email: foundReg.user_email, reward_type: 'badge',
-          reward_label: 'Finisher Badge', status: 'unlocked', unlocked_at: now,
+      if (!result?.success && !result?.already_checked_in) {
+        throw new Error(result?.error || 'Check-in failed');
+      }
+      // Log the check-in (best-effort — may fail for staff without write access to log, ignore)
+      try {
+        await base44.entities.EventCheckinLog.create({
+          event_id: foundReg.event_id,
+          registration_id: foundReg.id,
+          user_email: foundReg.user_email,
+          bib_number: foundReg.bib_number || '',
+          scanned_by: user.email,
+          scanned_at: now,
+          result: 'success',
         });
-        const eventCoupons = await base44.entities.Coupon.filter({ event_id: foundReg.event_id });
-        for (const coupon of eventCoupons) {
+      } catch (_) {}
+      // Unlock rewards (best-effort)
+      try {
+        const existingRewards = await base44.entities.EventRewardUnlock.filter({ registration_id: foundReg.id });
+        if (existingRewards.length === 0) {
           await base44.entities.EventRewardUnlock.create({
             registration_id: foundReg.id, event_id: foundReg.event_id,
-            user_email: foundReg.user_email, reward_type: 'coupon',
-            reward_id: coupon.id, reward_label: coupon.title,
-            status: 'unlocked', unlocked_at: now,
+            user_email: foundReg.user_email, reward_type: 'badge',
+            reward_label: 'Finisher Badge', status: 'unlocked', unlocked_at: now,
           });
+          const eventCoupons = await base44.entities.Coupon.filter({ event_id: foundReg.event_id });
+          for (const coupon of eventCoupons) {
+            await base44.entities.EventRewardUnlock.create({
+              registration_id: foundReg.id, event_id: foundReg.event_id,
+              user_email: foundReg.user_email, reward_type: 'coupon',
+              reward_id: coupon.id, reward_label: coupon.title,
+              status: 'unlocked', unlocked_at: now,
+            });
+          }
         }
-      }
+      } catch (_) {}
     },
     onSuccess: () => {
       setState(S.SUCCESS);
       queryClient.invalidateQueries({ queryKey: ['event-regs', scopedEventId] });
+      queryClient.invalidateQueries({ queryKey: ['staff-event-data', scopedEventId] });
       queryClient.invalidateQueries({ queryKey: ['all-regs-admin'] });
     },
   });
 
-  // ── Resolve a single registration into the correct result state ────────────
-  const resolveReg = async (reg) => {
-    const [evs, cats, payments] = await Promise.all([
+  // ── Resolve a registration + related data into result state ─────────────────
+  // All lookups go through backend (service role) to bypass RLS for staff users.
+  const resolveReg = async (reg, category = null) => {
+    // Fetch event and category via public entities (readable by all)
+    const [evs, cats] = await Promise.all([
       base44.entities.StrideEvent.filter({ id: reg.event_id }),
-      reg.category_id && reg.category_id !== 'rsvp'
+      !category && reg.category_id && reg.category_id !== 'rsvp'
         ? base44.entities.EventCategory.filter({ id: reg.category_id })
-        : Promise.resolve([]),
-      reg.payment_status === 'pending'
-        ? base44.entities.EventPayment.filter({ registration_id: reg.id })
         : Promise.resolve([]),
     ]);
 
     setFoundReg(reg);
     setFoundEvent(evs[0] || null);
-    setFoundCat(cats[0] || null);
-    const slip = payments.length > 0 && !!payments[0]?.slip_image_url;
-    setHasSlip(slip);
+    setFoundCat(category || cats[0] || null);
+    setHasSlip(false);
 
     if (reg.checked_in) {
-      await base44.entities.EventCheckinLog.create({
-        event_id: reg.event_id, registration_id: reg.id, user_email: reg.user_email,
-        bib_number: reg.bib_number || '', scanned_by: user.email,
-        scanned_at: new Date().toISOString(), result: 'already_checked_in',
-      });
       setState(S.ALREADY);
       return;
     }
@@ -299,7 +285,8 @@ export default function StrideCheckin() {
     setState(S.READY);
   };
 
-  // ── Main search — JSON QR first, then legacy QR/bib/name ──────────────────
+  // ── Main search — always routes through staffEventAction backend ──────────
+  // This bypasses RLS so staff can look up any participant in their assigned event.
   const handleSearchWithValue = async (q) => {
     q = (q || '').trim();
     if (!q) return;
@@ -308,72 +295,31 @@ export default function StrideCheckin() {
     setFoundReg(null); setFoundEvent(null); setFoundCat(null);
     setHasSlip(false); setResults([]);
 
-    const parsed = parseQRValue(q);
-
-    // ── A. New JSON format: lookup by registration_id directly ───────────────
-    if (parsed.format === 'json') {
-      const regs = await base44.entities.EventRegistration.filter({ id: parsed.registration_id });
-      if (!regs.length) { setState(S.NOT_FOUND); return; }
-      const reg = regs[0];
-
-      // Wrong event guard (only enforce if scopedEventId is set OR if payload carries event_id)
-      if (parsed.event_id && scopedEventId && parsed.event_id !== scopedEventId) {
-        setFoundReg(reg);
-        setScanError(`This QR belongs to a different event.`);
-        setState(S.WRONG_EVENT);
-        return;
-      }
-
-      await resolveReg(reg);
+    // All lookups require a scoped event_id (staff must open via Staff Dashboard)
+    if (!scopedEventId) {
+      setState(S.NOT_FOUND);
+      setScanError('No event selected. Open Check-In from your Staff Dashboard.');
       return;
     }
 
-    // ── B. Legacy / manual entry: qr_code exact → bib exact → fuzzy ─────────
+    // Delegate to backend — it parses QR, checks event scope, does service-role lookup
+    const result = await staffAction('find_registration_for_checkin', {
+      event_id: scopedEventId,
+      qr_input: q,
+    });
 
-    // 1. QR code exact
-    let regs = await base44.entities.EventRegistration.filter({ qr_code: q });
-
-    // 2. Bib exact (scope to event if known)
-    if (!regs.length) {
-      const bibFilter = scopedEventId
-        ? { bib_number: q.toUpperCase(), event_id: scopedEventId }
-        : { bib_number: q.toUpperCase() };
-      regs = await base44.entities.EventRegistration.filter(bibFilter);
-    }
-
-    // 3. Broad fetch + client-side filter by name / email (scope to event if known)
-    if (!regs.length) {
-      const fetchFilter = scopedEventId ? { event_id: scopedEventId } : {};
-      const all = Object.keys(fetchFilter).length > 0
-        ? await base44.entities.EventRegistration.filter(fetchFilter, '-created_date', 500)
-        : await base44.entities.EventRegistration.list('-created_date', 500);
-      const ql = q.toLowerCase();
-      regs = all.filter(r =>
-        `${r.first_name} ${r.last_name}`.toLowerCase().includes(ql) ||
-        r.user_email?.toLowerCase().includes(ql)
-      );
-    }
-
-    if (!regs.length) { setState(S.NOT_FOUND); return; }
-
-    // If single exact result, go straight to resolve
-    if (regs.length === 1) {
-      await resolveReg(regs[0]);
+    if (result?.wrong_event) {
+      setScanError('This QR belongs to a different event.');
+      setState(S.WRONG_EVENT);
       return;
     }
 
-    // Sort by score descending
-    const sorted = [...regs].sort((a, b) => scoreReg(b, q) - scoreReg(a, q));
+    if (!result?.found || !result?.registration) {
+      setState(S.NOT_FOUND);
+      return;
+    }
 
-    // Build a catMap for the result rows
-    const catIds = [...new Set(sorted.map(r => r.category_id).filter(Boolean))];
-    const cats = await Promise.all(catIds.map(id => base44.entities.EventCategory.filter({ id })));
-    const newCatMap = {};
-    cats.flat().forEach(c => { newCatMap[c.id] = c; });
-
-    setResults(sorted);
-    setCatMap(newCatMap);
-    setState(S.RESULTS);
+    await resolveReg(result.registration, result.category || null);
   };
 
   const handleSearch = () => handleSearchWithValue(input);
@@ -475,7 +421,14 @@ export default function StrideCheckin() {
               </div>
               <div>
                 <p style={{ fontSize: 16, fontWeight: 800, color: '#fff', margin: '0 0 4px' }}>No Participant Found</p>
-                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: 1.6 }}>No registration matches this QR, bib, name, or email.</p>
+                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: 1.6 }}>
+                  {scanError || 'QR was read but does not match any active registration in this event.'}
+                </p>
+                {input && (
+                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', margin: '6px 0 0', fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                    Input: {input.length > 60 ? input.slice(0, 60) + '…' : input}
+                  </p>
+                )}
               </div>
             </div>
           )}

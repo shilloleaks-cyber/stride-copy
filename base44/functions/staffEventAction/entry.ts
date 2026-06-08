@@ -15,6 +15,29 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const normalizeEmail = (e) => String(e || '').toLowerCase().trim();
 
+// ── Inline QR parser (mirrors lib/registrationQr.js — no local imports in Deno) ──
+function parseRegistrationQr(input) {
+  const raw = (input || '').trim();
+  if (!raw) return { raw, format: 'empty' };
+  if (raw.startsWith('{')) {
+    try {
+      const obj = JSON.parse(raw);
+      if (obj.type === 'event_registration' && obj.registration_id) {
+        return { format: 'json', registration_id: obj.registration_id, event_id: obj.event_id || null, bib_number: obj.bib_number || null, email: obj.user_email || obj.email || null, raw };
+      }
+      const reg_id = obj.registration_id || obj.registrationId || obj.event_registration_id || obj.id || obj.ticket_id || null;
+      if (reg_id) {
+        return { format: 'json_legacy', registration_id: reg_id, event_id: obj.event_id || obj.eventId || null, bib_number: obj.bib_number || obj.bibNumber || null, email: obj.user_email || obj.email || null, raw };
+      }
+    } catch (_) {}
+  }
+  if (raw.includes('@')) return { format: 'email', registration_id: null, event_id: null, bib_number: null, email: raw, raw };
+  const isMongoId = /^[0-9a-f]{20,}$/i.test(raw);
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(raw);
+  if (isUuid || isMongoId) return { format: 'id', registration_id: raw, event_id: null, bib_number: null, email: null, raw };
+  return { format: 'text', registration_id: null, event_id: null, bib_number: raw, email: null, raw };
+}
+
 async function getAcceptedAssignment(base44, eventId, userEmail) {
   const records = await base44.asServiceRole.entities.EventStaffAssignment.filter({
     event_id: eventId,
@@ -261,6 +284,97 @@ Deno.serve(async (req) => {
       ]);
 
       return Response.json({ success: true, registrations, payments, categories });
+    }
+
+    // ── ACTION: find_registration_for_checkin ──
+    // Parses a QR string / bib / email and finds the matching registration for this event.
+    // Uses service role — no RLS blocking staff lookup of other users' records.
+    if (action === 'find_registration_for_checkin') {
+      if (!isFull && !hasRole(assignment, 'checkin')) {
+        return Response.json({ error: 'Forbidden: checkin role required' }, { status: 403 });
+      }
+      const { qr_input } = body;
+      if (!qr_input) return Response.json({ error: 'qr_input required' }, { status: 400 });
+
+      const parsed = parseRegistrationQr(qr_input);
+
+      // If the QR carries a different event_id — cross-event guard
+      if (parsed.event_id && parsed.event_id !== event_id) {
+        return Response.json({ success: true, found: false, wrong_event: true, parsed });
+      }
+
+      // Fetch all active (non-archived) registrations for this event
+      const allRegs = await base44.asServiceRole.entities.EventRegistration.filter({ event_id }, '-created_date', 500);
+      const activeRegs = allRegs.filter(r => r.is_archived !== true);
+
+      // Lookup priority:
+      // 1. id === registration_id
+      // 2. qr_code === raw
+      // 3. bib_number match (case-insensitive)
+      // 4. email match
+      // 5. name fuzzy (for text/bib format fallback)
+      let reg = null;
+
+      if (parsed.registration_id) {
+        reg = activeRegs.find(r => r.id === parsed.registration_id);
+      }
+      if (!reg && parsed.raw) {
+        reg = activeRegs.find(r => r.qr_code === parsed.raw);
+      }
+      if (!reg && parsed.bib_number) {
+        const bibUpper = parsed.bib_number.toUpperCase();
+        reg = activeRegs.find(r => r.bib_number?.toUpperCase() === bibUpper);
+      }
+      if (!reg && parsed.email) {
+        const emailLower = parsed.email.toLowerCase();
+        reg = activeRegs.find(r => r.user_email?.toLowerCase() === emailLower);
+      }
+      if (!reg && parsed.format === 'text' && parsed.raw) {
+        const q = parsed.raw.toLowerCase();
+        reg = activeRegs.find(r =>
+          `${r.first_name} ${r.last_name}`.toLowerCase().includes(q) ||
+          r.user_email?.toLowerCase().includes(q)
+        );
+      }
+
+      if (!reg) {
+        return Response.json({ success: true, found: false, wrong_event: false, parsed });
+      }
+
+      // Also fetch category for display
+      const cats = reg.category_id
+        ? await base44.asServiceRole.entities.EventCategory.filter({ id: reg.category_id })
+        : [];
+
+      return Response.json({ success: true, found: true, registration: reg, category: cats[0] || null, parsed });
+    }
+
+    // ── ACTION: check_in_registration ──
+    // Checks in a registration by ID, verifying it belongs to this event and is not archived.
+    if (action === 'check_in_registration') {
+      if (!isFull && !hasRole(assignment, 'checkin')) {
+        return Response.json({ error: 'Forbidden: checkin role required' }, { status: 403 });
+      }
+      if (!registration_id) return Response.json({ error: 'registration_id required' }, { status: 400 });
+
+      // Verify the registration belongs to this event (service role fetch)
+      const regs = await base44.asServiceRole.entities.EventRegistration.filter({ id: registration_id, event_id });
+      const reg = regs[0];
+      if (!reg) return Response.json({ error: 'Registration not found for this event' }, { status: 404 });
+      if (reg.is_archived === true) return Response.json({ error: 'Registration is archived' }, { status: 422 });
+
+      if (reg.checked_in) {
+        return Response.json({ success: true, already_checked_in: true, registration: reg });
+      }
+
+      await base44.asServiceRole.entities.EventRegistration.update(registration_id, {
+        checked_in: true,
+        checked_in_at: now,
+        checked_in_by: normalizeEmail(user.email),
+      });
+
+      const updated = { ...reg, checked_in: true, checked_in_at: now, checked_in_by: normalizeEmail(user.email) };
+      return Response.json({ success: true, already_checked_in: false, registration: updated });
     }
 
     return Response.json({ error: `Unknown action: ${action}` }, { status: 400 });
