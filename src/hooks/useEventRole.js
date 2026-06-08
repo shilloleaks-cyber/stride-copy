@@ -53,12 +53,16 @@ export function useEventRole(eventId, user) {
     queryKey: ['event-staff-me', eventId, user?.email],
     queryFn: async () => {
       const normalizedEmail = user.email.toLowerCase().trim();
+      // Fetch all assignments for this event+email (any status) and filter client-side
+      // to support both 'accepted' and 'active' canonical statuses.
       const records = await base44.entities.EventStaffAssignment.filter({
         event_id: eventId,
         staff_email: normalizedEmail,
-        status: 'accepted',
       });
-      return records[0] || null;
+      const active = records.find(r =>
+        r.status === 'accepted' || r.status === 'active'
+      );
+      return active || null;
     },
     enabled: !!eventId && !!user?.email && !isGlobalAdmin && !isOwner,
     staleTime: 30000,

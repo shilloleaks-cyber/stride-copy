@@ -39,12 +39,14 @@ function parseRegistrationQr(input) {
 }
 
 async function getAcceptedAssignment(base44, eventId, userEmail) {
+  const normEmail = normalizeEmail(userEmail);
+  // Fetch all assignments for this event+email (any status), filter client-side
+  // to support both 'accepted' and 'active' canonical statuses.
   const records = await base44.asServiceRole.entities.EventStaffAssignment.filter({
     event_id: eventId,
-    staff_email: normalizeEmail(userEmail),
-    status: 'accepted',
+    staff_email: normEmail,
   });
-  return records[0] || null;
+  return records.find(r => r.status === 'accepted' || r.status === 'active') || null;
 }
 
 function hasRole(assignment, ...roles) {
