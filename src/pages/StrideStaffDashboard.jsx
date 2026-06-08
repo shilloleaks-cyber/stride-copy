@@ -304,20 +304,6 @@ export default function StrideStaffDashboard() {
         <p style={{ fontSize: 13, color: C.muted, margin: 0 }}>{t('staff_dashboard_subtitle')}</p>
       </div>
 
-      {/* Debug panel — shows raw assignment data for troubleshooting */}
-      {assignments.length === 0 && !assignLoading && (
-        <div style={{ margin: '0 20px 12px', padding: '12px 14px', borderRadius: 14, background: 'rgba(255,180,0,0.06)', border: '1px solid rgba(255,180,0,0.2)', fontSize: 11, color: 'rgba(255,200,80,0.8)', lineHeight: 1.7, fontFamily: 'monospace' }}>
-          <strong>Debug:</strong> email={normalizedEmail || '—'} | no active assignments found
-        </div>
-      )}
-      {assignments.length > 0 && (
-        <div style={{ margin: '0 20px 12px', padding: '8px 14px', borderRadius: 12, background: 'rgba(191,255,0,0.04)', border: '1px solid rgba(191,255,0,0.1)', fontSize: 10, color: 'rgba(191,255,0,0.5)', lineHeight: 1.7, fontFamily: 'monospace' }}>
-          {assignments.map(a => (
-            <div key={a.id}>event={a.event_id} | status={a.status} | roles=[{(a.roles||[]).join(',')}] | email={a.staff_email}</div>
-          ))}
-        </div>
-      )}
-
       {/* Content */}
       <div style={{ padding: '0 20px' }}>
         {isLoading ? (
