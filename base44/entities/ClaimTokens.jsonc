@@ -1,0 +1,54 @@
+{
+  "name": "ClaimTokens",
+  "type": "object",
+  "properties": {
+    "token": {
+      "type": "string",
+      "description": "Unique claim token (UUID)"
+    },
+    "card_id": {
+      "type": "string",
+      "description": "Cards entity ID this token grants"
+    },
+    "created_by": {
+      "type": "string",
+      "description": "Admin email who created it"
+    },
+    "used_by_user_id": {
+      "type": "string",
+      "description": "User ID who claimed it"
+    },
+    "used_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When it was claimed"
+    },
+    "is_used": {
+      "type": "boolean",
+      "default": false
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Optional expiry"
+    }
+  },
+  "required": [
+    "token",
+    "card_id"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {},
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -23,6 +23,8 @@ import AdminEvents from './pages/AdminEvents';
 import EventWorkspace from './pages/EventWorkspace';
 import StrideAdminEvents from './pages/StrideAdminEvents';
 import StrideStaffDashboard from './pages/StrideStaffDashboard';
+import Collection from './pages/Collection';
+import AdminCollectibles from './pages/AdminCollectibles';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRef } from 'react';
@@ -141,6 +143,8 @@ const AuthenticatedApp = () => {
         <Route path="/EventWorkspace" element={<LayoutWrapper currentPageName="EventWorkspace"><EventWorkspace /></LayoutWrapper>} />
         <Route path="/StrideAdminEvents" element={<LayoutWrapper currentPageName="StrideAdminEvents"><StrideAdminEvents /></LayoutWrapper>} />
         <Route path="/StrideStaffDashboard" element={<LayoutWrapper currentPageName="StrideStaffDashboard"><StrideStaffDashboard /></LayoutWrapper>} />
+        <Route path="/Collection" element={<LayoutWrapper currentPageName="Collection"><Collection /></LayoutWrapper>} />
+        <Route path="/admin/collectibles" element={<LayoutWrapper currentPageName="AdminCollectibles"><AdminCollectibles /></LayoutWrapper>} />
         <Route path="*" element={<PageNotFound />} />
       </Routes>
     </AnimatedRoutes>

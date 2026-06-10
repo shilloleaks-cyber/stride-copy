@@ -411,6 +411,41 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
         </div>
       </div>
 
+      {/* ── SECTION: COLLECTIBLES ── */}
+      <div className="section">
+        <div className="sectionLabel">COLLECTIBLES</div>
+        <button
+          onClick={() => navigate('/Collection')}
+          style={{
+            width: '100%', textAlign: 'left', cursor: 'pointer',
+            borderRadius: 18, overflow: 'hidden',
+            background: 'radial-gradient(120% 140% at 10% 10%, rgba(191,255,0,0.08) 0%, rgba(10,10,10,0.92) 55%)',
+            border: '1px solid rgba(191,255,0,0.15)',
+            boxShadow: '0 0 0 1px rgba(191,255,0,0.06) inset, 0 14px 36px rgba(0,0,0,.5)',
+            padding: '18px 20px',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            WebkitTapHighlightColor: 'transparent',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{
+              width: 44, height: 44, borderRadius: 14,
+              background: 'rgba(191,255,0,0.1)', border: '1px solid rgba(191,255,0,0.2)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22,
+            }}>✦</div>
+            <div>
+              <p style={{ fontSize: 15, fontWeight: 900, color: '#fff', margin: '0 0 2px' }}>My Collection</p>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', margin: 0 }}>Cards, badges & limited collectibles</p>
+            </div>
+          </div>
+          <div style={{
+            fontSize: 11, fontWeight: 800, padding: '6px 12px', borderRadius: 10,
+            background: 'rgba(191,255,0,0.1)', border: '1px solid rgba(191,255,0,0.2)',
+            color: '#BFFF00',
+          }}>View →</div>
+        </button>
+      </div>
+
       {/* ── SECTION: ACHIEVEMENTS ── */}
       <div className="section">
         <div className="achievementsHeaderRow">

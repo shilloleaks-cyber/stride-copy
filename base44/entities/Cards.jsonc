@@ -1,0 +1,78 @@
+{
+  "name": "Cards",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Card name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Card description"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Card image URL"
+    },
+    "rarity": {
+      "type": "string",
+      "enum": [
+        "common",
+        "rare",
+        "epic",
+        "legendary",
+        "founder",
+        "sponsor"
+      ],
+      "default": "common",
+      "description": "Card rarity"
+    },
+    "source_type": {
+      "type": "string",
+      "enum": [
+        "event",
+        "purchase",
+        "mission",
+        "sponsor",
+        "admin"
+      ],
+      "default": "admin",
+      "description": "How the card is obtained"
+    },
+    "sponsor_name": {
+      "type": "string",
+      "description": "Sponsor name if sponsor card"
+    },
+    "event_name": {
+      "type": "string",
+      "description": "Event name if event card"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether card is active"
+    }
+  },
+  "required": [
+    "name",
+    "rarity"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

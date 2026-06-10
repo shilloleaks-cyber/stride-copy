@@ -1,0 +1,58 @@
+{
+  "name": "Vouchers",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Voucher title"
+    },
+    "sponsor_name": {
+      "type": "string",
+      "description": "Sponsor name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Voucher details"
+    },
+    "quantity": {
+      "type": "number",
+      "default": 0,
+      "description": "Total available (0 = unlimited)"
+    },
+    "redeemed_count": {
+      "type": "number",
+      "default": 0,
+      "description": "How many have been redeemed"
+    },
+    "expiry_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Expiry date"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "title"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
