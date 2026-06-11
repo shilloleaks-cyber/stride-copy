@@ -83,7 +83,7 @@ function Field({ label, value, onChange, type = 'text', options, multiline }) {
 }
 
 // ── Image Upload Field ─────────────────────────────────────────────────────────
-function ImageUploadField({ value, onChange }) {
+function ImageUploadField({ label, value, onChange }) {
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef();
 
@@ -97,13 +97,13 @@ function ImageUploadField({ value, onChange }) {
   };
 
   return (
-    <div style={{ marginBottom: 12 }}>
-      <p style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 6px' }}>Card Artwork</p>
+    <div style={{ flex: 1, minWidth: 0 }}>
+      <p style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 6px' }}>{label}</p>
       <input ref={inputRef} type="file" accept="image/*" onChange={handleFile} style={{ display: 'none' }} />
 
       {value ? (
         <div style={{ position: 'relative', display: 'inline-block' }}>
-          <img src={value} alt="Card artwork" style={{ width: 100, height: 100, borderRadius: 12, objectFit: 'cover', border: `1px solid ${C.limeBorder}` }} />
+          <img src={value} alt={label} style={{ width: 80, height: 120, borderRadius: 10, objectFit: 'cover', border: `1px solid ${C.limeBorder}`, display: 'block' }} />
           <button
             onClick={() => { onChange(''); inputRef.current.value = ''; }}
             style={{ position: 'absolute', top: -8, right: -8, width: 22, height: 22, borderRadius: '50%', background: '#ff4444', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
@@ -116,18 +116,18 @@ function ImageUploadField({ value, onChange }) {
           onClick={() => inputRef.current.click()}
           disabled={uploading}
           style={{
-            width: '100%', padding: '20px', borderRadius: 12, border: `2px dashed rgba(255,255,255,0.15)`,
+            width: '100%', aspectRatio: '2/3', borderRadius: 10, border: `2px dashed rgba(255,255,255,0.15)`,
             background: 'rgba(255,255,255,0.03)', color: C.muted, cursor: 'pointer',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-            fontSize: 13, fontWeight: 600,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8,
+            fontSize: 11, fontWeight: 600,
           }}
         >
           {uploading ? (
-            <RefreshCw style={{ width: 20, height: 20, animation: 'spin 1s linear infinite' }} />
+            <RefreshCw style={{ width: 18, height: 18, animation: 'spin 1s linear infinite' }} />
           ) : (
-            <Upload style={{ width: 20, height: 20 }} />
+            <Upload style={{ width: 18, height: 18 }} />
           )}
-          {uploading ? 'Uploading…' : 'Tap to upload image'}
+          {uploading ? 'Uploading…' : 'Upload'}
         </button>
       )}
     </div>
@@ -137,12 +137,12 @@ function ImageUploadField({ value, onChange }) {
 // ── Create Card Form ───────────────────────────────────────────────────────────
 function CreateCardForm({ onCreated }) {
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ name: '', description: '', image_url: '', rarity: 'common', source_type: 'admin', sponsor_name: '', event_name: '' });
+  const [form, setForm] = useState({ name: '', description: '', front_image_url: '', back_image_url: '', rarity: 'common', source_type: 'admin', sponsor_name: '', event_name: '' });
   const set = k => v => setForm(f => ({ ...f, [k]: v }));
 
   const mutation = useMutation({
     mutationFn: () => base44.entities.Cards.create({ ...form, is_active: true }),
-    onSuccess: () => { setOpen(false); setForm({ name: '', description: '', image_url: '', rarity: 'common', source_type: 'admin', sponsor_name: '', event_name: '' }); onCreated(); },
+    onSuccess: () => { setOpen(false); setForm({ name: '', description: '', front_image_url: '', back_image_url: '', rarity: 'common', source_type: 'admin', sponsor_name: '', event_name: '' }); onCreated(); },
   });
 
   if (!open) return (
@@ -154,7 +154,10 @@ function CreateCardForm({ onCreated }) {
       <p style={{ fontWeight: 900, fontSize: 15, marginBottom: 14, color: C.text }}>Create Card</p>
       <Field label="Name" value={form.name} onChange={set('name')} />
       <Field label="Description" value={form.description} onChange={set('description')} multiline />
-      <ImageUploadField value={form.image_url} onChange={set('image_url')} />
+      <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+        <ImageUploadField label="Front Artwork" value={form.front_image_url} onChange={set('front_image_url')} />
+        <ImageUploadField label="Back Artwork" value={form.back_image_url} onChange={set('back_image_url')} />
+      </div>
       <Field label="Rarity" value={form.rarity} onChange={set('rarity')} options={RARITY_OPTS} />
       <Field label="Source" value={form.source_type} onChange={set('source_type')} options={SOURCE_OPTS} />
       {form.source_type === 'sponsor' && <Field label="Sponsor Name" value={form.sponsor_name} onChange={set('sponsor_name')} />}

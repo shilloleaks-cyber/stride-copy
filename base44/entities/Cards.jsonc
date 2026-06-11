@@ -12,7 +12,15 @@
     },
     "image_url": {
       "type": "string",
-      "description": "Card image URL"
+      "description": "Card image URL (legacy)"
+    },
+    "front_image_url": {
+      "type": "string",
+      "description": "Front artwork image URL"
+    },
+    "back_image_url": {
+      "type": "string",
+      "description": "Back artwork image URL"
     },
     "rarity": {
       "type": "string",

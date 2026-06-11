@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, QrCode } from 'lucide-react';
 import CollectibleCard from '@/components/collectibles/CollectibleCard';
 import ClaimQRSheet from '@/components/collectibles/ClaimQRSheet';
+import CardDetailModal from '@/components/collectibles/CardDetailModal';
 
 const C = {
   bg: '#0D0D0D',
@@ -26,6 +27,7 @@ export default function Collection() {
   const [filter, setFilter] = useState('All');
   const [rarityFilter, setRarityFilter] = useState('All');
   const [showClaim, setShowClaim] = useState(false);
+  const [selectedCard, setSelectedCard] = useState(null);
 
   const { data: user } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
 
@@ -169,6 +171,7 @@ export default function Collection() {
                 card={card}
                 owned={ownedCardIds.has(card.id)}
                 small
+                onClick={() => setSelectedCard(card)}
               />
             ))}
           </div>
@@ -178,6 +181,11 @@ export default function Collection() {
       {/* Claim sheet */}
       {showClaim && (
         <ClaimQRSheet onClose={() => setShowClaim(false)} onClaimed={refetchUserCards} />
+      )}
+
+      {/* Card detail modal with flip */}
+      {selectedCard && (
+        <CardDetailModal card={selectedCard} onClose={() => setSelectedCard(null)} />
       )}
     </div>
   );

@@ -9,20 +9,24 @@ const RARITY = {
   sponsor:   { label: 'Sponsor',   color: '#00e676',              bg: 'rgba(0,230,118,0.08)',   border: 'rgba(0,230,118,0.3)',    glow: 'rgba(0,230,118,0.2)' },
 };
 
-export default function CollectibleCard({ card, owned = false, small = false }) {
+export default function CollectibleCard({ card, owned = false, small = false, onClick }) {
   const r = RARITY[card?.rarity] || RARITY.common;
+  const frontImg = card?.front_image_url || card?.image_url;
 
   return (
-    <div style={{
-      borderRadius: small ? 14 : 18,
-      overflow: 'hidden',
-      background: 'rgba(18,18,18,0.98)',
-      border: `1.5px solid ${owned ? r.border : 'rgba(255,255,255,0.08)'}`,
-      boxShadow: owned ? `0 0 18px ${r.glow}` : 'none',
-      opacity: owned ? 1 : 0.45,
-      position: 'relative',
-      transition: 'all 0.2s ease',
-    }}>
+    <div
+      onClick={owned ? onClick : undefined}
+      style={{
+        borderRadius: small ? 14 : 18,
+        overflow: 'hidden',
+        background: 'rgba(18,18,18,0.98)',
+        border: `1.5px solid ${owned ? r.border : 'rgba(255,255,255,0.08)'}`,
+        boxShadow: owned ? `0 0 18px ${r.glow}` : 'none',
+        opacity: owned ? 1 : 0.45,
+        position: 'relative',
+        transition: 'all 0.2s ease',
+        cursor: owned && onClick ? 'pointer' : 'default',
+      }}>
       {/* Image */}
       <div style={{
         width: '100%',
@@ -31,9 +35,9 @@ export default function CollectibleCard({ card, owned = false, small = false }) 
         background: owned ? r.bg : 'rgba(255,255,255,0.03)',
         overflow: 'hidden',
       }}>
-        {card?.image_url ? (
+        {frontImg ? (
           <img
-            src={card.image_url}
+            src={frontImg}
             alt={card.name}
             style={{
               position: 'absolute', inset: 0, width: '100%', height: '100%',
