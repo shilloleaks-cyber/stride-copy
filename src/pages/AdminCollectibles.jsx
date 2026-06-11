@@ -2,7 +2,8 @@ import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ChevronLeft, Plus, QrCode, RefreshCw, Upload, X } from 'lucide-react';
+import { ChevronLeft, Plus, QrCode, RefreshCw, Upload, X, Eye, Pencil, Trash2 } from 'lucide-react';
+import AdminCardPreviewModal from '@/components/collectibles/AdminCardPreviewModal';
 import QRCode from 'qrcode';
 
 const C = {
@@ -205,19 +206,75 @@ function CreateVoucherForm({ onCreated }) {
   );
 }
 
-// ── QR Token Row ───────────────────────────────────────────────────────────────
-function CardRow({ card, onGenerateQR }) {
-  const [show, setShow] = useState(false);
+// ── Edit Card Form ─────────────────────────────────────────────────────────────
+function EditCardForm({ card, onSaved, onCancel }) {
+  const [form, setForm] = useState({
+    name: card.name || '',
+    description: card.description || '',
+    front_image_url: card.front_image_url || card.image_url || '',
+    back_image_url: card.back_image_url || '',
+    rarity: card.rarity || 'common',
+    source_type: card.source_type || 'admin',
+    sponsor_name: card.sponsor_name || '',
+    event_name: card.event_name || '',
+  });
+  const set = k => v => setForm(f => ({ ...f, [k]: v }));
+
+  const mutation = useMutation({
+    mutationFn: () => base44.entities.Cards.update(card.id, form),
+    onSuccess: onSaved,
+  });
+
+  return (
+    <div style={{ background: 'rgba(138,43,226,0.08)', border: `1px solid rgba(138,43,226,0.3)`, borderRadius: 14, padding: 16, marginBottom: 10 }}>
+      <p style={{ fontWeight: 900, fontSize: 14, marginBottom: 12, color: C.text }}>Edit: {card.name}</p>
+      <Field label="Name" value={form.name} onChange={set('name')} />
+      <Field label="Description" value={form.description} onChange={set('description')} multiline />
+      <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+        <ImageUploadField label="Front Artwork" value={form.front_image_url} onChange={set('front_image_url')} />
+        <ImageUploadField label="Back Artwork" value={form.back_image_url} onChange={set('back_image_url')} />
+      </div>
+      <Field label="Rarity" value={form.rarity} onChange={set('rarity')} options={RARITY_OPTS} />
+      <Field label="Source" value={form.source_type} onChange={set('source_type')} options={SOURCE_OPTS} />
+      {form.source_type === 'sponsor' && <Field label="Sponsor Name" value={form.sponsor_name} onChange={set('sponsor_name')} />}
+      {form.source_type === 'event' && <Field label="Event Name" value={form.event_name} onChange={set('event_name')} />}
+      <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+        <button onClick={() => mutation.mutate()} disabled={!form.name || mutation.isPending} style={{ flex: 1, padding: '11px', borderRadius: 12, background: mutation.isPending ? 'rgba(191,255,0,0.4)' : C.lime, color: '#000', fontSize: 14, fontWeight: 900, border: 'none', cursor: 'pointer' }}>
+          {mutation.isPending ? 'Saving…' : 'Save'}
+        </button>
+        <button onClick={onCancel} style={{ padding: '11px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', color: C.muted, border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', fontSize: 13 }}>Cancel</button>
+      </div>
+    </div>
+  );
+}
+
+// ── Card Row ───────────────────────────────────────────────────────────────────
+function CardRow({ card, onGenerateQR, onPreview, onDeleted }) {
+  const [editing, setEditing] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const deleteMutation = useMutation({
+    mutationFn: () => base44.entities.Cards.delete(card.id),
+    onSuccess: onDeleted,
+  });
+
+  const thumbnail = card.front_image_url || card.image_url;
+
+  if (editing) {
+    return <EditCardForm card={card} onSaved={() => { setEditing(false); onDeleted(); /* triggers refetch */ }} onCancel={() => setEditing(false)} />;
+  }
+
   return (
     <div style={{ background: C.card, border: `1px solid ${C.line}`, borderRadius: 14, padding: '12px 14px', marginBottom: 10 }}>
+      {/* Main row */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        {card.image_url ? (
-          <img src={card.image_url} style={{ width: 44, height: 44, borderRadius: 10, objectFit: 'cover' }} />
+        {thumbnail ? (
+          <img src={thumbnail} style={{ width: 44, height: 60, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
         ) : (
-          <div style={{ width: 44, height: 44, borderRadius: 10, background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>✦</div>
+          <div style={{ width: 44, height: 60, borderRadius: 8, background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>✦</div>
         )}
-        <div style={{ flex: 1 }}>
-          <p style={{ fontSize: 14, fontWeight: 800, color: C.text, margin: '0 0 3px' }}>{card.name}</p>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ fontSize: 14, fontWeight: 800, color: C.text, margin: '0 0 4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{card.name}</p>
           <span style={{
             fontSize: 9, fontWeight: 800, padding: '2px 7px', borderRadius: 5,
             color: RARITY_COLOR[card.rarity] || C.lime,
@@ -226,9 +283,28 @@ function CardRow({ card, onGenerateQR }) {
             textTransform: 'uppercase', letterSpacing: '0.08em',
           }}>{card.rarity}</span>
         </div>
-        <NeonBtn small onClick={() => onGenerateQR(card)}>
+      </div>
+
+      {/* Action buttons */}
+      <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
+        <button onClick={() => onPreview(card)} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 0', borderRadius: 10, background: C.limeDim, border: `1px solid ${C.limeBorder}`, color: C.lime, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+          <Eye style={{ width: 12, height: 12 }} /> Preview
+        </button>
+        <button onClick={() => onGenerateQR(card)} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 0', borderRadius: 10, background: 'rgba(138,43,226,0.08)', border: '1px solid rgba(138,43,226,0.25)', color: 'rgba(180,80,255,1)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
           <QrCode style={{ width: 12, height: 12 }} /> QR
-        </NeonBtn>
+        </button>
+        <button onClick={() => setEditing(true)} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 0', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.55)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+          <Pencil style={{ width: 12, height: 12 }} /> Edit
+        </button>
+        {!confirmDelete ? (
+          <button onClick={() => setConfirmDelete(true)} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 0', borderRadius: 10, background: 'rgba(255,80,80,0.06)', border: '1px solid rgba(255,80,80,0.18)', color: 'rgba(255,100,100,1)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+            <Trash2 style={{ width: 12, height: 12 }} /> Delete
+          </button>
+        ) : (
+          <button onClick={() => deleteMutation.mutate()} disabled={deleteMutation.isPending} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 0', borderRadius: 10, background: 'rgba(255,80,80,0.15)', border: '1px solid rgba(255,80,80,0.4)', color: '#ff6060', fontSize: 11, fontWeight: 900, cursor: 'pointer' }}>
+            {deleteMutation.isPending ? '…' : 'Confirm?'}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -296,6 +372,7 @@ export default function AdminCollectibles() {
   const queryClient = useQueryClient();
   const [tab, setTab] = useState('Cards');
   const [qrModal, setQrModal] = useState(null); // { card, token, qrDataUrl }
+  const [previewCard, setPreviewCard] = useState(null);
 
   const { data: user } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
 
@@ -375,7 +452,13 @@ export default function AdminCollectibles() {
               <div style={{ textAlign: 'center', padding: '40px 0', color: C.muted, fontSize: 13 }}>No cards yet.</div>
             ) : (
               cards.map(card => (
-                <CardRow key={card.id} card={card} onGenerateQR={handleGenerateQR} />
+                <CardRow
+                  key={card.id}
+                  card={card}
+                  onGenerateQR={handleGenerateQR}
+                  onPreview={setPreviewCard}
+                  onDeleted={refetchCards}
+                />
               ))
             )}
           </>
@@ -446,6 +529,11 @@ export default function AdminCollectibles() {
           </>
         )}
       </div>
+
+      {/* Card Preview Modal */}
+      {previewCard && (
+        <AdminCardPreviewModal card={previewCard} onClose={() => setPreviewCard(null)} />
+      )}
 
       {/* QR Modal */}
       {qrModal && (
