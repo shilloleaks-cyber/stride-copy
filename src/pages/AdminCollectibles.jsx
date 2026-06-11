@@ -558,7 +558,7 @@ export default function AdminCollectibles() {
     setQrModal({ card, token, qrDataUrl, expiresAt });
   };
 
-  const liveCount = cards.filter(c => c.is_active).length;
+  const liveCount = cards.filter(c => c.status === 'published').length;
 
   return (
     <div style={{ minHeight: '100dvh', backgroundColor: C.bg, color: C.text, paddingBottom: 120 }}>

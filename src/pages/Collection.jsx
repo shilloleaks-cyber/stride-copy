@@ -79,6 +79,13 @@ export default function Collection() {
     });
   }, [sortedCards, ownedCardIds, filter, rarityFilter]);
 
+  // Count: owned = how many you have; total = published cards (the collectible target)
+  const ownedPublishedCount = useMemo(() =>
+    [...ownedCardIds].filter(id => {
+      const c = visibleCards.find(v => v.id === id);
+      return c && (c.status === 'published' || !c.status);
+    }).length,
+  [ownedCardIds, visibleCards]);
   const ownedCount = ownedCardIds.size;
   const totalCount = visibleCards.filter(c => (c.status || 'draft') === 'published').length;
 
@@ -107,7 +114,7 @@ export default function Collection() {
               My Collection
             </h1>
             <p style={{ fontSize: 13, color: C.muted, margin: 0 }}>
-              {ownedCount} / {totalCount} cards collected
+              {ownedPublishedCount} / {totalCount} cards collected
             </p>
           </div>
 
@@ -133,7 +140,7 @@ export default function Collection() {
         <div style={{
           height: '100%', borderRadius: 4,
           background: `linear-gradient(90deg, ${C.lime}, rgba(191,255,0,0.5))`,
-          width: totalCount > 0 ? `${(ownedCount / totalCount) * 100}%` : '0%',
+          width: totalCount > 0 ? `${(ownedPublishedCount / totalCount) * 100}%` : '0%',
           transition: 'width 0.5s ease',
         }} />
       </div>
@@ -196,7 +203,7 @@ export default function Collection() {
                       card={card}
                       owned={owned}
                       small
-                      onClick={() => !isComingSoon && setSelectedCard(card)}
+                      onClick={(!isComingSoon || owned) ? () => setSelectedCard(card) : undefined}
                     />
                     {isComingSoon && !owned && (
                       <div style={{

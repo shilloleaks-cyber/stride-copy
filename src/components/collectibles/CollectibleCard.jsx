@@ -15,7 +15,7 @@ export default function CollectibleCard({ card, owned = false, small = false, on
 
   return (
     <div
-      onClick={owned ? onClick : undefined}
+      onClick={onClick}
       style={{
         borderRadius: small ? 14 : 18,
         overflow: 'hidden',
@@ -25,7 +25,7 @@ export default function CollectibleCard({ card, owned = false, small = false, on
         opacity: owned ? 1 : 0.45,
         position: 'relative',
         transition: 'all 0.2s ease',
-        cursor: owned && onClick ? 'pointer' : 'default',
+        cursor: onClick ? 'pointer' : 'default',
       }}>
       {/* Image */}
       <div style={{

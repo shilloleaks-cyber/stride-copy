@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { X, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Html5Qrcode } from 'html5-qrcode';
@@ -45,6 +45,12 @@ export default function ClaimQRSheet({ onClose, onClaimed }) {
     }
   };
 
+  // Auto-start scanner when sheet opens
+  useEffect(() => {
+    const timer = setTimeout(() => startScanner(), 300);
+    return () => { clearTimeout(timer); stopScanner(); };
+  }, []);
+
   const handleClose = () => {
     stopScanner();
     onClose();
@@ -58,8 +64,20 @@ export default function ClaimQRSheet({ onClose, onClaimed }) {
       if (!ct) { setErrorMsg('Invalid QR code.'); setStep('error'); return; }
       if (ct.is_used) { setErrorMsg('This card has already been claimed.'); setStep('error'); return; }
 
+      // Check expiry on the frontend too
+      if (ct.expires_at && new Date(ct.expires_at) < new Date()) {
+        setErrorMsg('This QR code has expired.'); setStep('error'); return;
+      }
+
       const cards = await base44.entities.Cards.filter({ id: ct.card_id });
-      setCardPreview(cards[0] || null);
+      const foundCard = cards[0] || null;
+
+      // Block non-published cards early
+      if (foundCard && foundCard.status && foundCard.status !== 'published') {
+        setErrorMsg('This card is not available for claim yet.'); setStep('error'); return;
+      }
+
+      setCardPreview(foundCard);
       setScannedToken(token);
       setStep('confirm');
     } catch {
@@ -108,35 +126,26 @@ export default function ClaimQRSheet({ onClose, onClaimed }) {
         display: 'flex', flexDirection: 'column',
       }}>
         {/* Handle + header */}
-        <div style={{ padding: '12px 20px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${C.line}` }}>
-          <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.15)', margin: '0 auto' }} />
-          <button onClick={handleClose} style={{ background: 'none', border: 'none', color: C.muted, cursor: 'pointer', padding: 4 }}>
-            <X style={{ width: 20, height: 20 }} />
-          </button>
+        <div style={{ padding: '16px 20px 14px', borderBottom: `1px solid ${C.line}` }}>
+          <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.15)', margin: '0 auto 14px' }} />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <p style={{ fontSize: 16, fontWeight: 900, color: C.text, margin: 0 }}>Claim Card</p>
+            <button onClick={handleClose} style={{ background: 'none', border: 'none', color: C.muted, cursor: 'pointer', padding: 4 }}>
+              <X style={{ width: 20, height: 20 }} />
+            </button>
+          </div>
         </div>
 
         <div style={{ overflowY: 'auto', padding: '20px 24px', flex: 1 }}>
           {step === 'scan' && (
             <div style={{ textAlign: 'center' }}>
-              <p style={{ fontSize: 20, fontWeight: 900, color: C.text, marginBottom: 6 }}>Scan Claim QR</p>
-              <p style={{ fontSize: 13, color: C.muted, marginBottom: 20 }}>Point your camera at the card's QR code</p>
+              <p style={{ fontSize: 13, color: C.muted, marginBottom: 20 }}>Point your camera at the QR code</p>
               <div
                 id="claim-qr-reader"
                 ref={scannerRef}
                 style={{ borderRadius: 16, overflow: 'hidden', maxWidth: 300, margin: '0 auto 20px' }}
               />
-              <button
-                onClick={startScanner}
-                style={{
-                  padding: '13px 28px', borderRadius: 14,
-                  background: C.lime, color: '#000',
-                  fontSize: 14, fontWeight: 900, border: 'none', cursor: 'pointer',
-                  width: '100%', maxWidth: 300,
-                }}
-              >
-                Start Camera
-              </button>
-              <p style={{ marginTop: 16, fontSize: 12, color: C.muted }}>
+              <p style={{ marginTop: 8, fontSize: 12, color: C.muted }}>
                 Or enter token manually:
               </p>
               <ManualTokenInput onSubmit={handleTokenScanned} />
@@ -149,16 +158,20 @@ export default function ClaimQRSheet({ onClose, onClaimed }) {
               <p style={{ fontSize: 13, color: C.muted, marginBottom: 24 }}>This will be added to your collection.</p>
 
               <div style={{
-                display: 'inline-block', borderRadius: 18, overflow: 'hidden',
+                borderRadius: 18, overflow: 'hidden',
                 border: `2px solid ${RARITY_COLOR[cardPreview.rarity] || C.limeBorder}`,
                 boxShadow: `0 0 24px ${RARITY_COLOR[cardPreview.rarity] || C.lime}33`,
-                marginBottom: 24, maxWidth: 200,
+                marginBottom: 24, width: 160, margin: '0 auto 24px',
               }}>
-                {cardPreview.image_url ? (
-                  <img src={cardPreview.image_url} alt={cardPreview.name} style={{ width: 200, height: 200, objectFit: 'cover', display: 'block' }} />
-                ) : (
-                  <div style={{ width: 200, height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 60, background: 'rgba(255,255,255,0.04)' }}>✦</div>
-                )}
+                {/* 2:3 aspect card */}
+                <div style={{ width: 160, height: 240, overflow: 'hidden', position: 'relative', background: 'rgba(255,255,255,0.04)' }}>
+                  {(cardPreview.front_image_url || cardPreview.image_url) ? (
+                    <img src={cardPreview.front_image_url || cardPreview.image_url} alt={cardPreview.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  ) : (
+                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 60 }}>✦</div>
+                  )}
+                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, transparent, ${RARITY_COLOR[cardPreview.rarity] || C.lime}, transparent)` }} />
+                </div>
                 <div style={{ padding: '12px 14px 14px', background: '#111' }}>
                   <p style={{ fontSize: 16, fontWeight: 900, color: '#fff', margin: '0 0 6px' }}>{cardPreview.name}</p>
                   <span style={{
@@ -216,7 +229,7 @@ export default function ClaimQRSheet({ onClose, onClaimed }) {
               <p style={{ fontSize: 18, fontWeight: 900, color: '#ff6060', marginBottom: 8 }}>Oops!</p>
               <p style={{ fontSize: 13, color: C.muted, marginBottom: 28 }}>{errorMsg}</p>
               <button
-                onClick={() => setStep('scan')}
+                onClick={() => { setStep('scan'); setTimeout(() => startScanner(), 300); }}
                 style={{
                   width: '100%', padding: '13px', borderRadius: 14,
                   background: 'rgba(255,255,255,0.08)', color: '#fff', fontSize: 15, fontWeight: 800,

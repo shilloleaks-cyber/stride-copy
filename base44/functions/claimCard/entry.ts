@@ -9,7 +9,7 @@ async function assignSerial(base44, card) {
 
   // Get all used serials for this card
   const usedUserCards = await base44.asServiceRole.entities.UserCards.filter({ card_id: card.id });
-  const usedSerials = new Set(usedUserCards.map(uc => uc.serial_number).filter(Boolean));
+  const usedSerials = new Set(usedUserCards.map(uc => Number(uc.serial_number)).filter(Boolean));
 
   if (usedSerials.size >= maxSupply) {
     return { soldOut: true };
@@ -77,20 +77,18 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'This card is not available for claim.' }, { status: 403 });
     }
 
-    // Check max supply
-    if (card.max_supply > 0) {
-      const claimedCount = await base44.asServiceRole.entities.UserCards.filter({ card_id: card.id });
-      if (claimedCount.length >= card.max_supply) {
-        return Response.json({ error: 'Sold Out — this card has reached its maximum supply.' }, { status: 409 });
-      }
-    }
-
-    // Assign serial if enabled
+    // Assign serial if enabled (also handles supply check for serial cards)
     let serialData = null;
-    if (card.enable_serial_random) {
+    if (card.enable_serial_random && card.max_supply > 0) {
       serialData = await assignSerial(base44, card);
       if (serialData?.soldOut) {
         return Response.json({ error: 'Sold Out — no serial numbers remaining.' }, { status: 409 });
+      }
+    } else if (card.max_supply > 0) {
+      // Non-serial supply check
+      const claimedCount = await base44.asServiceRole.entities.UserCards.filter({ card_id: card.id });
+      if (claimedCount.length >= card.max_supply) {
+        return Response.json({ error: 'Sold Out — this card has reached its maximum supply.' }, { status: 409 });
       }
     }
 
