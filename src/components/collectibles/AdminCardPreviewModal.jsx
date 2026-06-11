@@ -91,7 +91,9 @@ export default function AdminCardPreviewModal({ card, onClose }) {
 
   const claimed = userCards.length;
   const maxSupply = card.max_supply || 0;
-  const remaining = maxSupply > 0 ? maxSupply - claimed : null;
+  const supplyDisplay = maxSupply > 0 ? maxSupply : 'Unlimited';
+  const remainingDisplay = maxSupply > 0 ? Math.max(0, maxSupply - claimed) : 'Unlimited';
+  const remaining = maxSupply > 0 ? Math.max(0, maxSupply - claimed) : null;
 
   const handleCopyId = () => {
     navigator.clipboard.writeText(card.id);
@@ -170,14 +172,11 @@ export default function AdminCardPreviewModal({ card, onClose }) {
         )}
 
         {/* Stats row */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
+          <StatPill label="Supply" value={supplyDisplay} accent="rgba(255,255,255,0.7)" />
           <StatPill label="Claimed" value={claimed} accent={C.lime} />
-          {remaining !== null ? (
-            <StatPill label="Remaining" value={remaining} accent={remaining === 0 ? 'rgba(255,80,80,1)' : 'rgba(80,160,255,1)'} />
-          ) : (
-            <StatPill label="Active Tokens" value={activeTokens.length} accent="rgba(80,160,255,1)" />
-          )}
-          <StatPill label="Tokens" value={activeTokens.length} accent="rgba(180,80,255,1)" />
+          <StatPill label="Remaining" value={remainingDisplay} accent={remaining === 0 ? 'rgba(255,80,80,1)' : 'rgba(80,200,120,1)'} />
+          <StatPill label="Active QR" value={activeTokens.length} accent="rgba(180,80,255,1)" />
         </div>
 
         {/* Card ID row */}

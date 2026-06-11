@@ -326,17 +326,16 @@ function CardRow({ card, onGenerateQR, onPreview, onDeleted }) {
               background: `${RARITY_COLOR[card.rarity] || C.lime}10`,
               textTransform: 'uppercase', letterSpacing: '0.08em',
             }}>{card.rarity}</span>
-            {card.enable_serial_random ? (
-              <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 5, color: C.lime, border: `1px solid ${C.limeBorder}`, background: C.limeDim }}>
-                #{card.serial_prefix || 'SN'} · {card.current_supply || 0}/{card.max_supply || '∞'}
-              </span>
-            ) : (
-              card.max_supply > 0 && (
-                <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 5, color: C.muted, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.03)' }}>
-                  {card.current_supply || 0}/{card.max_supply}
+            {(() => {
+              const supply = card.max_supply > 0 ? card.max_supply : null;
+              const claimed = card.current_supply || 0;
+              const remaining = supply !== null ? Math.max(0, supply - claimed) : null;
+              return (
+                <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 5, color: C.muted, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.03)', fontFamily: 'monospace' }}>
+                  {supply !== null ? `${supply} sup · ${claimed} clmd · ${remaining} rem` : `${claimed} claimed · ∞`}
                 </span>
-              )
-            )}
+              );
+            })()}
           </div>
         </div>
       </div>
