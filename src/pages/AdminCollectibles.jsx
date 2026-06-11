@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ChevronLeft, Plus, QrCode, RefreshCw, Eye, EyeOff, Trash2 } from 'lucide-react';
+import { ChevronLeft, Plus, QrCode, RefreshCw, Upload, X } from 'lucide-react';
 import QRCode from 'qrcode';
 
 const C = {
@@ -82,6 +82,58 @@ function Field({ label, value, onChange, type = 'text', options, multiline }) {
   );
 }
 
+// ── Image Upload Field ─────────────────────────────────────────────────────────
+function ImageUploadField({ value, onChange }) {
+  const [uploading, setUploading] = useState(false);
+  const inputRef = useRef();
+
+  const handleFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    onChange(file_url);
+    setUploading(false);
+  };
+
+  return (
+    <div style={{ marginBottom: 12 }}>
+      <p style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 6px' }}>Card Artwork</p>
+      <input ref={inputRef} type="file" accept="image/*" onChange={handleFile} style={{ display: 'none' }} />
+
+      {value ? (
+        <div style={{ position: 'relative', display: 'inline-block' }}>
+          <img src={value} alt="Card artwork" style={{ width: 100, height: 100, borderRadius: 12, objectFit: 'cover', border: `1px solid ${C.limeBorder}` }} />
+          <button
+            onClick={() => { onChange(''); inputRef.current.value = ''; }}
+            style={{ position: 'absolute', top: -8, right: -8, width: 22, height: 22, borderRadius: '50%', background: '#ff4444', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <X style={{ width: 12, height: 12, color: '#fff' }} />
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={() => inputRef.current.click()}
+          disabled={uploading}
+          style={{
+            width: '100%', padding: '20px', borderRadius: 12, border: `2px dashed rgba(255,255,255,0.15)`,
+            background: 'rgba(255,255,255,0.03)', color: C.muted, cursor: 'pointer',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+            fontSize: 13, fontWeight: 600,
+          }}
+        >
+          {uploading ? (
+            <RefreshCw style={{ width: 20, height: 20, animation: 'spin 1s linear infinite' }} />
+          ) : (
+            <Upload style={{ width: 20, height: 20 }} />
+          )}
+          {uploading ? 'Uploading…' : 'Tap to upload image'}
+        </button>
+      )}
+    </div>
+  );
+}
+
 // ── Create Card Form ───────────────────────────────────────────────────────────
 function CreateCardForm({ onCreated }) {
   const [open, setOpen] = useState(false);
@@ -102,7 +154,7 @@ function CreateCardForm({ onCreated }) {
       <p style={{ fontWeight: 900, fontSize: 15, marginBottom: 14, color: C.text }}>Create Card</p>
       <Field label="Name" value={form.name} onChange={set('name')} />
       <Field label="Description" value={form.description} onChange={set('description')} multiline />
-      <Field label="Image URL" value={form.image_url} onChange={set('image_url')} />
+      <ImageUploadField value={form.image_url} onChange={set('image_url')} />
       <Field label="Rarity" value={form.rarity} onChange={set('rarity')} options={RARITY_OPTS} />
       <Field label="Source" value={form.source_type} onChange={set('source_type')} options={SOURCE_OPTS} />
       {form.source_type === 'sponsor' && <Field label="Sponsor Name" value={form.sponsor_name} onChange={set('sponsor_name')} />}
