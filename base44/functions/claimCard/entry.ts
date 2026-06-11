@@ -72,6 +72,11 @@ Deno.serve(async (req) => {
     const card = cards[0];
     if (!card) return Response.json({ error: 'Card not found' }, { status: 404 });
 
+    // Check card status — only published cards can be claimed
+    if (card.status && card.status !== 'published') {
+      return Response.json({ error: 'This card is not available for claim.' }, { status: 403 });
+    }
+
     // Check max supply
     if (card.max_supply > 0) {
       const claimedCount = await base44.asServiceRole.entities.UserCards.filter({ card_id: card.id });

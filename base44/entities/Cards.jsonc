@@ -35,6 +35,17 @@
       "default": "common",
       "description": "Card rarity"
     },
+    "status": {
+      "type": "string",
+      "enum": [
+        "coming_soon",
+        "draft",
+        "published",
+        "archived"
+      ],
+      "default": "draft",
+      "description": "Card status workflow"
+    },
     "source_type": {
       "type": "string",
       "enum": [

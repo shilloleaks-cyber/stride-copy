@@ -25,6 +25,13 @@ const C = {
 
 const SOURCE_LABEL = { event: 'Event', purchase: 'Purchase', mission: 'Mission', sponsor: 'Sponsor', admin: 'Admin' };
 
+const STATUS_CFG = {
+  draft:       { label: 'Draft',       color: '#FFD700',             border: 'rgba(255,215,0,0.3)',    bg: 'rgba(255,215,0,0.08)' },
+  coming_soon: { label: 'Coming Soon', color: '#A855F7',             border: 'rgba(168,85,247,0.3)',   bg: 'rgba(168,85,247,0.1)' },
+  published:   { label: 'Live',        color: 'rgba(80,200,120,1)',  border: 'rgba(80,200,120,0.3)',   bg: 'rgba(80,200,120,0.08)' },
+  archived:    { label: 'Archived',    color: 'rgba(150,150,150,1)', border: 'rgba(150,150,150,0.25)', bg: 'rgba(150,150,150,0.06)' },
+};
+
 function DefaultCardBack() {
   return (
     <div style={{
@@ -108,10 +115,11 @@ export default function AdminCardPreviewModal({ card, onClose }) {
 
   // Status
   const soldOut = maxSupply > 0 && claimed >= maxSupply;
-  const status = soldOut ? 'Sold Out' : card.is_active ? 'Live' : 'Draft';
-  const statusColor = soldOut ? 'rgba(255,80,80,0.9)' : card.is_active ? 'rgba(80,200,120,0.9)' : 'rgba(255,255,255,0.35)';
-  const statusBorder = soldOut ? 'rgba(255,80,80,0.25)' : card.is_active ? 'rgba(80,200,120,0.25)' : 'rgba(255,255,255,0.12)';
-  const statusBg = soldOut ? 'rgba(255,80,80,0.08)' : card.is_active ? 'rgba(80,200,120,0.07)' : 'rgba(255,255,255,0.04)';
+  const cardStatus = soldOut ? null : (card.status || 'draft');
+  const statusCfg = soldOut
+    ? { label: 'Sold Out', color: 'rgba(255,80,80,0.9)', border: 'rgba(255,80,80,0.25)', bg: 'rgba(255,80,80,0.08)' }
+    : STATUS_CFG[cardStatus] || STATUS_CFG.draft;
+  const qrBlocked = !soldOut && cardStatus !== 'published';
 
   // Serial example
   const digits = card.serial_digits || 4;
@@ -187,8 +195,14 @@ export default function AdminCardPreviewModal({ card, onClose }) {
             <div style={{ display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap' }}>
               <span style={{ fontSize: 10, fontWeight: 800, padding: '4px 12px', borderRadius: 8, color: r.color, border: `1px solid ${r.border}`, background: `${r.glow}30`, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{r.label}</span>
               <span style={{ fontSize: 10, fontWeight: 700, padding: '4px 12px', borderRadius: 8, color: 'rgba(255,255,255,0.45)', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', textTransform: 'capitalize' }}>{SOURCE_LABEL[card.source_type] || card.source_type}</span>
-              <span style={{ fontSize: 10, fontWeight: 800, padding: '4px 12px', borderRadius: 8, color: statusColor, border: `1px solid ${statusBorder}`, background: statusBg, textTransform: 'uppercase', letterSpacing: '0.07em' }}>{status}</span>
+              <span style={{ fontSize: 10, fontWeight: 800, padding: '4px 12px', borderRadius: 8, color: statusCfg.color, border: `1px solid ${statusCfg.border}`, background: statusCfg.bg, textTransform: 'uppercase', letterSpacing: '0.07em' }}>{statusCfg.label}</span>
             </div>
+            {qrBlocked && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, padding: '10px 14px', borderRadius: 12, background: 'rgba(255,165,0,0.06)', border: '1px solid rgba(255,165,0,0.2)' }}>
+                <span style={{ fontSize: 14 }}>⚠️</span>
+                <p style={{ fontSize: 12, color: 'rgba(255,165,0,0.85)', fontWeight: 600, margin: 0 }}>QR generation disabled until published.</p>
+              </div>
+            )}
             {card.description && (
               <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, margin: '12px 0 0' }}>{card.description}</p>
             )}

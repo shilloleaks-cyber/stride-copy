@@ -23,7 +23,15 @@ const C = {
 
 const RARITY_OPTS = ['common', 'rare', 'epic', 'legendary', 'founder', 'sponsor'];
 const SOURCE_OPTS = ['event', 'purchase', 'mission', 'sponsor', 'admin'];
+const STATUS_OPTS = ['draft', 'coming_soon', 'published', 'archived'];
 const TABS = ['Cards', 'Vouchers', 'Claimed'];
+
+const STATUS_CFG = {
+  draft:       { label: 'Draft',       color: '#FFD700',            border: 'rgba(255,215,0,0.3)',    bg: 'rgba(255,215,0,0.08)' },
+  coming_soon: { label: 'Coming Soon', color: C.purple,             border: C.purpleBorder,           bg: C.purpleDim },
+  published:   { label: 'Live',        color: 'rgba(80,200,120,1)', border: 'rgba(80,200,120,0.3)',   bg: 'rgba(80,200,120,0.08)' },
+  archived:    { label: 'Archived',    color: 'rgba(150,150,150,1)', border: 'rgba(150,150,150,0.25)', bg: 'rgba(150,150,150,0.06)' },
+};
 
 const RARITY_COLOR = {
   common: 'rgba(180,180,180,1)', rare: 'rgba(80,160,255,1)',
@@ -154,6 +162,7 @@ function SerialFields({ form, set }) {
 const EMPTY_CARD_FORM = {
   name: '', description: '', front_image_url: '', back_image_url: '',
   rarity: 'common', source_type: 'admin', sponsor_name: '', event_name: '',
+  status: 'draft',
   enable_serial_random: false, serial_prefix: '', max_supply: '', serial_digits: '4',
 };
 
@@ -174,6 +183,7 @@ function CardForm({ initial = EMPTY_CARD_FORM, title, submitLabel, onSubmit, isP
       <Field label="Source" value={form.source_type} onChange={set('source_type')} options={SOURCE_OPTS} />
       {form.source_type === 'sponsor' && <Field label="Sponsor Name" value={form.sponsor_name} onChange={set('sponsor_name')} />}
       {form.source_type === 'event' && <Field label="Event Name" value={form.event_name} onChange={set('event_name')} />}
+      <Field label="Status" value={form.status || 'draft'} onChange={set('status')} options={STATUS_OPTS} />
       <SerialFields form={form} set={set} />
       <div style={{ display: 'flex', gap: 10, marginTop: 6 }}>
         <button onClick={() => onSubmit(form)} disabled={!form.name || isPending} style={{ flex: 1, padding: '13px', borderRadius: 14, background: isPending ? 'rgba(200,255,0,0.4)' : C.lime, color: '#000', fontSize: 14, fontWeight: 900, border: 'none', cursor: 'pointer' }}>
@@ -215,10 +225,9 @@ function StatusBadge({ card }) {
   const supply = card.max_supply > 0 ? card.max_supply : null;
   const claimed = card.current_supply || 0;
   const soldOut = supply !== null && claimed >= supply;
-
   if (soldOut) return <Badge children="Sold Out" color="rgba(255,80,80,0.9)" border="rgba(255,80,80,0.25)" bg="rgba(255,80,80,0.08)" />;
-  if (!card.is_active) return <Badge children="Draft" color="rgba(255,255,255,0.35)" border="rgba(255,255,255,0.12)" bg="rgba(255,255,255,0.04)" />;
-  return <Badge children="Live" color="rgba(80,200,120,0.9)" border="rgba(80,200,120,0.25)" bg="rgba(80,200,120,0.07)" />;
+  const cfg = STATUS_CFG[card.status] || STATUS_CFG.draft;
+  return <Badge children={cfg.label} color={cfg.color} border={cfg.border} bg={cfg.bg} />;
 }
 
 // ── Admin Card (mobile card layout) ───────────────────────────────────────────
@@ -240,23 +249,30 @@ function AdminCard({ card, onGenerateQR, onPreview, onDeleted }) {
     onSuccess: () => { setEditing(false); onDeleted(); },
   });
 
+  const statusMutation = useMutation({
+    mutationFn: (newStatus) => base44.entities.Cards.update(card.id, { status: newStatus }),
+    onSuccess: onDeleted,
+  });
+
   const thumbnail = card.front_image_url || card.image_url;
   const rarityColor = RARITY_COLOR[card.rarity] || C.lime;
+  const status = card.status || 'draft';
   const SOURCE_LABEL = { event: 'Event', purchase: 'Purchase', mission: 'Mission', sponsor: 'Sponsor', admin: 'Admin' };
 
   if (editing) {
     return (
       <CardForm
         initial={{
-          name: card.name || '', description: card.description || '',
-          front_image_url: card.front_image_url || card.image_url || '',
-          back_image_url: card.back_image_url || '',
-          rarity: card.rarity || 'common', source_type: card.source_type || 'admin',
-          sponsor_name: card.sponsor_name || '', event_name: card.event_name || '',
-          enable_serial_random: card.enable_serial_random || false,
-          serial_prefix: card.serial_prefix || '',
-          max_supply: card.max_supply ? String(card.max_supply) : '',
-          serial_digits: String(card.serial_digits || 4),
+        name: card.name || '', description: card.description || '',
+        front_image_url: card.front_image_url || card.image_url || '',
+        back_image_url: card.back_image_url || '',
+        rarity: card.rarity || 'common', source_type: card.source_type || 'admin',
+        sponsor_name: card.sponsor_name || '', event_name: card.event_name || '',
+        status: card.status || 'draft',
+        enable_serial_random: card.enable_serial_random || false,
+        serial_prefix: card.serial_prefix || '',
+        max_supply: card.max_supply ? String(card.max_supply) : '',
+        serial_digits: String(card.serial_digits || 4),
         }}
         title={`Edit: ${card.name}`}
         submitLabel="Save Changes"
@@ -313,17 +329,45 @@ function AdminCard({ card, onGenerateQR, onPreview, onDeleted }) {
       {/* Stats grid */}
       <MiniStatsGrid card={card} />
 
-      {/* Action pills */}
-      <div style={{ display: 'flex', gap: 6, marginTop: 12 }}>
+      {/* Action pills — status-aware */}
+      <div style={{ display: 'flex', gap: 6, marginTop: 12, flexWrap: 'wrap' }}>
         <PillBtn onClick={() => onPreview(card)} icon={Eye} color={C.lime} border={C.limeBorder} bg={C.limeDim}>Preview</PillBtn>
-        <PillBtn onClick={() => onGenerateQR(card)} icon={QrCode} color={C.purple} border={C.purpleBorder} bg={C.purpleDim}>QR</PillBtn>
+
+        {status === 'published' && (
+          <PillBtn onClick={() => onGenerateQR(card)} icon={QrCode} color={C.purple} border={C.purpleBorder} bg={C.purpleDim}>QR</PillBtn>
+        )}
+
         <PillBtn onClick={() => setEditing(true)} icon={Pencil} color="rgba(255,255,255,0.5)" border="rgba(255,255,255,0.1)" bg="rgba(255,255,255,0.04)">Edit</PillBtn>
-        {!confirmDelete ? (
-          <PillBtn onClick={() => setConfirmDelete(true)} icon={Trash2} color="rgba(255,100,100,0.9)" border="rgba(255,80,80,0.2)" bg="rgba(255,80,80,0.06)">Delete</PillBtn>
-        ) : (
-          <PillBtn onClick={() => deleteMutation.mutate()} color="#ff6060" border="rgba(255,80,80,0.4)" bg="rgba(255,80,80,0.12)">
-            {deleteMutation.isPending ? '…' : 'Confirm?'}
+
+        {(status === 'draft') && (
+          <PillBtn onClick={() => statusMutation.mutate('published')} color="rgba(80,200,120,0.9)" border="rgba(80,200,120,0.3)" bg="rgba(80,200,120,0.08)">
+            {statusMutation.isPending ? '…' : 'Publish'}
           </PillBtn>
+        )}
+        {(status === 'coming_soon') && (
+          <>
+            <PillBtn onClick={() => statusMutation.mutate('published')} color="rgba(80,200,120,0.9)" border="rgba(80,200,120,0.3)" bg="rgba(80,200,120,0.08)">
+              {statusMutation.isPending ? '…' : 'Publish'}
+            </PillBtn>
+            <PillBtn onClick={() => statusMutation.mutate('archived')} color="rgba(150,150,150,0.9)" border="rgba(150,150,150,0.25)" bg="rgba(150,150,150,0.06)">Archive</PillBtn>
+          </>
+        )}
+        {(status === 'published') && (
+          <PillBtn onClick={() => statusMutation.mutate('archived')} color="rgba(150,150,150,0.9)" border="rgba(150,150,150,0.25)" bg="rgba(150,150,150,0.06)">Archive</PillBtn>
+        )}
+        {(status === 'archived') && (
+          <PillBtn onClick={() => statusMutation.mutate('published')} color="rgba(80,200,120,0.9)" border="rgba(80,200,120,0.3)" bg="rgba(80,200,120,0.08)">
+            {statusMutation.isPending ? '…' : 'Restore'}
+          </PillBtn>
+        )}
+        {(status === 'draft' || status === 'archived') && (
+          !confirmDelete ? (
+            <PillBtn onClick={() => setConfirmDelete(true)} icon={Trash2} color="rgba(255,100,100,0.9)" border="rgba(255,80,80,0.2)" bg="rgba(255,80,80,0.06)">Delete</PillBtn>
+          ) : (
+            <PillBtn onClick={() => deleteMutation.mutate()} color="#ff6060" border="rgba(255,80,80,0.4)" bg="rgba(255,80,80,0.12)">
+              {deleteMutation.isPending ? '…' : 'Confirm?'}
+            </PillBtn>
+          )
         )}
       </div>
     </div>

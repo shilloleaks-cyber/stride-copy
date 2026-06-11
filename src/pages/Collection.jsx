@@ -33,7 +33,7 @@ export default function Collection() {
 
   const { data: allCards = [] } = useQuery({
     queryKey: ['all-cards'],
-    queryFn: () => base44.entities.Cards.filter({ is_active: true }),
+    queryFn: () => base44.entities.Cards.list('-created_date', 200),
   });
 
   const { data: userCards = [], refetch: refetchUserCards } = useQuery({
@@ -49,11 +49,25 @@ export default function Collection() {
     return map;
   }, [userCards]);
 
+  const isAdmin = user?.role === 'admin';
+
+  // Filter cards by status for regular users
+  const visibleCards = useMemo(() => {
+    return allCards.filter(card => {
+      const status = card.status || 'draft';
+      const owned = ownedCardIds.has(card.id);
+      if (isAdmin) return true; // admin sees all
+      if (status === 'draft') return false;
+      if (status === 'archived') return owned; // only show if owned
+      return true; // published + coming_soon are visible
+    });
+  }, [allCards, ownedCardIds, isAdmin]);
+
   const sortedCards = useMemo(() => {
-    return [...allCards].sort((a, b) =>
+    return [...visibleCards].sort((a, b) =>
       RARITY_ORDER.indexOf(a.rarity) - RARITY_ORDER.indexOf(b.rarity)
     );
-  }, [allCards]);
+  }, [visibleCards]);
 
   const filtered = useMemo(() => {
     return sortedCards.filter(card => {
@@ -66,7 +80,7 @@ export default function Collection() {
   }, [sortedCards, ownedCardIds, filter, rarityFilter]);
 
   const ownedCount = ownedCardIds.size;
-  const totalCount = allCards.length;
+  const totalCount = visibleCards.filter(c => (c.status || 'draft') === 'published').length;
 
   return (
     <div style={{ minHeight: '100dvh', backgroundColor: C.bg, color: C.text, paddingBottom: 120 }}>
@@ -172,16 +186,37 @@ export default function Collection() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
             {filtered.map(card => {
               const owned = ownedCardIds.has(card.id);
+              const status = card.status || 'draft';
+              const isComingSoon = status === 'coming_soon';
+              const isDraft = status === 'draft';
               return (
                 <div key={card.id} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <CollectibleCard
-                    card={card}
-                    owned={owned}
-                    small
-                    onClick={() => setSelectedCard(card)}
-                  />
-                  <p style={{ fontSize: 9, fontWeight: 700, textAlign: 'center', margin: 0, textTransform: 'uppercase', letterSpacing: '0.06em', color: owned ? '#BFFF00' : 'rgba(255,255,255,0.2)' }}>
-                    {owned ? 'Owned' : 'Not Yet Collected'}
+                  <div style={{ position: 'relative' }}>
+                    <CollectibleCard
+                      card={card}
+                      owned={owned}
+                      small
+                      onClick={() => !isComingSoon && setSelectedCard(card)}
+                    />
+                    {isComingSoon && !owned && (
+                      <div style={{
+                        position: 'absolute', inset: 0, borderRadius: 10,
+                        background: 'rgba(10,10,10,0.65)', backdropFilter: 'blur(2px)',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <span style={{ fontSize: 14 }}>⏳</span>
+                      </div>
+                    )}
+                    {isDraft && isAdmin && (
+                      <div style={{ position: 'absolute', top: 4, right: 4, fontSize: 8, fontWeight: 800, padding: '2px 5px', borderRadius: 4, background: 'rgba(255,215,0,0.15)', border: '1px solid rgba(255,215,0,0.3)', color: '#FFD700' }}>DRAFT</div>
+                    )}
+                  </div>
+                  <p style={{
+                    fontSize: 9, fontWeight: 700, textAlign: 'center', margin: 0,
+                    textTransform: 'uppercase', letterSpacing: '0.06em',
+                    color: owned ? '#C8FF00' : isComingSoon ? 'rgba(168,85,247,0.8)' : 'rgba(255,255,255,0.2)',
+                  }}>
+                    {owned ? 'Owned' : isComingSoon ? 'Coming Soon' : 'Not Yet Collected'}
                   </p>
                 </div>
               );
