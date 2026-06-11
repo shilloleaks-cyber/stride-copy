@@ -180,11 +180,23 @@ function CardRow({ card, onGenerateQR }) {
 }
 
 // ── QR Modal ──────────────────────────────────────────────────────────────────
-function QRModal({ card, token, qrDataUrl, onClose }) {
+function QRModal({ card, token, qrDataUrl, expiresAt, onClose }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(token);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const expiryStr = expiresAt
+    ? new Date(expiresAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+    : null;
+
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{ background: '#111', borderRadius: 24, border: `1px solid ${C.limeBorder}`, padding: 28, maxWidth: 320, width: '100%', textAlign: 'center' }}>
-        <p style={{ fontSize: 18, fontWeight: 900, color: C.text, marginBottom: 4 }}>Claim QR</p>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div style={{ background: '#111', borderRadius: 24, border: `1px solid ${C.limeBorder}`, padding: 28, maxWidth: 340, width: '100%', textAlign: 'center', boxShadow: `0 0 40px rgba(191,255,0,0.1)` }}>
+        <p style={{ fontSize: 18, fontWeight: 900, color: C.text, marginBottom: 2 }}>Claim QR Code</p>
         <p style={{ fontSize: 13, color: C.muted, marginBottom: 20 }}>{card.name}</p>
 
         {qrDataUrl ? (
@@ -195,12 +207,26 @@ function QRModal({ card, token, qrDataUrl, onClose }) {
           </div>
         )}
 
-        <p style={{ fontSize: 10, color: C.muted, wordBreak: 'break-all', marginBottom: 20, fontFamily: 'monospace', lineHeight: 1.5 }}>
-          Token: {token}
+        {/* Expiry badge */}
+        {expiryStr && (
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 20, background: 'rgba(255,180,0,0.08)', border: '1px solid rgba(255,180,0,0.2)', marginBottom: 14 }}>
+            <span style={{ fontSize: 12 }}>⏱</span>
+            <span style={{ fontSize: 11, color: 'rgba(255,180,0,0.85)', fontWeight: 700 }}>Expires {expiryStr}</span>
+          </div>
+        )}
+
+        {/* Token row with copy */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '8px 12px', marginBottom: 14, textAlign: 'left' }}>
+          <p style={{ flex: 1, fontSize: 10, color: C.muted, wordBreak: 'break-all', fontFamily: 'monospace', margin: 0, lineHeight: 1.5 }}>{token}</p>
+          <button onClick={handleCopy} style={{ flexShrink: 0, padding: '5px 10px', borderRadius: 8, background: copied ? 'rgba(191,255,0,0.15)' : 'rgba(255,255,255,0.06)', border: `1px solid ${copied ? C.limeBorder : 'rgba(255,255,255,0.1)'}`, color: copied ? C.lime : C.muted, fontSize: 11, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}>
+            {copied ? '✓ Copied' : 'Copy'}
+          </button>
+        </div>
+
+        <p style={{ fontSize: 11, color: 'rgba(255,180,0,0.65)', marginBottom: 20 }}>
+          ⚠️ Single-use · Expires in 24 hours
         </p>
-        <p style={{ fontSize: 11, color: 'rgba(255,180,0,0.7)', marginBottom: 20 }}>
-          ⚠️ Single-use only. Share this QR with the recipient.
-        </p>
+
         <button onClick={onClose} style={{ width: '100%', padding: '12px', borderRadius: 12, background: C.limeDim, border: `1px solid ${C.limeBorder}`, color: C.lime, fontSize: 14, fontWeight: 800, cursor: 'pointer' }}>
           Done
         </button>
@@ -244,14 +270,16 @@ export default function AdminCollectibles() {
 
   const handleGenerateQR = async (card) => {
     const token = crypto.randomUUID();
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
     await base44.entities.ClaimTokens.create({
       token,
       card_id: card.id,
       created_by: user?.email || '',
       is_used: false,
+      expires_at: expiresAt,
     });
     const qrDataUrl = await QRCode.toDataURL(token, { width: 300, margin: 2, color: { dark: '#000000', light: '#ffffff' } });
-    setQrModal({ card, token, qrDataUrl });
+    setQrModal({ card, token, qrDataUrl, expiresAt });
   };
 
   return (
@@ -370,6 +398,7 @@ export default function AdminCollectibles() {
           card={qrModal.card}
           token={qrModal.token}
           qrDataUrl={qrModal.qrDataUrl}
+          expiresAt={qrModal.expiresAt}
           onClose={() => setQrModal(null)}
         />
       )}
