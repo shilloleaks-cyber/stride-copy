@@ -26,6 +26,18 @@
     "claim_token": {
       "type": "string",
       "description": "Token used to claim"
+    },
+    "serial_number": {
+      "type": "number",
+      "description": "Assigned serial number (unique per card_id)"
+    },
+    "serial_code": {
+      "type": "string",
+      "description": "Full serial code e.g. BX-FND-0047"
+    },
+    "supply_position": {
+      "type": "string",
+      "description": "Display position e.g. #0047 / 0100"
     }
   },
   "required": [

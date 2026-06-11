@@ -59,6 +59,30 @@
       "type": "boolean",
       "default": true,
       "description": "Whether card is active"
+    },
+    "serial_prefix": {
+      "type": "string",
+      "description": "Prefix for serial code e.g. BX-FND"
+    },
+    "max_supply": {
+      "type": "number",
+      "default": 0,
+      "description": "Maximum supply (0 = unlimited)"
+    },
+    "current_supply": {
+      "type": "number",
+      "default": 0,
+      "description": "Current number claimed"
+    },
+    "enable_serial_random": {
+      "type": "boolean",
+      "default": false,
+      "description": "Assign random serial on claim"
+    },
+    "serial_digits": {
+      "type": "number",
+      "default": 4,
+      "description": "Number of digits for serial padding"
     }
   },
   "required": [

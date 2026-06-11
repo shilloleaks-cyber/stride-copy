@@ -89,6 +89,10 @@ export default function AdminCardPreviewModal({ card, onClose }) {
     ? new Date(card.created_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
     : '—';
 
+  const claimed = userCards.length;
+  const maxSupply = card.max_supply || 0;
+  const remaining = maxSupply > 0 ? maxSupply - claimed : null;
+
   const handleCopyId = () => {
     navigator.clipboard.writeText(card.id);
     setCopiedId(true);
@@ -153,11 +157,27 @@ export default function AdminCardPreviewModal({ card, onClose }) {
           {card.description && <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, margin: '10px 0 0' }}>{card.description}</p>}
         </div>
 
+        {/* Serial info */}
+        {card.enable_serial_random && (
+          <div style={{ marginBottom: 12, padding: '10px 12px', background: C.limeDim, border: `1px solid ${C.limeBorder}`, borderRadius: 10 }}>
+            <p style={{ fontSize: 9, fontWeight: 700, color: 'rgba(191,255,0,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 4px' }}>Serial System</p>
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 12, fontWeight: 800, color: C.lime, fontFamily: 'monospace' }}>{card.serial_prefix || '—'}-{'1'.padStart(card.serial_digits || 4, '0')}</span>
+              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>Digits: {card.serial_digits || 4}</span>
+              {maxSupply > 0 && <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>Max: {maxSupply}</span>}
+            </div>
+          </div>
+        )}
+
         {/* Stats row */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-          <StatPill label="Total Claimed" value={userCards.length} accent={C.lime} />
-          <StatPill label="Active Tokens" value={activeTokens.length} accent="rgba(80,160,255,1)" />
-          <StatPill label="Created" value={createdDate} />
+          <StatPill label="Claimed" value={claimed} accent={C.lime} />
+          {remaining !== null ? (
+            <StatPill label="Remaining" value={remaining} accent={remaining === 0 ? 'rgba(255,80,80,1)' : 'rgba(80,160,255,1)'} />
+          ) : (
+            <StatPill label="Active Tokens" value={activeTokens.length} accent="rgba(80,160,255,1)" />
+          )}
+          <StatPill label="Tokens" value={activeTokens.length} accent="rgba(180,80,255,1)" />
         </div>
 
         {/* Card ID row */}

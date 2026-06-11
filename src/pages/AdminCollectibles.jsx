@@ -136,14 +136,47 @@ function ImageUploadField({ label, value, onChange }) {
 }
 
 // ── Create Card Form ───────────────────────────────────────────────────────────
+const EMPTY_CARD_FORM = { name: '', description: '', front_image_url: '', back_image_url: '', rarity: 'common', source_type: 'admin', sponsor_name: '', event_name: '', enable_serial_random: false, serial_prefix: '', max_supply: '', serial_digits: '4' };
+
+function SerialFields({ form, set }) {
+  return (
+    <>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, padding: '10px 12px', background: 'rgba(191,255,0,0.04)', border: '1px solid rgba(191,255,0,0.12)', borderRadius: 10 }}>
+        <input type="checkbox" id="serial_toggle" checked={!!form.enable_serial_random} onChange={e => set('enable_serial_random')(e.target.checked)} style={{ width: 16, height: 16, accentColor: C.lime, cursor: 'pointer' }} />
+        <label htmlFor="serial_toggle" style={{ fontSize: 12, fontWeight: 700, color: form.enable_serial_random ? C.lime : C.muted, cursor: 'pointer', userSelect: 'none' }}>Enable Serial Numbers</label>
+      </div>
+      {form.enable_serial_random && (
+        <div style={{ background: 'rgba(191,255,0,0.03)', border: '1px solid rgba(191,255,0,0.1)', borderRadius: 10, padding: '12px', marginBottom: 12 }}>
+          <Field label="Serial Prefix (e.g. BX-FND)" value={form.serial_prefix} onChange={set('serial_prefix')} />
+          <div style={{ display: 'flex', gap: 10 }}>
+            <div style={{ flex: 1 }}><Field label="Max Supply" value={form.max_supply} onChange={set('max_supply')} type="number" /></div>
+            <div style={{ flex: 1 }}><Field label="Serial Digits" value={form.serial_digits} onChange={set('serial_digits')} type="number" /></div>
+          </div>
+          {form.serial_prefix && form.max_supply && (
+            <p style={{ fontSize: 10, color: 'rgba(191,255,0,0.5)', margin: '4px 0 0', fontFamily: 'monospace' }}>
+              Preview: {form.serial_prefix}-{'1'.padStart(Number(form.serial_digits) || 4, '0')} → {form.serial_prefix}-{'1'.padStart(Number(form.serial_digits) || 4, '0')} / {String(form.max_supply).padStart(Number(form.serial_digits) || 4, '0')}
+            </p>
+          )}
+        </div>
+      )}
+    </>
+  );
+}
+
 function CreateCardForm({ onCreated }) {
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ name: '', description: '', front_image_url: '', back_image_url: '', rarity: 'common', source_type: 'admin', sponsor_name: '', event_name: '' });
+  const [form, setForm] = useState(EMPTY_CARD_FORM);
   const set = k => v => setForm(f => ({ ...f, [k]: v }));
 
   const mutation = useMutation({
-    mutationFn: () => base44.entities.Cards.create({ ...form, is_active: true }),
-    onSuccess: () => { setOpen(false); setForm({ name: '', description: '', front_image_url: '', back_image_url: '', rarity: 'common', source_type: 'admin', sponsor_name: '', event_name: '' }); onCreated(); },
+    mutationFn: () => base44.entities.Cards.create({
+      ...form,
+      is_active: true,
+      max_supply: form.max_supply ? Number(form.max_supply) : 0,
+      serial_digits: Number(form.serial_digits) || 4,
+      current_supply: 0,
+    }),
+    onSuccess: () => { setOpen(false); setForm(EMPTY_CARD_FORM); onCreated(); },
   });
 
   if (!open) return (
@@ -163,6 +196,7 @@ function CreateCardForm({ onCreated }) {
       <Field label="Source" value={form.source_type} onChange={set('source_type')} options={SOURCE_OPTS} />
       {form.source_type === 'sponsor' && <Field label="Sponsor Name" value={form.sponsor_name} onChange={set('sponsor_name')} />}
       {form.source_type === 'event' && <Field label="Event Name" value={form.event_name} onChange={set('event_name')} />}
+      <SerialFields form={form} set={set} />
       <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
         <button onClick={() => mutation.mutate()} disabled={!form.name || mutation.isPending} style={{ flex: 1, padding: '11px', borderRadius: 12, background: mutation.isPending ? 'rgba(191,255,0,0.4)' : C.lime, color: '#000', fontSize: 14, fontWeight: 900, border: 'none', cursor: 'pointer' }}>
           {mutation.isPending ? 'Creating…' : 'Create'}
@@ -217,11 +251,19 @@ function EditCardForm({ card, onSaved, onCancel }) {
     source_type: card.source_type || 'admin',
     sponsor_name: card.sponsor_name || '',
     event_name: card.event_name || '',
+    enable_serial_random: card.enable_serial_random || false,
+    serial_prefix: card.serial_prefix || '',
+    max_supply: card.max_supply ? String(card.max_supply) : '',
+    serial_digits: String(card.serial_digits || 4),
   });
   const set = k => v => setForm(f => ({ ...f, [k]: v }));
 
   const mutation = useMutation({
-    mutationFn: () => base44.entities.Cards.update(card.id, form),
+    mutationFn: () => base44.entities.Cards.update(card.id, {
+      ...form,
+      max_supply: form.max_supply ? Number(form.max_supply) : 0,
+      serial_digits: Number(form.serial_digits) || 4,
+    }),
     onSuccess: onSaved,
   });
 
@@ -238,6 +280,7 @@ function EditCardForm({ card, onSaved, onCancel }) {
       <Field label="Source" value={form.source_type} onChange={set('source_type')} options={SOURCE_OPTS} />
       {form.source_type === 'sponsor' && <Field label="Sponsor Name" value={form.sponsor_name} onChange={set('sponsor_name')} />}
       {form.source_type === 'event' && <Field label="Event Name" value={form.event_name} onChange={set('event_name')} />}
+      <SerialFields form={form} set={set} />
       <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
         <button onClick={() => mutation.mutate()} disabled={!form.name || mutation.isPending} style={{ flex: 1, padding: '11px', borderRadius: 12, background: mutation.isPending ? 'rgba(191,255,0,0.4)' : C.lime, color: '#000', fontSize: 14, fontWeight: 900, border: 'none', cursor: 'pointer' }}>
           {mutation.isPending ? 'Saving…' : 'Save'}
@@ -275,13 +318,26 @@ function CardRow({ card, onGenerateQR, onPreview, onDeleted }) {
         )}
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ fontSize: 14, fontWeight: 800, color: C.text, margin: '0 0 4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{card.name}</p>
-          <span style={{
-            fontSize: 9, fontWeight: 800, padding: '2px 7px', borderRadius: 5,
-            color: RARITY_COLOR[card.rarity] || C.lime,
-            border: `1px solid ${RARITY_COLOR[card.rarity] || C.lime}44`,
-            background: `${RARITY_COLOR[card.rarity] || C.lime}10`,
-            textTransform: 'uppercase', letterSpacing: '0.08em',
-          }}>{card.rarity}</span>
+          <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', alignItems: 'center' }}>
+            <span style={{
+              fontSize: 9, fontWeight: 800, padding: '2px 7px', borderRadius: 5,
+              color: RARITY_COLOR[card.rarity] || C.lime,
+              border: `1px solid ${RARITY_COLOR[card.rarity] || C.lime}44`,
+              background: `${RARITY_COLOR[card.rarity] || C.lime}10`,
+              textTransform: 'uppercase', letterSpacing: '0.08em',
+            }}>{card.rarity}</span>
+            {card.enable_serial_random ? (
+              <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 5, color: C.lime, border: `1px solid ${C.limeBorder}`, background: C.limeDim }}>
+                #{card.serial_prefix || 'SN'} · {card.current_supply || 0}/{card.max_supply || '∞'}
+              </span>
+            ) : (
+              card.max_supply > 0 && (
+                <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 5, color: C.muted, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.03)' }}>
+                  {card.current_supply || 0}/{card.max_supply}
+                </span>
+              )
+            )}
+          </div>
         </div>
       </div>
 

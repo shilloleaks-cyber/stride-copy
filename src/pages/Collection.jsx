@@ -43,6 +43,11 @@ export default function Collection() {
   });
 
   const ownedCardIds = useMemo(() => new Set(userCards.map(uc => uc.card_id)), [userCards]);
+  const userCardByCardId = useMemo(() => {
+    const map = {};
+    userCards.forEach(uc => { map[uc.card_id] = uc; });
+    return map;
+  }, [userCards]);
 
   const sortedCards = useMemo(() => {
     return [...allCards].sort((a, b) =>
@@ -165,15 +170,22 @@ export default function Collection() {
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-            {filtered.map(card => (
-              <CollectibleCard
-                key={card.id}
-                card={card}
-                owned={ownedCardIds.has(card.id)}
-                small
-                onClick={() => setSelectedCard(card)}
-              />
-            ))}
+            {filtered.map(card => {
+              const owned = ownedCardIds.has(card.id);
+              return (
+                <div key={card.id} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <CollectibleCard
+                    card={card}
+                    owned={owned}
+                    small
+                    onClick={() => setSelectedCard(card)}
+                  />
+                  <p style={{ fontSize: 9, fontWeight: 700, textAlign: 'center', margin: 0, textTransform: 'uppercase', letterSpacing: '0.06em', color: owned ? '#BFFF00' : 'rgba(255,255,255,0.2)' }}>
+                    {owned ? 'Owned' : 'Not Yet Collected'}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -185,7 +197,11 @@ export default function Collection() {
 
       {/* Card detail modal with flip */}
       {selectedCard && (
-        <CardDetailModal card={selectedCard} onClose={() => setSelectedCard(null)} />
+        <CardDetailModal
+          card={selectedCard}
+          userCard={userCardByCardId[selectedCard.id]}
+          onClose={() => setSelectedCard(null)}
+        />
       )}
     </div>
   );
