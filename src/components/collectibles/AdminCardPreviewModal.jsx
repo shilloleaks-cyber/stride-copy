@@ -55,11 +55,18 @@ function DefaultCardBack() {
   );
 }
 
-function StatPill({ label, value, accent }) {
+function StatCard({ label, value, accent }) {
+  const isLong = String(value).length > 5;
   return (
-    <div style={{ flex: 1, textAlign: 'center', padding: '10px 8px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12 }}>
-      <p style={{ fontSize: 18, fontWeight: 900, color: accent || '#fff', margin: '0 0 2px' }}>{value}</p>
-      <p style={{ fontSize: 9, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>{label}</p>
+    <div style={{
+      flex: '1 1 calc(50% - 4px)', minWidth: 0,
+      textAlign: 'center', padding: '12px 10px',
+      background: 'rgba(255,255,255,0.03)',
+      border: '1px solid rgba(255,255,255,0.07)',
+      borderRadius: 14,
+    }}>
+      <p style={{ fontSize: 9, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.09em', margin: '0 0 6px' }}>{label}</p>
+      <p style={{ fontSize: isLong ? 13 : 22, fontWeight: 900, color: accent || '#fff', margin: 0, lineHeight: 1 }}>{value}</p>
     </div>
   );
 }
@@ -171,12 +178,12 @@ export default function AdminCardPreviewModal({ card, onClose }) {
           </div>
         )}
 
-        {/* Stats row */}
-        <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
-          <StatPill label="Supply" value={supplyDisplay} accent="rgba(255,255,255,0.7)" />
-          <StatPill label="Claimed" value={claimed} accent={C.lime} />
-          <StatPill label="Remaining" value={remainingDisplay} accent={remaining === 0 ? 'rgba(255,80,80,1)' : 'rgba(80,200,120,1)'} />
-          <StatPill label="Active QR" value={activeTokens.length} accent="rgba(180,80,255,1)" />
+        {/* Stats 2x2 grid */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+          <StatCard label="Supply"     value={supplyDisplay}    accent="rgba(200,200,200,0.85)" />
+          <StatCard label="Claimed"    value={claimed}          accent={C.lime} />
+          <StatCard label="Remaining"  value={remainingDisplay} accent={remaining === 0 ? 'rgba(255,80,80,1)' : 'rgba(80,200,120,1)'} />
+          <StatCard label="Active QR"  value={activeTokens.length} accent="rgba(180,80,255,1)" />
         </div>
 
         {/* Card ID row */}

@@ -330,10 +330,19 @@ function CardRow({ card, onGenerateQR, onPreview, onDeleted }) {
               const supply = card.max_supply > 0 ? card.max_supply : null;
               const claimed = card.current_supply || 0;
               const remaining = supply !== null ? Math.max(0, supply - claimed) : null;
+              const items = [
+                { label: 'Supply',    val: supply ?? 'Unlimited', color: 'rgba(200,200,200,0.7)' },
+                { label: 'Claimed',   val: claimed,               color: C.lime },
+                { label: 'Remaining', val: remaining ?? 'Unlimited', color: remaining === 0 ? 'rgba(255,100,100,0.9)' : 'rgba(80,200,120,0.9)' },
+              ];
               return (
-                <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 5, color: C.muted, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.03)', fontFamily: 'monospace' }}>
-                  {supply !== null ? `${supply} sup · ${claimed} clmd · ${remaining} rem` : `${claimed} claimed · ∞`}
-                </span>
+                <div style={{ display: 'flex', gap: 10, marginTop: 4, flexWrap: 'wrap' }}>
+                  {items.map(({ label, val, color }) => (
+                    <span key={label} style={{ fontSize: 10, color: C.muted }}>
+                      {label}: <span style={{ fontWeight: 800, color }}>{val}</span>
+                    </span>
+                  ))}
+                </div>
               );
             })()}
           </div>
