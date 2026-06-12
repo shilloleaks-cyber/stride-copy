@@ -1,7 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect } from 'react';
 import { RARITY_CONFIG, injectRarityKeyframes, SPARKLE_POSITIONS } from './rarityEffects';
 
-// Returns the glow class name for a rarity
 function glowClass(rarity) {
   switch (rarity) {
     case 'founder':   return 'bx-glow-lime';
@@ -13,55 +12,42 @@ function glowClass(rarity) {
   }
 }
 
-// Animated spinning conic border for founder/legendary
-function SpinningBorder({ color1, color2 }) {
-  return (
-    <div style={{
-      position: 'absolute', inset: -2, zIndex: 0, borderRadius: 'inherit',
-      overflow: 'hidden', pointerEvents: 'none',
-    }}>
-      <div style={{
-        position: 'absolute',
-        inset: -60,
-        background: `conic-gradient(from 0deg, transparent 0%, ${color1} 15%, ${color2} 30%, transparent 45%, transparent 55%, ${color2} 70%, ${color1} 85%, transparent 100%)`,
-        animation: 'bx-border-spin 3s linear infinite',
-      }} />
-      {/* Inner mask to only show border ring */}
-      <div style={{
-        position: 'absolute', inset: 2, borderRadius: 'inherit',
-        background: '#0e0e0e',
-      }} />
-    </div>
-  );
-}
+// Subtle shine sweep — uses animation-duration equal to the period
+// The keyframe itself only moves during first ~18% of the cycle, then hides
+function ShineSweep({ period, rarity }) {
+  const color = rarity === 'legendary' || rarity === 'sponsor'
+    ? 'rgba(255,255,255,0.18)'
+    : rarity === 'founder'
+      ? 'rgba(191,255,0,0.22)'
+      : rarity === 'epic'
+        ? 'rgba(180,80,255,0.18)'
+        : 'rgba(191,255,0,0.16)';
 
-// Shine sweep layer
-function ShineSweep({ color, period }) {
   return (
     <div style={{
       position: 'absolute', inset: 0, zIndex: 5, pointerEvents: 'none',
       borderRadius: 'inherit', overflow: 'hidden',
     }}>
       <div style={{
-        position: 'absolute', top: 0, bottom: 0, width: '50%',
+        position: 'absolute', top: 0, bottom: 0, width: '45%',
         background: `linear-gradient(90deg, transparent 0%, ${color} 50%, transparent 100%)`,
         animation: `bx-shine ${period}s ease-in-out infinite`,
-        animationDelay: '-1s',
       }} />
     </div>
   );
 }
 
-// Holographic rainbow overlay
-function HoloOverlay() {
+// Barely-visible holographic overlay
+function HoloOverlay({ rarity }) {
   return (
     <div style={{
       position: 'absolute', inset: 0, zIndex: 4, pointerEvents: 'none',
       borderRadius: 'inherit',
-      background: 'linear-gradient(125deg, rgba(255,0,100,0.25) 0%, rgba(255,165,0,0.25) 16%, rgba(255,255,0,0.25) 32%, rgba(0,255,120,0.25) 48%, rgba(0,150,255,0.25) 64%, rgba(180,0,255,0.25) 80%, rgba(255,0,100,0.25) 100%)',
+      background: rarity === 'founder'
+        ? 'linear-gradient(125deg, rgba(191,255,0,0.0) 0%, rgba(138,43,226,0.12) 35%, rgba(191,255,0,0.08) 55%, rgba(138,43,226,0.0) 100%)'
+        : 'linear-gradient(125deg, rgba(255,215,0,0.0) 0%, rgba(255,100,0,0.1) 30%, rgba(255,215,0,0.08) 55%, rgba(100,180,255,0.08) 75%, rgba(255,215,0,0.0) 100%)',
       backgroundSize: '300% 300%',
-      animation: 'bx-holo-sweep 3s ease-in-out infinite',
-      mixBlendMode: 'screen',
+      animation: `bx-holo-sweep ${rarity === 'founder' ? 14 : 10}s ease-in-out infinite`,
     }} />
   );
 }
@@ -73,46 +59,14 @@ export default function CollectibleCard({ card, owned = false, small = false, on
   const rarity = card?.rarity || 'common';
   const frontImg = card?.front_image_url || card?.image_url;
 
-  // 3D tilt for founder
-  const cardRef = useRef(null);
-  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const isOwned = owned;
+  const opacity = isOwned ? 1 : comingSoon ? 0.6 : 0.3;
 
-  const onMouseMove = (e) => {
-    if (!r.tilt3d || !owned) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
-    setTilt({ x: ((e.clientY - cy) / rect.height) * 14, y: -((e.clientX - cx) / rect.width) * 14 });
-  };
-  const onMouseLeave = () => setTilt({ x: 0, y: 0 });
-  const onTouchMove = (e) => {
-    if (!r.tilt3d || !owned) return;
-    const t = e.touches[0];
-    const rect = cardRef.current.getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
-    setTilt({ x: ((t.clientY - cy) / rect.height) * 12, y: -((t.clientX - cx) / rect.width) * 12 });
-  };
-  const onTouchEnd = () => setTilt({ x: 0, y: 0 });
-
-  const isAnimated = owned && rarity !== 'common';
-  const opacity = owned ? 1 : comingSoon ? 0.65 : 0.35;
-
-  // Wrapper classes
-  const floatClass = owned && r.floatAnim ? 'bx-float' : '';
-  const activeGlowClass = owned ? glowClass(rarity) : '';
-
-  const tiltTransform = r.tilt3d && owned
-    ? `perspective(500px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`
-    : 'none';
+  const floatClass = isOwned && r.floatAnim ? 'bx-float' : '';
+  const activeGlowClass = isOwned ? glowClass(rarity) : '';
 
   return (
     <div
-      ref={cardRef}
-      onMouseMove={onMouseMove}
-      onMouseLeave={onMouseLeave}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
       onClick={onClick}
       className={[floatClass, activeGlowClass].filter(Boolean).join(' ')}
       style={{
@@ -120,157 +74,121 @@ export default function CollectibleCard({ card, owned = false, small = false, on
         position: 'relative',
         opacity,
         cursor: onClick ? 'pointer' : 'default',
-        transform: tiltTransform,
-        transition: r.tilt3d ? 'transform 0.1s ease' : 'none',
-        // Non-animated fallback border/glow for static display
-        border: `1.5px solid ${owned ? r.border : comingSoon ? `${r.border}50` : 'rgba(255,255,255,0.07)'}`,
+        border: `1.5px solid ${isOwned ? r.border : comingSoon ? `${r.border}50` : 'rgba(255,255,255,0.06)'}`,
         background: '#0e0e0e',
-        overflow: 'visible', // allow spinning border to bleed
+        overflow: 'hidden',
       }}
     >
-      {/* Spinning animated border — founder & legendary */}
-      {owned && (rarity === 'founder' || rarity === 'legendary') && (
-        <SpinningBorder
-          color1={rarity === 'founder' ? '#BFFF00' : '#FFD700'}
-          color2={rarity === 'founder' ? '#8A2BE2' : '#ff6600'}
-        />
-      )}
-
-      {/* Inner card (clips content) */}
+      {/* Image area */}
       <div style={{
-        position: 'relative', zIndex: 1,
-        borderRadius: small ? 13 : 17,
+        width: '100%', paddingTop: '100%', position: 'relative',
+        background: isOwned ? r.bg : 'rgba(255,255,255,0.02)',
         overflow: 'hidden',
-        background: '#0e0e0e',
       }}>
+        {frontImg ? (
+          <img
+            src={frontImg}
+            alt={card.name}
+            style={{
+              position: 'absolute', inset: 0, width: '100%', height: '100%',
+              objectFit: 'cover',
+              filter: isOwned ? 'none' : comingSoon ? 'grayscale(0.4) blur(0.5px)' : 'grayscale(1) blur(2px)',
+            }}
+          />
+        ) : (
+          <div style={{
+            position: 'absolute', inset: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: small ? 28 : 40,
+          }}>
+            {isOwned ? '✦' : '?'}
+          </div>
+        )}
 
-        {/* Pulse border for epic/rare/sponsor */}
-        {owned && r.pulseBorder && rarity !== 'founder' && rarity !== 'legendary' && (
-          <div className="bx-border-pulse" style={{
-            position: 'absolute', inset: 0, zIndex: 8, borderRadius: 'inherit', pointerEvents: 'none',
-            border: `2px solid ${r.border}`,
+        {/* Holographic overlay */}
+        {isOwned && r.holographic && <HoloOverlay rarity={rarity} />}
+
+        {/* Shine sweep */}
+        {isOwned && r.shinePeriod && <ShineSweep period={r.shinePeriod} rarity={rarity} />}
+
+        {/* Sparkles — legendary only, rare moments */}
+        {isOwned && r.sparkles && SPARKLE_POSITIONS.map((sp, i) => (
+          <div key={i} className="bx-sparkle" style={{
+            position: 'absolute', zIndex: 6, pointerEvents: 'none',
+            top: sp.top, left: sp.left,
+            animationDelay: sp.delay,
+            animationDuration: sp.dur,
+            width: small ? sp.size - 1 : sp.size,
+            height: small ? sp.size - 1 : sp.size,
+            borderRadius: '50%',
+            background: '#FFD700',
+            boxShadow: `0 0 4px #FFD700, 0 0 8px rgba(255,215,0,0.6)`,
+          }} />
+        ))}
+
+        {/* Coming soon teaser */}
+        {comingSoon && !isOwned && (
+          <div className="bx-teaser" style={{
+            position: 'absolute', inset: 0, zIndex: 2, pointerEvents: 'none',
+            background: `radial-gradient(ellipse at 50% 40%, ${r.glow} 0%, transparent 65%)`,
           }} />
         )}
 
-        {/* Image area */}
-        <div style={{
-          width: '100%', paddingTop: '100%', position: 'relative',
-          background: owned ? r.bg : comingSoon ? `${r.bg}50` : 'rgba(255,255,255,0.02)',
-          overflow: 'hidden',
-        }}>
-          {frontImg ? (
-            <img
-              src={frontImg}
-              alt={card.name}
-              style={{
-                position: 'absolute', inset: 0, width: '100%', height: '100%',
-                objectFit: 'cover',
-                filter: owned ? 'none' : comingSoon ? 'grayscale(0.5) blur(0.5px)' : 'grayscale(1) blur(2px)',
-              }}
-            />
-          ) : (
-            <div style={{
-              position: 'absolute', inset: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: small ? 28 : 40,
-            }}>
-              {owned ? '✦' : '?'}
-            </div>
-          )}
+        {/* Bottom accent bar — very thin */}
+        {isOwned && rarity !== 'common' && (
+          <div style={{
+            position: 'absolute', bottom: 0, left: 0, right: 0,
+            height: 2,
+            background: `linear-gradient(90deg, transparent 10%, ${r.color}60 50%, transparent 90%)`,
+            zIndex: 7,
+          }} />
+        )}
 
-          {/* Holographic overlay */}
-          {owned && r.holographic && <HoloOverlay />}
-
-          {/* Shine sweep */}
-          {owned && r.shinePeriod && (
-            <ShineSweep
-              color={rarity === 'founder' ? 'rgba(191,255,0,0.45)' : rarity === 'legendary' ? 'rgba(255,255,255,0.45)' : rarity === 'sponsor' ? 'rgba(255,215,0,0.4)' : 'rgba(191,255,0,0.35)'}
-              period={r.shinePeriod}
-            />
-          )}
-
-          {/* Sparkles for legendary */}
-          {owned && r.sparkles && SPARKLE_POSITIONS.map((sp, i) => (
-            <div key={i} className="bx-sparkle" style={{
-              position: 'absolute', zIndex: 6, pointerEvents: 'none',
-              top: sp.top, left: sp.left,
-              animationDelay: sp.delay,
-              animationDuration: sp.dur,
-              width: small ? sp.size - 1 : sp.size,
-              height: small ? sp.size - 1 : sp.size,
-              borderRadius: '50%',
-              background: '#FFD700',
-              boxShadow: `0 0 6px #FFD700, 0 0 12px rgba(255,215,0,0.8)`,
-            }} />
-          ))}
-
-          {/* Coming soon teaser glow */}
-          {comingSoon && !owned && (
-            <div className="bx-teaser" style={{
-              position: 'absolute', inset: 0, zIndex: 2, pointerEvents: 'none',
-              background: `radial-gradient(ellipse at 50% 40%, ${r.glow} 0%, transparent 70%)`,
-            }} />
-          )}
-
-          {/* Bottom shimmer bar */}
-          {owned && (
-            <div style={{
-              position: 'absolute', bottom: 0, left: 0, right: 0,
-              height: rarity === 'founder' || rarity === 'legendary' ? 4 : 3,
-              background: `linear-gradient(90deg, transparent, ${r.color}, transparent)`,
-              zIndex: 7,
-            }} />
-          )}
-
-          {/* Lock overlay */}
-          {!owned && (
-            <div style={{
-              position: 'absolute', inset: 0, zIndex: 3,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: comingSoon ? 'rgba(0,0,0,0.15)' : 'rgba(0,0,0,0.45)',
-              fontSize: small ? 16 : 26,
-            }}>
-              {comingSoon ? '👁' : '🔒'}
-            </div>
-          )}
-        </div>
-
-        {/* Info bar */}
-        <div style={{ padding: small ? '7px 8px 9px' : '9px 11px 11px', position: 'relative', zIndex: 9, background: '#0e0e0e' }}>
-          <p style={{
-            fontSize: small ? 11 : 13, fontWeight: 800,
-            color: owned ? '#fff' : comingSoon ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.25)',
-            margin: '0 0 4px', lineHeight: 1.2,
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        {/* Lock overlay */}
+        {!isOwned && (
+          <div style={{
+            position: 'absolute', inset: 0, zIndex: 3,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: comingSoon ? 'rgba(0,0,0,0.1)' : 'rgba(0,0,0,0.5)',
+            fontSize: small ? 16 : 26,
           }}>
-            {owned ? card?.name : comingSoon ? card?.name : '???'}
+            {comingSoon ? '👁' : '🔒'}
+          </div>
+        )}
+      </div>
+
+      {/* Info bar */}
+      <div style={{ padding: small ? '7px 8px 9px' : '9px 11px 11px', background: '#0e0e0e', position: 'relative', zIndex: 9 }}>
+        <p style={{
+          fontSize: small ? 11 : 13, fontWeight: 800,
+          color: isOwned ? '#fff' : comingSoon ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.22)',
+          margin: '0 0 4px', lineHeight: 1.2,
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
+          {isOwned ? card?.name : comingSoon ? card?.name : '???'}
+        </p>
+
+        <span style={{
+          fontSize: 9, fontWeight: 800, padding: '2px 7px', borderRadius: 5,
+          background: isOwned ? r.bg : 'rgba(255,255,255,0.03)',
+          border: `1px solid ${isOwned ? r.border : comingSoon ? `${r.border}30` : 'rgba(255,255,255,0.07)'}`,
+          color: isOwned ? r.color : comingSoon ? `${r.color}60` : 'rgba(255,255,255,0.2)',
+          textTransform: 'uppercase', letterSpacing: '0.08em',
+          display: 'inline-block',
+        }}>
+          {r.label}
+        </span>
+
+        {isOwned && card?.event_name && (
+          <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', margin: '4px 0 0', lineHeight: 1.3 }}>
+            {card.event_name}
           </p>
-
-          <span
-            className={owned && rarity === 'sponsor' ? 'bx-badge-pulse' : ''}
-            style={{
-              fontSize: 9, fontWeight: 800, padding: '2px 7px', borderRadius: 5,
-              background: owned ? r.bg : 'rgba(255,255,255,0.04)',
-              border: `1px solid ${owned ? r.border : comingSoon ? `${r.border}40` : 'rgba(255,255,255,0.08)'}`,
-              color: owned ? r.color : comingSoon ? `${r.color}70` : 'rgba(255,255,255,0.22)',
-              textTransform: 'uppercase', letterSpacing: '0.08em',
-              display: 'inline-block',
-            }}
-          >
-            {r.label}
-          </span>
-
-          {owned && card?.event_name && (
-            <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', margin: '4px 0 0', lineHeight: 1.3 }}>
-              {card.event_name}
-            </p>
-          )}
-          {owned && card?.sponsor_name && (
-            <p style={{ fontSize: 9, color: 'rgba(255,215,0,0.6)', margin: '4px 0 0', lineHeight: 1.3 }}>
-              {card.sponsor_name}
-            </p>
-          )}
-        </div>
+        )}
+        {isOwned && card?.sponsor_name && (
+          <p style={{ fontSize: 9, color: 'rgba(255,215,0,0.5)', margin: '4px 0 0', lineHeight: 1.3 }}>
+            {card.sponsor_name}
+          </p>
+        )}
       </div>
     </div>
   );

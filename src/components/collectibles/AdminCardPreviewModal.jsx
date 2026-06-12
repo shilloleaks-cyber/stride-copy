@@ -82,6 +82,7 @@ export default function AdminCardPreviewModal({ card, onClose }) {
   const glowClassMap = { founder: 'bx-glow-lime', legendary: 'bx-glow-gold', epic: 'bx-glow-purple', rare: 'bx-glow-rare', sponsor: 'bx-glow-sponsor' };
   const floatClass = r.floatAnim ? 'bx-float' : '';
   const outerGlowClass = glowClassMap[rarity] || '';
+  const shineColor = rarity === 'founder' ? 'rgba(191,255,0,0.22)' : rarity === 'epic' ? 'rgba(180,80,255,0.18)' : 'rgba(255,255,255,0.16)';
   const frontImg = card?.front_image_url || card?.image_url;
   const backImg = card?.back_image_url;
 
@@ -156,17 +157,6 @@ export default function AdminCardPreviewModal({ card, onClose }) {
         <div style={{ padding: '0 20px' }}>
           {/* Card flip */}
           <div style={{ width: 180, margin: '0 auto 16px', aspectRatio: '2/3', perspective: 1000, cursor: 'pointer', position: 'relative' }} onClick={() => setFlipped(f => !f)}>
-            {/* Spinning border for founder/legendary */}
-            {(rarity === 'founder' || rarity === 'legendary') && (
-              <div style={{ position: 'absolute', inset: -2, zIndex: 0, borderRadius: 20, overflow: 'hidden', pointerEvents: 'none' }}>
-                <div style={{
-                  position: 'absolute', inset: -60,
-                  background: `conic-gradient(from 0deg, transparent 0%, ${rarity === 'founder' ? '#BFFF00' : '#FFD700'} 15%, ${rarity === 'founder' ? '#8A2BE2' : '#ff6600'} 30%, transparent 45%, transparent 55%, ${rarity === 'founder' ? '#8A2BE2' : '#ff6600'} 70%, ${rarity === 'founder' ? '#BFFF00' : '#FFD700'} 85%, transparent 100%)`,
-                  animation: 'bx-border-spin 3s linear infinite',
-                }} />
-                <div style={{ position: 'absolute', inset: 2, borderRadius: 18, background: '#0e0e0e' }} />
-              </div>
-            )}
 
             {/* Sparkles for legendary */}
             {r.sparkles && SPARKLE_POSITIONS.map((sp, i) => (
@@ -175,7 +165,7 @@ export default function AdminCardPreviewModal({ card, onClose }) {
                 top: sp.top, left: sp.left,
                 animationDelay: sp.delay, animationDuration: sp.dur,
                 width: sp.size, height: sp.size, borderRadius: '50%',
-                background: '#FFD700', boxShadow: `0 0 6px #FFD700, 0 0 12px rgba(255,215,0,0.8)`,
+                background: '#FFD700', boxShadow: `0 0 4px #FFD700, 0 0 8px rgba(255,215,0,0.6)`,
               }} />
             ))}
 
@@ -184,39 +174,41 @@ export default function AdminCardPreviewModal({ card, onClose }) {
               style={{
                 width: '100%', height: '100%', position: 'relative', zIndex: 1,
                 transformStyle: 'preserve-3d',
-                transition: 'transform 0.55s cubic-bezier(0.4,0,0.2,1)',
+                transition: 'transform 0.6s cubic-bezier(0.4,0,0.2,1)',
                 transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
                 borderRadius: 18,
               }}>
-              {/* Pulse border for epic/rare/sponsor */}
-              {r.pulseBorder && rarity !== 'founder' && rarity !== 'legendary' && (
-                <div className="bx-border-pulse" style={{ position: 'absolute', inset: -1, zIndex: 10, borderRadius: 19, pointerEvents: 'none', border: `2px solid ${r.border}` }} />
-              )}
               <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', borderRadius: 18, overflow: 'hidden', border: `1.5px solid ${r.border}`, background: '#0e0e0e' }}>
                 {frontImg ? (
                   <img src={frontImg} alt={card.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
-                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: `radial-gradient(circle at 50% 40%, ${r.glow} 0%, transparent 70%)`, fontSize: 56 }}>✦</div>
+                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: `radial-gradient(circle at 50% 40%, ${r.glow} 0%, transparent 70%)`, fontSize: 56, color: r.color }}>✦</div>
                 )}
                 {/* Holographic overlay */}
                 {r.holographic && (
                   <div style={{
                     position: 'absolute', inset: 0, zIndex: 4, borderRadius: 'inherit', pointerEvents: 'none',
-                    background: 'linear-gradient(125deg, rgba(255,0,100,0.3) 0%, rgba(255,165,0,0.3) 16%, rgba(255,255,0,0.3) 32%, rgba(0,255,120,0.28) 48%, rgba(0,150,255,0.3) 64%, rgba(180,0,255,0.3) 80%, rgba(255,0,100,0.3) 100%)',
-                    backgroundSize: '300% 300%', animation: 'bx-holo-sweep 3s ease-in-out infinite', mixBlendMode: 'screen',
+                    background: rarity === 'founder'
+                      ? 'linear-gradient(125deg, rgba(191,255,0,0.0) 0%, rgba(138,43,226,0.14) 35%, rgba(191,255,0,0.1) 55%, rgba(138,43,226,0.0) 100%)'
+                      : 'linear-gradient(125deg, rgba(255,215,0,0.0) 0%, rgba(255,100,0,0.12) 30%, rgba(255,215,0,0.1) 55%, rgba(100,180,255,0.1) 75%, rgba(255,215,0,0.0) 100%)',
+                    backgroundSize: '300% 300%',
+                    animation: `bx-holo-sweep ${rarity === 'founder' ? 14 : 10}s ease-in-out infinite`,
                   }} />
                 )}
                 {/* Shine sweep */}
                 {r.shinePeriod && (
                   <div style={{ position: 'absolute', inset: 0, zIndex: 5, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none' }}>
                     <div style={{
-                      position: 'absolute', top: 0, bottom: 0, width: '55%',
-                      background: rarity === 'founder' ? 'linear-gradient(90deg,transparent,rgba(191,255,0,0.55),transparent)' : rarity === 'legendary' ? 'linear-gradient(90deg,transparent,rgba(255,255,255,0.55),transparent)' : 'linear-gradient(90deg,transparent,rgba(191,255,0,0.4),transparent)',
+                      position: 'absolute', top: 0, bottom: 0, width: '45%',
+                      background: `linear-gradient(90deg, transparent 0%, ${shineColor} 50%, transparent 100%)`,
                       animation: `bx-shine ${r.shinePeriod}s ease-in-out infinite`,
                     }} />
                   </div>
                 )}
-                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 4, background: `linear-gradient(90deg, transparent, ${r.color}, transparent)`, boxShadow: `0 0 8px ${r.color}`, zIndex: 6 }} />
+                {/* Thin accent bar */}
+                {rarity !== 'common' && (
+                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent 10%, ${r.color}60 50%, transparent 90%)`, zIndex: 6 }} />
+                )}
               </div>
               <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', borderRadius: 18, overflow: 'hidden', border: `1.5px solid ${r.border}`, transform: 'rotateY(180deg)' }}>
                 {backImg ? <img src={backImg} alt="back" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <DefaultCardBack />}
