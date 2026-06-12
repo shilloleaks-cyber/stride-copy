@@ -8,7 +8,7 @@ import { format } from 'date-fns';
 import { 
   ArrowLeft, Share2, User, MapPin, Clock, Flame, Heart, 
   Award, Calendar, TrendingUp, Facebook, Copy, Check,
-  Settings, LogOut, Trophy, Target, Users, Edit3, Palette, Wallet, Trash2
+  Settings, LogOut, Trophy, Target, Users, Edit3, Palette, Wallet, Trash2, Shield
 } from 'lucide-react';
 import UserCard from '@/components/feed/UserCard';
 import { useMutation } from '@tanstack/react-query';
@@ -413,7 +413,29 @@ ${fastestPace && fastestPace.pace_min_per_km > 0 ? `⚡ เพซเร็วท
 
       {/* ── SECTION: COLLECTIBLES ── */}
       <div className="section">
-        <div className="sectionLabel">COLLECTIBLES</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <div className="sectionLabel" style={{ margin: 0 }}>COLLECTIBLES</div>
+          {user?.role === 'admin' && (
+            <button
+              onClick={() => navigate('/admin/collectibles')}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                padding: '5px 12px', borderRadius: 999,
+                background: 'rgba(10,10,10,0.9)',
+                border: '1px solid rgba(191,255,0,0.35)',
+                color: '#BFFF00',
+                fontSize: 11, fontWeight: 800,
+                cursor: 'pointer',
+                boxShadow: '0 0 10px rgba(191,255,0,0.15)',
+                WebkitTapHighlightColor: 'transparent',
+                letterSpacing: '0.05em',
+              }}
+            >
+              <Shield style={{ width: 11, height: 11 }} />
+              Admin
+            </button>
+          )}
+        </div>
         <button
           onClick={() => navigate('/Collection')}
           style={{
