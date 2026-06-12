@@ -158,14 +158,14 @@ export default function AdminCardPreviewModal({ card, onClose }) {
           {/* Card flip */}
           <div style={{ width: 180, margin: '0 auto 16px', aspectRatio: '2/3', perspective: 1000, cursor: 'pointer', position: 'relative' }} onClick={() => setFlipped(f => !f)}>
 
-            {/* Sparkles for legendary */}
+            {/* Sparkles for legendary — slow drifting particles */}
             {r.sparkles && SPARKLE_POSITIONS.map((sp, i) => (
-              <div key={i} className="bx-sparkle" style={{
+              <div key={i} style={{
                 position: 'absolute', zIndex: 20, pointerEvents: 'none',
                 top: sp.top, left: sp.left,
-                animationDelay: sp.delay, animationDuration: sp.dur,
                 width: sp.size, height: sp.size, borderRadius: '50%',
-                background: '#FFD700', boxShadow: `0 0 4px #FFD700, 0 0 8px rgba(255,215,0,0.6)`,
+                background: '#FFD700', boxShadow: `0 0 4px #FFD700, 0 0 8px rgba(255,215,0,0.5)`,
+                animation: `bx-sparkle-${sp.idx} ${sp.dur} ease-in-out ${sp.delay} infinite`,
               }} />
             ))}
 

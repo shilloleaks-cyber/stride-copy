@@ -143,10 +143,48 @@ export const RARITY_KEYFRAMES = `
   100% { background-position: 0% 50%;   opacity: 0; }
 }
 
-/* ── Sparkle — rare moments, mostly invisible ── */
-@keyframes bx-sparkle {
-  0%, 6%, 100% { opacity: 0; transform: scale(0.3); }
-  3%            { opacity: 0.85; transform: scale(1.0); }
+/* ── Sparkle — soft drifting particles, each unique path ── */
+@keyframes bx-sparkle-0 {
+  0%   { opacity: 0;    transform: translate(0px, 0px)    scale(0.8); }
+  20%  { opacity: 0.65; transform: translate(-3px, -5px)  scale(1.1); }
+  50%  { opacity: 0.45; transform: translate(2px, -8px)   scale(0.9); }
+  80%  { opacity: 0.7;  transform: translate(-2px, -4px)  scale(1.15); }
+  100% { opacity: 0;    transform: translate(0px, 0px)    scale(0.8); }
+}
+@keyframes bx-sparkle-1 {
+  0%   { opacity: 0;    transform: translate(0px, 0px)   scale(0.85); }
+  25%  { opacity: 0.5;  transform: translate(4px, -4px)  scale(1.0); }
+  55%  { opacity: 0.75; transform: translate(2px, -7px)  scale(1.2); }
+  80%  { opacity: 0.4;  transform: translate(3px, -3px)  scale(0.9); }
+  100% { opacity: 0;    transform: translate(0px, 0px)   scale(0.85); }
+}
+@keyframes bx-sparkle-2 {
+  0%   { opacity: 0;    transform: translate(0px, 0px)    scale(1.0); }
+  30%  { opacity: 0.6;  transform: translate(-4px, -3px)  scale(0.85); }
+  60%  { opacity: 0.8;  transform: translate(-2px, -6px)  scale(1.1); }
+  85%  { opacity: 0.35; transform: translate(-3px, -2px)  scale(0.9); }
+  100% { opacity: 0;    transform: translate(0px, 0px)    scale(1.0); }
+}
+@keyframes bx-sparkle-3 {
+  0%   { opacity: 0;    transform: translate(0px, 0px)   scale(0.9); }
+  20%  { opacity: 0.4;  transform: translate(3px, -6px)  scale(1.0); }
+  50%  { opacity: 0.7;  transform: translate(1px, -9px)  scale(1.15); }
+  75%  { opacity: 0.5;  transform: translate(2px, -5px)  scale(1.0); }
+  100% { opacity: 0;    transform: translate(0px, 0px)   scale(0.9); }
+}
+@keyframes bx-sparkle-4 {
+  0%   { opacity: 0;    transform: translate(0px, 0px)    scale(0.8); }
+  35%  { opacity: 0.55; transform: translate(-2px, -7px)  scale(1.05); }
+  65%  { opacity: 0.75; transform: translate(-4px, -5px)  scale(0.9); }
+  90%  { opacity: 0.3;  transform: translate(-1px, -3px)  scale(1.1); }
+  100% { opacity: 0;    transform: translate(0px, 0px)    scale(0.8); }
+}
+@keyframes bx-sparkle-5 {
+  0%   { opacity: 0;    transform: translate(0px, 0px)   scale(1.0); }
+  28%  { opacity: 0.6;  transform: translate(3px, -5px)  scale(0.85); }
+  58%  { opacity: 0.45; transform: translate(4px, -8px)  scale(1.2); }
+  82%  { opacity: 0.65; transform: translate(2px, -4px)  scale(0.95); }
+  100% { opacity: 0;    transform: translate(0px, 0px)   scale(1.0); }
 }
 
 /* ── Serial glow — slow gentle pulse ── */
@@ -178,12 +216,12 @@ export function injectRarityKeyframes() {
   document.head.appendChild(style);
 }
 
-// Sparkle positions — fewer, more spread out, larger for legendary
+// Sparkle positions — each uses its own drift keyframe (idx 0–5)
 export const SPARKLE_POSITIONS = [
-  { top: '12%', left: '18%', delay: '0s',    dur: '9s',  size: 4 },
-  { top: '9%',  left: '78%', delay: '3s',    dur: '8s',  size: 3 },
-  { top: '52%', left: '88%', delay: '1.5s',  dur: '10s', size: 5 },
-  { top: '82%', left: '22%', delay: '5s',    dur: '9s',  size: 3 },
-  { top: '40%', left: '8%',  delay: '2.5s',  dur: '8s',  size: 4 },
-  { top: '90%', left: '65%', delay: '6.5s',  dur: '10s', size: 3 },
+  { top: '12%', left: '18%', delay: '0s',   dur: '9s',  size: 4, idx: 0 },
+  { top: '9%',  left: '78%', delay: '3.5s', dur: '10s', size: 3, idx: 1 },
+  { top: '52%', left: '88%', delay: '1.5s', dur: '11s', size: 5, idx: 2 },
+  { top: '82%', left: '22%', delay: '5s',   dur: '9s',  size: 3, idx: 3 },
+  { top: '40%', left: '8%',  delay: '2s',   dur: '10s', size: 4, idx: 4 },
+  { top: '88%', left: '65%', delay: '6.5s', dur: '8s',  size: 3, idx: 5 },
 ];

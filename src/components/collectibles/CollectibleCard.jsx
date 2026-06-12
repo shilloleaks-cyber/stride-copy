@@ -111,18 +111,17 @@ export default function CollectibleCard({ card, owned = false, small = false, on
         {/* Shine sweep */}
         {isOwned && r.shinePeriod && <ShineSweep period={r.shinePeriod} rarity={rarity} />}
 
-        {/* Sparkles — legendary only, rare moments */}
+        {/* Sparkles — legendary only, slow drifting particles */}
         {isOwned && r.sparkles && SPARKLE_POSITIONS.map((sp, i) => (
-          <div key={i} className="bx-sparkle" style={{
+          <div key={i} style={{
             position: 'absolute', zIndex: 6, pointerEvents: 'none',
             top: sp.top, left: sp.left,
-            animationDelay: sp.delay,
-            animationDuration: sp.dur,
             width: small ? sp.size - 1 : sp.size,
             height: small ? sp.size - 1 : sp.size,
             borderRadius: '50%',
             background: '#FFD700',
-            boxShadow: `0 0 4px #FFD700, 0 0 8px rgba(255,215,0,0.6)`,
+            boxShadow: `0 0 4px #FFD700, 0 0 8px rgba(255,215,0,0.5)`,
+            animation: `bx-sparkle-${sp.idx} ${sp.dur} ease-in-out ${sp.delay} infinite`,
           }} />
         ))}
 

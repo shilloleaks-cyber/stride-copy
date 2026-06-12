@@ -78,15 +78,15 @@ export default function CardDetailModal({ card, userCard, onClose }) {
         {/* Card flip area */}
         <div style={{ width: '100%', aspectRatio: '2/3', perspective: 900, cursor: 'pointer', position: 'relative' }}>
 
-          {/* Sparkles — outside the flip card so they don't rotate */}
+          {/* Sparkles — outside the flip card, slow drifting particles */}
           {isOwned && r.sparkles && SPARKLE_POSITIONS.map((sp, i) => (
-            <div key={i} className="bx-sparkle" style={{
+            <div key={i} style={{
               position: 'absolute', zIndex: 20, pointerEvents: 'none',
               top: sp.top, left: sp.left,
-              animationDelay: sp.delay, animationDuration: sp.dur,
               width: sp.size + 1, height: sp.size + 1, borderRadius: '50%',
               background: '#FFD700',
-              boxShadow: `0 0 5px #FFD700, 0 0 10px rgba(255,215,0,0.6)`,
+              boxShadow: `0 0 5px #FFD700, 0 0 10px rgba(255,215,0,0.5)`,
+              animation: `bx-sparkle-${sp.idx} ${sp.dur} ease-in-out ${sp.delay} infinite`,
             }} />
           ))}
 
