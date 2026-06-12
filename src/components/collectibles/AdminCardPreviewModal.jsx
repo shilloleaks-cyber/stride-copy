@@ -138,8 +138,8 @@ export default function AdminCardPreviewModal({ card, onClose }) {
           width: '100%', maxWidth: 420, background: '#111',
           borderRadius: '28px 28px 0 0',
           border: '1px solid rgba(255,255,255,0.09)', borderBottom: 'none',
-          padding: '0 0 48px',
-          maxHeight: '94dvh', overflowY: 'auto',
+          padding: '0 0 0',
+          maxHeight: 'calc(100dvh - 60px)', overflowY: 'auto',
           boxShadow: `0 -20px 60px rgba(0,0,0,0.5), 0 0 40px ${r.glow}`,
         }}
       >
@@ -299,7 +299,7 @@ export default function AdminCardPreviewModal({ card, onClose }) {
           </div>
 
           {/* Card ID */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '10px 14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '10px 14px', marginBottom: 'calc(120px + env(safe-area-inset-bottom))' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ fontSize: 9, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 3px' }}>Card ID</p>
               <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', fontFamily: 'monospace', margin: 0, wordBreak: 'break-all', lineHeight: 1.5 }}>{card.id}</p>

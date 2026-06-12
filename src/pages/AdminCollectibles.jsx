@@ -468,7 +468,8 @@ function QRModal({ card, token, qrDataUrl, expiresAt, onClose }) {
       <div onClick={e => e.stopPropagation()} style={{
         width: '100%', maxWidth: 420, background: '#111', borderRadius: '24px 24px 0 0',
         border: `1px solid rgba(255,255,255,0.1)`, borderBottom: 'none',
-        padding: '24px 24px 48px', textAlign: 'center',
+        padding: `24px 24px calc(120px + env(safe-area-inset-bottom))`, textAlign: 'center',
+        maxHeight: 'calc(100dvh - 60px)', overflowY: 'auto',
         boxShadow: `0 0 60px rgba(200,255,0,0.08)`,
       }}>
         {/* Drag pill */}
