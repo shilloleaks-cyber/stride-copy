@@ -28,8 +28,7 @@ import AdminCollectibles from './pages/AdminCollectibles';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRef } from 'react';
-
-const isGlobalAdmin = (user) => user?.role === 'admin';
+import { isGlobalAdmin } from './Layout.jsx';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
