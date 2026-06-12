@@ -118,12 +118,12 @@ export default function ClaimQRSheet({ onClose, onClaimed }) {
       display: 'flex', alignItems: 'flex-end',
     }}>
       <div style={{
-        width: '100%', maxHeight: '90dvh',
+        width: '100%', maxHeight: 'calc(100vh - 80px)',
         background: '#111', borderRadius: '24px 24px 0 0',
         border: '1px solid rgba(255,255,255,0.08)',
         borderBottom: 'none',
-        padding: '0 0 calc(env(safe-area-inset-bottom,0px) + 24px)',
         display: 'flex', flexDirection: 'column',
+        overflow: 'hidden',
       }}>
         {/* Handle + header */}
         <div style={{ padding: '16px 20px 14px', borderBottom: `1px solid ${C.line}` }}>
@@ -136,14 +136,14 @@ export default function ClaimQRSheet({ onClose, onClaimed }) {
           </div>
         </div>
 
-        <div style={{ overflowY: 'auto', padding: '20px 24px', flex: 1 }}>
+        <div style={{ overflowY: 'auto', padding: '20px 24px', flex: 1, paddingBottom: 'calc(160px + env(safe-area-inset-bottom))' }}>
           {step === 'scan' && (
             <div style={{ textAlign: 'center' }}>
               <p style={{ fontSize: 13, color: C.muted, marginBottom: 20 }}>Point your camera at the QR code</p>
               <div
                 id="claim-qr-reader"
                 ref={scannerRef}
-                style={{ borderRadius: 16, overflow: 'hidden', maxWidth: 300, margin: '0 auto 20px' }}
+                style={{ borderRadius: 16, overflow: 'hidden', maxWidth: 260, maxHeight: 260, margin: '0 auto 20px' }}
               />
               <p style={{ marginTop: 8, fontSize: 12, color: C.muted }}>
                 Or enter token manually:
