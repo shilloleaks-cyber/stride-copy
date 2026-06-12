@@ -6,13 +6,37 @@
       "type": "string",
       "description": "Voucher title"
     },
+    "description": {
+      "type": "string",
+      "description": "Voucher details"
+    },
     "sponsor_name": {
       "type": "string",
       "description": "Sponsor name"
     },
-    "description": {
+    "sponsor_logo_url": {
       "type": "string",
-      "description": "Voucher details"
+      "description": "Sponsor logo image URL"
+    },
+    "voucher_image_url": {
+      "type": "string",
+      "description": "Main voucher image URL"
+    },
+    "reward_type": {
+      "type": "string",
+      "enum": [
+        "discount",
+        "free_item",
+        "cash_value",
+        "experience",
+        "special_access"
+      ],
+      "default": "discount",
+      "description": "Type of reward"
+    },
+    "reward_value": {
+      "type": "string",
+      "description": "e.g. 20%, Free Coffee, 100 THB"
     },
     "quantity": {
       "type": "number",
@@ -29,9 +53,23 @@
       "format": "date",
       "description": "Expiry date"
     },
-    "is_active": {
-      "type": "boolean",
-      "default": true
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "published",
+        "archived"
+      ],
+      "default": "draft",
+      "description": "Voucher status"
+    },
+    "terms_conditions": {
+      "type": "string",
+      "description": "Terms and conditions text"
+    },
+    "redeem_instruction": {
+      "type": "string",
+      "description": "How to redeem this voucher"
     }
   },
   "required": [

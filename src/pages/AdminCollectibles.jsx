@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft, Plus, QrCode, RefreshCw, Upload, X, Eye, Pencil, Trash2, Copy, Check } from 'lucide-react';
 import AdminCardPreviewModal from '@/components/collectibles/AdminCardPreviewModal';
+import AdminVouchersTab from '@/components/collectibles/AdminVouchersTab';
 import QRCode from 'qrcode';
 
 const C = {
@@ -410,44 +411,7 @@ function CreateCardForm({ onCreated }) {
   );
 }
 
-// ── Create Voucher Form ────────────────────────────────────────────────────────
-function CreateVoucherForm({ onCreated }) {
-  const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ title: '', sponsor_name: '', description: '', quantity: '0', expiry_date: '' });
-  const set = k => v => setForm(f => ({ ...f, [k]: v }));
 
-  const mutation = useMutation({
-    mutationFn: () => base44.entities.Vouchers.create({ ...form, quantity: Number(form.quantity), redeemed_count: 0, is_active: true }),
-    onSuccess: () => { setOpen(false); setForm({ title: '', sponsor_name: '', description: '', quantity: '0', expiry_date: '' }); onCreated(); },
-  });
-
-  if (!open) return (
-    <button onClick={() => setOpen(true)} style={{
-      display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 20,
-      background: C.limeDim, border: `1px solid ${C.limeBorder}`, color: C.lime,
-      fontSize: 13, fontWeight: 800, cursor: 'pointer',
-    }}>
-      <Plus style={{ width: 14, height: 14 }} /> New Voucher
-    </button>
-  );
-
-  return (
-    <div style={{ background: '#0F0F0F', border: `1px solid ${C.purpleBorder}`, borderRadius: 20, padding: 20, marginBottom: 16 }}>
-      <p style={{ fontWeight: 900, fontSize: 16, marginBottom: 16, color: C.text }}>Create Voucher</p>
-      <Field label="Title" value={form.title} onChange={set('title')} />
-      <Field label="Sponsor Name" value={form.sponsor_name} onChange={set('sponsor_name')} />
-      <Field label="Description" value={form.description} onChange={set('description')} multiline />
-      <Field label="Quantity (0 = unlimited)" value={form.quantity} onChange={set('quantity')} type="number" />
-      <Field label="Expiry Date" value={form.expiry_date} onChange={set('expiry_date')} type="date" />
-      <div style={{ display: 'flex', gap: 10 }}>
-        <button onClick={() => mutation.mutate()} disabled={!form.title || mutation.isPending} style={{ flex: 1, padding: '13px', borderRadius: 14, background: C.lime, color: '#000', fontSize: 14, fontWeight: 900, border: 'none', cursor: 'pointer' }}>
-          {mutation.isPending ? 'Creating…' : 'Create'}
-        </button>
-        <button onClick={() => setOpen(false)} style={{ padding: '13px 18px', borderRadius: 14, background: 'rgba(255,255,255,0.05)', color: C.muted, border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer' }}>Cancel</button>
-      </div>
-    </div>
-  );
-}
 
 // ── QR Modal ──────────────────────────────────────────────────────────────────
 function QRModal({ card, token, qrDataUrl, expiresAt, onClose }) {
@@ -632,45 +596,7 @@ export default function AdminCollectibles() {
 
         {/* ── Vouchers tab ── */}
         {tab === 'Vouchers' && (
-          <>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <p style={{ fontSize: 12, fontWeight: 700, color: C.mutedHi, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Vouchers ({vouchers.length})</p>
-              <CreateVoucherForm onCreated={refetchVouchers} />
-            </div>
-            {vouchers.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '60px 0', color: C.muted, fontSize: 13 }}>No vouchers yet.</div>
-            ) : (
-              vouchers.map(v => (
-                <div key={v.id} style={{ background: C.card, border: `1px solid ${C.line}`, borderRadius: 18, padding: '16px', marginBottom: 12 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-                    <div style={{ flex: 1 }}>
-                      <p style={{ fontSize: 15, fontWeight: 800, color: C.text, margin: '0 0 4px' }}>{v.title}</p>
-                      {v.sponsor_name && <p style={{ fontSize: 12, color: '#00e676', margin: '0 0 4px', fontWeight: 600 }}>{v.sponsor_name}</p>}
-                      {v.description && <p style={{ fontSize: 12, color: C.muted, margin: 0, lineHeight: 1.5 }}>{v.description}</p>}
-                    </div>
-                    <span style={{
-                      fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 8, flexShrink: 0, marginLeft: 10,
-                      background: v.is_active ? 'rgba(0,230,118,0.08)' : 'rgba(255,80,80,0.08)',
-                      border: `1px solid ${v.is_active ? 'rgba(0,230,118,0.25)' : 'rgba(255,80,80,0.2)'}`,
-                      color: v.is_active ? '#00e676' : '#ff6060',
-                    }}>{v.is_active ? 'Active' : 'Inactive'}</span>
-                  </div>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    {[
-                      { label: 'Qty', val: v.quantity === 0 ? '∞' : v.quantity },
-                      { label: 'Redeemed', val: v.redeemed_count || 0 },
-                      ...(v.expiry_date ? [{ label: 'Expires', val: v.expiry_date }] : []),
-                    ].map(({ label, val }) => (
-                      <div key={label} style={{ padding: '6px 10px', borderRadius: 8, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
-                        <p style={{ fontSize: 8, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.07em', margin: '0 0 2px' }}>{label}</p>
-                        <p style={{ fontSize: 13, fontWeight: 800, color: C.text, margin: 0 }}>{val}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))
-            )}
-          </>
+          <AdminVouchersTab vouchers={vouchers} onRefresh={refetchVouchers} />
         )}
 
         {/* ── Claimed tab ── */}
