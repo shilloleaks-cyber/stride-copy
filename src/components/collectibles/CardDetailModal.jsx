@@ -64,19 +64,35 @@ export default function CardDetailModal({ card, userCard, onClose }) {
       style={{
         position: 'fixed', inset: 0, zIndex: 2000,
         background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(16px)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: 24,
+        display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
       }}
     >
-      <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 320, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-
-        {/* Close */}
-        <button onClick={onClose} style={{ alignSelf: 'flex-end', width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <X style={{ width: 16, height: 16 }} />
-        </button>
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          width: '100%', maxWidth: 480,
+          background: '#0e0e0e',
+          borderRadius: '24px 24px 0 0',
+          border: '1px solid rgba(255,255,255,0.09)', borderBottom: 'none',
+          maxHeight: 'calc(100vh - 80px)',
+          overflowY: 'auto',
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
+          padding: '0 20px',
+          boxShadow: `0 -20px 60px rgba(0,0,0,0.6), 0 0 40px ${r.glow}22`,
+        }}
+      >
+        {/* Drag handle + Close row */}
+        <div style={{ width: '100%', position: 'sticky', top: 0, background: '#0e0e0e', zIndex: 10, paddingTop: 14, paddingBottom: 12 }}>
+          <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.15)', margin: '0 auto 14px' }} />
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <X style={{ width: 16, height: 16 }} />
+            </button>
+          </div>
+        </div>
 
         {/* Card flip area */}
-        <div style={{ width: '100%', aspectRatio: '2/3', perspective: 900, cursor: 'pointer', position: 'relative' }}>
+        <div style={{ width: 200, aspectRatio: '2/3', perspective: 900, cursor: 'pointer', position: 'relative', margin: '0 auto 0' }}>
 
           {/* Sparkles — outside the flip card, slow drifting particles */}
           {isOwned && r.sparkles && SPARKLE_POSITIONS.map((sp, i) => (
@@ -182,7 +198,7 @@ export default function CardDetailModal({ card, userCard, onClose }) {
         </div>
 
         {/* Card info */}
-        <div style={{ width: '100%', textAlign: 'center' }}>
+        <div style={{ width: '100%', textAlign: 'center', marginTop: 16 }}>
           <p style={{ fontSize: 20, fontWeight: 900, color: '#fff', margin: '0 0 8px' }}>{card.name}</p>
 
           <div style={{ display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 10 }}>
@@ -228,7 +244,7 @@ export default function CardDetailModal({ card, userCard, onClose }) {
 
         <button
           onClick={() => setFlipped(f => !f)}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 20, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.35)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
+          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 20, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.35)', fontSize: 11, fontWeight: 700, cursor: 'pointer', marginBottom: 'calc(140px + env(safe-area-inset-bottom))' }}
         >
           <RotateCcw style={{ width: 12, height: 12 }} />
           {flipped ? 'Show Front' : backImg ? 'Flip to Back' : 'Flip Card'}
