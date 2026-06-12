@@ -3,7 +3,7 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import NavigationTracker from '@/lib/NavigationTracker'
 import { pagesConfig } from './pages.config'
-import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { LanguageProvider } from '@/lib/LanguageContext';
@@ -28,6 +28,8 @@ import AdminCollectibles from './pages/AdminCollectibles';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRef } from 'react';
+
+const isGlobalAdmin = (user) => user?.role === 'admin';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -83,7 +85,7 @@ function AnimatedRoutes({ children }) {
 }
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
   const location = useLocation();
 
   // Show loading spinner while checking app public settings or auth
@@ -111,11 +113,24 @@ const AuthenticatedApp = () => {
     <AnimatedRoutes>
       <Routes location={location}>
         <Route path="/" element={
-          <LayoutWrapper currentPageName={mainPageKey}>
-            <MainPage />
-          </LayoutWrapper>
+          isGlobalAdmin(user)
+            ? <LayoutWrapper currentPageName={mainPageKey}><MainPage /></LayoutWrapper>
+            : <Navigate to="/Feed" replace />
         } />
+        {/* Admin-only route overrides — must come before the Pages loop */}
+        <Route path="/Home" element={
+          isGlobalAdmin(user)
+            ? <LayoutWrapper currentPageName="Home"><Pages.Home /></LayoutWrapper>
+            : <Navigate to="/Feed" replace />
+        } />
+        <Route path="/Training" element={
+          isGlobalAdmin(user)
+            ? <LayoutWrapper currentPageName="Training"><Pages.Training /></LayoutWrapper>
+            : <Navigate to="/Feed" replace />
+        } />
+
         {Object.entries(Pages).map(([path, Page]) => (
+          path === 'Home' || path === 'Training' ? null :
           <Route
             key={path}
             path={`/${path}`}

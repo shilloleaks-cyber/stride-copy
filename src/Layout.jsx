@@ -1,11 +1,13 @@
 import React, { useEffect, useRef } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Home, BarChart2, User, Users, CalendarDays } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useLanguage } from '@/lib/LanguageContext';
 import './globals.css';
+
+export const isGlobalAdmin = (user) => user?.role === 'admin';
 
 export default function Layout({ children }) {
   const location = useLocation();
@@ -54,15 +56,19 @@ export default function Layout({ children }) {
     };
   }, [navigate]);
   
-  const navItems = [
-    { nameKey: 'nav_home',    icon: Home,        page: 'Home' },
-    { nameKey: 'nav_train',   icon: BarChart2,   page: 'Training' },
-    { nameKey: 'nav_feed',    icon: Users,        page: 'Feed' },
-    { nameKey: 'nav_events',  icon: CalendarDays, page: 'Events' },
-    { nameKey: 'nav_profile', icon: User,         page: 'Profile' },
+  const { data: user } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
+
+  const adminOnly = isGlobalAdmin(user);
+
+  const allNavItems = [
+    { nameKey: 'nav_home',    icon: Home,        page: 'Home',     adminOnly: true },
+    { nameKey: 'nav_train',   icon: BarChart2,   page: 'Training', adminOnly: true },
+    { nameKey: 'nav_feed',    icon: Users,        page: 'Feed',     adminOnly: false },
+    { nameKey: 'nav_events',  icon: CalendarDays, page: 'Events',   adminOnly: false },
+    { nameKey: 'nav_profile', icon: User,         page: 'Profile',  adminOnly: false },
   ];
 
-  const { data: user } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
+  const navItems = allNavItems.filter(item => !item.adminOnly || adminOnly);
 
   const isActivePage = (pageName) => location.pathname.includes(pageName);
 
